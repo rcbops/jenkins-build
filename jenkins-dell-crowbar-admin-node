@@ -24,3 +24,7 @@ fi
 # EXEC CROWBAR BUILD / BOOT ADMIN NODE
 ssh openstack@${ISODEST} "sudo /home/openstack/incoming/fixup_crowbar.sh ${ISONAME}"
 ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+
+# WAIT FOR ADMIN NODE TO HAVE SSH
+while true; do nc -z 184.106.53.162 22 && break; echo 'Waiting for remote sshd...'; done
+
