@@ -1,0 +1,184 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+function err_cleanup_exercise() {
+    # $1 - name
+
+    if [ -e "${tmpdir}" ]; then
+	rm -rf "${tmpdir}"
+    fi
+
+    if [ "${NOCLEAN-0}" == "1" ]; then
+	exit 0
+    fi
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+kvm_instance_name=${BINARY_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}-exercise
+
+# this sets IP as a side-effect
+get_ip $kvm_instance_name
+
+MEMORY=2048000
+maybe_make_kvm_instance $kvm_instance_name
+start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/${PACKAGE_REPO} ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+
+tmpdir=$(mktemp -d)
+
+trap "err_cleanup_exercise ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+
+declare -a ip_octets
+ip_octets=(${IP//./ })
+
+cat > ${tmpdir}/dna.json <<EOF
+{
+  "public": {
+    "label": "public",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br100",
+    "bridge_dev": "eth0.100",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4",
+    "ipv4_cidr": "10.2.${ip_octets[3]}.0/24"
+  },
+
+  "private": {
+    "label": "private",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br101",
+    "bridge_dev": "eth0.101",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4",
+    "ipv4_cidr": "10.3.${ip_octets[3]}.0/24"
+  },
+  "floating": {
+    "ipv4_cidr": "10.1.${ip_octets[3]}.0/24"
+  },
+
+  "package_url": "http://192.168.1.1/${PACKAGE_REPO}",
+  "package_release": "${BINARY_BUILD_RELEASE}",
+  "package_component": "${NOVA_RELEASE}-${MILESTONE}",
+  "virt_type": "qemu",
+
+ "run_list": [ "recipe[apt]", "recipe[openstack::allinone]", "recipe[kong]" ]
+}
+EOF
+
+ssh root@${IP} apt-get install vlan -y --force-yes
+ssh root@${IP} vconfig add eth0 100
+ssh root@${IP} vconfig add eth0 101
+
+run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz" ${tmpdir}/dna.json
+
+sleep 20
+
+
+echo "export HOST_IP=${IP}" > ${tmpdir}/localrc
+
+cat >> ${tmpdir}/localrc <<"EOF"
+export TENANT=openstack
+export USERNAME=admin
+export ADMIN_PASSWORD=secrete
+export ACTIVE_TIMEOUT=120
+export BOOT_TIMEOUT=120
+export ASSOCIATE_TIMEOUT=120
+
+export NOVA_URL=http://${HOST_IP}:5000/v2.0/
+export NOVA_REGION_NAME=RegionOne
+export NOVA_VERSION=1.1
+export NOVA_PROJECT_ID=${TENANT}
+export NOVA_API_KEY=${ADMIN_PASSWORD}
+export NOVA_USERNAME=${USERNAME}
+
+function do_cleanup() {
+    EXITSTAT=$?
+
+    if [ $EXITSTAT -eq 0 ] && [[ ! $(basename ${BASH_SOURCE[0]}) =~ ".sh" ]]; then
+	return 0
+    fi
+
+    set +e
+
+    trap - SIGINT SIGTERM ERR
+
+    if [ ${EXITSTAT} -ne 0 ]; then
+	echo " == STARTING CLEANUP == "
+    fi
+
+    SECGROUP=test_secgroup
+    
+    if ( nova secgroup-list | grep ${SECGROUP}); then
+	nova secgroup-delete ${SECGROUP}
+    fi
+    
+    NAME=myserver
+
+    for id in $(nova list | grep "${NAME}" | cut -d'|' -f2); do
+	echo "Deleting ${id}"
+	nova delete ${id}
+
+	if ! timeout ${ACTIVE_TIMEOUT} sh -c "while nova show ${id}; do sleep 1; done"; then
+	    echo "Server ${id} would not shut down"
+	    exit 1
+	fi
+    done
+    
+    # propogate SIGINT so timeouts aren't stupid
+    if [ $EXITSTAT -eq 130 ]; then
+	echo "Bailing on SIGINT"
+	kill -s SIGINT $$
+	exit 130
+    fi
+
+    exit 1
+}
+
+function grep() {
+    if [ "${1:-}" == "private network" ]; then
+	shift
+	/bin/grep "public network" "$@"
+    else
+	/bin/grep "$@"
+    fi
+}
+
+
+
+if [ $(basename ${BASH_SOURCE[$(( ${#BASH_SOURCE[@]} - 1))]}) == "exercise.sh" ]; then
+    echo "== INSTALLING TRAP HANDLER =="
+    trap do_cleanup SIGINT SIGTERM ERR
+    do_cleanup
+else
+    echo "Not installing trap handler."
+fi
+EOF
+
+# box should be configured now....
+ssh root@${IP} -- apt-get install -y git-core euca2ools
+ssh root@${IP} -- "cd /opt; git clone http://github.com/rpedde/devstack"
+scp ${tmpdir}/localrc root@${IP}:/opt/devstack
+ssh root@${IP} -- "cd /opt/devstack; SKIP_EXERCISES=swift,euca ./exercise.sh"
+
+trap - SIGINT SIGTERM EXIT ERR
+
+rm -rf ${tmpdir}
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}

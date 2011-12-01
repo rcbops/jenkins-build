@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+MILESTONE=${MILESTONE-d5}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+jenkins_init
+jenkins_set_vars
+
+echo ${NOVA_RELEASE}
+
+MILESTONE="d5"
+
+function err_cleanup_chefsolo() {
+    # $1 - name
+    if [ "${NOCLEAN-0}" == "1" ]; then
+	exit 0
+    fi
+
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+
+kvm_instance_name=${BINARY_BUILD_RELEASE}-crowbar-admin-iso
+
+# this sets IP as a side-effect
+get_ip $kvm_instance_name
+
+iso_name=rcb-${NOVA_RELEASE}-${MILESTONE}-${BINARY_BUILD_RELEASE}
+if [ -e "crowbar-${iso_name}.iso" ]; then
+    echo "Cleaning ISO(s) from previous build"
+    rm -rf crowbar-${iso_name}.iso
+fi
+
+MEMORY=1024000
+maybe_make_kvm_instance $kvm_instance_name
+start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+
+trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+
+ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install build-essential ruby-dev git debootstrap mkisofs ruby curl binutils -y --force-yes"
+ssh root@${IP} "modprobe loop"
+ssh root@${IP} "cd /opt && git clone https://github.com/dellcloudedge/crowbar.git"
+
+# prestage the ubuntu-10.10-server-amd64.iso
+ISO_PATH=${JENKINS_HOME}/userContent/build-crowbar/ubuntu-10.10-server-amd64.iso
+ssh root@${IP} "mkdir -p /root/.crowbar-build-cache/iso"
+if ! ( scp ${ISO_PATH} root@${IP}:/root/.crowbar-build-cache/iso ); then
+    echo "Ubuntu-10.10 ISO Copy Failed"
+    exit 1
+fi
+
+# copy over the sledgehammer image
+SLEDGEHAMMER_PATH=${JENKINS_HOME}/userContent/build-crowbar/sledgehammer-tftpboot.tar.gz
+ssh root@${IP} "mkdir -p /opt/crowbar-sledgehammer/bin"
+if ! ( scp ${SLEDGEHAMMER_PATH} root@${IP}:/opt/crowbar-sledgehammer/bin ); then
+    echo "Sledgehammer Copy Failed"
+    exit 1
+fi
+
+ssh root@${IP} "cd /opt/crowbar && git checkout openstack-os-build"
+ssh root@${IP} "cd /opt/crowbar && git submodule init"
+ssh root@${IP} "cd /opt/crowbar && git submodule update"
+if ! ( ssh root@${IP} "cd /opt/crowbar && DEBIAN_FRONTEND=noninteractive VERSION='${iso_name}' ./build_crowbar.sh ubuntu-10.10" ); then
+     echo "Error in tests"
+     exit 1
+fi
+scp root@${IP}:/opt/crowbar/crowbar-${iso_name}.iso .
+# scp crowbar-${iso_name}.iso openstack@${ISODEST}:~/incoming/crowbar.iso
+
+trap - SIGINT SIGTERM EXIT ERR
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}

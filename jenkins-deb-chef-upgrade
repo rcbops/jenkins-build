@@ -1,0 +1,175 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+
+declare -A ipmap
+ipmap=(
+    [ubuntu-natty]="192.168.1.40"
+    [ubuntu-maverick]="192.168.1.41"
+    [ubuntu-oneiric]="192.168.1.42"
+    [debian-squeeze]="192.168.1.43"
+)
+
+declare -A componentmap
+componentmap=(
+    [diablo-d5]="cookbooks-release-2011.3-d5.tgz"
+    [diablo-final]="cookbooks.tgz"
+)
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+echo ${DISTRELEASE}
+echo ${ipmap[${DISTRELEASE-}]-}
+
+echo ${FROMCOMPONENT}
+echo ${TOCOMPONENT}
+echo ${componentmap[${FROMCOMPONENT-}]-}
+echo ${componentmap[${TOCOMPONENT-}]-}
+
+if [ "${ipmap[${DISTRELEASE-}]-}" = "" ]; then
+    die "No IP map set for ${DISTRELEASE} in $0"
+fi
+
+IP=${ipmap[${DISTRELEASE}]}
+FROM_TARBALL=${componentmap[${FROMCOMPONENT}]}
+TO_TARBALL=${componentmap[${TOCOMPONENT}]}
+
+function err_cleanup_chefsolo() {
+    # $1 - name
+    if [ "${NOCLEAN-0}" == "1" ]; then
+	exit 0
+    fi
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+kvm_instance_name=${BINARY_BUILD_RELEASE}-upgrade-test
+# kvm_instance_name=${BINARY_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}-chefsolo
+
+MEMORY=2048000
+maybe_make_kvm_instance $kvm_instance_name
+# start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/proposed-packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/packages ${BINARY_BUILD_RELEASE} ${FROMCOMPONENT}
+
+trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+
+cat > /tmp/${kvm_instance_name}-FROM.json <<EOF
+{
+  "public": {
+    "label": "public",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br100",
+    "bridge_dev": "eth0.100",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4"
+  },
+
+  "private": {
+    "label": "private",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br101",
+    "bridge_dev": "eth0.101",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4"
+  },
+
+
+  "package_url": "http://192.168.1.1/packages",
+  "package_release": "${BINARY_BUILD_RELEASE}",
+  "package_component": "${FROMCOMPONENT}",
+  "virt_type": "qemu",
+
+ "run_list": [ "recipe[apt]", "recipe[openstack::allinone]" ]
+}
+EOF
+
+ssh root@${IP} apt-get install vlan -y --force-yes
+ssh root@${IP} vconfig add eth0 100
+ssh root@${IP} vconfig add eth0 101
+
+run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/${FROM_TARBALL}" /tmp/${kvm_instance_name}-FROM.json
+
+sleep 20
+
+# Glance upgrade fixup
+ssh root@${IP} "stop glance-api && stop glance-registry"
+ssh root@${IP} "glance-manage version_control"
+ssh root@${IP} "mysql -u root glance -e 'update migrate_version set version=8'"
+
+# box should be configured now....
+echo "#########################################"
+echo "## ${FROMCOMPONENT} HAS BEEN INSTALLED ##"
+echo "#########################################"
+echo "## GONNA UPGRADE TO ${TOCOMPONENT} NOW ##"
+echo "#########################################"
+
+# Need to clean up diablo-d5 source file..
+ssh root@${IP} "rm /etc/apt/sources.list.d/rcb-packages.list"
+
+ssh root@${IP} "apt-get -qq -y --force-yes install git"
+ssh root@${IP} "cd /opt && git clone https://github.com/rcbops/keystone-upgrade"
+if ! ( ssh root@${IP} "cd /opt/keystone-upgrade && ./keystone_upgrade.py" ); then
+    echo "Keystone-Upgrade FAILED"
+    exit 1
+fi
+
+# NEED TO RUN AN UPGRADE HERE
+cat > /tmp/${kvm_instance_name}-TO.json <<EOF
+{
+  "public": {
+    "label": "public",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br100",
+    "bridge_dev": "eth0.100",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4"
+  },
+
+  "private": {
+    "label": "private",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br101",
+    "bridge_dev": "eth0.101",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4"
+  },
+
+
+  "package_url": "http://192.168.1.1/packages",
+  "package_release": "${BINARY_BUILD_RELEASE}",
+  "package_component": "${TOCOMPONENT}",
+  "virt_type": "qemu",
+
+ "run_list": [ "recipe[apt]", "recipe[openstack::allinone]", "recipe[kong]" ]
+}
+EOF
+
+run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/${TO_TARBALL}" /tmp/${kvm_instance_name}-TO.json
+
+sleep 20
+
+if ! ( ssh root@${IP} "cd /opt/kong; ./run_tests.sh --nova" ); then
+    echo "Error in NOVA tests"
+    exit 1
+fi
+
+trap - SIGINT SIGTERM EXIT ERR
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
+

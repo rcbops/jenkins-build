@@ -1,0 +1,607 @@
+#!/bin/bash
+
+function jenkins_init() {
+    if [ ! -z "${__JENKINS_INITIALIZED-}" ]; then
+	return
+    fi
+
+    __JENKINS_INIALIZED=1
+
+    log "Initializing"
+    set -x
+    set -e
+    set -u
+
+    exec 2>&1
+
+    jenkins_set_vars
+    
+}
+
+
+# set default values for all the configuration options
+function jenkins_set_vars() {
+    if [ ! -z "${__JENKINS_INITIALIZED-}" ]; then
+	return
+    fi
+    
+    unset STRATEGY
+
+    [ -e /etc/jenkins-deb/jenkins-deb.conf ] && . /etc/jenkins-deb/jenkins-deb.conf
+
+    DEBEMAIL=${DEBEMAIL-'RCB Builder <rcb-deploy@lists.rackspace.com>'}
+    GIT_BRANCH=${GIT_BRANCH-master}
+    SOURCE_BUILD_DIST=${SOURCE_BUILD_DIST-ubuntu}
+    SOURCE_BUILD_RELEASE=${SOURCE_BUILD_RELEASE-natty}
+    PACKAGE_HOST=${PACKAGE_HOST-build.monkeypuppetlabs.com}
+    DIST_CACHE=${DIST_CACHE:-build.monkeypuppetlabs.com:3142}
+
+    # this should get overridden by the branch config
+    if [ "${COMPONENT-}" != "" ]; then
+	NOVA_RELEASE=${COMPONENT%%-*}
+	MILESTONE=${COMPONENT##*-}
+    else
+	NOVA_RELEASE=${NOVA_RELEASE-diablo}
+	MILESTONE=${MILESTONE-d5}
+    fi
+
+    MAJOR_VERSION=${MAJOR_VERSION-2011.3}
+
+    ARCH=${ARCH-amd64}
+    STRATEGY=${STRATEGY-lvm}
+    SIGNING_KEY=${SIGNING_KEY-F87CBDE0}
+
+    # we only see this on source builds
+    if [ -e debian/changelog ]; then
+	PACKAGE_VERSION=$(grep "urgency=" debian/changelog | sed -e 's/.*(\(.*\)).*/\1/' | head -n1)
+    fi
+
+    JOB_NAME=${JOB_NAME-console-standalone}
+    PACKAGE=$(echo ${JOB_NAME} | cut -d '/' -f 1 | sed -r -e "s/-(source|binaries)$//")
+
+    # distrelease set in arch matrix on binary build
+    if [ "${DISTRELEASE:-}" != "" ]; then
+	BINARY_BUILD_DIST=${DISTRELEASE%%-*}
+	BINARY_BUILD_RELEASE=${DISTRELEASE##*-}
+    fi
+
+    LVM_ROOT=${LVM_ROOT-/dev/vg0}
+    INCOMING_PACKAGES=${INCOMING_PACKAGES-/srv/incoming-packages}
+    PROPOSED_REPO=${PROPOSED_REPO-/srv/proposed-packages}
+}
+
+function acquire_lock() {
+    # $1 - lock name
+    # $2 - file handle - default 254
+    name=${1-}
+    fh=${2-9}
+
+    [ "${name}" != "" ] || die "Must specify lock name"
+
+    log "$(date +%Y%m%d): acquiring lock"
+
+    eval "exec ${fh}>/tmp/${name}"
+    flock -x ${fh}
+
+    log "$(date +%Y%m%d): acquired lock"
+}
+
+function release_lock() {
+    # $1 - file handle
+    fh=${1-9}
+
+    flock -u ${fh}
+
+    eval "${fh}>&-"
+    log "$(date +%Y%m%d): released lock"
+}
+
+function die() {
+    echo $0
+    exit 1
+}
+
+function log() {
+    echo $*
+}
+
+function run_chef_solo() {
+    # $1 - IP
+    # $2 - cookbook tarball URL
+    # $3 - dna.json
+
+    ip=$1
+    tarball=$2
+    dna=$3
+
+    log "Running chef solo using:"
+    log " ip: ${ip}"
+    log " tarball: ${tarball}"
+    log " dna file: ${dna}"
+
+    scp ${dna} root@${ip}:/root/dna.json
+
+    # ruby ssl on maverick defaults to verify certs, and chef can't download recipies from https
+    if [[ ${tarball} =~ "http" ]]; then
+	tarball_file=$(mktemp)
+	wget ${tarball} -O ${tarball_file}
+	tarball=$(basename ${tarball})
+	scp ${tarball_file} root@${ip}:~/${tarball}
+	rm ${tarball_file}
+    fi
+
+    ssh root@${ip} "DEBIAN_FRONTEND=noninteractive apt-get install -y chef"
+    ssh root@${ip} "LANG=C chef-solo -r ${tarball} -j /root/dna.json -l debug"
+}
+
+function maybe_make_kvm_instance() {
+    # $1 - name
+
+    base_instance=${LVM_ROOT}/${BINARY_BUILD_RELEASE}
+    new_instance=${1}
+
+    if [ ! -e ${LVM_ROOT}/${new_instance} ]; then
+	sudo lvcreate ${LVM_ROOT}/${BINARY_BUILD_RELEASE} --size=8G --name=${new_instance} --snapshot
+    fi
+}
+
+function start_kvm_instance() {
+    # $1 - name
+    # $2 - IP
+    # $3 - openstack url
+    # $4 - openstack release
+    # $5 - openstack component
+    
+    new_instance=${1}
+    my_ip=${2}
+    openstack_url=${3}
+    openstack_release=${4}
+    openstack_component=${5}
+
+    MEMORY=${MEMORY-524288}
+
+    # fix up the apt sources....
+    sudo mkdir -p /mnt/$$
+    sudo mount ${LVM_ROOT}/${new_instance} /mnt/$$
+
+    trap "sudo umount /mnt/$$ && sudo rm -rf /mnt/$$" SIGINT SIGTERM EXIT ERR
+
+
+    cat <<EOF | sudo tee /mnt/$$/etc/apt/sources.list 
+deb http://${DIST_CACHE}/ubuntu ${BINARY_BUILD_RELEASE} main universe
+deb http://${DIST_CACHE}/ubuntu ${BINARY_BUILD_RELEASE}-updates main universe
+deb ${openstack_url} ${openstack_release} ${openstack_component}
+EOF
+
+    cat <<EOF | sudo tee /mnt/$$/etc/hosts
+127.0.0.1       localhost
+127.0.1.1       ${new_instance} 
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+EOF
+
+    cat <<EOF | sudo tee /mnt/$$/etc/network/interfaces
+auto eth0
+iface eth0 inet static
+    address ${my_ip}
+    netmask 255.255.255.0
+    gateway 192.168.1.1
+    dns-nameservers 192.168.1.1
+EOF
+
+    echo ${new_instance} | sudo tee /mnt/$$/etc/hostname
+    echo "nameserver 192.168.1.1" | sudo tee /mnt/$$/etc/resolv.conf
+
+    # hackity hack hack hack
+    sudo mkdir -p /mnt/$$/lib/modules
+    sudo cp -a /lib/modules/`uname -r` /mnt/$$/lib/modules
+
+    sudo mkdir -p /mnt/$$/root/.ssh
+    sudo cp ${HOME}/.ssh/id_rsa.pub /mnt/$$/root/.ssh/authorized_keys
+    sudo chmod -R og-rwx /mnt/$$/root/.ssh
+
+    if [ ! -e /mnt/$$/usr/sbin/sshd ]; then
+	sudo chroot /mnt/$$ apt-get update 
+	sudo chroot /mnt/$$ apt-get install -y openssh-server
+    fi
+
+    sudo cp /etc/ssh/*key* /mnt/$$/etc/ssh
+
+    trap - SIGINT SIGTERM EXIT ERR
+
+    sudo umount ${LVM_ROOT}/${new_instance}
+    sudo rm -rf /mnt/$$
+
+    # See if we have a virsh definition for this
+    if ! $( sudo virsh list | grep -q "${new_instance}" ); then
+	# make a new virsh definition
+	cat > /tmp/newxml-${new_instance} <<EOF
+<domain type='kvm'>
+  <name>${new_instance}</name>
+  <memory>${MEMORY}</memory>
+  <currentMemory>${MEMORY}</currentMemory>
+  <vcpu>1</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-0.12'>hvm</type>
+    <kernel>/vmlinuz</kernel>
+    <initrd>/initrd.img</initrd>
+    <cmdline>root=/dev/vda</cmdline>
+    <boot dev='hd'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/bin/kvm</emulator>
+    <disk type='block' device='disk'>
+      <driver name='qemu' type='raw'/>
+      <source dev='${LVM_ROOT}/${new_instance}'/>
+      <target dev='vda' bus='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='kvmbr0'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='tablet' bus='usb'/>
+    <input type='mouse' bus='ps2'/>
+    <graphics type='vnc' port='-1' autoport='yes'/>
+    <sound model='ac97'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </sound>
+    <video>
+      <model type='cirrus' vram='9216' heads='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+EOF
+	sudo virsh create /tmp/newxml-${new_instance}
+	rm /tmp/newxml-${new_instance}
+    else
+	sudo virsh start ${new_instance}
+    fi
+    
+    # wait for the box to come up
+    count=1
+    while [ $count -lt 10 ]; do
+	# wait for port 22 to open
+	count=$(( count + 1 ))
+	sleep 5
+	if ( nc ${my_ip} 22 -w 1 -q 0 < /dev/null ); then
+	    break
+	fi
+    done
+    sleep 5
+
+    [ -e ${HOME}/.ssh ] && ssh-keyscan ${my_ip} >> ${HOME}/.ssh/known_hosts
+
+}
+
+# reset the "proposed repo" to the current upstream
+function reset_repo() {
+    acquire_lock "repo"
+    [ -e ${PROPOSED_REPO} ] || die "No ${PROPOSED_REPO}"
+
+    rm -rf ${PROPOSED_REPO}/*
+    cp -a /srv/packages/{cache,conf,db,dists,pool} ${PROPOSED_REPO}
+    release_lock
+}
+
+# promote the "proposed repo" to the current repo
+function promote_repo() {
+    acquire_lock "repo"
+    [ -e ${PROPOSED_REPO} ] || die "No ${PROPOSED_REPO}"
+
+    cp -a ${PROPOSED_REPO}/{cache,conf,db,dists,pool} /srv/packages
+    release_lock
+}
+
+# builder a new schroot for pbuilder
+function verify_pbuilder() {
+    # $1 - schroot template
+    # $2 - pbuilder name
+
+    distro_chroot=${1}
+    pbuilder=${2}
+
+    lockfile-create /tmp/build-${pbuilder}
+    lockfile-touch -o /tmp/build-${pbuilder}
+
+    trap "lockfile-remove /tmp/build-${pbuilder}" SIGINT SIGTERM EXIT ERR
+
+    if ! (schroot --list --all-session | grep -q ${pbuilder}); then
+	log "Building pbuilder for ${pbuilder}"
+	
+	schroot -c ${distro_chroot} -n ${pbuilder} -b
+	log "Updating pbuilder"
+
+	schroot -c ${pbuilder} -r -u root -- apt-get update
+	log "Installing pbuilder..."
+
+	schroot -c ${pbuilder} -r -u root -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get --force-yes -y install pbuilder aptitude git-buildpackage'
+	log "Cleanup"
+
+	schroot -c ${pbuilder} -r -u root -- /etc/init.d/atd stop
+    else
+	log "pbuilder schroot exists... skipping"
+    fi
+
+    lockfile-remove /tmp/build-${pbuilder}
+    trap - SIGINT SIGTERM EXIT ERR
+}
+
+function build_source_package {
+    distro_chroot=${SOURCE_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}
+    pbuilder=${USER}-${distro_chroot}-pbuilder
+
+    acquire_lock ${pbuilder}
+
+    verify_pbuilder $distro_chroot $pbuilder
+
+    schroot -c ${pbuilder} -r -u root -- /usr/lib/pbuilder/pbuilder-satisfydepends
+    schroot -c ${pbuilder} -r -- git-buildpackage --git-pristine-tar -tc -S --git-ignore-new --git-ignore-branch
+
+    release_lock
+
+    # hrm... we have packages, but now they are setting in the .. directory
+    mv ../*.gz .
+    mv ../*changes .
+    mv ../*dsc .
+    mv ../*build .
+
+    # for the jenkins post-deploy job
+    if [ "" != "${JENKINS_HOME-}" ] && [ "" != "${JOB_NAME-}" ] && [ "" != "${BUILD_NUMBER-}" ]; then
+	mkdir -p ${JENKINS_HOME}/userContent/${JOB_NAME}/${BUILD_NUMBER}
+    fi
+}
+
+function set_component_from_dsc() {
+    # $1 - dsc
+
+    dsc=${1}
+    RCB_COMPONENT=$(grep -i "rcb-component" "${dsc}" | awk '{ print $2 }')
+    if [ "${RCB_COMPONENT-}" != "" ]; then
+	NOVA_RELEASE=${RCB_COMPONENT%%-*}
+	MILESTONE=${RCB_COMPONENT##*-}
+    fi
+}
+
+function build_binary_packages() {
+    dsc=${1}
+
+    # we need to figure out the nova_release and milestone from the .dch
+    set_component_from_dsc ${dsc}
+
+    distro_chroot=${BINARY_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}
+
+    DEB_BUILD_OPTIONS="nodocs nocheck" sbuild \
+	-n -A -d ${NOVA_RELEASE}-${MILESTONE} \
+	--append-to-version=~${BINARY_BUILD_RELEASE} \
+        -m "${DEBEMAIL}" -k ${SIGNING_KEY} \
+	-c ${distro_chroot} ${dsc}
+
+    # drop a java properties file with the NOVA_RELEASE and MILESTONE, so
+    # we can kick off the right package and kong tests...
+    [ "${WORKSPACE-}" != "" ] && echo "COMPONENT=${NOVA_RELEASE}-${MILESTONE}" > ${JENKINS_HOME}/jobs/${PACKAGE}-binaries/lastbuild.properties
+}
+
+function upload_to_incoming() {
+    # $1 - dsc file
+    set_component_from_dsc ${dsc}
+
+    # dump the packages into proposed packages.  The repotest will
+    # merge outstanding packages.
+    acquire_lock "incoming"
+
+    mkdir -p ${INCOMING_PACKAGES}/${NOVA_RELEASE}/${MILESTONE}/${BINARY_BUILD_RELEASE}
+    mv *.{gz,dsc,changes} ${INCOMING_PACKAGES}/${NOVA_RELEASE}/${MILESTONE}/${BINARY_BUILD_RELEASE}
+    cp *.deb ${INCOMING_PACKAGES}/${NOVA_RELEASE}/${MILESTONE}/${BINARY_BUILD_RELEASE}
+
+    release_lock
+}
+
+function import_proposed_packages() {
+    acquire_lock "repo" 9
+    acquire_lock "incoming" 8
+
+    source_packages=$(find ${INCOMING_PACKAGES} -name "*dsc")
+    binary_packages=$(find ${INCOMING_PACKAGES} -name "*deb")
+
+    for pkg in $source_packages; do 
+    	base_pkg=$(echo $pkg | sed -e s#${INCOMING_PACKAGES}##)
+	base_name=$(basename $base_pkg)
+
+    	details=(${base_pkg//\// })
+
+    	nova_release=${details[0]}
+    	milestone=${details[1]}
+    	release=${details[2]}
+
+	# see if this .dsc has already been imported
+	# if ( ! find ${PROPOSED_REPO} -name "${base_name}" ); then
+    	#     reprepro -b ${PROPOSED_REPO} -S ${nova_release}-${milestone} \
+    	# 	includedsc ${release} ${pkg}
+	# else
+	#     log "Skipping ${base_name} -- exists in repo"
+	# fi
+	
+	# naw, on second though, just try and blindly stick it in
+	package_name=${base_name%%_*}
+
+	# for dist in ${PROPOSED_REPO}/dists; do
+	#     if ( reprepro -b ${PROPOSED_REPO} -C ${nova_release}-${milestone} removesrc ${dist} ${package_name} ); then
+	# 	log "Removed ${package_name}"
+	#     fi
+	# done
+
+	if ( reprepro -b ${PROPOSED_REPO} -C ${nova_release}-${milestone} \
+	    includedsc ${release} ${pkg} ); then
+	    log "Uploaded ${pkg}"
+	fi
+    done
+
+    for pkg in $binary_packages; do 
+	base_pkg=$(echo $pkg | sed -e s#${INCOMING_PACKAGES}##)
+	base_name=$(basename $base_pkg)
+
+	details=(${base_pkg//\// })
+
+	nova_release=${details[0]}
+	milestone=${details[1]}
+	release=${details[2]}
+
+	pkg_file=${PROPOSED_REPO}/dists/${release}/${nova_release}-${milestone}/binary-${ARCH}/Packages
+
+	# if ( ! grep -q "$base_name" ${pkg_file} ); then
+	#     reprepro -b ${PROPOSED_REPO} -S ${nova_release}-${milestone} \
+	# 	includedeb ${release} ${pkg}
+	# else
+	#     log "Skipping ${base_name} - package exists in ${release} repo for ${nova_release}-${milestone}"
+	# fi
+	package_name=${base_name%%_*}
+
+	if ( reprepro -b ${PROPOSED_REPO} -C ${nova_release}-${milestone} remove ${release} ${package_name} ); then
+	    log "Removed package ${package_name}"
+	fi
+
+	if ( reprepro -b ${PROPOSED_REPO} -C ${nova_release}-${milestone} \
+	    includedeb ${release} ${pkg} ); then
+	    log "Uploaded ${pkg}"
+	fi
+
+    done
+
+
+    
+    # for source_pkg in ${INCOMING_PACKAGES}/*dsc; do
+    # 	reprepro -b ${PROPOSED_REPO} -S ${NOVA_RELEASE}-${MILESTONE} \
+    # 	    includedsc ${BINARY_BUILD_RELEASE} ${source_pkg}
+    # done
+
+    # for source_pkg in ${INCOMING_PACKAGES}/*deb; do
+    # 	reprepro -b /src/proposed-packages -S ${NOVA_RELEASE}-${MILESTONE} \
+    # 	    includedeb ${BINARY_BUILD_RELEASE} ${source_pkg}
+    # done
+
+    rm -rf ${INCOMING_PACKAGES}/*
+
+    release_lock 8
+    release_lock 9
+}
+
+function get_ip {
+    # $1 - what to get IP for, from range in /etc/jenkins-deb/jenkins-deb-ip.conf
+    #      poor-man's IPAM
+    #
+    # /etc/jenkins-deb/jenkins-deb-ip.conf should look like this:
+    # 192.168.1.10 unallocated
+    # 192.168.1.11 unallocated
+    # ---
+    #
+    # allocation will be first-come, first-served allocated by name.  Once an
+    # ip has been allocated for a name, it will always be allocated to that
+    # name.  There is no cleanup, no ping tests, etc.
+    #
+    # clean it up yourself.
+    #
+    
+    # first, load in the whole list
+
+    acquire_lock "index"  # trap handler already set
+
+    # declares in functions are by default local (without -x)
+    declare -A ip_list
+    declare -A host_list
+    local ip
+    local host
+
+    ip_list=()
+    host_list=()
+
+    while read line; do
+	ip=${line%% *}
+	host=${line##* }
+	ip_list[${ip}]=${host}
+	host_list[${host}]=${ip}
+    done < <(cat /etc/jenkins-deb/jenkins-deb-ip.conf)
+
+
+    # set the host to the passed-in host name
+    host=${1}
+
+    if [ "${host_list[${host}]-}" != "" ]; then
+	# already have an ip allocated for this host
+	IP=${host_list[${host}]}
+    else
+	# need to allocate and write the file back out.  Pick
+	# the last unallocated
+	IP=${host_list[unallocated]}
+	ip_list[${IP}]=${host}
+
+	# Now, write out the file
+	local tmpfile=$(mktemp)
+
+	for ip in ${!ip_list[@]}; do
+	    echo "Writing ${ip}"
+	    echo "${ip} ${ip_list[${ip}]}" >> ${tmpfile}
+	done
+
+	sort -t . -k 1,1n -k 2,2n -k 3,3n -k 4,4n ${tmpfile} > /etc/jenkins-deb/jenkins-deb-ip.conf
+	rm ${tmpfile}
+    fi
+    
+    release_lock
+}
+
+function increment_counter {
+    # $1 - counter to increment
+    # $2 - variable to return the result in
+
+    acquire_lock "index"
+
+    # increment the global build number
+    . /etc/jenkins-deb/jenkins-deb-counters.conf
+
+    # hackity hack hack hack
+    eval ${1}="$(( ${1} + 1 ))"
+    eval ${2}=${!1}
+
+#    cat > /etc/jenkins-deb/jenkins-deb-counters.conf <<EOF
+    cat <<EOF
+GLOBAL_REVNO=${GLOBAL_REVNO}
+EOF
+
+    release_lock
+}
+
+
+if [ "${IMPORTED_JENKINS-}" = "" ]; then
+    jenkins_init
+    jenkins_set_vars
+fi
+
+export IMPORTED_JENKINS=1
+jenkins_init
+

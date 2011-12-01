@@ -1,0 +1,9 @@
+#!/bin/bash
+#
+#
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+import_proposed_packages
+

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+if [ "" = "${NOCLEAN-}" ]; then
+    git reset --hard
+    git clean -df
+
+    branch_list=$( git branch -a | grep "remotes/origin" | grep -v "\->" | cut -d/ -f3 )
+
+    for branch in $branch_list; do
+	if ! ( git branch -a | egrep -q "[^/]${branch}" ); then
+	    git checkout --track -b ${branch} origin/${branch}
+	else
+	    git checkout ${branch}
+	fi
+	git pull
+	git clean -df
+    done
+
+    git checkout master
+    git checkout ${GIT_BRANCH}  # this is really a tag...
+fi
+
+build_source_package
+
+
+

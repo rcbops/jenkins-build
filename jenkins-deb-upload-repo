@@ -1,0 +1,11 @@
+#!/bin/bash
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+set
+
+upload_repo

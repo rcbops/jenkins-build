@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
+PACKAGE_HOST=${PACKAGE_HOST-build.monkeypuppetlabs.com}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+echo ${DISTRELEASE}
+
+function err_cleanup_repo_test() {
+    # $1 - name
+
+    if [ "${NOCLEAN-0}" == "1" ]; then
+	exit 0
+    fi
+
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+
+# importing packages done by import-packages job
+#import_proposed_packages
+
+kvm_instance_name=${BINARY_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}-repotest
+
+# this sets IP as a side-effect
+get_ip $kvm_instance_name
+
+maybe_make_kvm_instance $kvm_instance_name
+start_kvm_instance $kvm_instance_name ${IP} http://${PACKAGE_HOST}/${PACKAGE_REPO} ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+
+trap "err_cleanup_repo_test ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+
+# shep this shit up
+sleep 20
+
+ssh root@${IP} "LANG=C apt-get install -y --force-yes nova-api nova-network nova-scheduler nova-network nova-compute glance keystone openstack-dashboard swift-proxy swift-object swift-container swift-account python-swauth nova-vncproxy python-slogging"
+
+trap - SIGINT SIGTERM EXIT ERR
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
+
+

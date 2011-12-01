@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+MILESTONE=${MILESTONE-d5}
+
+declare -A ipmap
+ipmap=(
+    [ubuntu-natty]="192.168.1.30"
+    [ubuntu-maverick]="192.168.1.31"
+    [ubuntu-oneiric]="192.168.1.32"
+)
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+echo ${DISTRELEASE}
+echo ${ipmap[${DISTRELEASE-}]-}
+
+if [ "${ipmap[${DISTRELEASE-}]-}" = "" ]; then
+    die "No IP map set for ${DISTRELEASE} in $0"
+fi
+
+IP=${ipmap[${DISTRELEASE}]}
+
+function err_cleanup_chefsolo() {
+    # $1 - name
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+
+# kvm_instance_name=${BINARY_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}-crowbar
+kvm_instance_name=${BINARY_BUILD_RELEASE}-crowbar-sledgehammer
+
+MEMORY=1024000
+maybe_make_kvm_instance $kvm_instance_name
+start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+
+trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+
+ssh root@${IP} apt-get install git ruby rpm rpm2cpio expect -y --force-yes
+ssh root@${IP} "cd /opt && git clone https://github.com/dellcloudedge/crowbar-sledgehammer.git"
+ssh root@${IP} "cd /opt/crowbar-sledgehammer && ls"
+ssh root@${IP} "mkdir -p /opt/sledgehammer/bin"
+scp /opt/CentOS-5.6-x86_64-bin-DVD-1of2.iso root@${IP}:/opt
+if ! ( ssh root@${IP} "cd /opt/crowbar-sledgehammer && CENTOS_ISO=/opt/CentOS-5.6-x86_64-bin-DVD-1of2.iso ./build.expect" ); then
+     echo "Error in tests"
+     exit 1
+fi
+ssh root@${IP} "cd /opt/crowbar-sledgehammer && ls"
+scp root@${IP}:/opt/crowbar-sledgehammer/bin/sledgehammer-tftpboot.tar.gz .
+
+trap - SIGINT SIGTERM EXIT ERR
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
+
+

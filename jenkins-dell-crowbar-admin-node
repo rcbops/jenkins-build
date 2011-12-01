@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+env
+# JENKINS COMMON
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+jenkins_init
+jenkins_set_vars
+
+# Hide ipmi info
+source ~jenkins/.ipmirc
+
+# SETUP ISO NAME
+MILESTONE="d5"
+if [ -z "$NOVA_RELEASE" ] || [ -z "$MILESTONE" ] || [ -z "$DISTRELEASE" ]; then
+    ISONAME="crowbar.iso"
+else
+    BINARY_BUILD_RELEASE=`echo $DISTRELEASE | cut -d'-' -f2`
+    ISONAME="crowbar-rcb-${NOVA_RELEASE}-${MILESTONE}-${BINARY_BUILD_RELEASE}.iso"
+fi
+
+# EXEC CROWBAR BUILD / BOOT ADMIN NODE
+ssh openstack@${ISODEST} "sudo /home/openstack/incoming/fixup_crowbar.sh ${ISONAME}"
+ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"

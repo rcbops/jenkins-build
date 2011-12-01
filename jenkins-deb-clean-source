@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+if [ ! -z "${SOURCE_BUILD_NUMBER-}" ]; then
+    rm -rf ${JENKINS_HOME}/userContent/${PACKAGE}-source/${SOURCE_BUILD_NUMBER}
+fi
+
