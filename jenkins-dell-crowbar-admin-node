@@ -42,4 +42,4 @@ done
 sleep 5
 
 # SSH TO ADMIN NODE 
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no crowbar@184.106.53.10 'export CROWBAR_KEY=`cat /etc/crowbar.install.key`; sudo /opt/dell/bin/crowbar node_state status'
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no crowbar@184.106.53.10 'export CROWBAR_KEY=`cat /etc/crowbar.install.key`; sudo -i /opt/dell/bin/crowbar node_state status'
