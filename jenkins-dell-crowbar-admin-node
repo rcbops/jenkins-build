@@ -11,6 +11,7 @@ jenkins_set_vars
 
 # Hide ipmi info
 source ~jenkins/.ipmirc
+HEADNODE='184.106.53.10'
 
 # SETUP ISO NAME
 MILESTONE="d5"
@@ -35,7 +36,7 @@ count=1
 while [ $count -lt 35 ]; do
     count=$(( count + 1 ))
     sleep 60s
-    if ( nc 184.106.53.10 22 -w 1 -q 0 < /dev/null ); then
+    if ( nc ${HEADNODE} -w 1 -q 0 < /dev/null ); then
         break
     fi
 done
@@ -43,7 +44,6 @@ sleep 5
 
 # SSH TO ADMIN NODE 
 SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
-HEADNODE='184.106.53.10'
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar node_state status | grep -e crowbar | grep -e Ready' ); then
     echo "Crowbar Headnode does not appear to have installed correctly"
     exit 1
