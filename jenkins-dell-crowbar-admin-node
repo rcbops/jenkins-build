@@ -32,4 +32,4 @@ sleep 120
 while true; do nc -z 184.106.53.10 22 && break; echo 'Waiting for remote sshd...'; sleep 60; done
 
 # SSH TO ADMIN NODE 
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no crowbar@184.106.53.10 'export CROWBAR_KEY=`cat /etc/crowbar.install.key`; /opt/dell/bin/crowbar node_state status'
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no crowbar@184.106.53.10 'export CROWBAR_KEY=`cat /etc/crowbar.install.key`; sudo /opt/dell/bin/crowbar node_state status'
