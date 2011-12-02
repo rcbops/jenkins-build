@@ -79,6 +79,10 @@ if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql 
     exit 1
 fi
 
+# Ghetto Hack since we are disabling IPMI Barclamp
+# SET PXE BOOT on CONTROLLER NODE 
+ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe'
+
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal commit jenkins' ); then
     echo "Unable to commit the MySQL Proposal"
     exit 1
