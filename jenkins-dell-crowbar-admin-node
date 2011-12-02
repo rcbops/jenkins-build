@@ -26,7 +26,7 @@ fi
 # ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
-# sleep 120
+# sleep 60s
 
 # WAIT FOR ADMIN NODE TO HAVE SSH
 # This takes ~30 mins
@@ -52,7 +52,7 @@ fi
 ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
-sleep 120
+sleep 60s
 
 # Loop and wait for the Controller node to get discovered
 count=1
@@ -70,3 +70,29 @@ if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_s
     echo "Something went wrong with discovering the Controller node"
     exit 1
 fi
+
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal create jenkins' ); then
+    echo "Unable to create the MySQL Proposal"
+    exit 1
+fi
+
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal commit jenkins' ); then
+    echo "Unable to commit the MySQL Proposal"
+    exit 1
+fi
+
+# Loop and wait for the MySQL Proposal to get applied
+count=1
+while [ $count -lt 30 ]; do
+    count=$(( count + 1 ))
+    sleep 60s
+    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql | grep jenkins ); then
+        echo "MySQL proposal successfully applied"
+        break
+    fi
+
+    if [ $count == 29 ]; then
+        echo "MySQL Proposal not successfully applied"
+        exit 1
+    fi
+done
