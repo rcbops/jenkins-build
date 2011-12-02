@@ -26,7 +26,7 @@ fi
 # ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
 
 # POWER OFF CONTROLLER NODE
-ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
+#ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
@@ -52,41 +52,41 @@ if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_s
 fi
 
 # POWER ON CONTROLLER NODE 
-ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+#ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
 
-# Loop and wait for the Controller node to get discovered
-count=1
-while [ $count -lt 15 ]; do
-    count=$(( count + 1 ))
-    sleep 60s
-    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
-        echo "Controller node discovered"
-        break 
-    fi
-done
-sleep 5
+## Loop and wait for the Controller node to get discovered
+#count=1
+#while [ $count -lt 15 ]; do
+#    count=$(( count + 1 ))
+#    sleep 60s
+#    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
+#        echo "Controller node discovered"
+#        break 
+#    fi
+#done
+#sleep 5
 
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
-    echo "Something went wrong with discovering the Controller node"
-    exit 1
-fi
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
+#    echo "Something went wrong with discovering the Controller node"
+#    exit 1
+#fi
 
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal create jenkins' ); then
-    echo "Unable to create the MySQL Proposal"
-    exit 1
-fi
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal create jenkins' ); then
+#    echo "Unable to create the MySQL Proposal"
+#    exit 1
+#fi
 
-# Ghetto Hack since we are disabling IPMI Barclamp
-# SET PXE BOOT on CONTROLLER NODE 
-ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe'
+## Ghetto Hack since we are disabling IPMI Barclamp
+## SET PXE BOOT on CONTROLLER NODE 
+#ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe'
 
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal commit jenkins' ); then
-    echo "Unable to commit the MySQL Proposal"
-    exit 1
-fi
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal commit jenkins' ); then
+#    echo "Unable to commit the MySQL Proposal"
+#    exit 1
+#fi
 
 # Loop and wait for the MySQL Proposal to get applied
 count=1
@@ -103,3 +103,58 @@ while [ $count -lt 30 ]; do
         exit 1
     fi
 done
+
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone proposal create jenkins' ); then
+    echo "Unable to create the Keystone Proposal"
+    exit 1
+fi
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone proposal commit jenkins' ); then
+    echo "Unable to commit the Keystone Proposal"
+    exit 1
+fi
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone list | grep jenkins' ); then
+    echo "Keystone proposal not applied"
+    exit 1
+fi
+
+# Push the Glance Proposal
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance proposal create jenkins' ); then
+    echo "Unable to create the Glance Proposal"
+    exit 1
+fi
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance proposal commit jenkins' ); then
+    echo "Unable to commit the Glance Proposal"
+    exit 1
+fi
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance list | grep jenkins' ); then
+    echo "Glance proposal not applied"
+    exit 1
+fi
+
+# Push the Nova Proposal
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova proposal create jenkins' ); then
+    echo "Unable to create the Nova Proposal"
+    exit 1
+fi
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova proposal commit jenkins' ); then
+    echo "Unable to commit the Nova Proposal"
+    exit 1
+fi
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova list | grep jenkins' ); then
+    echo "Nova proposal not applied"
+    exit 1
+fi
+
+# Push the Dash Proposal
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard proposal create jenkins' ); then
+    echo "Unable to create the Dash Proposal"
+    exit 1
+fi
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard proposal commit jenkins' ); then
+    echo "Unable to commit the Dash Proposal"
+    exit 1
+fi
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard list | grep jenkins' ); then
+    echo "Dash proposal not applied"
+    exit 1
+fi
