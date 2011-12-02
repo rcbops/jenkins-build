@@ -42,7 +42,7 @@ while [ $count -lt 35 ]; do
         break
     fi
 done
-sleep 5
+sleep 120s
 
 # SSH TO ADMIN NODE 
 SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
