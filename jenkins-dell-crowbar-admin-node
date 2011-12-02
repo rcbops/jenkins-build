@@ -42,4 +42,9 @@ done
 sleep 5
 
 # SSH TO ADMIN NODE 
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no crowbar@184.106.53.10 'export CROWBAR_KEY=`cat /etc/crowbar.install.key`; sudo -i /opt/dell/bin/crowbar node_state status'
+SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+HEADNODE='184.106.53.10'
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar node_state status | grep -e crowbar | grep -e Ready' ); then
+    echo "Crowbar Headnode does not appear to have installed correctly"
+    exit 1
+fi
