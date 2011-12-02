@@ -11,7 +11,6 @@ jenkins_set_vars
 
 # Hide ipmi info
 source ~jenkins/.ipmirc
-HEADNODE='184.106.53.10'
 
 # SETUP ISO NAME
 MILESTONE="d5"
@@ -48,3 +47,6 @@ if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar node_s
     echo "Crowbar Headnode does not appear to have installed correctly"
     exit 1
 fi
+
+# IPMI CONTROLLER NODE
+ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
