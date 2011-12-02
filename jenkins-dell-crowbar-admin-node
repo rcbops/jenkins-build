@@ -35,7 +35,7 @@ count=1
 while [ $count -lt 35 ]; do
     count=$(( count + 1 ))
     sleep 60s
-    if ( nc ${HEADNODE} -w 1 -q 0 < /dev/null ); then
+    if ( nc ${HEADNODE} 22 -w 1 -q 0 < /dev/null ); then
         break
     fi
 done
