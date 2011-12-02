@@ -101,10 +101,7 @@ sleep 20
 
 ## box should be configured now....
 
-if ! ( ssh root@${IP} "cd /opt/kong; ./run_tests.sh --nova" ); then
-    echo "Error in NOVA tests"
-    exit 1
-fi
+ssh root@${IP} "cd /opt/kong; ./run_tests.sh --nova"
 
 trap - SIGINT SIGTERM EXIT ERR
 
