@@ -25,8 +25,11 @@ fi
 ssh openstack@${ISODEST} "sudo /home/openstack/incoming/fixup_crowbar.sh ${ISONAME}"
 ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
 
+# WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
+sleep 120
+
 # WAIT FOR ADMIN NODE TO HAVE SSH
 while true; do nc -z 184.106.53.10 22 && break; echo 'Waiting for remote sshd...'; sleep 60; done
 
 # SSH TO ADMIN NODE 
-ssh crowbar@184.106.53.10 "/opt/dell/bin/crowbar node_state status"
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no crowbar@184.106.53.10 "/opt/dell/bin/crowbar node_state status"
