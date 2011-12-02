@@ -26,7 +26,7 @@ fi
 # ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
-sleep 120
+# sleep 120
 
 # WAIT FOR ADMIN NODE TO HAVE SSH
 # This takes ~30 mins
@@ -43,10 +43,30 @@ sleep 5
 
 # SSH TO ADMIN NODE 
 SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar node_state status | grep -e crowbar | grep -e Ready' ); then
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status | grep -e crowbar | grep -e Ready' ); then
     echo "Crowbar Headnode does not appear to have installed correctly"
     exit 1
 fi
 
 # IPMI CONTROLLER NODE
 ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+
+# WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
+sleep 120
+
+# Loop and wait for the Controller node to get discovered
+count=1
+while [ $count -lt 15 ]; do
+    count=$(( count + 1 ))
+    sleep 60s
+    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
+        echo "Controller node discovered"
+        break 
+    fi
+done
+sleep 5
+
+if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
+    echo "Something went wrong with discovering the Controller node"
+    exit 1
+fi
