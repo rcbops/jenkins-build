@@ -52,7 +52,7 @@ if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_s
 fi
 
 # POWER ON CONTROLLER NODE 
-#ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
