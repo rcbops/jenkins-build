@@ -128,10 +128,20 @@ if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keysto
     echo "Unable to commit the Keystone Proposal"
     exit 1
 fi
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone list | grep jenkins' ); then
-    echo "Keystone proposal not applied"
-    exit 1
-fi
+# Loop and wait for the MySQL Proposal to get applied
+count=1
+while [ $count -lt 15 ]; do
+    count=$(( count + 1 ))
+    sleep 60s
+    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone list | grep jenkins' ); then
+        echo "Keystone proposal successfully applied"
+        break
+    fi
+    if [ $count == 15 ]; then
+        echo "Keystone Proposal not successfully applied"
+        exit 1
+    fi
+done
 ##################################################
 
 ##################################################
