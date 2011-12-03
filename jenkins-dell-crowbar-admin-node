@@ -12,6 +12,8 @@ jenkins_set_vars
 # Hide ipmi info
 source ~jenkins/.ipmirc
 
+SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+
 # SETUP ISO NAME
 MILESTONE="d5"
 if [ -z "$NOVA_RELEASE" ] || [ -z "$MILESTONE" ] || [ -z "$DISTRELEASE" ]; then
@@ -33,7 +35,6 @@ sleep 60s
 
 # WAIT FOR ADMIN NODE TO HAVE SSH
 # This takes ~30 mins
-# while true; do nc -z 184.106.53.10 22 && break; echo 'Waiting for remote sshd...'; sleep 60; done
 count=1
 while [ $count -lt 35 ]; do
     count=$(( count + 1 ))
@@ -43,8 +44,7 @@ while [ $count -lt 35 ]; do
     fi
 done
 
-SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
-
+# Give crowbar 10 minutes to install once SSH is available
 count=1
 while [ $count -lt 10 ]; do
     count=$(( count + 1 ))
@@ -53,12 +53,16 @@ while [ $count -lt 10 ]; do
     if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status | grep -e crowbar | grep -e Ready' ); then
         break
     fi
+    if [ $count == 10 ]; then
+        echo "Installation of Crowbar Headnode failed"
+        exit 1
+    fi
 done
 
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status | grep -e crowbar | grep -e Ready' ); then
-    echo "Installation of Crowbar Headnode failed"
-    exit 1
-fi
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status | grep -e crowbar | grep -e Ready' ); then
+#    echo "Installation of Crowbar Headnode failed"
+#    exit 1
+#fi
 
 sleep 120s
 
