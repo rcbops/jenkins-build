@@ -42,12 +42,21 @@ while [ $count -lt 35 ]; do
         break
     fi
 done
-sleep 120s
 
-# SSH TO ADMIN NODE 
 SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+
+count=1
+while [ $count -lt 10 ]; do
+    count=$(( count + 1 ))
+    sleep 60s
+    # SSH TO ADMIN NODE 
+    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status | grep -e crowbar | grep -e Ready' ); then
+        break
+    fi
+done
+
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status | grep -e crowbar | grep -e Ready' ); then
-    echo "Crowbar Headnode does not appear to have installed correctly"
+    echo "Installation of Crowbar Headnode failed"
     exit 1
 fi
 
