@@ -108,12 +108,15 @@ else
     ISONAME="crowbar-rcb-${NOVA_RELEASE}-${MILESTONE}-${BINARY_BUILD_RELEASE}.iso"
 fi
 
-# EXEC CROWBAR BUILD / BOOT ADMIN NODE
+# EXEC CROWBAR BUILD
 ssh openstack@${ISODEST} "sudo /home/openstack/incoming/fixup_crowbar.sh ${ISONAME}"
-ipmi_pxe_reboot ${DRACIP}
 
-# POWER OFF CONTROLLER NODE
-ipmi_poweroff ${CONTROLLERIP}
+# PXE REBOOT HEADNODE
+ipmi_pxe_reboot ${HEADNODE_DRAC_IP}
+
+# POWER OFF CONTROLLER NODE / COMPUTE NODE
+ipmi_poweroff ${CONTROLLER_DRAC_IP}
+ipmi_poweroff ${COMPUTE_DRAC_IP}
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
@@ -146,8 +149,8 @@ done
 sleep 120s
 
 # POWER ON CONTROLLER NODE 
-ipmi_set_pxe ${CONTROLLERIP}
-ipmi_poweron ${CONTROLLERIP}
+ipmi_set_pxe ${CONTROLLER_DRAC_IP}
+ipmi_poweron ${CONTROLLER_DRAC_IP}
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
@@ -175,7 +178,7 @@ crowbar_proposal "mysql" "create"
 
 ## Ghetto Hack since we are disabling IPMI Barclamp
 ## SET PXE BOOT on CONTROLLER NODE 
-ipmi_set_pxe ${CONTROLLERIP}
+ipmi_set_pxe ${CONTROLLER_DRAC_IP}
 
 crowbar_proposal "mysql" "commit"
 
