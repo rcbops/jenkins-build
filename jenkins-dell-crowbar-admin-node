@@ -51,15 +51,21 @@ function ipmi_poweron() {
     ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
 }
 
-function create_proposal() {
+function crowbar_proposal() {
     # $1 - Service Name
     # $2 - Proposal Name
+    # $3 - Action (create|commit)
     service=$1
     proposal_name=$2
+    action=$3
     cmd='/opt/dell/bin/crowbar'
+    log "Executing crowbar_proposal using:"
+    log " Service: ${service}"
+    log " Proposal Name: ${proposal_name}"
+    log " Action: ${action}"
     
-    if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i ${cmd}_${service} proposal create ${proposal_name}' ); then
-        log "Unable to create the ${service} Proposal"
+    if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i ${cmd}_${service} proposal ${action} ${proposal_name}' ); then
+        log "Unable to ${action} the ${service} Proposal"
         exit 1
     fi
 }
@@ -150,7 +156,7 @@ fi
 
 ##################################################
 # Push MYSQL Proposal
-create_proposal "mysql" "jenkins"
+crowbar_proposal "mysql" "jenkins" "create"
 #if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal create jenkins' ); then
 #    echo "Unable to create the MySQL Proposal"
 #    exit 1
@@ -161,10 +167,11 @@ create_proposal "mysql" "jenkins"
 ipmi_set_pxe ${CONTROLLERIP}
 # ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
 
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal commit jenkins' ); then
-    echo "Unable to commit the MySQL Proposal"
-    exit 1
-fi
+crowbar_proposal "mysql" "jenkins" "commit"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal commit jenkins' ); then
+#    echo "Unable to commit the MySQL Proposal"
+#    exit 1
+#fi
 
 # Loop and wait for the MySQL Proposal to get applied
 count=1
@@ -185,16 +192,17 @@ done
 
 ##################################################
 # Push the Keystone Proposal
-create_proposal "keystone" "jenkins"
+crowbar_proposal "keystone" "jenkins" "create"
 #if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone proposal create jenkins' ); then
 #    echo "Unable to create the Keystone Proposal"
 #    exit 1
 #fi
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone proposal commit jenkins' ); then
-    echo "Unable to commit the Keystone Proposal"
-    exit 1
-fi
-# Loop and wait for the MySQL Proposal to get applied
+crowbar_proposal "keystone" "jenkins" "commit"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone proposal commit jenkins' ); then
+#    echo "Unable to commit the Keystone Proposal"
+#    exit 1
+#fi
+# Loop and wait for the Keystone Proposal to get applied
 count=1
 while [ $count -lt 15 ]; do
     count=$(( count + 1 ))
@@ -212,32 +220,44 @@ done
 
 ##################################################
 # Push the Glance Proposal
-create_proposal "glance" "jenkins"
+crowbar_proposal "glance" "jenkins" "create"
 #if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance proposal create jenkins' ); then
 #    echo "Unable to create the Glance Proposal"
 #    exit 1
 #fi
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance proposal commit jenkins' ); then
-    echo "Unable to commit the Glance Proposal"
-    exit 1
-fi
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance list | grep jenkins' ); then
-    echo "Glance proposal not applied"
-    exit 1
-fi
+crowbar_proposal "glance" "jenkins" "commit"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance proposal commit jenkins' ); then
+#    echo "Unable to commit the Glance Proposal"
+#    exit 1
+#fi
+# Loop and wait for the Keystone Proposal to get applied
+count=1
+while [ $count -lt 15 ]; do
+    count=$(( count + 1 ))
+    sleep 60s
+    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance list | grep jenkins' ); then
+        echo "Glance proposal sucessfully applied"
+        break
+    fi
+    if [ $count == 15 ]; then
+        echo "Glance proposal not applied"
+        exit 1
+    fi
+done
 ##################################################
 
 ##################################################
 # Push the Nova Proposal
-create_proposal "nova" "jenkins"
+crowbar_proposal "nova" "jenkins" "create"
 #if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova proposal create jenkins' ); then
 #    echo "Unable to create the Nova Proposal"
 #    exit 1
 #fi
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova proposal commit jenkins' ); then
-    echo "Unable to commit the Nova Proposal"
-    exit 1
-fi
+crowbar_proposal "nova" "jenkins" "commit"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova proposal commit jenkins' ); then
+#    echo "Unable to commit the Nova Proposal"
+#    exit 1
+#fi
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova list | grep jenkins' ); then
     echo "Nova proposal not applied"
     exit 1
@@ -246,15 +266,16 @@ fi
 
 ##################################################
 # Push the Dash Proposal
-create_proposal "nova_dashboard" "jenkins"
+crowbar_proposal "nova_dashboard" "jenkins" "create"
 #if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard proposal create jenkins' ); then
 #    echo "Unable to create the Dash Proposal"
 #    exit 1
 #fi
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard proposal commit jenkins' ); then
-    echo "Unable to commit the Dash Proposal"
-    exit 1
-fi
+crowbar_proposal "nova_dashboard" "jenkins" "commit"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard proposal commit jenkins' ); then
+#    echo "Unable to commit the Dash Proposal"
+#    exit 1
+#fi
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard list | grep jenkins' ); then
     echo "Dash proposal not applied"
     exit 1
