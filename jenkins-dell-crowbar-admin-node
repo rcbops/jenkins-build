@@ -9,10 +9,12 @@ env
 jenkins_init
 jenkins_set_vars
 
+# IPMI VARIABLES
+[ -e ~jenkins/.ipmirc ] || exit 1
+. ~jenkins/.ipmirc
+
 # Setup global variables
 SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
-CROWBAR_USER="crowbar"
-CROWBAR_PASS="crowbar"
 PROPOSAL_NAME="jenkins"
 
 function ipmi_restart() {
@@ -75,11 +77,13 @@ function crowbar_proposal() {
 
 function crowbar_proposal_status() {
     # $1 - Service Name
+    # $2 - Wait Time
     service=$1
+    wait_timer=${2:-15} # Default to 15 minutes if no wait_time provided
     cmd="/opt/dell/bin/crowbar_${service} -U ${CROWBAR_USER} -P ${CROWBAR_PASS}"
-    wait_timer=15
     log "Executing crowbar_proposal using:"
     log " Service: ${service}"
+    log " Wait Time: ${wait_timer}"
 
     count=1
     while [ $count -lt $wait_timer ]; do
@@ -96,9 +100,6 @@ function crowbar_proposal_status() {
     done
 }
 
-# Hide ipmi info
-source ~jenkins/.ipmirc
-
 # SETUP ISO NAME
 MILESTONE="d5"
 if [ -z "$NOVA_RELEASE" ] || [ -z "$MILESTONE" ] || [ -z "$DISTRELEASE" ]; then
@@ -108,12 +109,15 @@ else
     ISONAME="crowbar-rcb-${NOVA_RELEASE}-${MILESTONE}-${BINARY_BUILD_RELEASE}.iso"
 fi
 
-# EXEC CROWBAR BUILD / BOOT ADMIN NODE
+# EXEC CROWBAR BUILD
 ssh openstack@${ISODEST} "sudo /home/openstack/incoming/fixup_crowbar.sh ${ISONAME}"
-ipmi_pxe_reboot ${DRACIP}
 
-# POWER OFF CONTROLLER NODE
-ipmi_poweroff ${CONTROLLERIP}
+# PXE REBOOT HEADNODE
+ipmi_pxe_reboot ${HEADNODE_DRAC_IP}
+
+# POWER OFF CONTROLLER NODE / COMPUTE NODE
+ipmi_poweroff ${CONTROLLER_DRAC_IP}
+ipmi_poweroff ${COMPUTE_DRAC_IP}
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
@@ -146,8 +150,8 @@ done
 sleep 120s
 
 # POWER ON CONTROLLER NODE 
-ipmi_set_pxe ${CONTROLLERIP}
-ipmi_poweron ${CONTROLLERIP}
+ipmi_set_pxe ${CONTROLLER_DRAC_IP}
+ipmi_poweron ${CONTROLLER_DRAC_IP}
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
@@ -175,26 +179,10 @@ crowbar_proposal "mysql" "create"
 
 ## Ghetto Hack since we are disabling IPMI Barclamp
 ## SET PXE BOOT on CONTROLLER NODE 
-ipmi_set_pxe ${CONTROLLERIP}
+ipmi_set_pxe ${CONTROLLER_DRAC_IP}
 
 crowbar_proposal "mysql" "commit"
-
-crowbar_proposal_status "mysql"
-## Loop and wait for the MySQL Proposal to get applied
-#count=1
-#while [ $count -lt 30 ]; do
-#    count=$(( count + 1 ))
-#    sleep 60s
-#    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql list | grep jenkins' ); then
-#        echo "MySQL proposal successfully applied"
-#        break
-#    fi
-#
-#    if [ $count == 29 ]; then
-#        echo "MySQL Proposal not successfully applied"
-#        exit 1
-#    fi
-#done
+crowbar_proposal_status "mysql" 20
 ##################################################
 
 ##################################################
@@ -202,20 +190,6 @@ crowbar_proposal_status "mysql"
 crowbar_proposal "keystone" "create"
 crowbar_proposal "keystone" "commit"
 crowbar_proposal_status "keystone"
-## Loop and wait for the Keystone Proposal to get applied
-#count=1
-#while [ $count -lt 15 ]; do
-#    count=$(( count + 1 ))
-#    sleep 60s
-#    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone list | grep jenkins' ); then
-#        echo "Keystone proposal successfully applied"
-#        break
-#    fi
-#    if [ $count == 15 ]; then
-#        echo "Keystone Proposal not successfully applied"
-#        exit 1
-#    fi
-#done
 ##################################################
 
 ##################################################
@@ -223,20 +197,6 @@ crowbar_proposal_status "keystone"
 crowbar_proposal "glance" "create"
 crowbar_proposal "glance" "commit"
 crowbar_proposal_status "glance"
-## Loop and wait for the Keystone Proposal to get applied
-#count=1
-#while [ $count -lt 15 ]; do
-#    count=$(( count + 1 ))
-#    sleep 60s
-#    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance list | grep jenkins' ); then
-#        echo "Glance proposal sucessfully applied"
-#        break
-#    fi
-#    if [ $count == 15 ]; then
-#        echo "Glance proposal not applied"
-#        exit 1
-#    fi
-#done
 ##################################################
 
 ##################################################
@@ -244,10 +204,6 @@ crowbar_proposal_status "glance"
 crowbar_proposal "nova" "create"
 crowbar_proposal "nova" "commit"
 crowbar_proposal_status "nova"
-#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova list | grep jenkins' ); then
-#    echo "Nova proposal not applied"
-#    exit 1
-#fi
 ##################################################
 
 ##################################################
@@ -255,8 +211,4 @@ crowbar_proposal_status "nova"
 crowbar_proposal "nova_dashboard" "create"
 crowbar_proposal "nova_dashboard" "commit"
 crowbar_proposal_status "nova_dashboard"
-#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard list | grep jenkins' ); then
-#    echo "Dash proposal not applied"
-#    exit 1
-#fi
 ##################################################
