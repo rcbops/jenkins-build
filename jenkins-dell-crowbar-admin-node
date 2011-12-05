@@ -77,11 +77,13 @@ function crowbar_proposal() {
 
 function crowbar_proposal_status() {
     # $1 - Service Name
+    # $2 - Wait Time
     service=$1
+    wait_timer=${2:-15} # Default to 15 minutes if no wait_time provided
     cmd="/opt/dell/bin/crowbar_${service} -U ${CROWBAR_USER} -P ${CROWBAR_PASS}"
-    wait_timer=15
     log "Executing crowbar_proposal using:"
     log " Service: ${service}"
+    log " Wait Time: ${wait_timer}"
 
     count=1
     while [ $count -lt $wait_timer ]; do
@@ -180,7 +182,7 @@ crowbar_proposal "mysql" "create"
 ipmi_set_pxe ${CONTROLLER_DRAC_IP}
 
 crowbar_proposal "mysql" "commit"
-crowbar_proposal_status "mysql"
+crowbar_proposal_status "mysql" 20
 ##################################################
 
 ##################################################
