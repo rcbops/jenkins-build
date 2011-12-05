@@ -20,7 +20,7 @@ function ipmi_restart() {
 function ipmi_set_pxe() {
     # $1 - IP
     ip=$1
-    log "Running ipmi_pxe_reboot using:"
+    log "Running ipmi_set_pxe using:"
     log " ip: ${ip}"
     ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
 }
@@ -87,11 +87,9 @@ fi
 # EXEC CROWBAR BUILD / BOOT ADMIN NODE
 ssh openstack@${ISODEST} "sudo /home/openstack/incoming/fixup_crowbar.sh ${ISONAME}"
 ipmi_pxe_reboot ${DRACIP}
-# ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
 
 # POWER OFF CONTROLLER NODE
 ipmi_poweroff ${CONTROLLERIP}
-#ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
