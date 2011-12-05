@@ -91,7 +91,7 @@ function crowbar_proposal_status() {
     while [ $count -lt $wait_timer ]; do
         count=$(( count + 1 ))
         sleep 60s
-        if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} '${cmd} list | grep ${proposal_name}' ); then
+        if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} "${cmd} list | grep ${proposal_name}" ); then
             log "${service} proposal sucessfully applied"
             break
         fi
