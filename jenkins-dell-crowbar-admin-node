@@ -9,10 +9,12 @@ env
 jenkins_init
 jenkins_set_vars
 
+# IPMI VARIABLES
+[ -e ~jenkins/.ipmirc ] || exit 1
+. ~jenkins/.ipmirc
+
 # Setup global variables
 SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
-CROWBAR_USER="crowbar"
-CROWBAR_PASS="crowbar"
 PROPOSAL_NAME="jenkins"
 
 function ipmi_restart() {
@@ -95,9 +97,6 @@ function crowbar_proposal_status() {
         fi
     done
 }
-
-# Hide ipmi info
-source ~jenkins/.ipmirc
 
 # SETUP ISO NAME
 MILESTONE="d5"
