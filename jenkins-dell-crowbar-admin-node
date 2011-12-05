@@ -9,6 +9,61 @@ env
 jenkins_init
 jenkins_set_vars
 
+function ipmi_restart() {
+    # $1 - IP
+    ip=$1
+    log "Running ipmi_restart using:"
+    log " ip: ${ip}"
+    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+}
+
+function ipmi_set_pxe() {
+    # $1 - IP
+    ip=$1
+    log "Running ipmi_pxe_reboot using:"
+    log " ip: ${ip}"
+    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
+}
+
+function ipmi_pxe_reboot() {
+    # $1 - IP
+    ip=$1
+    log "Running ipmi_pxe_reboot using:"
+    log " ip: ${ip}"
+    ipmi_set_pxe ${ip}
+    # ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
+    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+}
+
+function ipmi_poweroff() {
+    # $1 - IP
+    ip=$1
+    log "Running ipmi_poweroff using:"
+    log " ip: ${ip}"
+    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
+}
+
+function ipmi_poweron() {
+    # $1 - IP
+    ip=$1
+    log "Running ipmi_poweron using:"
+    log " ip: ${ip}"
+    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+}
+
+function create_proposal() {
+    # $1 - Service Name
+    # $2 - Proposal Name
+    service=$1
+    proposal_name=$2
+    cmd='/opt/dell/bin/crowbar'
+    
+    if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i ${cmd}_${service} proposal create ${proposal_name}' ); then
+        log "Unable to create the ${service} Proposal"
+        exit 1
+    fi
+}
+
 # Hide ipmi info
 source ~jenkins/.ipmirc
 
@@ -25,10 +80,12 @@ fi
 
 # EXEC CROWBAR BUILD / BOOT ADMIN NODE
 ssh openstack@${ISODEST} "sudo /home/openstack/incoming/fixup_crowbar.sh ${ISONAME}"
-ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+ipmi_pxe_reboot ${DRACIP}
+# ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${DRACIP} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
 
 # POWER OFF CONTROLLER NODE
-ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
+ipmi_poweroff ${CONTROLLERIP}
+#ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
@@ -67,7 +124,9 @@ done
 sleep 120s
 
 # POWER ON CONTROLLER NODE 
-ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+ipmi_set_pxe ${CONTROLLERIP}
+ipmi_poweron ${CONTROLLERIP}
+# ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
@@ -91,14 +150,16 @@ fi
 
 ##################################################
 # Push MYSQL Proposal
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal create jenkins' ); then
-    echo "Unable to create the MySQL Proposal"
-    exit 1
-fi
+create_proposal "mysql" "jenkins"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal create jenkins' ); then
+#    echo "Unable to create the MySQL Proposal"
+#    exit 1
+#fi
 
 ## Ghetto Hack since we are disabling IPMI Barclamp
 ## SET PXE BOOT on CONTROLLER NODE 
-ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
+ipmi_set_pxe ${CONTROLLERIP}
+# ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
 
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal commit jenkins' ); then
     echo "Unable to commit the MySQL Proposal"
@@ -124,10 +185,11 @@ done
 
 ##################################################
 # Push the Keystone Proposal
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone proposal create jenkins' ); then
-    echo "Unable to create the Keystone Proposal"
-    exit 1
-fi
+create_proposal "keystone" "jenkins"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone proposal create jenkins' ); then
+#    echo "Unable to create the Keystone Proposal"
+#    exit 1
+#fi
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_keystone proposal commit jenkins' ); then
     echo "Unable to commit the Keystone Proposal"
     exit 1
@@ -150,10 +212,11 @@ done
 
 ##################################################
 # Push the Glance Proposal
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance proposal create jenkins' ); then
-    echo "Unable to create the Glance Proposal"
-    exit 1
-fi
+create_proposal "glance" "jenkins"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance proposal create jenkins' ); then
+#    echo "Unable to create the Glance Proposal"
+#    exit 1
+#fi
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_glance proposal commit jenkins' ); then
     echo "Unable to commit the Glance Proposal"
     exit 1
@@ -166,10 +229,11 @@ fi
 
 ##################################################
 # Push the Nova Proposal
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova proposal create jenkins' ); then
-    echo "Unable to create the Nova Proposal"
-    exit 1
-fi
+create_proposal "nova" "jenkins"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova proposal create jenkins' ); then
+#    echo "Unable to create the Nova Proposal"
+#    exit 1
+#fi
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova proposal commit jenkins' ); then
     echo "Unable to commit the Nova Proposal"
     exit 1
@@ -182,10 +246,11 @@ fi
 
 ##################################################
 # Push the Dash Proposal
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard proposal create jenkins' ); then
-    echo "Unable to create the Dash Proposal"
-    exit 1
-fi
+create_proposal "nova_dashboard" "jenkins"
+#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard proposal create jenkins' ); then
+#    echo "Unable to create the Dash Proposal"
+#    exit 1
+#fi
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_nova_dashboard proposal commit jenkins' ); then
     echo "Unable to commit the Dash Proposal"
     exit 1
