@@ -95,9 +95,9 @@ ipmi_poweroff ${CONTROLLERIP}
 sleep 60s
 
 # WAIT FOR ADMIN NODE TO HAVE SSH
-# This takes ~30 mins
+# This takes ~20 mins
 count=1
-while [ $count -lt 35 ]; do
+while [ $count -lt 25 ]; do
     count=$(( count + 1 ))
     sleep 60s
     if ( nc ${HEADNODE} 22 -w 1 -q 0 < /dev/null ); then
@@ -110,7 +110,6 @@ count=1
 while [ $count -lt 10 ]; do
     count=$(( count + 1 ))
     sleep 60s
-    # SSH TO ADMIN NODE 
     if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status | grep -e crowbar | grep -e Ready' ); then
         break
     fi
@@ -120,17 +119,11 @@ while [ $count -lt 10 ]; do
     fi
 done
 
-#if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status | grep -e crowbar | grep -e Ready' ); then
-#    echo "Installation of Crowbar Headnode failed"
-#    exit 1
-#fi
-
 sleep 120s
 
 # POWER ON CONTROLLER NODE 
 ipmi_set_pxe ${CONTROLLERIP}
 ipmi_poweron ${CONTROLLERIP}
-# ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe; ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
 
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
@@ -163,7 +156,6 @@ crowbar_proposal "mysql" "jenkins" "create"
 ## Ghetto Hack since we are disabling IPMI Barclamp
 ## SET PXE BOOT on CONTROLLER NODE 
 ipmi_set_pxe ${CONTROLLERIP}
-# ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${CONTROLLERIP} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
 
 crowbar_proposal "mysql" "jenkins" "commit"
 #if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_mysql proposal commit jenkins' ); then
