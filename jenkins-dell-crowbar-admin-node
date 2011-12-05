@@ -81,7 +81,6 @@ function crowbar_proposal_status() {
     log "Executing crowbar_proposal using:"
     log " Service: ${service}"
 
-    # Loop and wait for the Keystone Proposal to get applied
     count=1
     while [ $count -lt $wait_timer ]; do
         count=$(( count + 1 ))
