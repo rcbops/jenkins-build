@@ -9,13 +9,13 @@ function jenkins_init() {
 
     log "Initializing"
     set -x
-    set -e
+#    set -e
     set -u
 
     exec 2>&1
 
     jenkins_set_vars
-    
+
 }
 
 
@@ -24,7 +24,7 @@ function jenkins_set_vars() {
     if [ ! -z "${__JENKINS_INITIALIZED-}" ]; then
 	return
     fi
-    
+
     unset STRATEGY
 
     [ -e /etc/jenkins-deb/jenkins-deb.conf ] && . /etc/jenkins-deb/jenkins-deb.conf
@@ -142,6 +142,8 @@ function maybe_make_kvm_instance() {
 
     if [ ! -e ${LVM_ROOT}/${new_instance} ]; then
 	sudo lvcreate ${LVM_ROOT}/${BINARY_BUILD_RELEASE} --size=8G --name=${new_instance} --snapshot
+    else
+	return 1
     fi
 }
 
@@ -151,7 +153,7 @@ function start_kvm_instance() {
     # $3 - openstack url
     # $4 - openstack release
     # $5 - openstack component
-    
+
     new_instance=${1}
     my_ip=${2}
     openstack_url=${3}
@@ -164,10 +166,16 @@ function start_kvm_instance() {
     sudo mkdir -p /mnt/$$
     sudo mount ${LVM_ROOT}/${new_instance} /mnt/$$
 
-    trap "sudo umount /mnt/$$ && sudo rm -rf /mnt/$$" SIGINT SIGTERM EXIT ERR
+    function start_kvm_instance_cleanup() {
+	umount /mnt/$$
+	rm -rf /mnt/$$
+	return 1
+    }
+
+    trap "start_kvm_instance_cleanup; return 1" SIGINT SIGTERM ERR
 
 
-    cat <<EOF | sudo tee /mnt/$$/etc/apt/sources.list 
+    cat <<EOF | sudo tee /mnt/$$/etc/apt/sources.list
 deb http://${DIST_CACHE}/ubuntu ${BINARY_BUILD_RELEASE} main universe
 deb http://${DIST_CACHE}/ubuntu ${BINARY_BUILD_RELEASE}-updates main universe
 deb ${openstack_url} ${openstack_release} ${openstack_component}
@@ -175,7 +183,7 @@ EOF
 
     cat <<EOF | sudo tee /mnt/$$/etc/hosts
 127.0.0.1       localhost
-127.0.1.1       ${new_instance} 
+127.0.1.1       ${new_instance}
 
 # The following lines are desirable for IPv6 capable hosts
 ::1     ip6-localhost ip6-loopback
@@ -206,13 +214,11 @@ EOF
     sudo chmod -R og-rwx /mnt/$$/root/.ssh
 
     if [ ! -e /mnt/$$/usr/sbin/sshd ]; then
-	sudo chroot /mnt/$$ apt-get update 
+	sudo chroot /mnt/$$ apt-get update
 	sudo chroot /mnt/$$ apt-get install -y openssh-server
     fi
 
     sudo cp /etc/ssh/*key* /mnt/$$/etc/ssh
-
-    trap - SIGINT SIGTERM EXIT ERR
 
     sudo umount ${LVM_ROOT}/${new_instance}
     sudo rm -rf /mnt/$$
@@ -282,7 +288,7 @@ EOF
     else
 	sudo virsh start ${new_instance}
     fi
-    
+
     # wait for the box to come up
     count=1
     while [ $count -lt 10 ]; do
@@ -333,7 +339,7 @@ function verify_pbuilder() {
 
     if ! (schroot --list --all-session | grep -q ${pbuilder}); then
 	log "Building pbuilder for ${pbuilder}"
-	
+
 	schroot -c ${distro_chroot} -n ${pbuilder} -b
 	log "Updating pbuilder"
 
@@ -429,7 +435,7 @@ function import_proposed_packages() {
     source_packages=$(find ${INCOMING_PACKAGES} -name "*dsc")
     binary_packages=$(find ${INCOMING_PACKAGES} -name "*deb")
 
-    for pkg in $source_packages; do 
+    for pkg in $source_packages; do
     	base_pkg=$(echo $pkg | sed -e s#${INCOMING_PACKAGES}##)
 	base_name=$(basename $base_pkg)
 
@@ -446,7 +452,7 @@ function import_proposed_packages() {
 	# else
 	#     log "Skipping ${base_name} -- exists in repo"
 	# fi
-	
+
 	# naw, on second though, just try and blindly stick it in
 	package_name=${base_name%%_*}
 
@@ -462,7 +468,7 @@ function import_proposed_packages() {
 	fi
     done
 
-    for pkg in $binary_packages; do 
+    for pkg in $binary_packages; do
 	base_pkg=$(echo $pkg | sed -e s#${INCOMING_PACKAGES}##)
 	base_name=$(basename $base_pkg)
 
@@ -494,7 +500,7 @@ function import_proposed_packages() {
     done
 
 
-    
+
     # for source_pkg in ${INCOMING_PACKAGES}/*dsc; do
     # 	reprepro -b ${PROPOSED_REPO} -S ${NOVA_RELEASE}-${MILESTONE} \
     # 	    includedsc ${BINARY_BUILD_RELEASE} ${source_pkg}
@@ -526,7 +532,7 @@ function get_ip {
     #
     # clean it up yourself.
     #
-    
+
     # first, load in the whole list
 
     acquire_lock "index"  # trap handler already set
@@ -571,7 +577,7 @@ function get_ip {
 	sort -t . -k 1,1n -k 2,2n -k 3,3n -k 4,4n ${tmpfile} > /etc/jenkins-deb/jenkins-deb-ip.conf
 	rm ${tmpfile}
     fi
-    
+
     release_lock
 }
 
