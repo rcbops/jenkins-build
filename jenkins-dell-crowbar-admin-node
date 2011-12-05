@@ -9,6 +9,11 @@ env
 jenkins_init
 jenkins_set_vars
 
+# Setup global variables
+SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+CROWBAR_USER="crowbar"
+CROWBAR_PASS="crowbar"
+
 function ipmi_restart() {
     # $1 - IP
     ip=$1
@@ -58,13 +63,13 @@ function crowbar_proposal() {
     service=$1
     proposal_name=$2
     action=$3
-    cmd='/opt/dell/bin/crowbar'
+    cmd="/opt/dell/bin/crowbar_${service} -U ${CROWBAR_USER} -P ${CROWBAR_PASS}"
     log "Executing crowbar_proposal using:"
     log " Service: ${service}"
     log " Proposal Name: ${proposal_name}"
     log " Action: ${action}"
 
-    if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -E -i ${cmd}_${service} proposal ${action} ${proposal_name}' ); then
+    if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} "${cmd} proposal ${action} ${proposal_name}" ); then
         log "Unable to ${action} the ${service} Proposal"
         exit 1
     fi
@@ -75,7 +80,7 @@ function crowbar_proposal_status() {
     # $2 - Proposal Name
     service=$1
     proposal_name=$2
-    cmd='/opt/dell/bin/crowbar'
+    cmd="/opt/dell/bin/crowbar_${service} -U ${CROWBAR_USER} -P ${CROWBAR_PASS}"
     wait_timer=15
     log "Executing crowbar_proposal using:"
     log " Service: ${service}"
@@ -86,7 +91,7 @@ function crowbar_proposal_status() {
     while [ $count -lt $wait_timer ]; do
         count=$(( count + 1 ))
         sleep 60s
-        if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -E -i ${cmd}_${service} list | grep ${proposal_name}' ); then
+        if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} '${cmd} list | grep ${proposal_name}' ); then
             log "${service} proposal sucessfully applied"
             break
         fi
@@ -99,8 +104,6 @@ function crowbar_proposal_status() {
 
 # Hide ipmi info
 source ~jenkins/.ipmirc
-
-SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 
 # SETUP ISO NAME
 MILESTONE="d5"
