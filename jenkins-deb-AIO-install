@@ -51,10 +51,10 @@ kvm_instance_name=${BINARY_BUILD_RELEASE}-${COMPONENT}-${PACKAGE_REPO}-AIO-test
 get_ip $kvm_instance_name
 
 MEMORY=2048000
+trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+
 maybe_make_kvm_instance $kvm_instance_name
 start_kvm_instance $kvm_instance_name ${IP} ${REPO} ${BINARY_BUILD_RELEASE} ${COMPONENT}
-
-trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
 cat > /tmp/${kvm_instance_name}.json <<EOF
 {
