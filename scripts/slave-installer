@@ -1,0 +1,1036 @@
+#!/bin/bash
+
+set -e
+set -u
+
+MODE=${MODE:-slave}
+JENKINS_MASTER=${JENKINS_MASTER:-build.monkeypuppetlabs.com}
+JENKINS_MASTER_PORT=${JENKINS_MASTER_PORT:-8080}
+VGNAME=${VGNAME:-/dev/vg0}
+PVNAME=${PVNAME:-/dev/sdb}
+TESTING_KERNEL=${TESTING_KERNEL:-1} # change this if squeeze aufs works.  :)
+
+
+apt-get install -y lvm2 bridge-utils sbuild schroot kvm
+
+if ( ! vgdisplay ${VGNAME} ); then
+    if [[ "${MAKE_VG:-0}" -ne 1 ]]; then
+	echo -e "\n-----------------------------------------------------\n"
+	echo "You don't have a VG set up, and I won't set it up"
+	echo "unless you REALLY REALLY want me to."
+	echo
+	echo "If I *were* to set up a vg, I'd be setting up ${VGNAME}"
+	echo "using a pv of ${PVNAME}."
+	echo
+	echo "If this is correct, then you should re-run this with with"
+	echo "MAKE_VG environment variable set to 1.  Otherwise, update"
+	echo "the script, or set environmental variables VGNAME and PVNAME"
+	echo -e "\n-----------------------------------------------------\n"
+	exit 1
+    else
+	# here we go... sorry about your data.  my bad.
+	pvcreate ${PVNAME}
+	vgcreate ${VGNAME} ${PVNAME}
+    fi
+fi
+
+apt-get install -y emacs23-nox sudo daemon sun-java6-jre
+sed -ri /etc/sudoers -e 's/sudo ALL.*/sudo ALL=(ALL) NOPASSWD:ALL/' 
+
+if ( ! grep jenkins /etc/passwd ); then
+    adduser --system --disabled-password --shell=/bin/bash jenkins
+    adduser jenkins sudo
+    adduser jenkins sbuild
+    mkdir /home/jenkins/.ssh
+
+    su -c "cd; git clone http://github.com/rcbops/jenkins-build" jenkins
+fi
+
+# this is all about me
+cat > /home/jenkins/.ssh/authorized_keys <<EOF
+ssh-dss AAAAB3NzaC1kc3MAAACBAIKoflC/gZn8VklqyH50OK/yImA0e34HcExnVFjuUaJVZFke8UQ66mTqrYjo4ihB0v2Vy9ycvW3lzxD6QO6UKTwx8jyee9zUSaQOVuWTF3G41ny1PEAjj1kFRJCWFB62LyUZ2clkIFuGJeSgUfB3+P23k/tdnveNzLqalLRbBjexAAAAFQD6iQEKxcs0e1RnbAzKgbwzfh36PwAAAIAiG3/lkzxweRXQCyYJP1MDlfPhdsBWc7n2eGDpUQiKlaZr5s0GmA1ElL0CNqsxzKm61HxomW59QZUxRkRPJWY7TsfP8Vbi8YwNyWBVZdYdBtO/cvIkPOY4lmAEaPvDg2A43l6afzaZvJbcInSbn4tuATUD2fYyIurx40hcryxZEgAAAIADDYwudrihNODaRZ73gz5f5hfSWDmLsanXN5bIJQp8NIE3ZpJUIWyhKPB5R61Kzgpq7SvsUrN81gO8DPEeKCjecCQOV8nx+hVxlEAuIuCKk0KctdUEPXbj5GuFYC/DvE8y7VIHjlZRYkB252DpE5BQn64XDkk93GDm6iybyLhXdw== ron@mac-laptop.dynamic.pedde.com
+EOF
+
+cat > /home/jenkins/.gitconfig <<EOF
+[user]
+        name = RCB Builder
+        email = rcb-deploy@lists.rackspace.com
+EOF
+
+chmod -R go-rwx /home/jenkins/.ssh
+
+mkdir -p /usr/share/jenkins/
+
+if [[ "${MODE}" == "slave" ]]; then
+    if [ ! -e /usr/share/jenkins/slave.jar ]; then
+	wget http://${JENKINS_MASTER}:${JENKINS_MASTER_PORT}/jnlpJars/slave.jar -O /usr/share/jenkins/slave.jar
+    fi
+    echo "JENKINS_TYPE=slave" > /etc/default/jenkins
+    echo "JENKINS_SLAVE_JNLP_URL=http://${JENKINS_MASTER}:${JENKINS_MASTER_PORT}/computer/$(hostname)/slave-agent.jnlp" >> /etc/default/jenkins
+else
+    if [ ! -e /usr/share/jenkins/jenkins.war ]; then
+	wget http://mirrors.jenkins-ci.org/war/latest/jenkins.war -O /usr/share/jenkins/jenkins.war
+    fi
+    echo "JENKINS_TYPE=master" > /etc/default/jenkins
+fi
+
+cat >> /etc/default/jenkins <<"EOF"
+
+# pulled in from the init script; makes things easier.
+NAME=jenkins
+
+# location of java
+JAVA=/usr/bin/java
+
+# arguments to pass to java
+#JAVA_ARGS="-Xmx256m"
+#JAVA_ARGS="-Djava.net.preferIPv4Stack=true" # make jenkins listen on IPv4 address
+
+PIDFILE=/var/run/jenkins/jenkins.pid
+
+# user id to be invoked as (otherwise will run as root; not wise!)
+JENKINS_USER=jenkins
+
+# location of the jenkins war file
+JENKINS_WAR=/usr/share/jenkins/jenkins.war
+JENKINS_SLAVE_JAR=/usr/share/jenkins/slave.jar
+
+# jenkins home location
+JENKINS_HOME=/home/jenkins
+
+# set this to false if you don't want Hudson to run by itself
+# in this set up, you are expected to provide a servlet container
+# to host jenkins.
+RUN_STANDALONE=true
+
+# log location.  this may be a syslog facility.priority
+JENKINS_LOG=/var/log/jenkins/$NAME.log
+#HUDSON_LOG=daemon.info
+
+# OS LIMITS SETUP
+#   comment this out to observe /etc/security/limits.conf
+#   this is on by default because http://github.com/jenkinsci/jenkins/commit/2fb2884
+#   reported that Ubuntu's PAM configuration doesn't include pam_limits.so, and as a
+#   descriptors are forced to 1024 regardless of /etc/security/limits.conf
+MAXOPENFILES=8192
+
+# port for HTTP connector (default 8080; disable with -1)
+HTTP_PORT=8080
+
+# port for AJP connector (disabled by default)
+AJP_PORT=-1
+
+# arguments to pass to jenkins.
+# --javahome=$JAVA_HOME
+# --httpPort=$HTTP_PORT (default 8080; disable with -1)
+# --httpsPort=$HTTP_PORT
+# --ajp13Port=$AJP_PORT
+# --argumentsRealm.passwd.$ADMIN_USER=[password]
+# --argumentsRealm.$ADMIN_USER=admin
+# --webroot=~/.jenkins/war
+JENKINS_ARGS="--webroot=/var/run/jenkins/war --httpPort=$HTTP_PORT --ajp13Port=$AJP_PORT"
+JENKINS_SLAVE_ARGS="-jnlpUrl ${JENKINS_SLAVE_JNLP_URL}"
+EOF
+
+# the init script is going to vary based on slave versus master
+cat > /etc/init.d/jenkins <<"EOF"
+#!/bin/bash
+# /etc/init.d/jenkins
+# debian-compatible jenkins startup script.
+# Amelia A Lewis <alewis@ibco.com>
+#
+### BEGIN INIT INFO
+# Provides:          jenkins
+# Required-Start:    $remote_fs $syslog $network
+# Required-Stop:     $remote_fs $syslog $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start jenkins at boot time
+# Description:       Controls the jenkins continuous integration engine.
+### END INIT INFO
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+DESC="Jenkins Continuous Integration Server"
+NAME=jenkins
+SCRIPTNAME=/etc/init.d/$NAME
+
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+#DAEMON=$JENKINS_SH
+DAEMON=/usr/bin/daemon
+DAEMON_ARGS="--name=$NAME --inherit --env=JENKINS_HOME=$JENKINS_HOME --output=$JENKINS_LOG --pidfile=$PIDFILE"
+
+SU=/bin/su
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Exit if not supposed to run standalone
+[ "$RUN_STANDALONE" = "false" ] && exit 0
+
+# load environments
+if [ -r /etc/default/locale ]; then
+  . /etc/default/locale
+  export LANG LANGUAGE
+elif [ -r /etc/environment ]; then
+  . /etc/environment
+  export LANG LANGUAGE
+fi
+
+# Load the VERBOSE setting and other rcS variables
+. /lib/init/vars.sh
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+. /lib/lsb/init-functions
+
+# Make sure we run as root, since setting the max open files through
+# ulimit requires root access
+if [ `id -u` -ne 0 ]; then
+    echo "The $NAME init script can only be run as root"
+    exit 1
+fi
+
+
+check_tcp_port() {
+    local service=$1
+    local assigned=$2
+    local default=$3
+
+    if [ -n "$assigned" ]; then
+        port=$assigned
+    else
+        port=$default
+    fi
+
+    count=`netstat --listen --numeric-ports | grep \:$port[[:space:]] | grep -c . `
+
+    if [ $count -ne 0 ]; then
+        echo "The selected $service port ($port) seems to be in use by another program "
+        echo "Please select another port to use for $NAME"
+        return 1
+    fi
+}
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+    # the default location is /var/run/jenkins/jenkins.pid but the parent directory needs to be created
+    mkdir `dirname $PIDFILE` > /dev/null 2>&1 || true
+    chown $JENKINS_USER `dirname $PIDFILE`
+    # Return
+    #   0 if daemon has been started
+    #   1 if daemon was already running
+    #   2 if daemon could not be started
+    $DAEMON $DAEMON_ARGS --running && return 1
+
+    # Verify that the jenkins port is not already in use, winstone does not exit
+    # even for BindException
+    check_tcp_port "http" "$HTTP_PORT" "8080" || return 1
+
+    # If the var MAXOPENFILES is enabled in /etc/default/jenkins then set the max open files to the
+    # proper value
+    if [ -n "$MAXOPENFILES" ]; then
+        [ "$VERBOSE" != no ] && echo Setting up max open files limit to $MAXOPENFILES
+        ulimit -n $MAXOPENFILES
+    fi
+
+    # --user in daemon doesn't prepare environment variables like HOME, USER, LOGNAME or USERNAME,
+    # so we let su do so for us now
+    if [[ "${JENKINS_TYPE}" == "slave" ]]; then
+        $SU -l $JENKINS_USER --shell=/bin/bash -c "$DAEMON $DAEMON_ARGS -- $JAVA $JAVA_ARGS -jar $JENKINS_SLAVE_JAR $JENKINS_SLAVE_ARGS" || return 2
+    else
+        $SU -l $JENKINS_USER --shell=/bin/bash -c "$DAEMON $DAEMON_ARGS -- $JAVA $JAVA_ARGS -jar $JENKINS_WAR $JENKINS_ARGS" || return 2
+    fi
+}
+
+
+#
+# Verify that all jenkins processes have been shutdown
+# and if not, then do killall for them
+#
+get_running()
+{
+    return `ps -U $JENKINS_USER --no-headers -f | egrep -e '(java|daemon)' | grep -c . `
+}
+
+force_stop()
+{
+    get_running
+    if [ $? -ne 0 ]; then
+        killall -u $JENKINS_USER java daemon || return 3
+    fi
+}
+
+# Get the status of the daemon process
+get_daemon_status()
+{
+    $DAEMON $DAEMON_ARGS --running || return 1
+}
+
+
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+    # Return
+    #   0 if daemon has been stopped
+    #   1 if daemon was already stopped
+    #   2 if daemon could not be stopped
+    #   other if a failure occurred
+    get_daemon_status
+    case "$?" in
+        0)
+            $DAEMON $DAEMON_ARGS --stop || return 2
+        # wait for the process to really terminate
+        for n in 1 2 3 4 5; do
+            sleep 1
+            $DAEMON $DAEMON_ARGS --running || break
+        done
+        if get_daemon_status; then
+                force_stop || return 3
+        fi
+            ;;
+        *)
+            force_stop || return 3
+            ;;
+    esac
+
+    # Many daemons don't delete their pidfiles when they exit.
+    rm -f $PIDFILE
+    return 0
+}
+
+case "$1" in
+  start)
+    log_daemon_msg "Starting $DESC" "$NAME"
+    do_start
+    case "$?" in
+        0|1) log_end_msg 0 ;;
+        2) log_end_msg 1 ;;
+    esac
+    ;;
+  stop)
+    log_daemon_msg "Stopping $DESC" "$NAME"
+    do_stop
+    case "$?" in
+        0|1) log_end_msg 0 ;;
+        2) log_end_msg 1 ;;
+    esac
+    ;;
+  restart|force-reload)
+    #
+    # If the "reload" option is implemented then remove the
+    # 'force-reload' alias
+    #
+    log_daemon_msg "Restarting $DESC" "$NAME"
+    do_stop
+    case "$?" in
+      0|1)
+        do_start
+        case "$?" in
+          0) log_end_msg 0 ;;
+          1) log_end_msg 1 ;; # Old process is still running
+          *) log_end_msg 1 ;; # Failed to start
+        esac
+        ;;
+      *)
+        # Failed to stop
+        log_end_msg 1
+        ;;
+    esac
+    ;;
+  status)
+      get_daemon_status
+      case "$?" in
+         0) echo "$DESC is running with the pid `cat $PIDFILE`";;
+         *)
+              get_running
+              procs=$?
+              if [ $procs -eq 0 ]; then
+                  echo -n "$DESC is not running"
+                  if [ -f $PIDFILE ]; then
+                      echo ", but the pidfile ($PIDFILE) still exists"
+                  else
+                      echo
+                  fi
+
+              else
+                  echo "$procs instances of jenkins are running at the moment"
+                  echo "but the pidfile $PIDFILE is missing"
+              fi
+              ;;
+      esac
+    ;;
+  *)
+    echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+    exit 3
+    ;;
+esac
+
+exit 0
+EOF
+
+chmod +x /etc/init.d/jenkins
+update-rc.d jenkins defaults
+
+mkdir -p /var/log/jenkins
+chown -R jenkins: /var/log/jenkins
+
+# jenkins should be installed at this point....
+# Now, let's install the package building environment
+
+# we need to pull kernel out of testing
+
+apt-get install -y debootstrap
+cat > /etc/apt/sources.list <<EOF
+deb http://ftp.us.debian.org/debian squeeze main contrib non-free
+deb-src http://ftp.us.debian.org/debian squeeze main contrib non-free
+
+deb http://backports.debian.org/debian-backports squeeze-backports main contrib non-free
+deb-src http://backports.debian.org/debian-backports squeeze-backports main contrib non-free
+EOF
+
+apt-get update
+
+echo "options kvm-intel nested=1" > /etc/modprobe.d/kvm
+
+# seriously, if you are running i686, rekick.  seriously.
+apt-get install -y -t testing linux-image-2.6-amd64 aufs-tools firmware-linux-nonfree firmware-bnx2 qemu-kvm
+
+# TODO: if we're a master, need to set up apt-cacher
+
+
+# set up configs for sbuild
+cat > /etc/sbuild/sbuild.conf <<"EOF"
+# sbuild.conf: global sbuild settings.                              -*- Perl -*-
+# This makes it easier to drop this sbuild version into a buildd
+# setting.  (Also see example.sbuildrc for user .sbuildrc settings.)
+#
+# Default settings are commented out.
+# Note that all possible settings are listed here.  Many may be set on
+# the command-line, and do not normally need setting here,
+# e.g. $verbose.  Others need setting by each individual user in their
+# ~/.sbuildrc, but are listed here for completeness.
+
+
+##
+## LOGGING
+##
+
+# Set to 1 to enable verbose messages.
+#$verbose = 0;
+
+# Set to a number >= 1 to enable debugging messages.
+#$debug = 0;
+
+# Set to 1 to disable logging.
+#$nolog = 0;
+
+# Mail address where logs are sent to (mandatory, no default)
+#$mailto = "frankie";
+
+# Name of log sender
+#$mailfrom = "Source Builder <sbuild>";
+
+
+##
+## DPKG-BUILDPACKAGE OPTIONS
+##
+
+# Name to use as override in .changes files for the Maintainer: field
+# Defaults to the DEBEMAIL environment variable, if set, or else the
+# Maintainer: field will not be overridden unless set here.
+#$maintainer_name='Francesco Paolo Lovergine <frankie@debian.org>';
+
+# Name to use as override in .changes file for the Changed-By: field.
+#$uploader_name='Francesco Paolo Lovergine <frankie@debian.org>';
+
+# Key ID to use in .changes for the current upload.
+# It overrides both $maintainer_name and $uploader_name
+#$key_id='Francesco Paolo Lovergine <frankie@debian.org>';
+
+# PGP-related option to pass to dpkg-buildpackage. Usually neither .dsc
+# nor .changes files shall be signed automatically.
+#$pgp_options = ['-us', '-uc'];
+
+# By default, do not build arch-all packages
+#$build_arch_all = 0;
+
+# By default, do not build a source package (binary only build).
+# Set to 1 to force creation of a source package, but note that
+# this is inappropriate for binary NMUs, where the option will
+# always be disabled.
+$build_source = 0;
+
+# By default, the -s option only includes the .orig.tar.gz when needed
+# (i.e. when the Debian revision is 0 or 1).  By setting this option
+# to 1, the .orig.tar.gz will always be included when -s is used.
+# This is equivalent to --force-orig-source.
+#$force_orig_source = 0;
+
+# PATH to set when running dpkg-buildpackage.
+#$path = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/X11R6/bin:/usr/games";
+
+# LD_LIBRARY_PATH to set when running dpkg-buildpackage.
+#$ld_library_path = "";
+
+# This command is run with the dpkg-buildpackage command line passed to it
+# (in the chroot, if doing a chrooted build).  It is used by the sparc buildd
+# (which is sparc64) to call the wrapper script that sets the environment to
+# sparc (32-bit).  It could be used for other build environment setup scripts
+#
+#$build_env_cmnd = "";
+
+
+##
+## SBUILD BEHAVIOUR
+##
+
+# Default architecture.  Defaults to host architecture.
+#$arch = 'powerpc';
+
+# Default distribution.  By default, no distribution is defined, and
+# the user must specify it with the -d option.  However, a default may
+# be configured here if desired.  Users must take care not to upload
+# to the wrong distribution when this option is set, for example
+# experimental packages will be built for upload to unstable when this
+# is not what is required.
+#$distribution = 'unstable';
+
+# Chroot mode.  Valid modes are 'schroot' to use schroot for chroot
+# access (the default), and 'sudo' to use sudo, requiring full sudo
+# access to the host system.
+#$chroot_mode = 'schroot';
+
+# Chroot split.  Set to 1 to run apt and dpkg outside the chroot, so
+# the chroot does not require networking.  Set to 0 to run all
+# programs inside the chroot.  Default 0.
+#$chroot_split = 0;
+
+# Default chroot (defaults to distribution[-arch][-sbuild])
+#$chroot = 'unstable-powerpc-sbuild';
+
+# Script to run prior to a build.  The default is to not run any setup script.
+#$chroot_setup_script='/usr/local/bin/chroot-setup'
+
+# When to purge the build directory afterwards; possible values are "never",
+# "successful", and "always".  "always" is the default.
+#$purge_build_directory="successful";
+
+# When to purge the build dependencies afterwards; possible values are "never",
+# "successful", and "always".  "always" is the default.
+#$purge_build_deps="always";
+
+# sbuild behaviour; possible values are "user" (exit status reports
+# build failures) and "buildd" (exit status does not report build
+# failures) for use in a buildd setup.  "buildd" also currently
+# implies enabling of "legacy features" such as chroot symlinks in the
+# build directory and the creation of current symlinks in the build
+# directory.
+#$sbuild_mode = "user";
+
+# Force APT to accept unauthenticated packages.
+# This is disabled by default: only enable it if you know what you are doing.
+#$apt_allow_unauthenticated = 0;
+
+# APT policy.  1 to enable additional checking of package versions
+# available in the APT cache, or 0 to disable.  0 is the traditional
+# sbuild behaviour; 1 is needed to build from additional repositories
+# such as sarge-backports or experimental, and has a small performance
+# cost.
+#$apt_policy = 1;
+
+# APT clean.  1 to enable running "apt-get clean" at the start of
+# each build, or 0 to disable.
+#$apt_clean = 0;
+
+# APT update.  1 to enable running "apt-get update" at the start of
+# each build, or 0 to disable.
+$apt_update = 1;
+
+# APT upgrade.  1 to enable running "apt-get upgrade" at the start of
+# each build, or 0 to disable.
+#$apt_upgrade = 0;
+
+# APT distupgrade.  1 to enable running "apt-get dist-upgrade" at the start of
+# each build, or 0 to disable.
+#$apt_distupgrade = 0;
+
+# Check free disk space prior to starting a build.  sbuild requires
+# the free space to be at least twice the size of the unpacked sources
+# to allow a build to proceed.  Can be disabled to allow building if
+# space is very limited, but the threshold to abort a build has been
+# exceeded despite there being sufficient space for the build to
+# complete.
+#$check_space = 1;
+
+# Check watched packages to discover missing build dependencies.  This
+# can be disabled to increase the speed of builds
+#$check_watches = 1;
+
+# Binaries for which the access time is controlled if they're not listed as
+# source dependencies (note: /usr/bin is added if executable name doesn't
+# start with '/')
+#
+# Most buildds run with clean chroots at the moment, so the default
+# list is now empty.
+#%watches = ();
+
+# Ignore watches on the following packages if the package doesn't have its own
+# build dependencies in the .dsc
+#@ignore_watches_no_build_deps = qw();
+
+# If a source dependency is an alternative that is provided by more than one
+# package, this list can select which one will be installed (if nothing is
+# defined, a random provider will be used)
+#%alternatives = ("info-browser"                        => "info",
+#                "httpd"                        => "apache",
+#                "postscript-viewer"            => "ghostview",
+#                "postscript-preview"           => "psutils",
+#                "www-browser"                  => "lynx",
+#                "awk"                          => "gawk",
+#                "c-shell"                      => "tcsh",
+#                "wordlist"                     => "wenglish",
+#                "tclsh"                        => "tcl8.4",
+#                "wish"                         => "tk8.4",
+#                "c-compiler"                   => "gcc",
+#                "fortran77-compiler"           => "g77",
+#                "java-compiler"                => "jikes",
+#                "libc-dev"                     => "libc6-dev",
+#                "libgl-dev"                    => "xlibmesa-gl-dev",
+#                "libglu-dev"                   => "xlibmesa-glu-dev",
+#                "libncurses-dev"               => "libncurses5-dev",
+#                "libz-dev"                     => "zlib1g-dev",
+#                "libg++-dev"                   => "libstdc++6-4.0-dev",
+#                "emacsen"                      => "emacs21",
+#                "mail-transport-agent"         => "ssmtp",
+#                "mail-reader"                  => "mailx",
+#                "news-transport-system"        => "inn",
+#                "news-reader"                  => "nn",
+#                "xserver"                      => "xvfb",
+#                "mysql-dev"                    => "libmysqlclient-dev",
+#                "giflib-dev"                   => "libungif4-dev",
+#                "freetype2-dev"                => "libttf-dev");
+
+# Regular expressions identifying toolchain packages.
+#@toolchain_regex = ( 'binutils$', 'gcc-[\d.]+$', 'g\+\+-[\d.]+$', 'libstdc\+\+', 'libc[\d.]+-dev$', 'linux-kernel-headers$' );
+
+# Algorithm for build dependency checks: possible values are
+# "first_only" (used by Debian buildds) or "alternatives". Default:
+# "first_only".
+#$check_depends_algorithm = "first-only";
+
+##
+## TIMEOUTS
+##
+
+# Time to wait for a source dependency lock.  The default is 1 minute.
+#$srcdep_lock_wait = 1; # 1 minute
+
+# Number of times to try waiting for a lock
+#$max_lock_trys = 120;
+
+# Lock wait interval (seconds).  Maximum wait time is
+# (max_lock_trys × lock_interval).
+#$lock_interval = 5;
+
+# Time (in minutes) of inactivity after which a build is terminated. Activity
+# is measured by output to the log file.
+#$stalled_pkg_timeout = 150;
+
+# Some packages may exceed the general timeout (e.g. redirecting output to
+# a file) and need a different timeout. Below are some examples.
+#%individual_stalled_pkg_timeout = (smalleiffel => 300,
+#                                  jade => 300,
+#                                  atlas => 300,
+#                                  glibc => 1000,
+#                                  'gcc-3.3' => 300,
+#                                  kwave => 600);
+
+
+##
+## FILE AND DIRECTORY LOCATIONS
+##
+
+# This option is deprecated.  Directory for chroot symlinks and sbuild
+# logs.  Defaults to the current directory if unspecified.  It is used
+# as the location of chroot symlinks (obsolete) and for current build
+# log symlinks and some build logs.  There is no default; if unset, it
+# defaults to the current working directory.  $HOME/build is another
+# common configuration.
+#$build_dir = undef;
+
+# Directory for writing build logs to
+#$log_dir = "$HOME/logs";
+
+# Directory for writing build statistics to
+#$stats_dir = "$HOME/stats";
+
+# Name of a database for logging package build times (optional, no database
+# is written if empty)
+#$avg_time_db = "/var/lib/sbuild/avg-build-times";
+
+# Name of a database for logging package space requirement (optional)
+#$avg_space_db = "/var/lib/sbuild/avg-build-space";
+
+# Name for dir for source dependency lock files
+#$srcdep_lock_dir = "/var/lib/sbuild/srcdep-lock";
+
+# Job status file (only used in batch mode)
+#$job_file = "build-progress";
+
+
+##
+## PROGRAMS USED BY SBUILD
+##
+
+# Program to mail log files.
+#$mailprog = "/usr/sbin/sendmail";
+# dpkg binary.
+#$dpkg = "/usr/bin/dpkg";
+# su binary.
+#$su = "/bin/su";
+# schroot binary.
+#$schroot = "/usr/bin/schroot";
+# schroot options; see schroot(1).
+#$schroot_options = ['-q'];
+# sudo binary.
+#$sudo = "/usr/bin/sudo";
+# fakeroot command.  Set to be fakeroot by default, but sudo is
+# typically used on systems without fakeroot.
+#$fakeroot = "/usr/bin/fakeroot";
+# apt-get binary.
+#$apt_get = "/usr/bin/apt-get";
+# apt-cache binary.
+#$apt_cache = "/usr/bin/apt-cache";
+# dpkg-source binary.
+#$dpkg_source = "/usr/bin/dpkg-source";
+# dcmd binary.
+#$dcmd = "/usr/bin/dcmd";
+# md5sum binary
+#$md5sum = "/usr/bin/md5sum";
+
+
+# don't remove this, Perl needs it:
+1;
+EOF
+
+cat > /etc/schroot/schroot.conf <<EOF
+[maverick]
+type=lvm-snapshot
+description=maverick
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/maverick
+mount-options=-o atime,sync,user_xattr
+lvm-snapshot-options=--size 8G
+
+[maverick-diablo-d5]
+type=block-device
+union-type=aufs
+description=maverick
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/maverick
+mount-options=-o atime,sync,user_xattr
+
+[maverick-diablo-final]
+type=block-device
+union-type=aufs
+description=maverick
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/maverick
+mount-options=-o atime,sync,user_xattr
+
+[squeeze]
+type=block-device
+union-type=aufs
+description=squeeze
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/squeeze
+mount-options=-o atime,sync,user_xattr
+
+[squeeze-diablo-d5]
+type=block-device
+union-type=aufs
+description=squeeze
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/squeeze
+mount-options=-o atime,sync,user_xattr
+
+[squeeze-diablo-final]
+type=block-device
+union-type=aufs
+description=squeeze
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/squeeze
+mount-options=-o atime,sync,user_xattr
+
+[natty]
+type=block-device
+union-type=aufs
+description=natty
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/natty
+mount-options=-o atime,sync,user_xattr
+
+[natty-diablo-d5]
+type=block-device
+union-type=aufs
+description=natty
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/natty
+mount-options=-o atime,sync,user_xattr
+
+[natty-diablo-final]
+type=block-device
+union-type=aufs
+description=natty
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/natty
+mount-options=-o atime,sync,user_xattr
+
+[oneiric]
+type=block-device
+union-type=aufs
+description=oneiric
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/oneiric
+mount-options=-o atime,sync,user_xattr
+
+[oneiric-diablo-d5]
+type=block-device
+union-type=aufs
+description=oneiric
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/oneiric
+mount-options=-o atime,sync,user_xattr
+
+[oneiric-diablo-final]
+type=block-device
+union-type=aufs
+description=oneiric
+groups=sbuild,root
+root-users=build,jenkins
+root-groups=root,sbuild
+source-root-users=build,jenkins
+device=/dev/vg0/oneiric
+mount-options=-o atime,sync,user_xattr
+EOF
+
+cat > /etc/schroot/setup.d/60-set-apt-sources <<"EOF"
+#!/bin/sh
+if [ "$1" = "setup-start" ] || [ $1 = "setup-recover" ]; then
+    NAME=`cat "${CHROOT_PATH}/etc/debian_chroot"`
+    NAME=${NAME%%-pbuilder}
+
+    EXTRA_APT_SOURCES="/etc/schroot/sources.list.d/${NAME}.sources.list"
+    EXTRA_APT_PREFS="/etc/schroot/sources.list.d/${NAME}.preferences"
+
+    if [ "$AUTH_VERBOSITY" = "verbose" ]; then
+        echo "Checking for extra apt sources" >&2
+    fi
+
+    if [ -e "$EXTRA_APT_SOURCES" ]; then
+        if [ "$AUTH_VERBOSITY" = "verbose" ]; then
+            echo "... found" >&2
+        fi
+        cat "$EXTRA_APT_SOURCES" > "${CHROOT_PATH}/etc/apt/sources.list"
+    fi
+
+    if [ "$AUTH_VERBOSITY" = "verbose" ]; then
+        echo "Checking for extra apt preferences" >&2
+    fi
+
+    if [ -e "$EXTRA_APT_PREFS" ]; then
+        if [ "$AUTH_VERBOSITY" = "verbose" ]; then
+            echo "... found" >&2
+        fi
+
+    install -m644 "$EXTRA_APT_PREFS" "${CHROOT_PATH}/etc/apt/apt.conf.d/99local"
+    fi
+fi
+EOF
+
+chmod +x /etc/schroot/setup.d/60-set-apt-sources
+
+mkdir -p /etc/schroot/sources.list.d
+
+for dist in maverick natty oneiric; do
+    for release in diablo-d3 diablo-d5 diablo-final; do
+	echo "${dist}-${release}..."
+
+	cat > /etc/schroot/sources.list.d/${dist}-${release}.preferences <<EOF
+Apt::get::force-yes "true";
+EOF
+
+	cat > /etc/schroot/sources.list.d/${dist}-${release}.sources.list <<EOF
+deb http://${JENKINS_MASTER}:3142/ubuntu ${dist} main restricted universe
+deb http://${JENKINS_MASTER}:3142/ubuntu ${dist}-updates main restricted universe
+EOF
+
+    done
+
+    if [ ! -e ${VGNAME}/${dist} ]; then
+	lvcreate --size=8g ${VGNAME} --name=${dist}
+	mke2fs -j ${VGNAME}/${dist}
+	mkdir -p /mnt/${dist}
+	mount -t ext3 ${VGNAME}/${dist} /mnt/${dist}
+	if [ ! -e /usr/share/debootstrap/scripts/${dist} ]; then
+	    ln -s gutsy /usr/share/debootstrap/scripts/${dist}
+	fi
+
+	debootstrap ${dist} /mnt/${dist} http://${JENKINS_MASTER}:3142/ubuntu
+	umount /mnt/${dist}
+	rm -rf /mnt/${dist}
+    fi
+done
+
+if ( ! grep -q "kvmbr0" /etc/network/interfaces ); then
+    cat >> /etc/network/interfaces <<EOF
+
+auto kvmbr0
+iface kvmbr0 inet static
+      address 192.168.1.1
+      netmask 255.255.255.0
+      bridge_ports none
+      bridge_fd 0
+      bridge_stp off
+      bridge_maxwait 0
+
+EOF
+    ifup /dev/kvmbr0
+fi
+
+
+mkdir -p /etc/jenkins-deb
+
+if [ ! -e /etc/jenkins-deb/jenkins-deb-ip.conf ]; then
+    for (( octet=1; octet < 255; octet++ )); do
+	echo "192.168.1.${octet} unallocated" >> /etc/jenkins-deb/jenkins-deb-ip.conf
+    done
+fi
+
+if [ ! -e /etc/jenkins-deb/jenkins-deb.conf ]; then
+    cat > /etc/jenkins-deb/jenkins-deb.conf <<EOF
+#DEBEMAIL='RCB Builder <rcb-deploy@lists.rackspace.com>'
+#GIT_BRANCH=master
+#SOURCE_BUILD_DIST=ubuntu         # ubuntu|debian
+#SOURCE_BUILD_RELEASE=natty       # maverick|natty|....
+#NOVA_RELEASE=diablo
+MILESTONE=final
+#MAJOR_VERSION=2011.3
+#ARCH=amd64                       # amd64|i386
+#STRATEGY=lvm                     # lvm|cow
+
+# these should get set by the jenkins job matrix, but are included 
+# for completeness
+
+# PACKAGE=                        # required for source builds
+# PACKAGE_VERSION=                # required for source builds
+# BINARY_BUILD_DIST=ubuntu        # required for binary builds
+# BINARY_BUILD_RELEASE=natty      # requried for binary builds
+EOF
+fi
+
+chgrp -R sbuild /etc/jenkins-deb
+chmod 0770 /etc/jenkins-deb
+chmod 0660 /etc/jenkins-deb/*
+
+apt-get install -y -t testing libvirt-bin
+
+# set up firewall, turn on routing...
+sed -i /etc/sysctl.conf -e "s/^.*net.ipv4.ip_forward=.*/net.ipv4.ip_forward=1/"
+
+cat > /etc/firewall.conf <<EOF
+# Generated by iptables-save v1.4.8 on Wed May 18 09:26:56 2011
+*filter
+:INPUT DROP [3:360]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -p icmp -j ACCEPT 
+-A INPUT -i lo -j ACCEPT 
+-A INPUT -i kvmbr0 -j ACCEPT 
+-A INPUT -s 192.168.1.0/24 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT 
+# SERVER ONLY
+#-A INPUT -p tcp -m tcp --dport 8080 -j ACCEPT 
+#-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT 
+#-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT 
+#-A INPUT -p tcp -m tcp --dport 38168 -s 184.106.53.0/24 -j ACCEPT
+#-A INPUT -p tcp -m tcp --dport 3142 -s 184.106.53.0/24 -j ACCEPT
+-A INPUT -d 127.0.0.0/8 ! -i lo -j REJECT --reject-with icmp-port-unreachable 
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+COMMIT
+# Completed on Wed May 18 09:26:56 2011
+# Generated by iptables-save v1.4.8 on Wed May 18 09:26:56 2011
+*nat
+:PREROUTING ACCEPT [3:360]
+:POSTROUTING ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A POSTROUTING -o eth4 -j MASQUERADE 
+COMMIT
+# Completed on Wed May 18 09:26:56 2011
+EOF
+
+cat > /etc/network/if-pre-up.d/firewall <<EOF
+#!/bin/bash
+iptables-restore < /etc/firewall.conf
+EOF
+
+chmod +x /etc/network/if-pre-up.d/firewall
+iptables-restore < /etc/firewall.conf
+sysctl -p
+
+# copy jason's ipmprc
+
+cat > ~jenkins/.ipmirc <<EOF
+DRACIP='10.12.157.128'
+DRACUSER='root'
+DRACPASS='calvin'
+CWADNODE='184.106.53.10'
+EOF
+
+chown jenkins: ~jenkins/.ipmirc
+
+sudo apt-get -y install dnsmasq
+
+echo "SESSIONS_RECOVER=end" > /etc/default/schroot
+
+
