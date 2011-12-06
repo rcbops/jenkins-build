@@ -82,6 +82,12 @@ cat > /tmp/${kvm_instance_name}.json <<EOF
     "branch": "${KONG_BRANCH}"
   },
 
+  "image": {
+    "oneiric":  "http://${IMAGE_CACHE}/ubuntu-11.10-server-uec-amd64-multinic.tar.gz",
+    "natty":    "http://${IMAGE_CACHE}/ubuntu-11.04-server-uec-amd64-multinic.tar.gz",
+    "maverick": "http://${IMAGE_CACHE}/ubuntu-10.10-server-uec-amd64-multinic.tar.gz"
+  },
+
   "package_url": "${REPO}",
   "package_release": "${BINARY_BUILD_RELEASE}",
   "package_component": "${COMPONENT}",
