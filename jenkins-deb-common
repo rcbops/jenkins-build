@@ -29,6 +29,8 @@ function jenkins_set_vars() {
 
     [ -e /etc/jenkins-deb/jenkins-deb.conf ] && . /etc/jenkins-deb/jenkins-deb.conf
 
+    # needs the base_dir so it can find virt templates
+    BASE_DIR=${BASE_DIR:=~/jenkins-build}
     DEBEMAIL=${DEBEMAIL-'RCB Builder <rcb-deploy@lists.rackspace.com>'}
     GIT_BRANCH=${GIT_BRANCH-master}
     SOURCE_BUILD_DIST=${SOURCE_BUILD_DIST-ubuntu}
@@ -226,63 +228,15 @@ EOF
     # See if we have a virsh definition for this
     if ! $( sudo virsh list | grep -q "${new_instance}" ); then
 	# make a new virsh definition
-	cat > /tmp/newxml-${new_instance} <<EOF
-<domain type='kvm'>
-  <name>${new_instance}</name>
-  <memory>${MEMORY}</memory>
-  <currentMemory>${MEMORY}</currentMemory>
-  <vcpu>1</vcpu>
-  <os>
-    <type arch='x86_64' machine='pc-0.12'>hvm</type>
-    <kernel>/vmlinuz</kernel>
-    <initrd>/initrd.img</initrd>
-    <cmdline>root=/dev/vda</cmdline>
-    <boot dev='hd'/>
-  </os>
-  <features>
-    <acpi/>
-    <apic/>
-    <pae/>
-  </features>
-  <clock offset='utc'/>
-  <on_poweroff>destroy</on_poweroff>
-  <on_reboot>restart</on_reboot>
-  <on_crash>restart</on_crash>
-  <devices>
-    <emulator>/usr/bin/kvm</emulator>
-    <disk type='block' device='disk'>
-      <driver name='qemu' type='raw'/>
-      <source dev='${LVM_ROOT}/${new_instance}'/>
-      <target dev='vda' bus='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
-    </disk>
-    <interface type='bridge'>
-      <source bridge='kvmbr0'/>
-      <model type='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-    </interface>
-    <serial type='pty'>
-      <target port='0'/>
-    </serial>
-    <console type='pty'>
-      <target type='serial' port='0'/>
-    </console>
-    <input type='tablet' bus='usb'/>
-    <input type='mouse' bus='ps2'/>
-    <graphics type='vnc' port='-1' autoport='yes'/>
-    <sound model='ac97'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-    </sound>
-    <video>
-      <model type='cirrus' vram='9216' heads='1'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
-    </video>
-    <memballoon model='virtio'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
-    </memballoon>
-  </devices>
-</domain>
-EOF
+	# Varibles that get substituted in this template
+	# are $MEMORY, $INSTANCE_NAME, and ${LVM_ROOT}
+	INSTANCE_NAME=${new_instance}
+	virt_template=${BASE_DIR}/
+	if [ -e ${BASE_DIR}/virt-templates/$(hostname) ]; then
+	    virt_template=${BASE_DIR}/virt-templates/$(hostname)
+	fi
+
+	eval "echo \"$(< ${virt_template})\"" > /tmp/newxml-${new_instance}
 	sudo virsh create /tmp/newxml-${new_instance}
 	rm /tmp/newxml-${new_instance}
     else
