@@ -393,6 +393,24 @@ deb-src http://ftp.us.debian.org/debian squeeze main contrib non-free
 
 deb http://backports.debian.org/debian-backports squeeze-backports main contrib non-free
 deb-src http://backports.debian.org/debian-backports squeeze-backports main contrib non-free
+
+deb http://ftp.us.debian.org/debian testing main contrib non-free
+deb-src http://ftp.us.debian.org/debian testing main contrib non-free
+EOF
+
+
+cat > /etc/apt/preferences.d/pin.pref <<EOF
+Package: *
+Pin: release a=stable
+Pin-Priority: 700
+
+Package: *
+Pin release a=squeeze-backports
+Pin-Priority: 600
+
+Package: *
+Pin: release a=testing
+Pin-Priority: 500
 EOF
 
 apt-get update
