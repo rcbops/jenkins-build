@@ -85,6 +85,11 @@ cat > /tmp/${kvm_instance_name}-FROM.json <<EOF
     "dns2": "8.8.4.4"
   },
 
+  "image": {
+    "oneiric":  "http://${IMAGE_CACHE}/ubuntu-11.10-server-uec-amd64-multinic.tar.gz",
+    "natty":    "http://${IMAGE_CACHE}/ubuntu-11.04-server-uec-amd64-multinic.tar.gz",
+    "maverick": "http://${IMAGE_CACHE}/ubuntu-10.10-server-uec-amd64-multinic.tar.gz"
+  },
 
   "package_url": "http://192.168.1.1/packages",
   "package_release": "${BINARY_BUILD_RELEASE}",
