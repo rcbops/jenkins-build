@@ -232,7 +232,7 @@ EOF
 	# Varibles that get substituted in this template
 	# are $MEMORY, $INSTANCE_NAME, and ${LVM_ROOT}
 	INSTANCE_NAME=${new_instance}
-	virt_template=${BASE_DIR}/
+	virt_template=${BASE_DIR}/virt-templates/default
 	if [ -e ${BASE_DIR}/virt-templates/$(hostname) ]; then
 	    virt_template=${BASE_DIR}/virt-templates/$(hostname)
 	fi
