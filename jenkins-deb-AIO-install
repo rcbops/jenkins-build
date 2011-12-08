@@ -41,6 +41,14 @@ function err_cleanup_chefsolo() {
     if [ "${NOCLEAN-0}" == "1" ]; then
 	exit 0
     fi
+
+    # Diagnostic info
+    log "Running on $(hostname)"
+    log "Network:"
+    ssh root@${IP} -- /sbin/ifconfig
+    log "Kong conf"
+    ssh root@${IP} -- cat /opt/kong/etc/config.ini
+
     sudo virsh destroy ${1}
     sleep 5
     sudo lvremove -f ${LVM_ROOT}/${1}
