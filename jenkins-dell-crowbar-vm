@@ -134,7 +134,7 @@ while [[ $count -lt ${MAX_INSTALL_WAIT} ]]; do
 done
 
 sudo qemu-img convert -f host_device -O qcow2 -c ${LVM_ROOT}/${kvm_instance_name} crowbar.qcow2
-sudo chown jenkins: crowbar.qcow
+sudo chown jenkins: crowbar.qcow2
 
 sudo virsh destroy ${kvm_instance_name}
 sleep 5
