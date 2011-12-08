@@ -35,7 +35,7 @@ function ipmi_restart() {
     fi
 
     # we need to sleep for 5 seconds and make sure the box came back online
-    sleep 5s
+    sleep 15s
     status=$(ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
     if [ $status == "off" ]; then
         # Server did not come back online
