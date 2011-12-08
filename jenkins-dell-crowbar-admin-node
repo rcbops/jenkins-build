@@ -221,6 +221,30 @@ crowbar_proposal "glance" "commit"
 crowbar_proposal_status "glance"
 ##################################################
 
+# Bring up the dedicated Compute Node
+ipmi_set_pxe ${COMPUTE_DRAC_IP}
+ipmi_poweron ${COMPUTE_DRAC_IP}
+
+# WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
+sleep 60s
+
+## Loop and wait for the Controller node to get discovered
+count=1
+while [ $count -lt 15 ]; do
+    count=$(( count + 1 ))
+    sleep 60s
+    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-6e-ec-ce' ); then
+        echo "Controller node discovered"
+        break 
+    fi
+    if [ $count -eq 15 ]; then
+        echo "Something went wrong with discovering the Compute node"
+        exit 1
+    fi
+done
+
+sleep 15s
+
 ##################################################
 # Push the Nova Proposal
 crowbar_proposal "nova" "create"
