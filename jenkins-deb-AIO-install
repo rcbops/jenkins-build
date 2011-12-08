@@ -10,12 +10,12 @@ PACKAGE_REPO=${PACKAGEREPO-unstable}
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
 . $(dirname $0)/jenkins-deb-common
 
+jenkins_init
+jenkins_set_vars
+
 echo ${DISTRELEASE}
 echo ${PACKAGE_REPO}
 echo ${COMPONENT}
-
-jenkins_init
-jenkins_set_vars
 
 KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
 if [ "${KONG_BRANCH}" == "diablo-final" ]; then
