@@ -150,6 +150,10 @@ while [ $count -lt 25 ]; do
     if ( nc ${HEADNODE} 22 -w 1 -q 0 < /dev/null ); then
         break
     fi
+    if [ $count -eq 25 ]; then
+        log "Server is not network accessible"
+        exit 1
+    fi
 done
 
 # Give crowbar 10 minutes to install once SSH is available
