@@ -48,6 +48,8 @@ function err_cleanup_chefsolo() {
     ssh root@${IP} -- /sbin/ifconfig
     log "Kong conf"
     ssh root@${IP} -- cat /opt/kong/etc/config.ini
+    log "Logs"
+    ssh root@${IP} -- tail -n100 /var/log/nova/nova*log
 
     sudo virsh destroy ${1}
     sleep 5
@@ -65,7 +67,7 @@ ip_octets=(${IP//./ })
 
 
 MEMORY=2048000
-trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM ERR
 
 maybe_make_kvm_instance $kvm_instance_name
 start_kvm_instance $kvm_instance_name ${IP} ${REPO} ${BINARY_BUILD_RELEASE} ${COMPONENT}
