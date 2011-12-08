@@ -1,0 +1,143 @@
+#!/bin/bash
+#
+
+MAX_INSTALL_WAIT=40   # 15 sec increments -- 10 minuts
+MAX_FIRSTBOOT_WAIT=40
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+function err_cleanup_crowbar() {
+    # $1 - name
+    cd
+    sudo umount ${tmpdir}/crowbar-new
+    sudo umount ${tmpdir}/crowbar-iso
+
+    if [ "${NOCLEAN-0}" == "1" ]; then
+	exit 0
+    fi
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    sudo rm -rf ${tmpdir}
+    exit 1
+}
+
+kvm_instance_name=crowbar-vm-installer
+
+trap "err_cleanup_crowbar ${kvm_instance_name}" SIGINT SIGTERM ERR
+
+MEMORY=2048000
+sudo lvcreate --size=20g --name=${kvm_instance_name} ${LVM_ROOT}
+
+tmpdir=$(mktemp -d)
+
+cp ~jenkins/jobs/build-crowbar-admin-iso/workspace/*iso ${tmpdir}/crowbar-dist.iso
+mkdir ${tmpdir}/crowbar-iso
+mkdir ${tmpdir}/aufs-overlay
+mkdir ${tmpdir}/crowbar-new
+sudo mount -oloop ${tmpdir}/crowbar-dist.iso ${tmpdir}/crowbar-iso
+sudo mount -t aufs -o br=${tmpdir}/aufs-overlay:${tmpdir}/crowbar-iso none ${tmpdir}/crowbar-new
+
+sudo sed -i -e 's#/dev/sda#/dev/vda#' ${tmpdir}/crowbar-new/preseed/crowbar_admin.seed
+
+# re-sum the disk
+pushd ${tmpdir}/crowbar-new
+sudo rm -f isolinux/boot.cat
+find . -type f -not -name isolinux.bin -not -name sha1sums -not -path '*/.git/*' | xargs sha1sum -b > ../sha1sums
+sudo mv ../sha1sums .
+
+sudo genisoimage -r -cache-inodes -J -l -quiet -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ${tmpdir}/crowbar.iso .
+popd
+
+sudo umount ${tmpdir}/crowbar-new
+sudo umount ${tmpdir}/crowbar-iso
+
+cat > ${tmpdir}/${kvm_instance_name}.xml <<EOF
+<domain type='kvm'>
+  <name>${kvm_instance_name}</name>
+  <memory>${MEMORY}</memory>
+  <currentMemory>${MEMORY}</currentMemory>
+  <vcpu>1</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-0.12'>hvm</type>
+    <boot dev='cdrom'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>destroy</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/bin/kvm</emulator>
+    <disk type='block' device='disk'>
+      <driver name='qemu' type='raw'/>
+      <source dev='/dev/vg0/${kvm_instance_name}'/>
+      <target dev='sda' bus='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+    </disk>
+    <disk type='block' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <target dev='hdc' bus='ide'/>
+      <source dev='${tmpdir}/crowbar.iso'/>
+      <readonly/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='kvmbr0'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='tablet' bus='usb'/>
+    <input type='mouse' bus='ps2'/>
+    <graphics type='vnc' port='-1' autoport='yes'/>
+    <sound model='ac97'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </sound>
+    <video>
+      <model type='cirrus' vram='9216' heads='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+EOF
+
+# superfail - wipe first and last gig of the disk to wipe lvm metadata
+sudo dd if=/dev/zero of=/dev/vg0/${kvm_instance_name} bs=1M seek=19K count=1K
+sudo dd if=/dev/zero of=/dev/vg0/${kvm_instance_name} bs=1M count=1K
+
+chmod 755 ${tmpdir}
+sudo virsh create ${tmpdir}/${kvm_instance_name}.xml
+
+count=0
+while [[ $count -lt ${MAX_INSTALL_WAIT} ]]; do
+    count=$((count + 1))
+    sleep 15
+    if ( ! sudo virsh list | grep -q ${kvm_instance_name} ); then
+	echo "Box stopped!"
+	break
+    fi
+done
+
+sudo qemu-img convert -f host_device -O qcow2 -c ${LVM_ROOT}/${kvm_instance_name} crowbar.qcow2
+sudo chown jenkins: crowbar.qcow
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
+
