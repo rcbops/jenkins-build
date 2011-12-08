@@ -27,13 +27,12 @@ function err_cleanup_crowbar() {
 }
 
 kvm_instance_name=crowbar-vm-installer
+tmpdir=$(mktemp -d)
 
 trap "err_cleanup_crowbar ${kvm_instance_name}" SIGINT SIGTERM ERR
 
 MEMORY=2048000
 sudo lvcreate --size=20g --name=${kvm_instance_name} ${LVM_ROOT}
-
-tmpdir=$(mktemp -d)
 
 cp ~jenkins/jobs/build-crowbar-admin-iso/workspace/*iso ${tmpdir}/crowbar-dist.iso
 mkdir ${tmpdir}/crowbar-iso
