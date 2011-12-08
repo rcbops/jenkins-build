@@ -111,7 +111,7 @@ cat > /tmp/${kvm_instance_name}.json <<EOF
   "package_url": "${REPO}",
   "package_release": "${BINARY_BUILD_RELEASE}",
   "package_component": "${COMPONENT}",
-  "virt_type": "kvm",
+  "virt_type": "qemu",
 
  "run_list": [ "recipe[apt]", "recipe[openstack::allinone]", "recipe[kong]" ]
 }
