@@ -52,6 +52,10 @@ kvm_instance_name=${BINARY_BUILD_RELEASE}-${COMPONENT}-${PACKAGE_REPO}-AIO-test
 # this sets IP as a side-effect
 get_ip $kvm_instance_name
 
+declare -a ip_octets
+ip_octets=(${IP//./ })
+
+
 MEMORY=2048000
 trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
@@ -67,7 +71,8 @@ cat > /tmp/${kvm_instance_name}.json <<EOF
     "bridge": "br100",
     "bridge_dev": "eth0.100",
     "dns1": "8.8.8.8",
-    "dns2": "8.8.4.4"
+    "dns2": "8.8.4.4",
+    "ipv4_cidr": "10.2.${ip_octets[3]}.0/24"
   },
 
   "private": {
@@ -77,7 +82,12 @@ cat > /tmp/${kvm_instance_name}.json <<EOF
     "bridge": "br101",
     "bridge_dev": "eth0.101",
     "dns1": "8.8.8.8",
-    "dns2": "8.8.4.4"
+    "dns2": "8.8.4.4",
+    "ipv4_cidr": "10.3.${ip_octets[3]}.0/24"
+  },
+
+  "floating": {
+    "ipv4_cidr": "10.1.${ip_octets[3]}.0/24"
   },
 
   "kong": {
