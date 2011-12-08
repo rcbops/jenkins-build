@@ -5,7 +5,7 @@
 
 # force a local default so this can be run on command line
 DISTRELEASE=${DISTRELEASE-ubuntu-natty}
-PACKAGE_REPO=${PACKAGEREPO-unstable}
+PACKAGE_REPO=${PACKAGE_REPO-unstable}
 COMPONENT=${COMPONENT-diablo-final}
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
