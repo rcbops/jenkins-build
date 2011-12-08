@@ -58,8 +58,7 @@ function ipmi_pxe_reboot() {
     log "Running ipmi_pxe_reboot using:"
     log " ip: ${ip}"
     ipmi_set_pxe ${ip}
-    # ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
-    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+    ipmi_restart ${ip}
 }
 
 function ipmi_poweroff() {
