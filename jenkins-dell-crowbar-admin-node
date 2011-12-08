@@ -22,7 +22,26 @@ function ipmi_restart() {
     ip=$1
     log "Running ipmi_restart using:"
     log " ip: ${ip}"
-    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+
+    # First check the status
+    # This will return "Chassis Power is off|on"
+    status=$(ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
+    if [ $status == "on" ]; then
+        # Power is on, we can powercycle
+        ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+    else
+        # Power is off, we can poweron
+        ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+    fi
+
+    # we need to sleep for 5 seconds and make sure the box came back online
+    sleep 5s
+    status=$(ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
+    if [ $status == "off" ]; then
+        # Server did not come back online
+        log "Unable to powercycle server successfully"
+        exit 1
+    fi
 }
 
 function ipmi_set_pxe() {
