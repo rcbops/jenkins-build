@@ -249,7 +249,7 @@ sleep 15s
 # Push the Nova Proposal
 crowbar_proposal "nova" "create"
 crowbar_proposal "nova" "commit"
-crowbar_proposal_status "nova"
+crowbar_proposal_status "nova" 30
 ##################################################
 
 ##################################################
