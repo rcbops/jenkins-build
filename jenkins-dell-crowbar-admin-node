@@ -249,6 +249,9 @@ sleep 15s
 # Push the Nova Proposal
 crowbar_proposal "nova" "create"
 crowbar_proposal "nova" "commit"
+## Ghetto Hack since we are disabling IPMI Barclamp
+## SET PXE BOOT on CONTROLLER NODE 
+ipmi_set_pxe ${COMPUTE_DRAC_IP}
 crowbar_proposal_status "nova" 30
 ##################################################
 
