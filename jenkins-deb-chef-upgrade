@@ -6,14 +6,6 @@
 # force a local default so this can be run on command line
 DISTRELEASE=${DISTRELEASE-ubuntu-natty}
 
-declare -A ipmap
-ipmap=(
-    [ubuntu-natty]="192.168.1.40"
-    [ubuntu-maverick]="192.168.1.41"
-    [ubuntu-oneiric]="192.168.1.42"
-    [debian-squeeze]="192.168.1.43"
-)
-
 declare -A componentmap
 componentmap=(
     [diablo-d5]="cookbooks-release-2011.3-d5.tgz"
@@ -34,11 +26,6 @@ echo ${TOCOMPONENT}
 echo ${componentmap[${FROMCOMPONENT-}]-}
 echo ${componentmap[${TOCOMPONENT-}]-}
 
-if [ "${ipmap[${DISTRELEASE-}]-}" = "" ]; then
-    die "No IP map set for ${DISTRELEASE} in $0"
-fi
-
-IP=${ipmap[${DISTRELEASE}]}
 FROM_TARBALL=${componentmap[${FROMCOMPONENT}]}
 TO_TARBALL=${componentmap[${TOCOMPONENT}]}
 
@@ -56,9 +43,12 @@ function err_cleanup_chefsolo() {
 kvm_instance_name=${BINARY_BUILD_RELEASE}-upgrade-test
 # kvm_instance_name=${BINARY_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}-chefsolo
 
+# this sets IP as a side-effect
+get_ip $kvm_instance_name
+
+
 MEMORY=2048000
 maybe_make_kvm_instance $kvm_instance_name
-# start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/proposed-packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
 start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/packages ${BINARY_BUILD_RELEASE} ${FROMCOMPONENT}
 
 trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
@@ -91,7 +81,7 @@ cat > /tmp/${kvm_instance_name}-FROM.json <<EOF
     "maverick": "http://${IMAGE_CACHE}/ubuntu-10.10-server-uec-amd64-multinic.tar.gz"
   },
 
-  "package_url": "http://192.168.1.1/packages",
+  "package_url": "http://build.monkeypuppetlabs.com/packages",
   "package_release": "${BINARY_BUILD_RELEASE}",
   "package_component": "${FROMCOMPONENT}",
   "virt_type": "qemu",
@@ -154,7 +144,7 @@ cat > /tmp/${kvm_instance_name}-TO.json <<EOF
   },
 
 
-  "package_url": "http://192.168.1.1/packages",
+  "package_url": "http://build.monkeypuppetlabs.com/packages",
   "package_release": "${BINARY_BUILD_RELEASE}",
   "package_component": "${TOCOMPONENT}",
   "virt_type": "qemu",
