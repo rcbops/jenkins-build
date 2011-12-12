@@ -19,7 +19,6 @@ jenkins_init
 jenkins_set_vars
 
 echo ${DISTRELEASE}
-echo ${ipmap[${DISTRELEASE-}]-}
 
 echo ${FROMCOMPONENT}
 echo ${TOCOMPONENT}
