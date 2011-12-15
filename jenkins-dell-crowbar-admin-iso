@@ -14,8 +14,6 @@ jenkins_set_vars
 
 echo ${NOVA_RELEASE}
 
-MILESTONE="d5"
-
 function err_cleanup_chefsolo() {
     # $1 - name
     if [ "${NOCLEAN-0}" == "1" ]; then
