@@ -120,7 +120,6 @@ function crowbar_proposal_status() {
 }
 
 # SETUP ISO NAME
-MILESTONE="d5"
 if [ -z "$NOVA_RELEASE" ] || [ -z "$MILESTONE" ] || [ -z "$DISTRELEASE" ]; then
     ISONAME="crowbar.iso"
 else
