@@ -179,7 +179,7 @@ while [ $count -lt 10 ]; do
         break
     fi
     if [ $count == 10 ]; then
-        echo "Installation of Crowbar Headnode failed"
+        log "Installation of Crowbar Headnode failed"
         exit 1
     fi
 done
@@ -199,14 +199,14 @@ while [ $count -lt 15 ]; do
     count=$(( count + 1 ))
     sleep 60s
     if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
-        echo "Controller node discovered"
+        log "Controller node discovered"
         break 
     fi
 done
 sleep 5
 
 if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
-    echo "Something went wrong with discovering the Controller node"
+    log "Something went wrong with discovering the Controller node"
     exit 1
 fi
 
@@ -249,11 +249,11 @@ while [ $count -lt 15 ]; do
     count=$(( count + 1 ))
     sleep 60s
     if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-6e-ec-ce' ); then
-        echo "Controller node discovered"
+        log "Controller node discovered"
         break 
     fi
     if [ $count -eq 15 ]; then
-        echo "Something went wrong with discovering the Compute node"
+        log "Something went wrong with discovering the Compute node"
         exit 1
     fi
 done
