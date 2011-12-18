@@ -28,10 +28,16 @@ function ipmi_restart() {
     status=$(ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
     if [ $status == "on" ]; then
         # Power is on, we can powercycle
-        ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+        # Gonna wilk it up here
+        for i in $(seq 1 5); do
+            ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+        done
     else
         # Power is off, we can poweron
-        ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+        # Gonna wilk it up here
+        for i in $(seq 1 5); do
+            ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+        done
     fi
 
     # we need to sleep for 5 seconds and make sure the box came back online
@@ -49,7 +55,10 @@ function ipmi_set_pxe() {
     ip=$1
     log "Running ipmi_set_pxe using:"
     log " ip: ${ip}"
-    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
+    # Gonna wilk it up here
+    for i in $(seq 1 5); do
+        ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
+    done
 }
 
 function ipmi_pxe_reboot() {
@@ -66,7 +75,10 @@ function ipmi_poweroff() {
     ip=$1
     log "Running ipmi_poweroff using:"
     log " ip: ${ip}"
-    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
+    # Gonna wilk it up here
+    for i in $(seq 1 5); do
+        ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
+    done
 }
 
 function ipmi_poweron() {
@@ -74,7 +86,10 @@ function ipmi_poweron() {
     ip=$1
     log "Running ipmi_poweron using:"
     log " ip: ${ip}"
-    ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+    # Gonna wilk it up here
+    for i in $(seq 1 5); do
+        ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+    done
 }
 
 function crowbar_proposal() {
