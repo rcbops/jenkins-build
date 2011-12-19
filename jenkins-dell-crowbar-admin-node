@@ -219,7 +219,7 @@ crowbar_proposal "mysql" "create"
 ipmi_set_pxe ${CONTROLLER_DRAC_IP}
 
 crowbar_proposal "mysql" "commit"
-crowbar_proposal_status "mysql" 20
+crowbar_proposal_status "mysql" 30
 ##################################################
 
 ##################################################
