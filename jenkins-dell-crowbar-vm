@@ -1,6 +1,9 @@
 #!/bin/bash
 #
 
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+
 MAX_INSTALL_WAIT=40   # 15 sec increments -- 10 minuts
 MAX_FIRSTBOOT_WAIT=40
 
@@ -26,6 +29,7 @@ function err_cleanup_crowbar() {
     exit 1
 }
 
+iso_name=rcb-${NOVA_RELEASE}-${MILESTONE}-${BINARY_BUILD_RELEASE}
 kvm_instance_name=crowbar-vm-installer
 tmpdir=$(mktemp -d)
 
@@ -34,7 +38,7 @@ trap "err_cleanup_crowbar ${kvm_instance_name}" SIGINT SIGTERM ERR
 MEMORY=2048000
 sudo lvcreate --size=20g --name=${kvm_instance_name} ${LVM_ROOT}
 
-cp ~jenkins/jobs/build-crowbar-admin-iso/workspace/*iso ${tmpdir}/crowbar-dist.iso
+cp ~jenkins/jobs/build-crowbar-admin-iso/workspace/crowbar-${iso_name}.iso ${tmpdir}/crowbar-dist.iso
 mkdir ${tmpdir}/crowbar-iso
 mkdir ${tmpdir}/aufs-overlay
 mkdir ${tmpdir}/crowbar-new
