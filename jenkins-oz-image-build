@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+MILESTONE=${MILESTONE-d5}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+function err_cleanup_oz_image_build() {
+    # $1 - name
+    if [ "${NOCLEAN-0}" == "1" ]; then
+    exit 0
+    fi
+
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+kvm_instance_name=${BINARY_BUILD_RELEASE}-oz-image-build
+
+# this sets IP as a side-effect
+get_ip $kvm_instance_name
+
+MEMORY=2048000
+
+maybe_make_kvm_instance $kvm_instance_name
+start_kvm_instance $kvm_instance_name ${IP} http://${PACKAGE_HOST}/${PACKAGE_REPO} ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+
+trap "err_cleanup_oz_image_build ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+
+# add our custom deb to the build environment
+ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install git -y --force-yes"
+
+ssh root@{$IP} "mkdir -p /srv/nfs-scratch"
+ssh root@{$IP} "mount -t nfs 184.106.53.105:/srv/export/nfs-scratch  /srv/nfs-scratch"
+#ssh root@{$IP} 
+ssh root@${IP} "git clone git://github.com/rackerjoe/oz-image-build.git"
+ssh root@${IP} "dpkg -i /root/oz-image-build/packages/${OZ_PACKAGE}"
+
+trap - SIGINT SIGTERM EXIT ERR
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
+
