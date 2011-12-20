@@ -139,12 +139,15 @@ function run_chef_solo() {
 
 function maybe_make_kvm_instance() {
     # $1 - name
+    # $2 - size in G (optional)
+
+    gigs=${2-8}
 
     base_instance=${LVM_ROOT}/${BINARY_BUILD_RELEASE}
     new_instance=${1}
 
     if [ ! -e ${LVM_ROOT}/${new_instance} ]; then
-	sudo lvcreate ${LVM_ROOT}/${BINARY_BUILD_RELEASE} --size=8G --name=${new_instance} --snapshot
+	sudo lvcreate ${LVM_ROOT}/${BINARY_BUILD_RELEASE} --size=${gigs}G --name=${new_instance} --snapshot
     else
 	return 1
     fi
