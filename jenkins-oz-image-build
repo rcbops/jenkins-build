@@ -33,7 +33,7 @@ get_ip $kvm_instance_name
 MEMORY=2048000
 
 maybe_make_kvm_instance $kvm_instance_name
-start_kvm_instance $kvm_instance_name ${IP} http://mirror.rackspace.com/ubuntu ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+start_kvm_instance $kvm_instance_name ${IP} http://build.monkeypuppetlabs.com/packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
 
 trap "err_cleanup_oz_image_build ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
