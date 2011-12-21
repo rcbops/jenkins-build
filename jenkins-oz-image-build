@@ -45,6 +45,7 @@ ssh root@{$IP} "mount -t nfs 184.106.53.105:/srv/export/nfs-scratch  /srv/nfs-sc
 #ssh root@{$IP} 
 ssh root@${IP} "git clone git://github.com/rackerjoe/oz-image-build.git"
 ssh root@${IP} "dpkg -i /root/oz-image-build/packages/${OZ_PACKAGE}"
+ssh root@{$IP} "umount /srv/nfs-scratch"
 
 trap - SIGINT SIGTERM EXIT ERR
 
