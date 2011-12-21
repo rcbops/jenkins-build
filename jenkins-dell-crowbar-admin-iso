@@ -46,7 +46,9 @@ trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
 ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install build-essential ruby-dev git debootstrap mkisofs ruby curl binutils -y --force-yes"
 ssh root@${IP} "modprobe loop"
-ssh root@${IP} "cd /opt && git clone https://github.com/dellcloudedge/crowbar.git"
+
+# ssh root@${IP} "cd /opt && git clone https://github.com/dellcloudedge/crowbar.git"
+ssh root@${IP} "cd /opt && git clone https://github.com/galstrom21/crowbar.git"
 
 # prestage the ubuntu-10.10-server-amd64.iso
 ISO_PATH=${JENKINS_HOME}/userContent/build-crowbar/ubuntu-10.10-server-amd64.iso
