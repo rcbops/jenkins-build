@@ -245,14 +245,14 @@ sleep 60s
 
 ## Loop and wait for the Controller node to get discovered
 count=1
-while [ $count -lt 15 ]; do
+while [ $count -lt 20 ]; do
     count=$(( count + 1 ))
     sleep 60s
     if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-6e-ec-ce' ); then
         log "Controller node discovered"
         break 
     fi
-    if [ $count -eq 15 ]; then
+    if [ $count -eq 20 ]; then
         log "Something went wrong with discovering the Compute node"
         exit 1
     fi
