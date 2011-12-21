@@ -4,7 +4,7 @@
 #
 
 # force a local default so this can be run on command line
-DISTRELEASE=${DISTRELEASE-ubuntu-maverick}
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
 MILESTONE=${MILESTONE-d5}
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
@@ -40,7 +40,9 @@ trap "err_cleanup_oz_image_build ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 sleep 20s
 
 # add our custom deb to the build environment
-ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install git -y --force-yes"
+ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install git nfs-common -y --force-yes"
+
+sleep 10s
 
 ssh root@{$IP} "mkdir -p /srv/nfs-scratch"
 ssh root@{$IP} "mount -t nfs 184.106.53.105:/srv/export/nfs-scratch  /srv/nfs-scratch"
