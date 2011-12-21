@@ -4,7 +4,7 @@
 #
 
 # force a local default so this can be run on command line
-DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+DISTRELEASE=${DISTRELEASE-ubuntu-oneiric}
 MILESTONE=${MILESTONE-d5}
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
