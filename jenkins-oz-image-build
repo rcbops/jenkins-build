@@ -37,8 +37,6 @@ start_kvm_instance $kvm_instance_name ${IP} http://build.monkeypuppetlabs.com/pa
 
 trap "err_cleanup_oz_image_build ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
-sleep 20s
-
 # add our custom deb to the build environment
 ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get -y --force-yes install git nfs-common python-support genisoimage gvncviewer libvirt-dev mtools python-libxml2 python-libvirt python-pycurl python-numpy python-m2crypto python-parted libaugeas0 libhivex0 febootstrap qemu-system kvm qemu-kvm qemu btrfs-tools cryptsetup diff grub-pc ntfs-3g ntfsprogs reiserfsprogs zfs-fuse binutils dosfstools jfsutils lsof lvm2 parted scrub strace xfsprogs zerofree"
 
@@ -54,6 +52,10 @@ ssh root@${IP} "mkdir -p /srv/nfs-scratch"
 ssh root@${IP} "mount -t nfs 184.106.53.105:/srv/export/nfs-scratch  /srv/nfs-scratch"
 ssh root@${IP} "git clone git://github.com/rackerjoe/oz-image-build.git"
 ssh root@${IP} "dpkg -i /root/oz-image-build/packages/oz_0.8.0-1_all.deb"
+
+ssh root@${IP} "cp /root/oz-image-build/templates/oz.cfg.orig /root/oz-image-build/templates/oz.cfg"
+ssh root@${IP} "sed -i 's/^data_dir.*$/data_dir = \/srv\/nfs-scratch\/oz/g' /root/oz-image-build/templates/oz.cfg"
+ssh root@${IP} "sed -i 's/^output_dir.*$/output_dir = \/srv\/nfs-scratch\/libvirt/g' /root/oz-image-build/templates/oz.cfg"
 
 
 ssh root@${IP} "exit 1"
