@@ -4,7 +4,7 @@
 #
 
 # force a local default so this can be run on command line
-DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+DISTRELEASE=${DISTRELEASE-ubuntu-maverick}
 MILESTONE=${MILESTONE-d5}
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
@@ -36,6 +36,8 @@ maybe_make_kvm_instance $kvm_instance_name
 start_kvm_instance $kvm_instance_name ${IP} http://build.monkeypuppetlabs.com/packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
 
 trap "err_cleanup_oz_image_build ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+
+sleep 20s
 
 # add our custom deb to the build environment
 ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install git -y --force-yes"
