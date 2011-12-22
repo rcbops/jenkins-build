@@ -37,7 +37,7 @@ start_kvm_instance $kvm_instance_name ${IP} http://build.monkeypuppetlabs.com/pa
 
 trap "err_cleanup_oz_image_build ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
-ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get -y --force-yes install git nfs-common python-support genisoimage gvncviewer libvirt-dev mtools python-libxml2 python-libvirt python-pycurl python-numpy python-m2crypto python-parted libaugeas0 libhivex0 febootstrap qemu-system kvm qemu-kvm qemu btrfs-tools cryptsetup diff grub-pc ntfs-3g reiserfsprogs zfs-fuse binutils dosfstools jfsutils lsof lvm2 parted scrub strace xfsprogs zerofree libvirt-bin"
+ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get -y --force-yes install git nfs-common python-support genisoimage gvncviewer libvirt-dev mtools python-libxml2 python-libvirt python-pycurl python-numpy python-m2crypto python-parted libaugeas0 libhivex0 febootstrap qemu-system kvm qemu-kvm qemu btrfs-tools cryptsetup diff grub-pc ntfs-3g reiserfsprogs zfs-fuse binutils dosfstools jfsutils lsof lvm2 parted scrub strace xfsprogs zerofree libvirt-bin bsdmainutils linux-generic"
 
 ssh root@${IP} "wget http://libguestfs.org/download/binaries/ubuntu1110-packages/python-guestfs_1.15.11-1_amd64.deb"
 ssh root@${IP} "wget http://libguestfs.org/download/binaries/ubuntu1110-packages/libguestfs0_1.15.11-1_amd64.deb"
