@@ -48,7 +48,7 @@ ssh root@${IP} "dpkg -i /root/libguestfs0_1.15.11-1_amd64.deb"
 ssh root@${IP} "dpkg -i /root/python-guestfs_1.15.11-1_amd64.deb"
 
 ssh root@${IP} "mkdir -p /srv/nfs-scratch"
-ssh root@${IP} "mount -t nfs -o rw,rsize=32768,wsize=32768,noac 184.106.53.105:/srv/export/nfs-scratch  /srv/nfs-scratch"
+ssh root@${IP} "mount -t nfs -o vers=3,rw,rsize=32768,wsize=32768 184.106.53.105:/srv/export/nfs-scratch  /srv/nfs-scratch"
 ssh root@${IP} "git clone git://github.com/rackerjoe/oz-image-build.git"
 ssh root@${IP} "dpkg -i /root/oz-image-build/packages/oz_0.8.0-2_all.deb"
 
