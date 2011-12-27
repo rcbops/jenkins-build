@@ -4,7 +4,7 @@
 #
 
 # force a local default so this can be run on command line
-DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+DISTRELEASE=${DISTRELEASE-ubuntu-oneiric}
 MILESTONE=${MILESTONE-d5}
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
@@ -33,18 +33,34 @@ get_ip $kvm_instance_name
 MEMORY=2048000
 
 maybe_make_kvm_instance $kvm_instance_name
-start_kvm_instance $kvm_instance_name ${IP} http://${PACKAGE_HOST}/${PACKAGE_REPO} ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+start_kvm_instance $kvm_instance_name ${IP} http://build.monkeypuppetlabs.com/packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
 
 trap "err_cleanup_oz_image_build ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
-# add our custom deb to the build environment
-ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install git -y --force-yes"
+ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get -y --force-yes install git nfs-common python-support genisoimage gvncviewer libvirt-dev mtools python-libxml2 python-libvirt python-pycurl python-numpy python-m2crypto python-parted libaugeas0 libhivex0 febootstrap qemu-system kvm qemu-kvm qemu btrfs-tools cryptsetup diff grub-pc ntfs-3g reiserfsprogs zfs-fuse binutils dosfstools jfsutils lsof lvm2 parted scrub strace xfsprogs zerofree libvirt-bin bsdmainutils linux-generic"
 
-ssh root@{$IP} "mkdir -p /srv/nfs-scratch"
-ssh root@{$IP} "mount -t nfs 184.106.53.105:/srv/export/nfs-scratch  /srv/nfs-scratch"
-#ssh root@{$IP} 
+ssh root@${IP} "wget http://libguestfs.org/download/binaries/ubuntu1110-packages/python-guestfs_1.15.11-1_amd64.deb"
+ssh root@${IP} "wget http://libguestfs.org/download/binaries/ubuntu1110-packages/libguestfs0_1.15.11-1_amd64.deb"
+ssh root@${IP} "wget http://libguestfs.org/download/binaries/ubuntu1110-packages/febootstrap_3.12-1_amd64.deb"
+
+ssh root@${IP} "dpkg -i /root/febootstrap_3.12-1_amd64.deb"
+ssh root@${IP} "dpkg -i /root/libguestfs0_1.15.11-1_amd64.deb"
+ssh root@${IP} "dpkg -i /root/python-guestfs_1.15.11-1_amd64.deb"
+
+ssh root@${IP} "mkdir -p /srv/nfs-scratch"
+ssh root@${IP} "mount -t nfs -o nolock,vers=3,rw,rsize=32768,wsize=32768 184.106.53.105:/srv/export/nfs-scratch  /srv/nfs-scratch"
 ssh root@${IP} "git clone git://github.com/rackerjoe/oz-image-build.git"
-ssh root@${IP} "dpkg -i /root/oz-image-build/packages/${OZ_PACKAGE}"
+ssh root@${IP} "dpkg -i /root/oz-image-build/packages/oz_0.8.0-2_all.deb"
+
+ssh root@${IP} "cp /root/oz-image-build/templates/oz.cfg.orig /root/oz-image-build/templates/oz.cfg"
+ssh root@${IP} "sed -i 's/^data_dir.*$/data_dir = \/srv\/nfs-scratch\/oz/g' /root/oz-image-build/templates/oz.cfg"
+ssh root@${IP} "sed -i 's/^output_dir.*$/output_dir = \/srv\/nfs-scratch\/libvirt/g' /root/oz-image-build/templates/oz.cfg"
+
+ssh root@${IP} "sed -i 's/^data_dir.*$/data_dir = \/srv\/nfs-scratch\/oz/g' /root/oz-image-build/templates/ubuntu-lucid.oz.cfg"
+ssh root@${IP} "sed -i 's/^output_dir.*$/output_dir = \/srv\/nfs-scratch\/libvirt/g' /root/oz-image-build/templates/ubuntu-lucid.oz.cfg"
+
+ssh root@${IP} "exit 1"
+ssh root@${IP} "umount /srv/nfs-scratch"
 
 trap - SIGINT SIGTERM EXIT ERR
 
