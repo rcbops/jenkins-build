@@ -46,6 +46,7 @@ sudo mount -oloop ${tmpdir}/crowbar-dist.iso ${tmpdir}/crowbar-iso
 sudo mount -t aufs -o br=${tmpdir}/aufs-overlay:${tmpdir}/crowbar-iso none ${tmpdir}/crowbar-new
 
 sudo sed -i -e 's#/dev/sda#/dev/vda#' ${tmpdir}/crowbar-new/preseed/crowbar_admin.seed
+sudo sed -i -e 's#console-setup/layoutcode=us#console-setup/layoutcode=us keyboard-configuration/layoutcode=us#' ${tmpdir}/crowbar-new/isolinux/pxelinux.cfg/default
 
 # re-sum the disk
 pushd ${tmpdir}/crowbar-new
