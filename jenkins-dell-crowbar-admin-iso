@@ -73,15 +73,15 @@ ssh root@${IP} "cd /opt/crowbar && git submodule update"
 
 ssh root@${IP} "cd /opt/crowbar/barclamps/provisioner && git remote add upstream https://github.com/galstrom21/barclamp-provisioner.git && git pull upstream master"
 
-if ! ( ssh root@${IP} "cd /opt/crowbar && DEBIAN_FRONTEND=noninteractive VERSION='${iso_name}' ./build_crowbar.sh ubuntu-11.04" ); then
-     echo "Error in tests"
-     exit 1
-fi
-
-#if ! ( ssh root@${IP} "cd /opt/crowbar && DEBIAN_FRONTEND=noninteractive VERSION='${iso_name}' ./build_crowbar.sh ubuntu-10.10" ); then
+#if ! ( ssh root@${IP} "cd /opt/crowbar && DEBIAN_FRONTEND=noninteractive VERSION='${iso_name}' ./build_crowbar.sh ubuntu-11.04" ); then
 #     echo "Error in tests"
 #     exit 1
 #fi
+
+if ! ( ssh root@${IP} "cd /opt/crowbar && DEBIAN_FRONTEND=noninteractive VERSION='${iso_name}' ./build_crowbar.sh ubuntu-10.10" ); then
+     echo "Error in tests"
+     exit 1
+fi
 
 scp root@${IP}:/opt/crowbar/crowbar-${iso_name}.iso .
 # scp crowbar-${iso_name}.iso openstack@${ISODEST}:~/incoming/crowbar.iso
