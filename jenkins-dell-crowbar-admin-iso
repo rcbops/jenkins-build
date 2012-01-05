@@ -46,15 +46,16 @@ trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
 ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install build-essential ruby-dev git debootstrap mkisofs ruby curl binutils -y --force-yes"
 ssh root@${IP} "modprobe loop"
+
 ssh root@${IP} "cd /opt && git clone https://github.com/dellcloudedge/crowbar.git"
 
-# prestage the ubuntu-10.10-server-amd64.iso
-ISO_PATH=${JENKINS_HOME}/userContent/build-crowbar/ubuntu-10.10-server-amd64.iso
-ssh root@${IP} "mkdir -p /root/.crowbar-build-cache/iso"
-if ! ( scp ${ISO_PATH} root@${IP}:/root/.crowbar-build-cache/iso ); then
-    echo "Ubuntu-10.10 ISO Copy Failed"
-    exit 1
-fi
+## prestage the ubuntu-10.10-server-amd64.iso
+# ISO_PATH=${JENKINS_HOME}/userContent/build-crowbar/ubuntu-10.10-server-amd64.iso
+# ssh root@${IP} "mkdir -p /root/.crowbar-build-cache/iso"
+# if ! ( scp ${ISO_PATH} root@${IP}:/root/.crowbar-build-cache/iso ); then
+#    echo "Ubuntu-10.10 ISO Copy Failed"
+#    exit 1
+#fi
 
 # copy over the sledgehammer image
 SLEDGEHAMMER_PATH=${JENKINS_HOME}/userContent/build-crowbar/sledgehammer-tftpboot.tar.gz
@@ -68,18 +69,9 @@ ssh root@${IP} "cd /opt/crowbar && git checkout openstack-os-build"
 ssh root@${IP} "cd /opt/crowbar && git submodule init"
 ssh root@${IP} "cd /opt/crowbar && git submodule update"
 
-# Putting in patches to test out Crowbar on Ubuntu-11.04
-ssh root@${IP} "cd /opt/crowbar/barclamps/crowbar && git remote add upstream https://github.com/dellcloudedge/barclamp-crowbar.git && git pull upstream master"
-ssh root@${IP} "cd /opt/crowbar/barclamps/deployer && git remote add upstream https://github.com/dellcloudedge/barclamp-deployer.git && git pull upstream master"
-ssh root@${IP} "cd /opt/crowbar/barclamps/glance && git remote add upstream https://github.com/dellcloudedge/barclamp-glance.git && git pull upstream master"
-ssh root@${IP} "cd /opt/crowbar/barclamps/keystone && git remote add upstream https://github.com/dellcloudedge/barclamp-keystone.git && git pull upstream master"
-ssh root@${IP} "cd /opt/crowbar/barclamps/kong && git remote add upstream https://github.com/dellcloudedge/barclamp-kong.git && git pull upstream master"
-ssh root@${IP} "cd /opt/crowbar/barclamps/nova && git remote add upstream https://github.com/dellcloudedge/barclamp-nova.git && git pull upstream master"
-ssh root@${IP} "cd /opt/crowbar/barclamps/nova_dashboard && git remote add upstream https://github.com/dellcloudedge/barclamp-nova_dashboard.git && git pull upstream master"
-ssh root@${IP} "cd /opt/crowbar/barclamps/provisioner && git remote add upstream https://github.com/dellcloudedge/barclamp-provisioner.git && git pull upstream master"
-ssh root@${IP} "cd /opt/crowbar/barclamps/swift && git remote add upstream https://github.com/dellcloudedge/barclamp-swift.git && git pull upstream master"
-# ssh root@${IP} "cd /opt/crowbar/barclamps/ubuntu-install && git remote add upstream https://github.com/dellcloudedge/barclamp-ubuntu-install.git && git pull upstream master"
-ssh root@${IP} "cd /opt/crowbar/barclamps/ubuntu-install && git remote add upstream https://github.com/galstrom21/barclamp-ubuntu-install.git && git pull upstream master"
+# Adding in non merged pull-reqs
+ssh root@${IP} "cd /opt/crowbar/barclamps/provisioner && git remote add upstream https://github.com/galstrom21/barclamp-provisioner.git && git pull upstream master"
+ssh root@${IP} "cd /opt/crowbar/barclamps/crowbar && git remote add upstream https://github.com/galstrom21/barclamp-crowbar.git && git pull upstream master"
 
 if ! ( ssh root@${IP} "cd /opt/crowbar && DEBIAN_FRONTEND=noninteractive VERSION='${iso_name}' ./build_crowbar.sh ubuntu-11.04" ); then
      echo "Error in tests"
