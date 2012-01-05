@@ -4,7 +4,9 @@
 #
 
 # force a local default so this can be run on command line
-DISTRELEASE=f15
+if [ -z $DISTRELEASE ]; then
+    DISTRELEASE=f15
+fi
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
 . $(dirname $0)/jenkins-deb-common
