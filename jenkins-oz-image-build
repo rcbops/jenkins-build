@@ -4,8 +4,7 @@
 #
 
 # force a local default so this can be run on command line
-DISTRELEASE=${DISTRELEASE-ubuntu-oneiric}
-MILESTONE=${MILESTONE-d5}
+DISTRELEASE=f15
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
 . $(dirname $0)/jenkins-deb-common
@@ -22,4 +21,4 @@ function err_cleanup_oz_image_build() {
     exit 1
 }
 
-env > /tmp/env-output
+sudo make $DISTRELEASE
