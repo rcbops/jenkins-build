@@ -22,3 +22,4 @@ function err_cleanup_oz_image_build() {
     exit 1
 }
 
+env > /tmp/env-output
