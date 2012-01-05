@@ -21,4 +21,5 @@ function err_cleanup_oz_image_build() {
     exit 1
 }
 
+cd ~/oz-image-build
 sudo make $DISTRELEASE
