@@ -38,8 +38,6 @@ trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
 #-----#
 
-env
-
 iso_ver=${PACKAGE_SET}-${CROWBAR_VERSION}-${BUILD_NUMBER}
 iso_name=crowbar-${iso_ver}.iso
 
