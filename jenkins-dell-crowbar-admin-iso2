@@ -38,7 +38,7 @@ trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
 #-----#
 
-iso_ver=${openstack_component}-${CROWBAR_VERSION}-${BUILD_NUMBER}
+iso_ver=${openstack_component}-${CROWBAR_RELEASE}-${BUILD_NUMBER}
 iso_name=crowbar-${iso_ver}.iso
 
 echo "ISO NAME: ${iso_name}"
