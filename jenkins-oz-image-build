@@ -23,10 +23,10 @@ function err_cleanup_oz_image_build() {
     exit 1
 }
 
-cd ~/oz-image-build
+cd /home/jenkins/workspace/oz-image-build
 git reset --hard HEAD
 git pull
-if [ $FORCE -eq 0 ]; then
+if [ "${FORCE-0} == "1" ]; then
     sudo make $DISTRELEASE-clean
 fi
 sudo make $DISTRELEASE
