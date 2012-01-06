@@ -71,7 +71,7 @@ ssh root@${IP} "cd /opt/crowbar && git submodule update"
 
 # Adding in non merged pull-reqs
 # ssh root@${IP} "cd /opt/crowbar/barclamps/provisioner && git remote add upstream https://github.com/galstrom21/barclamp-provisioner.git && git pull upstream master"
-# ssh root@${IP} "cd /opt/crowbar/barclamps/crowbar && git remote add upstream https://github.com/galstrom21/barclamp-crowbar.git && git pull upstream master"
+ssh root@${IP} "cd /opt/crowbar/barclamps/crowbar && git remote add upstream https://github.com/galstrom21/barclamp-crowbar.git && git pull upstream master"
 
 ssh root@${IP} "cd /opt/crowbar/barclamps/provisioner && git checkout vlowther-ipxe-longdelay && git pull"
 
