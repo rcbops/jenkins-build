@@ -25,7 +25,7 @@ function err_cleanup_chefsolo() {
 }
 
 
-kvm_instance_name=${BINARY_BUILD_RELEASE}-crowbar-admin-iso
+kvm_instance_name=${BINARY_BUILD_RELEASE}-crowbar-admin-iso2
 
 # this sets IP as a side-effect
 get_ip $kvm_instance_name
