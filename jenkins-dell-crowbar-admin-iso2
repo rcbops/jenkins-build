@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+MILESTONE=${MILESTONE-d5}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+jenkins_init
+jenkins_set_vars
+
+function err_cleanup_chefsolo() {
+    # $1 - name
+    if [ "${NOCLEAN-0}" == "1" ]; then
+	exit 0
+    fi
+
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+
+kvm_instance_name=${BINARY_BUILD_RELEASE}-crowbar-admin-iso
+
+# this sets IP as a side-effect
+get_ip $kvm_instance_name
+
+iso_name=rcb-${NOVA_RELEASE}-${MILESTONE}-${BINARY_BUILD_RELEASE}
+
+MEMORY=1024000
+maybe_make_kvm_instance $kvm_instance_name
+start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+
+trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+
+#-----#
+
+env
+echo ${BUILD_NUMBER}
+echo ${BUILD_ID}
+echo ${JOB_NAME}
+echo ${BUILD_TAG}
+echo ${EXECUTOR_NUMBER}
+echo ${NODE_NAME}
+echo ${NODE_LABELS}
+echo ${JAVA_HOME}
+echo ${WORKSPACE}
+echo ${HUDSON_URL}
+echo ${JENKINS_URL}
+echo ${BUILD_URL}
+echo ${JOB_URL}
+echo ${SVN_REVISION}
+echo ${CVS_BRANCH}
+
+
+#-----#
+
+trap - SIGINT SIGTERM EXIT ERR
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
