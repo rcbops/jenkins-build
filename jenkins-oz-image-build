@@ -5,7 +5,7 @@
 
 # force a local default so this can be run on command line
 if [ -z $DISTRELEASE ]; then
-    DISTRELEASE=f15
+    DISTRELEASE=fedora16_x86_64
 fi
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
@@ -26,4 +26,7 @@ function err_cleanup_oz_image_build() {
 cd ~/oz-image-build
 git reset --hard HEAD
 git pull
+if [ $FORCE -eq 0 ]; then
+    sudo make $DISTRELEASE-clean
+fi
 sudo make $DISTRELEASE
