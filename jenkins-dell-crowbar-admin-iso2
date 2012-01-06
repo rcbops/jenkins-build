@@ -30,8 +30,6 @@ kvm_instance_name=${BINARY_BUILD_RELEASE}-crowbar-admin-iso2
 # this sets IP as a side-effect
 get_ip $kvm_instance_name
 
-iso_name=rcb-${NOVA_RELEASE}-${MILESTONE}-${BINARY_BUILD_RELEASE}
-
 MEMORY=1024000
 maybe_make_kvm_instance $kvm_instance_name
 start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
@@ -41,22 +39,11 @@ trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 #-----#
 
 env
-echo ${BUILD_NUMBER}
-echo ${BUILD_ID}
-echo ${JOB_NAME}
-echo ${BUILD_TAG}
-echo ${EXECUTOR_NUMBER}
-echo ${NODE_NAME}
-echo ${NODE_LABELS}
-echo ${JAVA_HOME}
-echo ${WORKSPACE}
-echo ${HUDSON_URL}
-echo ${JENKINS_URL}
-echo ${BUILD_URL}
-echo ${JOB_URL}
-echo ${SVN_REVISION}
-echo ${CVS_BRANCH}
 
+iso_ver=${PACKAGE_SET}-${CROWBAR_VERSION}-${BUILD_NUMBER}
+iso_name=crowbar-${iso_ver}.iso
+
+echo "ISO NAME: ${iso_name}"
 
 #-----#
 
