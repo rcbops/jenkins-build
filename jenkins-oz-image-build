@@ -24,6 +24,9 @@ function err_cleanup_oz_image_build() {
 }
 
 cd /home/jenkins/workspace/oz-image-build
+RAND=$[ ( $RANDOM % 10 )  + 10 ]
+echo "sleeping for $RAND seconds before building"
+sleep $RAND
 git reset --hard HEAD
 git pull
 if [ "${FORCE-0}" == "1" ]; then
