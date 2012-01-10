@@ -36,6 +36,18 @@ fi
 
 REPO=${repomap[${PACKAGE_REPO}]}
 
+delcare -A chefmap
+chefmap=(
+    [diablo-d5]="https://github.com/rcbops/chef-cookbooks/raw/master/cookbooks-release-2011.3-d5.tgz"
+    [diablo-final]="https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz"
+)
+
+CHEF_BRANCH=${NOVA_RELEASE}-${MILESTONE}
+if [ "${chefmap[${CHEF_BRANCH-}]-}" = "" ]; then
+    die "No CHEF MAP set for CHEF_BRANCH ${CHEF_BRANCH} in $0"
+fi
+CHEF_URL=${chefmap[${CHEF_BRANCH}]}
+
 function err_cleanup_chefsolo() {
     # $1 - name
     if [ "${NOCLEAN-0}" == "1" ]; then
@@ -123,7 +135,8 @@ ssh root@${IP} apt-get install vlan -y --force-yes
 ssh root@${IP} vconfig add eth0 100
 ssh root@${IP} vconfig add eth0 101
 
-run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz" /tmp/${kvm_instance_name}.json
+#run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz" /tmp/${kvm_instance_name}.json
+run_chef_solo ${IP} ${CHEF_URL} /tmp/${kvm_instance_name}.json
 
 sleep 20
 
