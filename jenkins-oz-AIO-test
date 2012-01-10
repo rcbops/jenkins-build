@@ -58,7 +58,9 @@ function err_cleanup_chefsolo() {
     exit 1
 }
 
-kvm_instance_name=${BINARY_BUILD_RELEASE}-oz-${TARGET}-AIO-test
+TMP_HOSTNAME=${TARGET//_/-}
+
+kvm_instance_name=${BINARY_BUILD_RELEASE}-oz-${TMP_HOSTNAME}-AIO-test
 
 # this sets IP as a side-effect
 get_ip $kvm_instance_name
