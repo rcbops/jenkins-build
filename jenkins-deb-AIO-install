@@ -36,7 +36,7 @@ fi
 
 REPO=${repomap[${PACKAGE_REPO}]}
 
-delcare -A chefmap
+declare -A chefmap
 chefmap=(
     [diablo-d5]="https://github.com/rcbops/chef-cookbooks/raw/master/cookbooks-release-2011.3-d5.tgz"
     [diablo-final]="https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz"
