@@ -4,8 +4,8 @@
 #
 
 # force a local default so this can be run on command line
-DISTRELEASE=centos60_x86_64
-PACKAGE_REPO=${PACKAGE_REPO-stable}
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+PACKAGE_REPO=${PACKAGE_REPO-unstable}
 COMPONENT=${COMPONENT-diablo-final}
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
@@ -57,7 +57,7 @@ function err_cleanup_chefsolo() {
     exit 1
 }
 
-kvm_instance_name=oz-${DISTRELEASE}-AIO-test
+kvm_instance_name=${BINARY_BUILD_RELEASE}-${COMPONENT}-${PACKAGE_REPO}-oz-AIO-test
 
 # this sets IP as a side-effect
 get_ip $kvm_instance_name
@@ -105,7 +105,7 @@ cat > /tmp/${kvm_instance_name}.json <<EOF
   },
 
   "image": {
-    "${DISTRELEASE}":  "http://${IMAGE_CACHE}/${DISTRELEASE}.qcow2",
+    "oneiric":  "http://${IMAGE_CACHE}/${TARGET}"
   },
 
   "package_url": "${REPO}",
