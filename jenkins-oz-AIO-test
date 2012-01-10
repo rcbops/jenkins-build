@@ -57,7 +57,7 @@ function err_cleanup_chefsolo() {
     exit 1
 }
 
-kvm_instance_name=${BINARY_BUILD_RELEASE}-${COMPONENT}-${PACKAGE_REPO}-oz-AIO-test
+kvm_instance_name=${BINARY_BUILD_RELEASE}-${COMPONENT}-${PACKAGE_REPO}-oz-${TARGET}-AIO-test
 
 # this sets IP as a side-effect
 get_ip $kvm_instance_name
