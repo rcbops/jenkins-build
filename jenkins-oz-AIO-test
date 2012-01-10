@@ -1,0 +1,137 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=centos60_x86_64
+PACKAGE_REPO=${PACKAGE_REPO-stable}
+COMPONENT=${COMPONENT-diablo-final}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+echo ${DISTRELEASE}
+echo ${PACKAGE_REPO}
+echo ${COMPONENT}
+
+KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
+if [ "${KONG_BRANCH}" == "diablo-final" ]; then
+    KONG_BRANCH=master
+fi
+
+declare -A repomap
+repomap=(
+    [stable]="http://ops.rcb.me/packages"
+    [unstable]="http://ops.monkeypuppetlabs.com/packages"
+    [experimental]="http://build.monkeypuppetlabs.com/packages"
+)
+
+if [ "${repomap[${PACKAGE_REPO-}]-}" = "" ]; then
+    die "No IP map set for ${PACKAGE_REPO} in $0"
+fi
+
+REPO=${repomap[${PACKAGE_REPO}]}
+
+function err_cleanup_chefsolo() {
+    # $1 - name
+    if [ "${NOCLEAN-0}" == "1" ]; then
+	exit 0
+    fi
+
+    # Diagnostic info
+    log "Running on $(hostname)"
+    log "Network:"
+    ssh root@${IP} -- /sbin/ifconfig
+    log "Kong conf"
+    ssh root@${IP} -- cat /opt/kong/etc/config.ini
+    log "Logs"
+    ssh root@${IP} -- tail -n100 /var/log/nova/nova*log
+
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+kvm_instance_name=oz-${DISTRELEASE}-AIO-test
+
+# this sets IP as a side-effect
+get_ip $kvm_instance_name
+
+declare -a ip_octets
+ip_octets=(${IP//./ })
+
+
+MEMORY=2048000
+trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM ERR
+
+maybe_make_kvm_instance $kvm_instance_name
+start_kvm_instance $kvm_instance_name ${IP} ${REPO} ${BINARY_BUILD_RELEASE} ${COMPONENT}
+
+cat > /tmp/${kvm_instance_name}.json <<EOF
+{
+  "public": {
+    "label": "public",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br100",
+    "bridge_dev": "eth0.100",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4",
+    "ipv4_cidr": "10.2.${ip_octets[3]}.0/24"
+  },
+
+  "private": {
+    "label": "private",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br101",
+    "bridge_dev": "eth0.101",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4",
+    "ipv4_cidr": "10.3.${ip_octets[3]}.0/24"
+  },
+
+  "floating": {
+    "ipv4_cidr": "10.1.${ip_octets[3]}.0/24"
+  },
+
+  "kong": {
+    "branch": "${KONG_BRANCH}"
+  },
+
+  "image": {
+    "${DISTRELEASE}":  "http://${IMAGE_CACHE}/${DISTRELEASE}.qcow2",
+  },
+
+  "package_url": "${REPO}",
+  "package_release": "${BINARY_BUILD_RELEASE}",
+  "package_component": "${COMPONENT}",
+  "virt_type": "qemu",
+
+ "run_list": [ "recipe[apt]", "recipe[openstack::allinone]", "recipe[kong]" ]
+}
+EOF
+
+ssh root@${IP} apt-get install vlan -y --force-yes
+ssh root@${IP} vconfig add eth0 100
+ssh root@${IP} vconfig add eth0 101
+
+run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz" /tmp/${kvm_instance_name}.json
+
+sleep 20
+
+## box should be configured now....
+
+ssh root@${IP} "cd /opt/kong; ./run_tests.sh --nova"
+
+trap - SIGINT SIGTERM EXIT ERR
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
+
