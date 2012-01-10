@@ -4,8 +4,9 @@
 #
 
 # force a local default so this can be run on command line
-DISTRELEASE=${DISTRELEASE-ubuntu-natty}
-PACKAGE_REPO=${PACKAGE_REPO-unstable}
+TARGET=${TARGET-centos60_x86_64}
+DISTRELEASE=${DISTRELEASE-ubuntu-oneiric}
+PACKAGE_REPO=${PACKAGE_REPO-experimental}
 COMPONENT=${COMPONENT-diablo-final}
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
