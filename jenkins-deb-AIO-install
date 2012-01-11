@@ -18,10 +18,13 @@ echo ${DISTRELEASE}
 echo ${PACKAGE_REPO}
 echo ${COMPONENT}
 
-KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
-if [ "${KONG_BRANCH}" == "diablo-final" ]; then
-    KONG_BRANCH=master
-fi
+# hard setting KONG_BRANCH to d5_compat to test changes
+KONG_BRANCH="d5_compat"
+#KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
+#if [ "${KONG_BRANCH}" == "diablo-final" ]; then
+#    KONG_BRANCH=master
+#fi
+
 
 declare -A repomap
 repomap=(
