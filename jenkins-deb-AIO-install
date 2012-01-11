@@ -18,12 +18,10 @@ echo ${DISTRELEASE}
 echo ${PACKAGE_REPO}
 echo ${COMPONENT}
 
-# hard setting KONG_BRANCH to d5_compat to test changes
-KONG_BRANCH="d5_compat"
-#KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
-#if [ "${KONG_BRANCH}" == "diablo-final" ]; then
-#    KONG_BRANCH=master
-#fi
+KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
+if [ "${KONG_BRANCH}" == "diablo-final" ]; then
+    KONG_BRANCH=master
+fi
 
 
 declare -A repomap
@@ -40,13 +38,9 @@ fi
 REPO=${repomap[${PACKAGE_REPO}]}
 
 declare -A chefmap
-#chefmap=(
-#    [diablo-d5]="https://github.com/rcbops/chef-cookbooks/raw/master/cookbooks-release-2011.3-d5.tgz"
-#    [diablo-final]="https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz"
-#)
 chefmap=(
-    [diablo-d5]="http://breu.org/filedrop/cookbooks-release-2011.3-d5.tgz"
-    [diablo-final]="http://breu.org/filedrop/cookbooks.tgz"
+    [diablo-d5]="https://github.com/rcbops/chef-cookbooks/raw/master/cookbooks-release-2011.3-d5.tgz"
+    [diablo-final]="https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz"
 )
 
 CHEF_BRANCH=${NOVA_RELEASE}-${MILESTONE}
