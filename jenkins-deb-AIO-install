@@ -40,9 +40,13 @@ fi
 REPO=${repomap[${PACKAGE_REPO}]}
 
 declare -A chefmap
+#chefmap=(
+#    [diablo-d5]="https://github.com/rcbops/chef-cookbooks/raw/master/cookbooks-release-2011.3-d5.tgz"
+#    [diablo-final]="https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz"
+#)
 chefmap=(
-    [diablo-d5]="https://github.com/rcbops/chef-cookbooks/raw/master/cookbooks-release-2011.3-d5.tgz"
-    [diablo-final]="https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz"
+    [diablo-d5]="http://breu.org/filedrop/cookbooks-release-2011.3-d5.tgz"
+    [diablo-final]="http://breu.org/filedrop/cookbooks.tgz"
 )
 
 CHEF_BRANCH=${NOVA_RELEASE}-${MILESTONE}
