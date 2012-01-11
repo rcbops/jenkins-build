@@ -21,7 +21,7 @@ echo ${COMPONENT}
 
 KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
 if [ "${KONG_BRANCH}" == "diablo-final" ]; then
-    KONG_BRANCH=master
+    KONG_BRANCH="d5_compat"
 fi
 
 declare -A repomap
@@ -36,6 +36,18 @@ if [ "${repomap[${PACKAGE_REPO-}]-}" = "" ]; then
 fi
 
 REPO=${repomap[${PACKAGE_REPO}]}
+
+declare -A chefmap
+chefmap=(
+    [diablo-d5]="http://breu.org/filedrop/cookbooks-release-2011.3-d5.tgz"
+    [diablo-final]="http://breu.org/filedrop/cookbooks.tgz"
+)
+
+CHEF_BRANCH=${NOVA_RELEASE}-${MILESTONE}
+if [ "${chefmap[${CHEF_BRANCH-}]-}" = "" ]; then
+    die "No CHEF MAP set for CHEF_BRANCH ${CHEF_BRANCH} in $0"
+fi
+CHEF_URL=${chefmap[${CHEF_BRANCH}]}
 
 function err_cleanup_chefsolo() {
     # $1 - name
@@ -124,7 +136,7 @@ ssh root@${IP} apt-get install vlan -y --force-yes
 ssh root@${IP} vconfig add eth0 100
 ssh root@${IP} vconfig add eth0 101
 
-run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz" /tmp/${kvm_instance_name}.json
+run_chef_solo ${IP} ${CHEF_URL} /tmp/${kvm_instance_name}.json
 
 sleep 20
 
