@@ -129,6 +129,10 @@ cat > /tmp/${kvm_instance_name}.json <<EOF
     "maverick": "http://${IMAGE_CACHE}/ubuntu-10.10-server-uec-amd64-multinic.tar.gz"
   },
 
+  "integration_testing": {
+    "int1":     "http://c250663.r63.cf1.rackcdn.com/rhel56_x86_64.qcow2"
+  },
+
   "package_url": "${REPO}",
   "package_release": "${BINARY_BUILD_RELEASE}",
   "package_component": "${COMPONENT}",
