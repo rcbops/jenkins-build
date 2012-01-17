@@ -209,8 +209,8 @@ ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "  group: Infrastructure" >> /opt/dell
 ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
 
 # Update the barclamp
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/barclamp_install.rb /opt/dell/barclamp/crowbar'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i knife cookbook upload -o /opt/dell/barclamp crowbar'
+ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/barclamp_install.rb /opt/dell/barclamps/crowbar'
+ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i knife cookbook upload -o /opt/dell/barclamps crowbar'
 
 sleep 120s
 
