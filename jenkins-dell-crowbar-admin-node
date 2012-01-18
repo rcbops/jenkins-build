@@ -150,7 +150,9 @@ else
 fi
 
 # EXEC CROWBAR BUILD
+set +x
 ssh openstack@${ISODEST} "sudo /home/openstack/incoming/fixup_crowbar.sh ${ISONAME}"
+set -x
 
 # PXE REBOOT HEADNODE
 ipmi_pxe_reboot ${HEADNODE_DRAC_IP}
