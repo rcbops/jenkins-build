@@ -231,7 +231,7 @@ count=1
 while [ $count -lt 20 ]; do
     count=$(( count + 1 ))
     sleep 60s
-    ELEMENTS=$(ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | wc -l')
+    ELEMENTS=$(ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep "^d" | wc -l')
     if [ ${ELEMENTS} == ${NODECOUNT} ]; then
         log "All nodes discovered"
         break
