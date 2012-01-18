@@ -218,34 +218,40 @@ sleep 120s
 ipmi_set_pxe ${CONTROLLER_DRAC_IP}
 ipmi_poweron ${CONTROLLER_DRAC_IP}
 
+# Bring up the dedicated Compute Node
+ipmi_set_pxe ${COMPUTE_DRAC_IP}
+ipmi_poweron ${COMPUTE_DRAC_IP}
+
 # WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
 sleep 60s
 
 ## Loop and wait for the Controller node to get discovered
+NODECOUNT=2
 count=1
-while [ $count -lt 15 ]; do
+while [ $count -lt 20 ]; do
     count=$(( count + 1 ))
     sleep 60s
-    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
-        log "Controller node discovered"
-        break 
+    ELEMENTS=$(ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | wc -l')
+    if [ ${ELEMENTS} == ${NODECOUNT} ]; then
+        log "All nodes discovered"
+        break
+    fi
+    if [ $count -eq 20 ]; then
+        log "ALL NODES NOT DISCOVERED!!"
+        ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready'
+        exit 1
     fi
 done
 sleep 5
 
-if ! ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-8f-73-6c' ); then
-    log "Something went wrong with discovering the Controller node"
-    exit 1
-fi
+## Ghetto Hack since we are disabling IPMI Barclamp
+## SET PXE BOOT on BOTH NODES 
+ipmi_set_pxe ${CONTROLLER_DRAC_IP}
+ipmi_set_pxe ${COMPUTE_DRAC_IP}
 
 ##################################################
 # Push MYSQL Proposal
 crowbar_proposal "mysql" "create"
-
-## Ghetto Hack since we are disabling IPMI Barclamp
-## SET PXE BOOT on CONTROLLER NODE 
-ipmi_set_pxe ${CONTROLLER_DRAC_IP}
-
 crowbar_proposal "mysql" "commit"
 crowbar_proposal_status "mysql" 30
 ##################################################
@@ -264,36 +270,9 @@ crowbar_proposal "glance" "commit"
 crowbar_proposal_status "glance"
 ##################################################
 
-# Bring up the dedicated Compute Node
-ipmi_set_pxe ${COMPUTE_DRAC_IP}
-ipmi_poweron ${COMPUTE_DRAC_IP}
-
-# WAIT TO ENSURE TARGET GOES DOWN FOR REBOOT
-sleep 60s
-
-## Loop and wait for the Controller node to get discovered
-count=1
-while [ $count -lt 20 ]; do
-    count=$(( count + 1 ))
-    sleep 60s
-    if ( ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/crowbar_node_state status --no-ready | grep d60-eb-69-6e-ec-ce' ); then
-        log "Controller node discovered"
-        break 
-    fi
-    if [ $count -eq 20 ]; then
-        log "Something went wrong with discovering the Compute node"
-        exit 1
-    fi
-done
-
-sleep 15s
-
 ##################################################
 # Push the Nova Proposal
 crowbar_proposal "nova" "create"
-## Ghetto Hack since we are disabling IPMI Barclamp
-## SET PXE BOOT on CONTROLLER NODE 
-ipmi_set_pxe ${COMPUTE_DRAC_IP}
 crowbar_proposal "nova" "commit"
 crowbar_proposal_status "nova" 30
 ##################################################
