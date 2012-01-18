@@ -193,27 +193,6 @@ while [ $count -lt 10 ]; do
     fi
 done
 
-# Setup the node_description.yml file
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "default:" > /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "  description: Created on {DATE}" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "  alias: {NODE}" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "# Node specific names" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "admin:" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "  description: Crowbar Server" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "  alias: crowbar.rcbops.me" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "  group: Core" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "d60-eb-69-8f-73-6c:" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "  description: OS Controller" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "  alias: controller.rcbops.me" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "  group: Infrastructure" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'echo "" >> /opt/dell/barclamps/crowbar/crowbar_framework/db/node_description.yml'
-
-# Update the barclamp
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i /opt/dell/bin/barclamp_install.rb /opt/dell/barclamps/crowbar'
-ssh ${SSH_OPTS} crowbar@${HEADNODE} 'sudo -i knife cookbook upload -o /opt/dell/barclamps crowbar'
-
 sleep 120s
 
 # POWER ON CONTROLLER NODE 
