@@ -24,9 +24,28 @@ if [ "" = "${NOCLEAN-}" ]; then
 
     git checkout master
     git checkout ${GIT_BRANCH}  # this is really a tag...
+    git clean -df
 fi
 
-build_source_package
+if [ -d .pc ]; then
+    rm -rf .pc
+fi
 
+if [ -d build-area ]; then
+    rm -rf build-area
+fi
 
+mkdir -p build-area
+
+build_source_package build-area
+
+if (quilt series | grep "debian-changes"); then
+    echo "All debianed up"
+    exit 1
+fi
+
+mv build-area/* .
+if [ -d build-area ]; then
+    rm -rf build-area
+fi
 

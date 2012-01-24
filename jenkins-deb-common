@@ -317,6 +317,13 @@ function verify_pbuilder() {
 }
 
 function build_source_package {
+    # $1 - optional, build idr
+
+    local build_args=""
+    if [ "$1-" != "" ]; then
+	build_args="--git-export-dir=${1}"
+    fi
+	
     distro_chroot=${SOURCE_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}
     pbuilder=${USER}-${distro_chroot}-pbuilder
 
@@ -325,7 +332,7 @@ function build_source_package {
     verify_pbuilder $distro_chroot $pbuilder
 
     schroot -c ${pbuilder} -r -u root -- /usr/lib/pbuilder/pbuilder-satisfydepends
-    schroot -c ${pbuilder} -r -- git-buildpackage --git-pristine-tar -tc -S --git-ignore-new --git-ignore-branch
+    schroot -c ${pbuilder} -r -- git-buildpackage --git-pristine-tar -tc -S --git-ignore-new --git-ignore-branch ${build_args}
 
     release_lock
 
