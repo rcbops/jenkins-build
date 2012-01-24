@@ -320,10 +320,12 @@ function build_source_package {
     # $1 - optional, build idr
 
     local build_args=""
+    local relative_build_dir=".."
     if [ "$1-" != "" ]; then
 	build_args="--git-export-dir=${1}"
+	relative_build_dir=${1}
     fi
-	
+
     distro_chroot=${SOURCE_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}
     pbuilder=${USER}-${distro_chroot}-pbuilder
 
@@ -337,10 +339,10 @@ function build_source_package {
     release_lock
 
     # hrm... we have packages, but now they are setting in the .. directory
-    mv ../*.gz .
-    mv ../*changes .
-    mv ../*dsc .
-    mv ../*build .
+    mv ${relative_build_dir}/*.gz .
+    mv ${relative_build_dir}/*changes .
+    mv ${relative_build_dir}/*dsc .
+    mv ${relative_build_dir}/*build .
 
     # for the jenkins post-deploy job
     if [ "" != "${JENKINS_HOME-}" ] && [ "" != "${JOB_NAME-}" ] && [ "" != "${BUILD_NUMBER-}" ]; then
