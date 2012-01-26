@@ -173,8 +173,8 @@ function start_kvm_instance() {
     sudo mount ${LVM_ROOT}/${new_instance} /mnt/$$
 
     function start_kvm_instance_cleanup() {
-	umount /mnt/$$
-	rm -rf /mnt/$$
+	sudo umount /mnt/$$
+	sudo rm -rf /mnt/$$
 	return 1
     }
 
@@ -269,6 +269,7 @@ function reset_repo() {
     [ -e ${PROPOSED_REPO} ] || die "No ${PROPOSED_REPO}"
 
     rm -rf ${PROPOSED_REPO}/*
+
     cp -a /srv/packages/* ${PROPOSED_REPO}
     release_lock
 }
