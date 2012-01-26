@@ -184,7 +184,7 @@ function start_kvm_instance() {
     cat <<EOF | sudo tee /mnt/$$/etc/apt/sources.list
 deb http://${DIST_CACHE}/ubuntu ${BINARY_BUILD_RELEASE} main universe
 deb http://${DIST_CACHE}/ubuntu ${BINARY_BUILD_RELEASE}-updates main universe
-deb ${openstack_url} ${openstack_release} ${openstack_component}
+deb ${openstack_url}/${openstack_component} ${openstack_release} main
 EOF
 
     cat <<EOF | sudo tee /mnt/$$/etc/hosts
@@ -269,7 +269,7 @@ function reset_repo() {
     [ -e ${PROPOSED_REPO} ] || die "No ${PROPOSED_REPO}"
 
     rm -rf ${PROPOSED_REPO}/*
-    cp -a /srv/packages/{cache,conf,db,dists,pool} ${PROPOSED_REPO}
+    cp -a /srv/packages/* ${PROPOSED_REPO}
     release_lock
 }
 
