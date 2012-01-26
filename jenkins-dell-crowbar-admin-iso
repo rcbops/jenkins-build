@@ -70,7 +70,7 @@ ssh root@${IP} "cd /opt/crowbar && git submodule init"
 ssh root@${IP} "cd /opt/crowbar && git submodule update"
 
 # Adding in non merged pull-reqs
-# ssh root@${IP} "cd /opt/crowbar/barclamps/nova && git remote add upstream https://github.com/galstrom21/barclamp-nova.git && git pull upstream master"
+ssh root@${IP} "cd /opt/crowbar/barclamps/mysql && git remote add upstream https://github.com/galstrom21/barclamp-mysql.git && git pull upstream master"
 
 if ! ( ssh root@${IP} "cd /opt/crowbar && DEBIAN_FRONTEND=noninteractive VERSION='${iso_name}' ./build_crowbar.sh ubuntu-11.04" ); then
      echo "Error in tests"
