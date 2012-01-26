@@ -269,7 +269,7 @@ function reset_repo() {
     [ -e ${PROPOSED_REPO} ] || die "No ${PROPOSED_REPO}"
 
     rm -rf ${PROPOSED_REPO}/*
-    cp -a /srv/packages/{cache,conf,db,dists,pool} ${PROPOSED_REPO}
+    cp -a /srv/packages/* ${PROPOSED_REPO}
     release_lock
 }
 
