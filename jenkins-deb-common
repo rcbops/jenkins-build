@@ -570,6 +570,27 @@ EOF
     release_lock
 }
 
+function lv_remove() {
+    local lvm_name=${1}
+    local mapper_name=/dev/mapper/$(basename ${LVM_ROOT})-$(echo ${lvm_name} | sed -e 's/-/--/g')
+
+    # remove a lvm volume.  On natty this is easy.  On
+    # debian, the mapper devices probably have to get whacked first
+    #
+
+    if (! sudo lvremove -f ${LVM_ROOT}/${lvm_name}); then
+	# try and remove the mapper entries
+	if [ -e ${mapper_name}-cow ]; then
+	    sudo dmsetup remove ${mapper_name}-cow
+	fi
+
+	if [ -e ${mapper_name} ]; then
+	    sudo dmsetup remove ${mapper_name}
+	fi
+    fi
+
+    sudo lvremove -f ${LVM_ROOT}/${lvm_name}
+}
 
 if [ "${IMPORTED_JENKINS-}" = "" ]; then
     jenkins_init
