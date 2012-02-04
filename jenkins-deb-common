@@ -280,7 +280,8 @@ function promote_repo() {
     acquire_lock "repo"
     [ -e ${PROPOSED_REPO} ] || die "No ${PROPOSED_REPO}"
 
-    cp -a ${PROPOSED_REPO}/{cache,conf,db,dists,pool} /srv/packages
+    rm -rf /srv/packages/*
+    cp -a ${PROPOSED_REPO}/* /srv/packages
     release_lock
 }
 
@@ -431,7 +432,7 @@ function import_proposed_packages() {
 	#     fi
 	# done
 
-	if ( reprepro -b ${PROPOSED_REPO} -C ${nova_release}-${milestone} \
+	if ( reprepro -b ${PROPOSED_REPO}/${nova_release}-${milestone} -C ${nova_release}-${milestone} \
 	    includedsc ${release} ${pkg} ); then
 	    log "Uploaded ${pkg}"
 	fi
@@ -447,8 +448,8 @@ function import_proposed_packages() {
 	milestone=${details[1]}
 	release=${details[2]}
 
-	pkg_file=${PROPOSED_REPO}/dists/${release}/${nova_release}-${milestone}/binary-${ARCH}/Packages
-
+	# pkg_file=${PROPOSED_REPO}/dists/${release}/${nova_release}-${milestone}/binary-${ARCH}/Packages
+        #
 	# if ( ! grep -q "$base_name" ${pkg_file} ); then
 	#     reprepro -b ${PROPOSED_REPO} -S ${nova_release}-${milestone} \
 	# 	includedeb ${release} ${pkg}
@@ -457,11 +458,11 @@ function import_proposed_packages() {
 	# fi
 	package_name=${base_name%%_*}
 
-	if ( reprepro -b ${PROPOSED_REPO} -C ${nova_release}-${milestone} remove ${release} ${package_name} ); then
+	if ( reprepro -b ${PROPOSED_REPO}/${nova_release}-${milestone} -C ${nova_release}-${milestone} remove ${release} ${package_name} ); then
 	    log "Removed package ${package_name}"
 	fi
 
-	if ( reprepro -b ${PROPOSED_REPO} -C ${nova_release}-${milestone} \
+	if ( reprepro -b ${PROPOSED_REPO}/${nova_release}-${milestone} -C ${nova_release}-${milestone} \
 	    includedeb ${release} ${pkg} ); then
 	    log "Uploaded ${pkg}"
 	fi
