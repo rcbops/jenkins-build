@@ -44,8 +44,3 @@ if (quilt series | grep "debian-changes"); then
     exit 1
 fi
 
-mv build-area/* .
-if [ -d build-area ]; then
-    rm -rf build-area
-fi
-
