@@ -25,6 +25,21 @@ function err_cleanup_oz_image_build() {
 }
 
 cd /home/jenkins/workspace/oz-image-build
+
+sudo /sbin/service libvirtd status
+SERVICE_STATUS=$?
+if [ $SERVICE_STATUS -ne 0 ]; then
+    echo "*** WARNING: LIBVIRTD IS DOWN ***"
+    RAND=$[ ( $RANDOM % 100 ) ]
+    echo "*** WARNING: sleeping for $RAND seconds before restarting libvirtd ***"
+    sleep $RAND
+    sudo /sbin/service libvirtd stop
+    sudo /sbin/service libvirtd start
+    echo "*** WARNING: LIBVIRTD restart process completed"
+else
+    echo "*** NOTICE: libvirtd is up and should be running"
+fi
+
 RAND=$[ ( $RANDOM % 10 )  + 10 ]
 echo "sleeping for $RAND seconds before building"
 sleep $RAND
