@@ -44,11 +44,11 @@ function jenkins_set_vars() {
 	NOVA_RELEASE=${COMPONENT%%-*}
 	MILESTONE=${COMPONENT##*-}
     else
-	NOVA_RELEASE=${NOVA_RELEASE-diablo}
-	MILESTONE=${MILESTONE-d5}
+	NOVA_RELEASE=${NOVA_RELEASE-essex}
+	MILESTONE=${MILESTONE-e3}
     fi
 
-    MAJOR_VERSION=${MAJOR_VERSION-2011.3}
+    MAJOR_VERSION=${MAJOR_VERSION-2012.1}
 
     ARCH=${ARCH-amd64}
     STRATEGY=${STRATEGY-lvm}
@@ -319,7 +319,7 @@ function verify_pbuilder() {
 }
 
 function build_source_package {
-    # $1 - optional, build idr
+    # $1 - optional, build dir
 
     local build_args=""
     local relative_build_dir=".."
