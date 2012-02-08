@@ -483,6 +483,8 @@ function import_proposed_packages() {
 
     rm -rf ${INCOMING_PACKAGES}/*
 
+    ~/jenkins-build/merge.py ${PROPOSED_REPO}
+
     release_lock 8
     release_lock 9
 }
