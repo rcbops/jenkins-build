@@ -9,7 +9,7 @@ function jenkins_init() {
 
     log "Initializing"
     set -x
-#    set -e
+    set -e
     set -u
 
     exec 2>&1
