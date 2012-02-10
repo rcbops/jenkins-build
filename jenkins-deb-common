@@ -402,6 +402,8 @@ function import_proposed_packages() {
     acquire_lock "repo" 9
     acquire_lock "incoming" 8
 
+    ~/jenkins-build/scripts/merge.py ${PROPOSED_REPO}
+
     source_packages=$(find ${INCOMING_PACKAGES} -name "*dsc")
     binary_packages=$(find ${INCOMING_PACKAGES} -name "*deb")
 
@@ -483,7 +485,7 @@ function import_proposed_packages() {
 
     rm -rf ${INCOMING_PACKAGES}/*
 
-    ~/jenkins-build/merge.py ${PROPOSED_REPO}
+    ~/jenkins-build/scripts/merge.py ${PROPOSED_REPO}
 
     release_lock 8
     release_lock 9
