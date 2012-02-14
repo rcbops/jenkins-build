@@ -30,13 +30,13 @@ function ipmi_restart() {
     if [ $status == "on" ]; then
         # Power is on, we can powercycle
         # Gonna wilk it up here
-        for i in $(seq 1 5); do
+        for i in $(seq 1 4); do
             ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
         done
     else
         # Power is off, we can poweron
         # Gonna wilk it up here
-        for i in $(seq 1 5); do
+        for i in $(seq 1 4); do
             ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
         done
     fi
@@ -59,7 +59,7 @@ function ipmi_set_pxe() {
     log "Running ipmi_set_pxe using:"
     log " ip: ${ip}"
     # Gonna wilk it up here
-    for i in $(seq 1 5); do
+    for i in $(seq 1 4); do
         ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis bootdev pxe"
     done
     set -x
@@ -81,7 +81,7 @@ function ipmi_poweroff() {
     log "Running ipmi_poweroff using:"
     log " ip: ${ip}"
     # Gonna wilk it up here
-    for i in $(seq 1 5); do
+    for i in $(seq 1 4); do
         ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
     done
     set -x
@@ -94,7 +94,7 @@ function ipmi_poweron() {
     log "Running ipmi_poweron using:"
     log " ip: ${ip}"
     # Gonna wilk it up here
-    for i in $(seq 1 5); do
+    for i in $(seq 1 4); do
         ssh openstack@${IPMIHOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
     done
     set -x
