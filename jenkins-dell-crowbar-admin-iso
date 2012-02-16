@@ -40,7 +40,7 @@ fi
 
 MEMORY=1024000
 maybe_make_kvm_instance $kvm_instance_name
-start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/packages ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
+start_kvm_instance $kvm_instance_name ${IP} http://192.168.1.1/packages/${NOVA_RELEASE}-${MILESTONE} ${BINARY_BUILD_RELEASE} ${NOVA_RELEASE}-${MILESTONE}
 
 trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 
