@@ -329,6 +329,11 @@ function build_source_package {
 	relative_build_dir=${1}
     fi
 
+    if [ -e debian/control ]; then
+	# kind of cheesy
+	set_component_from_dsc debian/control
+    fi
+
     distro_chroot=${SOURCE_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}
     pbuilder=${USER}-${distro_chroot}-pbuilder
 
