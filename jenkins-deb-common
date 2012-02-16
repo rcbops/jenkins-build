@@ -291,7 +291,7 @@ function promote_repo() {
 	fi
 
 	rm -rf /srv/packages/${subrepo}/*
-	cp -a ${PROPOSED_REPO}/${subrepo} /src/packages
+	cp -a ${PROPOSED_REPO}/${subrepo} /srv/packages
     else
 	rm -rf /srv/packages/*
 	cp -a ${PROPOSED_REPO}/* /srv/packages
