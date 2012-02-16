@@ -324,7 +324,7 @@ function build_source_package {
 
     local build_args=""
     local relative_build_dir=".."
-    if [ "$1-" != "" ]; then
+    if [ "${1-}" != "" ]; then
 	build_args="--git-export-dir=${1}"
 	relative_build_dir=${1}
     fi
