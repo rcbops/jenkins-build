@@ -8,4 +8,10 @@ jenkins_set_vars
 
 set
 
-promote_repo
+if [ "${1-}" != "" ]; then
+    promote_repo $1
+else
+    promote_repo
+fi
+
+

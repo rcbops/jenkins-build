@@ -277,11 +277,26 @@ function reset_repo() {
 
 # promote the "proposed repo" to the current repo
 function promote_repo() {
+    # $1 - repo to promote (optional)
+
     acquire_lock "repo"
     [ -e ${PROPOSED_REPO} ] || die "No ${PROPOSED_REPO}"
 
-    rm -rf /srv/packages/*
-    cp -a ${PROPOSED_REPO}/* /srv/packages
+    if [ "${1-}" != "" ]; then
+	subrepo=$1
+	if [ ! -d ${PROPOSED_REPO}/${subrepo} ]; then
+	    release_lock
+	    echo "Bad repo"
+	    return 1
+	fi
+
+	rm -rf /srv/packages/${subrepo}/*
+	cp -a ${PROPOSED_REPO}/${subrepo} /src/packages
+    else
+	rm -rf /srv/packages/*
+	cp -a ${PROPOSED_REPO}/* /srv/packages
+    fi
+
     release_lock
 }
 
