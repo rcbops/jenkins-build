@@ -343,7 +343,7 @@ function build_source_package {
 
     schroot -c ${pbuilder} -r -u root -- apt-get update -y
     schroot -c ${pbuilder} -r -u root -- /usr/lib/pbuilder/pbuilder-satisfydepends
-    schroot -c ${pbuilder} -r -- git-buildpackage --git-pristine-tar -tc -S --git-ignore-new --git-ignore-branch ${build_args}
+    schroot -c ${pbuilder} -r -- git-buildpackage --git-pristine-tar -i.* -tc -S --git-ignore-new --git-ignore-branch ${build_args}
 
     release_lock
 
