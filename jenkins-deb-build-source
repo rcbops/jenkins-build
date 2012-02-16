@@ -37,7 +37,7 @@ fi
 
 mkdir -p build-area
 
-build_source_package build-area
+build_source_package #build-area
 
 if (quilt series | grep "debian-changes"); then
     echo "All debianed up"

@@ -322,11 +322,6 @@ function verify_pbuilder() {
 function build_source_package {
     # $1 - optional, build dir
 
-    rm ${WORKSPACE}/*tar.gz
-    rm ${WORKSPACE}/*dsc
-    rm ${WORKSPACE}/*source.build
-    rm ${WORKSPACE}/*source.changes
-
     local build_args=""
     local relative_build_dir=".."
     if [ "$1-" != "" ]; then
