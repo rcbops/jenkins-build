@@ -25,14 +25,16 @@ function jenkins_am_interested() {
     # $1 - distrelease (ubuntu-maverick)
     # $2 - packageset (diablo-d5)
 
+    local release=${DISTRELEASE##*-}
+
     case $2 in
 	diablo-d5)
-	    [[ $1 > "oneiric" ]] || return 1
+	    [[ ${release} > "oneiric" ]] && return 1
 	    return 0
 	    ;;
 
 	diablo-final)
-	    [[ $1 > "oneiric" ]] || return 1
+	    [[ ${release} > "oneiric" ]] && return 1
 	    return 0
 	    ;;
 
@@ -375,10 +377,6 @@ function build_source_package {
     if [ -e debian/control ]; then
 	# kind of cheesy
 	set_component_from_dsc debian/control
-    fi
-
-    if ( ! jenkins_am_interested ${DISTRELEASE} ${NOVA_RELEASE}-${MILESTONE} ); then
-	return 0
     fi
 
     distro_chroot=${SOURCE_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}
