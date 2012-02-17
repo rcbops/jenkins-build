@@ -442,6 +442,10 @@ function upload_to_incoming() {
     # $1 - dsc file
     set_component_from_dsc ${dsc}
 
+    if ( ! jenkins_am_interested ${DISTRELEASE} ${NOVA_RELEASE}-${MILESTONE} ); then
+	return 0
+    fi
+
     # dump the packages into proposed packages.  The repotest will
     # merge outstanding packages.
     acquire_lock "incoming"
