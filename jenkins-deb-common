@@ -222,7 +222,14 @@ EOF
 
     if [ ! -e /mnt/$$/usr/sbin/sshd ]; then
 	sudo chroot /mnt/$$ apt-get update
+	cat > /mnt/$$/usr/sbin/policy-rc.d <<EOF
+#!/bin/sh
+exit 101
+EOF
+	chmod 755 /mnt/$$/usr/sbin/policy-rc.d
+
 	sudo chroot /mnt/$$ apt-get install -y openssh-server
+	rm -f /mnt/$$/usr/sbin/policy-rc.d
     fi
 
     sudo cp /etc/ssh/*key* /mnt/$$/etc/ssh
