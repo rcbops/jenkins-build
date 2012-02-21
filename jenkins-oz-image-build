@@ -28,7 +28,8 @@ cd /home/jenkins/workspace/oz-image-build
 
 sudo /sbin/service libvirtd status
 SERVICE_STATUS=$?
-if [ $SERVICE_STATUS -ne 0 ]; then
+RES=`sudo /sbin/service libvirtd status | grep -c "Main PID.*killed"`
+if [ $SERVICE_STATUS -eq 0 -o $RES -ne 0 ]; then
     echo "*** WARNING: LIBVIRTD IS DOWN ***"
     RAND=$[ ( $RANDOM % 100 ) ]
     echo "*** WARNING: sleeping for $RAND seconds before restarting libvirtd ***"
