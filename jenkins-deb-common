@@ -179,6 +179,7 @@ function maybe_make_kvm_instance() {
     if [ ! -e ${LVM_ROOT}/${new_instance} ]; then
 	sudo lvcreate ${LVM_ROOT}/${BINARY_BUILD_RELEASE} --size=${gigs}G --name=${new_instance} --snapshot
     else
+	echo "Logical volume ${LVM_ROOT}/${new_instance} already exists"
 	return 1
     fi
 }
