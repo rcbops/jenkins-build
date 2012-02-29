@@ -14,9 +14,9 @@ jenkins_init
 jenkins_set_vars
 
 # KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
-if [ "${KONG_BRANCH}" == "precise" ]; then
-    KONG_BRANCH=keystone-manage2
-fi
+#if [ "${KONG_BRANCH}" == "precise" ]; then
+#    KONG_BRANCH=ubuntu-precise
+#fi
 
 function err_cleanup_chefsolo() {
     # $1 - name
