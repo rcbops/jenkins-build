@@ -1,0 +1,114 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+# KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
+if [ "${KONG_BRANCH}" == "precise" ]; then
+    KONG_BRANCH=keystone-manage2
+fi
+
+function err_cleanup_chefsolo() {
+    # $1 - name
+    if [ "${NOCLEAN-0}" == "1" ]; then
+	exit 0
+    fi
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+kvm_instance_name=${BINARY_BUILD_RELEASE}-chefsolo
+
+# this sets IP as a side-effect
+get_ip $kvm_instance_name
+
+MEMORY=2048000
+maybe_make_kvm_instance $kvm_instance_name
+trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
+
+
+cat > /tmp/${kvm_instance_name}.json <<EOF
+{
+  "public": {
+    "label": "public",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br100",
+    "bridge_dev": "eth0.100",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4"
+  },
+
+  "private": {
+    "label": "private",
+    "num_networks": "1",
+    "network_size": "255",
+    "bridge": "br101",
+    "bridge_dev": "eth0.101",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4"
+   },
+
+  "kong": {
+    "branch": "${KONG_BRANCH}"
+  },
+
+  "image": {
+    "oneiric":  "http://${IMAGE_CACHE}/ubuntu-11.10-server-uec-amd64-multinic.tar.gz",
+    "natty":    "http://${IMAGE_CACHE}/ubuntu-11.04-server-uec-amd64-multinic.tar.gz",
+    "maverick": "http://${IMAGE_CACHE}/ubuntu-10.10-server-uec-amd64-multinic.tar.gz",
+    "tty": "http://${IMAGE_CACHE}/ttylinux-uec-amd64-12.1_2.6.35-22_1.tar.gz"
+  },
+
+  "glance": {
+    "images": [ "tty" ]
+  },
+  "package_url": "http://archive.ubuntu.com/ubuntu",
+  "package_release": "${BINARY_BUILD_RELEASE}",
+  "package_component": "main",
+  "virt_type": "qemu",
+
+  "run_list": [ "recipe[apt]", "recipe[openstack::allinone]", "recipe[kong]", "recipe[exerstack]" ]
+}
+EOF
+
+ssh root@${IP} apt-get install vlan -y --force-yes
+ssh root@${IP} vconfig add eth0 100
+ssh root@${IP} vconfig add eth0 101
+
+run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/${KONG_BRANCH}/cookbooks.tgz" /tmp/${kvm_instance_name}.json
+
+sleep 20
+
+# box should be configured now....
+
+if ! ( ssh root@${IP} "cd /opt/kong; ./run_tests.sh --nova" ); then
+    echo "Error in tests"
+    exit 1
+fi
+
+if ! ( ssh root@${IP} "cd /opt/exerstack; ./exercise.sh" ); then
+    echo "Error in tests"
+    exit 1
+fi
+
+trap - SIGINT SIGTERM EXIT ERR
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
+
+
