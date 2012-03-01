@@ -89,7 +89,7 @@ ssh root@${IP} vconfig add eth0 100
 ssh root@${IP} vconfig add eth0 101
 
 # Trying to fix a bug
-ssh root@${IP} apt-get install cgroup-lite -y --force-yes
+ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"
 
 run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/${KONG_BRANCH}/cookbooks.tgz" /tmp/${kvm_instance_name}.json
 
