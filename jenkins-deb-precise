@@ -77,7 +77,6 @@ cat > /tmp/${kvm_instance_name}.json <<EOF
     "images": [ "tty" ]
   },
   "package_url": "http://archive.ubuntu.com/ubuntu",
-  "package_release": "${BINARY_BUILD_RELEASE}",
   "package_component": "main",
   "virt_type": "qemu",
 
@@ -88,6 +87,9 @@ EOF
 ssh root@${IP} apt-get install vlan -y --force-yes
 ssh root@${IP} vconfig add eth0 100
 ssh root@${IP} vconfig add eth0 101
+
+# Trying to fix a bug
+ssh root@${IP} apt-get install cgroup-lite -y --force-yes
 
 run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/${KONG_BRANCH}/cookbooks.tgz" /tmp/${kvm_instance_name}.json
 
