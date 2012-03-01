@@ -91,12 +91,12 @@ ssh root@${IP} vconfig add eth0 101
 # Trying to fix a bug
 count=1
 while ! $(ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"); then
-    if [ $count > 10 ]; then
+    if [ $count -gt 10 ]; then
         echo "Unable to install cgroup-lite"
         exit 1
     fi
     sleep 2;
-    count=count+1;
+    count=$(( count + 1 ));
 done
 
 run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/${KONG_BRANCH}/cookbooks.tgz" /tmp/${kvm_instance_name}.json
