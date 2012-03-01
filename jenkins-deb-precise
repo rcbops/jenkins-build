@@ -90,7 +90,7 @@ ssh root@${IP} vconfig add eth0 101
 
 # Trying to fix a bug
 count=1
-while ! $(ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"); then
+while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; then
     if [ $count -gt 10 ]; then
         echo "Unable to install cgroup-lite"
         exit 1
