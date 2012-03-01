@@ -95,6 +95,9 @@ sleep 20
 
 # box should be configured now....
 
+# Output package list before we run kong and exerstack
+ssh root@${IP} dpkg -l | grep '2012.1'
+
 if ! ( ssh root@${IP} "cd /opt/kong; ./run_tests.sh --nova" ); then
     echo "Error in tests"
     exit 1
