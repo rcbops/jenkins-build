@@ -4,7 +4,7 @@
 #
 
 # force a local default so this can be run on command line
-DISTRELEASE=${DISTRELEASE-ubuntu-natty}
+DISTRELEASE=${DISTRELEASE-ubuntu-precise}
 PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
