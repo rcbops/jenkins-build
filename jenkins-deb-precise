@@ -95,7 +95,7 @@ while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-li
         echo "Unable to install cgroup-lite"
         exit 1
     fi
-    if ! ( /usr/bin/cgroups-mount ); then
+    if ! ( ssh root@${IP} "/usr/bin/cgroups-mount" ); then
         :
     fi 
     sleep 2;
