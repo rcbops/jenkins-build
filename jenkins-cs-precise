@@ -52,12 +52,11 @@ ssh root@${IP} apt-get install ruby ruby-dev libopenssl-ruby rdoc ri irb build-e
 ssh root@${IP} 'wget http://production.cf.rubygems.org/rubygems/rubygems-1.8.10.tgz; tar -xvzf rubygems-1.8.10.tgz; ruby rubygems-1.8.10/setup.rb --no-format-executable; gem install chef'
 ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; knife configure client ./client-config'
 ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; chef-client'
-ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[openstack::allinone]; chef-client'
+ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[openstack::allinone]; chef-client; knife node delete $HOSTNAME -y'
 
 sleep 20
 
 # box should be configured now....
-ssh root@${IP} 'knife node delete $HOSTNAME -y'
 
 # Output package list before we run kong and exerstack
 ssh root@${IP} dpkg -l | grep '2012.1'
