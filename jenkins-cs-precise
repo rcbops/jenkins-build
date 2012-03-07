@@ -2,6 +2,8 @@
 #
 # $1 = test repo number
 #
+set -e 
+set -x
 
 # force a local default so this can be run on command line
 DISTRELEASE=${DISTRELEASE-ubuntu-precise}
