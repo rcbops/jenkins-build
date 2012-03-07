@@ -58,7 +58,7 @@ sleep 20
 
 # box should be configured now....
 # Delete node from hosted chef 
-ssh root@${IP} 'knife node delete $HOSTNAME'
+# ssh root@${IP} 'knife node delete $HOSTNAME'
 
 # Output package list before we run kong and exerstack
 ssh root@${IP} dpkg -l | grep '2012.1'
