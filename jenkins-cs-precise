@@ -71,10 +71,10 @@ if ! ( ssh root@${IP} "cd /opt/exerstack; ./exercise.sh" ); then
     exit 1
 fi
 
-trap - SIGINT SIGTERM EXIT ERR
-
 # Delete node from hosted chef when complete
 ssh root@${IP} 'knife node delete $HOSTNAME'
+
+trap - SIGINT SIGTERM EXIT ERR
 
 sudo virsh destroy ${kvm_instance_name}
 sleep 5
