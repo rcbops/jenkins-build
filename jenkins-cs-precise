@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-precise}
+PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+# KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
+#if [ "${KONG_BRANCH}" == "precise" ]; then
+#    KONG_BRANCH=ubuntu-precise
+#fi
+
+kvm_instance_name=${BINARY_BUILD_RELEASE}-cs
+
+# this sets IP as a side-effect
+get_ip $kvm_instance_name
+
+MEMORY=2048000
+maybe_make_kvm_instance $kvm_instance_name
+trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
+
+
+ssh root@${IP} apt-get install vlan -y --force-yes
+ssh root@${IP} vconfig add eth0 100
+ssh root@${IP} vconfig add eth0 101
+
+# Trying to fix a bug
+count=1
+while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
+    if [ $count -gt 3 ]; then
+        echo "Unable to install cgroup-lite"
+        exit 1
+    fi
+    if ! ( ssh root@${IP} "/usr/bin/cgroups-mount" ); then
+        :
+    fi 
+    sleep 2;
+    count=$(( count + 1 ));
+done
+
+# Setup Hosted Chef
+ssh root@${IP} apt-get install ruby ruby-dev libopenssl-ruby rdoc ri irb build-essential wget ssl-cert -y --force-yes
+ssh root@${IP} 'wget http://production.cf.rubygems.org/rubygems/rubygems-1.8.10.tgz; tar -xvzf rubygems-1.8.10.tgz; ruby rubygems-1.8.10/setup.rb --no-format-executable; gem install chef'
+ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; knife configure client ./client-config'
+ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; chef-client'
+ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[openstack::allinone]; chef-client'
+
+sleep 20
+
+# box should be configured now....
+
+# Output package list before we run kong and exerstack
+ssh root@${IP} dpkg -l | grep '2012.1'
+
+if ! ( ssh root@${IP} "cd /opt/kong; ./run_tests.sh --nova" ); then
+    echo "Error in tests"
+    exit 1
+fi
+
+if ! ( ssh root@${IP} "cd /opt/exerstack; ./exercise.sh" ); then
+    echo "Error in tests"
+    exit 1
+fi
+
+trap - SIGINT SIGTERM EXIT ERR
+
+# Delete node from hosted chef when complete
+ssh root@${IP} 'knife node delete $HOSTNAME'
+
+sudo virsh destroy ${kvm_instance_name}
+sleep 5
+sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
+
+
