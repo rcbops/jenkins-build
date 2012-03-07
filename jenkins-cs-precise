@@ -78,5 +78,3 @@ trap - SIGINT SIGTERM EXIT ERR
 sudo virsh destroy ${kvm_instance_name}
 sleep 5
 sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
-
-
