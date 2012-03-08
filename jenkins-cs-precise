@@ -28,6 +28,11 @@ function err_cleanup_chef() {
     if [ "${NOCLEAN-0}" == "1" ]; then
         exit 0
     fi
+
+    # Delete node and client from chef-server
+    ssh root@${IP} 'knife node delete $HOSTNAME'
+    ssh root@${IP} 'knife client delete $HOSTNAME'
+
     sudo virsh destroy ${1}
     sleep 5
     sudo lvremove -f ${LVM_ROOT}/${1}
@@ -36,7 +41,7 @@ function err_cleanup_chef() {
 
 MEMORY=2048000
 maybe_make_kvm_instance $kvm_instance_name
-trap "err_cleanup_chef ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+trap "err_cleanup_chef ${kvm_instance_name} ${IP}" SIGINT SIGTERM EXIT ERR
 start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
 
 
@@ -68,8 +73,6 @@ ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[openstack::allinone]; c
 sleep 20
 
 # box should be configured now....
-ssh root@${IP} 'knife node delete $HOSTNAME'
-ssh root@${IP} 'knife client delete $HOSTNAME'
 
 # Output package list before we run kong and exerstack
 ssh root@${IP} dpkg -l | grep '2012.1'
