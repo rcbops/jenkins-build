@@ -23,9 +23,20 @@ kvm_instance_name=${BINARY_BUILD_RELEASE}-cs
 # this sets IP as a side-effect
 get_ip $kvm_instance_name
 
+function err_cleanup_chef() {
+    # $1 - name
+    if [ "${NOCLEAN-0}" == "1" ]; then
+        exit 0
+    fi
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
 MEMORY=2048000
 maybe_make_kvm_instance $kvm_instance_name
-# trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+trap "err_cleanup_chef ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
 
 
