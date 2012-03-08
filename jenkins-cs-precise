@@ -41,7 +41,7 @@ function err_cleanup_chef() {
 
 MEMORY=2048000
 maybe_make_kvm_instance $kvm_instance_name
-trap "err_cleanup_chef ${kvm_instance_name} ${IP}" SIGINT SIGTERM EXIT ERR
+trap "err_cleanup_chef ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
 
 
