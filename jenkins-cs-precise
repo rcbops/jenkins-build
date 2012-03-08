@@ -30,8 +30,8 @@ function err_cleanup_chef() {
     fi
 
     # Delete node and client from chef-server
-    ssh root@${IP} 'knife node delete $HOSTNAME'
-    ssh root@${IP} 'knife client delete $HOSTNAME'
+    ssh root@${IP} 'knife node delete $HOSTNAME -y'
+    ssh root@${IP} 'knife client delete $HOSTNAME -y'
 
     sudo virsh destroy ${1}
     sleep 5
