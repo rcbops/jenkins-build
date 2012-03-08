@@ -25,7 +25,7 @@ get_ip $kvm_instance_name
 
 MEMORY=2048000
 maybe_make_kvm_instance $kvm_instance_name
-trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
+# trap "err_cleanup_chefsolo ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
 
 
