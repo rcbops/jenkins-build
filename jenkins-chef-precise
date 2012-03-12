@@ -16,8 +16,16 @@ set -x
 jenkins_init
 jenkins_set_vars
 
+# Get defined branch of chef-cookbooks
 git clone --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
+
+# Knife upload cookbooks to hosted chef
 cd chef-cookbooks
 for i in `ls cookbooks`; do
   knife cookbook upload $i
 done
+
+cd ..
+
+# Cleanup after ourselves
+rm -rf chef-cookbooks
