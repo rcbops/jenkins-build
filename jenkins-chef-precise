@@ -7,11 +7,17 @@
 DISTRELEASE=${DISTRELEASE-ubuntu-precise}
 PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 
+set -e
+set -x
+
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
 . $(dirname $0)/jenkins-deb-common
 
 jenkins_init
 jenkins_set_vars
 
-set -e
-set -x
+git clone --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
+cd chef-cookbooks
+for i in `ls cookbooks`; do
+  knife cookbook upload $i
+done
