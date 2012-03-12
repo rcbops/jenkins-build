@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-precise}
+PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+set -e
+set -x
