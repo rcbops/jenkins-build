@@ -395,7 +395,9 @@ function build_source_package {
     verify_pbuilder $distro_chroot $pbuilder
 
     # apply patches before dpkg-buildpackage
-    quilt push -a
+    if [ -e debian/patches/series ]; then
+	quilt push -a
+    fi
 
     schroot -c ${pbuilder} -r -u root -- apt-get update -y
     schroot -c ${pbuilder} -r -u root -- /usr/lib/pbuilder/pbuilder-satisfydepends
