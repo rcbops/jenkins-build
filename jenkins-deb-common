@@ -394,6 +394,9 @@ function build_source_package {
 
     verify_pbuilder $distro_chroot $pbuilder
 
+    # apply patches before dpkg-buildpackage
+    quilt push -a
+
     schroot -c ${pbuilder} -r -u root -- apt-get update -y
     schroot -c ${pbuilder} -r -u root -- /usr/lib/pbuilder/pbuilder-satisfydepends
     schroot -c ${pbuilder} -r -- git-buildpackage --git-pristine-tar -i.* -tc -S --git-ignore-new --git-ignore-branch ${build_args}
