@@ -70,7 +70,7 @@ ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf c
 ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; chef-client'
 ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[openstack::allinone]'
 # ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[kong]'
-ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[exerstack]'
+# ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[exerstack]'
 ssh root@${IP} 'chef-client'
 
 sleep 20
@@ -85,10 +85,10 @@ ssh root@${IP} dpkg -l | grep '2012.1'
     # exit 1
 # fi
 
-if ! ( ssh root@${IP} "cd /opt/exerstack; ./exercise.sh" ); then
-    echo "Error in tests"
-    exit 1
-fi
+# if ! ( ssh root@${IP} "cd /opt/exerstack; ./exercise.sh" ); then
+    # echo "Error in tests"
+    # exit 1
+# fi
 
 trap - SIGINT SIGTERM EXIT ERR
 
