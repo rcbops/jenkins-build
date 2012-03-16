@@ -24,9 +24,12 @@ cp -r ~/.chef chef-cookbooks
 
 # Knife upload cookbooks to hosted chef
 cd chef-cookbooks
-for i in `ls cookbooks`; do
-  knife cookbook upload $i
-done
+# using rake to make this easier
+rake upload_cookbooks
+rake roles
+#for i in `ls cookbooks`; do
+#  knife cookbook upload $i
+#done
 
 cd ..
 
