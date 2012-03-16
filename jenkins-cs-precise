@@ -92,6 +92,10 @@ ssh root@${IP} dpkg -l | grep '2012.1'
 
 trap - SIGINT SIGTERM EXIT ERR
 
+# Delete node and client from chef-server
+ssh root@${IP} 'knife node delete $HOSTNAME -y'
+ssh root@${IP} 'knife client delete $HOSTNAME -y'
+
 sudo virsh destroy ${kvm_instance_name}
 sleep 5
 sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
