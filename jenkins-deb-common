@@ -395,7 +395,7 @@ function build_source_package {
     verify_pbuilder $distro_chroot $pbuilder
 
     # apply patches before dpkg-buildpackage
-    if [ -e debian/patches/series ] && [[ $(wc -l debian/patches/series) > "0" ]]; then
+    if [ -s debian/patches/series ]; then
 	quilt push -a
     fi
 
