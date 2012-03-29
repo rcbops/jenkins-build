@@ -17,7 +17,7 @@ jenkins_init
 jenkins_set_vars
 
 # Get defined branch of chef-cookbooks
-git clone --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
+git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
 
 # Grab knife config etc..
 cp -r ~/.chef chef-cookbooks
