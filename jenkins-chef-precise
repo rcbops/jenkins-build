@@ -1,4 +1,4 @@
-#!/usr/bin/env rvm-shell 1.9.3
+#!/bin/bash
 #
 # $1 = test repo number
 #
@@ -20,11 +20,11 @@ jenkins_set_vars
 git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
 
 # RVM is throwing an unbound variable error
-#set +u
-#set +x
+set +u
+set +x
 # Tell RVM to use Ruby-1.9.3
-#source /usr/local/rvm/scripts/rvm
-#rvm use 1.9.3
+source /usr/local/rvm/scripts/rvm
+rvm use 1.9.3
 
 # Setup array of cookbooks to check with FoodCritic
 declare -a cookbooks
