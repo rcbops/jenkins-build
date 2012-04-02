@@ -8,7 +8,8 @@ DISTRELEASE=${DISTRELEASE-ubuntu-precise}
 PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 
 # RVM is throwing an unbound variable error
-# set -e
+set +u
+set -e
 set -x
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
