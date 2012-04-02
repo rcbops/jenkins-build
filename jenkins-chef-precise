@@ -46,13 +46,15 @@ cp -r ~/.chef chef-cookbooks
 cd chef-cookbooks
 
 echo "Uploading Cookbooks"
-if ! ( rake upload_cookbooks ); then
+# Using knife, as rake exits 0 even if knife throws an error
+if ! ( knife cookbook upload --all ); then
     echo "Unable to upload cookbooks"
     exit 1
 fi
 
 echo "Uploading Roles"
-if ! ( rake roles ); then
+# Using knife, as rake exits 0 even if knife throws an error
+if ! ( knife role from file roles/*.rb ); then
     echo "Unable to upload roles"
     exit 1
 fi
