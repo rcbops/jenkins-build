@@ -20,9 +20,11 @@ jenkins_set_vars
 git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
 
 # Tell RVM to use Ruby-1.9.3
+set +x
 source /usr/local/rvm/scripts/rvm
+set -x
 type rvm | head -1
-/usr/local/rvm/bin/rvm use 1.9.3
+rvm use 1.9.3
 
 # Setup array of cookbooks to check with FoodCritic
 declare -a cookbooks
