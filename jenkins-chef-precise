@@ -21,6 +21,7 @@ git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cook
 
 # Tell RVM to use Ruby-1.9.3
 source /usr/local/rvm/scripts/rvm
+type rvm | head -1
 /usr/local/rvm/bin/rvm use 1.9.3
 
 # Setup array of cookbooks to check with FoodCritic
