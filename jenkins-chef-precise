@@ -7,8 +7,6 @@
 DISTRELEASE=${DISTRELEASE-ubuntu-precise}
 PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 
-# RVM is throwing an unbound variable error
-set +u
 set -e
 set -x
 
@@ -21,6 +19,8 @@ jenkins_set_vars
 # Get defined branch of chef-cookbooks
 git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
 
+# RVM is throwing an unbound variable error
+set +u
 # Tell RVM to use Ruby-1.9.3
 source /usr/local/rvm/scripts/rvm
 # type rvm | head -1
