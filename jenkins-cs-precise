@@ -63,15 +63,18 @@ while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-li
     count=$(( count + 1 ));
 done
 
+# Install ruby/chef via opscode's fullstack installer
+ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)"
+#ssh root@${IP} apt-get install ruby ruby-dev libopenssl-ruby rdoc ri irb build-essential wget ssl-cert -y --force-yes
+#ssh root@${IP} 'wget http://production.cf.rubygems.org/rubygems/rubygems-1.8.10.tgz; tar -xvzf rubygems-1.8.10.tgz; ruby rubygems-1.8.10/setup.rb --no-format-executable; gem install --no-rdoc --no-ri chef'
+
 # Setup Hosted Chef
-ssh root@${IP} apt-get install ruby ruby-dev libopenssl-ruby rdoc ri irb build-essential wget ssl-cert -y --force-yes
-ssh root@${IP} 'wget http://production.cf.rubygems.org/rubygems/rubygems-1.8.10.tgz; tar -xvzf rubygems-1.8.10.tgz; ruby rubygems-1.8.10/setup.rb --no-format-executable; gem install --no-rdoc --no-ri chef'
 ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; knife configure client ./client-config'
-ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; chef-client'
-ssh root@${IP} 'knife node run_list add $HOSTNAME role[jenkins-allinone]'
-# ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[kong]'
-# ssh root@${IP} 'knife node run_list add $HOSTNAME recipe[exerstack]'
-ssh root@${IP} 'chef-client'
+ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client'
+ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
+# ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
+# ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
+ssh root@${IP} '/opt/opscode/bin/chef-client'
 
 sleep 20
 
@@ -93,8 +96,8 @@ ssh root@${IP} dpkg -l | grep '2012.1'
 trap - SIGINT SIGTERM EXIT ERR
 
 # Delete node and client from chef-server
-ssh root@${IP} 'knife node delete $HOSTNAME -y'
-ssh root@${IP} 'knife client delete $HOSTNAME -y'
+ssh root@${IP} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
+ssh root@${IP} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
 
 sudo virsh destroy ${kvm_instance_name}
 sleep 5
