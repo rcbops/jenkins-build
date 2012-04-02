@@ -21,6 +21,7 @@ git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cook
 
 # RVM is throwing an unbound variable error
 set +u
+set +x
 # Tell RVM to use Ruby-1.9.3
 source /usr/local/rvm/scripts/rvm
 # type rvm | head -1
@@ -35,6 +36,7 @@ for book in $cookbooks; do
 	foodcritic chef-cookbooks/cookbooks/$book;
 done;
 
+set -x
 # Grab knife config etc..
 cp -r ~/.chef chef-cookbooks
 
