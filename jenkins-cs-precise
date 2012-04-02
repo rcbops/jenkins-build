@@ -63,6 +63,9 @@ while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-li
     count=$(( count + 1 ));
 done
 
+# Install system pre-reqs
+ssh root@${IP} "apt-get install -y wget curl"
+
 # Install ruby/chef via opscode's fullstack installer
 ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)"
 #ssh root@${IP} apt-get install ruby ruby-dev libopenssl-ruby rdoc ri irb build-essential wget ssl-cert -y --force-yes
