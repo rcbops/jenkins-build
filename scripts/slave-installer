@@ -35,13 +35,14 @@ if ( ! vgdisplay ${VGNAME} ); then
 fi
 
 apt-get install -y emacs23-nox sudo daemon sun-java6-jre
-sed -ri /etc/sudoers -e 's/sudo ALL.*/sudo ALL=(ALL) NOPASSWD:ALL/'
+sed -ri /etc/sudoers -e 's/\%sudo.*/\%sudo ALL=(ALL) NOPASSWD:ALL/'
 
 if ( ! grep jenkins /etc/passwd ); then
     adduser --system --disabled-password --shell=/bin/bash jenkins
     adduser jenkins sudo
     adduser jenkins sbuild
     mkdir /home/jenkins/.ssh
+    chown -R jenkins:nogroup /home/jenkins/.ssh
 
     su -c "cd; git clone http://github.com/rcbops/jenkins-build" jenkins
 fi
