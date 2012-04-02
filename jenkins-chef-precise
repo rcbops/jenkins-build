@@ -31,6 +31,7 @@ rvm use 1.9.3
 declare -a cookbooks
 cookbooks=( glance keystone nova horizon )
 for book in $cookbooks; do
+        echo "Running FoodCritic against $book"
         # Epic fail on any violations (http://acrmp.github.com/foodcritic)
 	# foodcritic -f any chef-cookbooks/cookbooks/$book;
 	foodcritic chef-cookbooks/cookbooks/$book;
