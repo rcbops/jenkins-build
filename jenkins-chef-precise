@@ -21,7 +21,6 @@ git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cook
 
 # RVM is throwing an unbound variable error
 set +u
-set +x
 # Tell RVM to use Ruby-1.9.3
 source /usr/local/rvm/scripts/rvm
 rvm-shell 1.9.3
