@@ -32,8 +32,10 @@ cookbooks=( glance keystone nova horizon )
 for book in ${cookbooks[@]}; do
         echo "Running FoodCritic against $book"
         # Epic fail on any violations (http://acrmp.github.com/foodcritic)
-	# foodcritic -f any chef-cookbooks/cookbooks/$book;
-	foodcritic chef-cookbooks/cookbooks/$book;
+	if ! ( foodcritic -f any -f ~FC020 chef-cookbooks/cookbooks/$book ); then
+		echo "$book cookbook violates FoodCritic ruleset"
+		exit 1
+	fi
 done;
 
 # Grab knife config etc..
@@ -42,11 +44,18 @@ cp -r ~/.chef chef-cookbooks
 
 # Knife upload cookbooks to hosted chef
 cd chef-cookbooks
-# using rake to make this easier
+
 echo "Uploading Cookbooks"
-rake upload_cookbooks
+if ! ( rake upload_cookbooks ); then
+    echo "Unable to upload cookbooks"
+    exit 1
+fi
+
 echo "Uploading Roles"
-rake roles
+if ! ( rake roles ); then
+    echo "Unable to upload roles"
+    exit 1
+fi
 
 cd ..
 
