@@ -75,6 +75,8 @@ Description=Jenkins slave agent
 After=syslog.target network.target
 
 [Service]
+User=jenkins
+WorkingDirectory=/var/lib/jenkins
 ExecStart=/bin/java -jar /var/lib/jenkins/slave.jar -jnlpUrl http://build.monkeypuppetlabs.com:8080/computer/HOSTNAME/slave-agent.jnlp
 
 [Install]
