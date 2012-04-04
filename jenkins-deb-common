@@ -99,7 +99,7 @@ function jenkins_set_vars() {
     fi
 
     # figure out if this is a debian-ish or redhat-ish dist
-    if [ "${BINARY_BUILD_DIST:-} != "" ]; then
+    if [ "${BINARY_BUILD_DIST:-}" != "" ]; then
         variantmaps(
             [ubuntu]="debian"
             [debian]="debian"
