@@ -100,13 +100,14 @@ function jenkins_set_vars() {
 
     # figure out if this is a debian-ish or redhat-ish dist
     if [ "${BINARY_BUILD_DIST}" != "" ]; then
+        declare -A variantmaps
         variantmaps=(
             [ubuntu]="debian"
             [debian]="debian"
             [fedora]="redhat"
             [redhat]="redhat"
         )
-        BINARY_BUILD_VARIANT=${variantmap[${BINARY_BUILD_DIST}]}
+        BINARY_BUILD_VARIANT=${variantmaps[${BINARY_BUILD_DIST}]}
     fi
 
     LVM_ROOT=${LVM_ROOT-/dev/vg0}
