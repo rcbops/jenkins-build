@@ -98,6 +98,17 @@ function jenkins_set_vars() {
 	BINARY_BUILD_RELEASE=${DISTRELEASE##*-}
     fi
 
+    # figure out if this is a debian-ish or redhat-ish dist
+    if [ "${BINARY_BUILD_DIST:-} != "" ]; then
+        variantmaps(
+            [ubuntu]="debian"
+            [debian]="debian"
+            [fedora]="redhat"
+            [redhat]="redhat"
+        )
+        BINARY_BUILD_VARIANT=${variantmap[${BINARY_BUILD_DIST}]}
+    fi
+
     LVM_ROOT=${LVM_ROOT-/dev/vg0}
     INCOMING_PACKAGES=${INCOMING_PACKAGES-/srv/incoming-packages}
     PROPOSED_REPO=${PROPOSED_REPO-/srv/proposed-packages}
@@ -211,15 +222,19 @@ function start_kvm_instance() {
 
     trap "start_kvm_instance_cleanup; return 1" SIGINT SIGTERM ERR
 
-
-    cat <<EOF | sudo tee /mnt/$$/etc/apt/sources.list
+    # Setup apt sources
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+        cat <<EOF | sudo tee /mnt/$$/etc/apt/sources.list
 deb http://${DIST_CACHE}/ubuntu ${BINARY_BUILD_RELEASE} main universe
 deb http://${DIST_CACHE}/ubuntu ${BINARY_BUILD_RELEASE}-updates main universe
 #deb ${openstack_url}/${openstack_component} ${openstack_release} main
 deb ${openstack_url} ${openstack_release} ${openstack_component}
 EOF
+    fi
 
-    cat <<EOF | sudo tee /mnt/$$/etc/hosts
+    # Configure /etc/hosts
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+        cat <<EOF | sudo tee /mnt/$$/etc/hosts
 127.0.0.1       localhost
 127.0.1.1       ${new_instance}
 
@@ -230,7 +245,16 @@ ff00::0 ip6-mcastprefix
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 EOF
+    else
+        cat <<EOF | sudo tee /mnt/$$/etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+127.0.1.1   ${new_instance}
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+EOF
+    fi
 
+    # Configure networking
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
     cat <<EOF | sudo tee /mnt/$$/etc/network/interfaces
 auto eth0
 iface eth0 inet static
@@ -239,31 +263,54 @@ iface eth0 inet static
     gateway 192.168.1.1
     dns-nameservers 192.168.1.1
 EOF
+    else
+        cat <<EOF | sudo tee /mnt/$$/etc/sysconfig/network-scripts/ifcfg-eth0
+DEVICE="eth0"
+BOOTPROTO="static"
+IPADDR=${my_ip}
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+ONBOOT="yes"
+TYPE=Ethernet
+IPV4_FAILURE_FATAL=yes
+IPV6INIT=no
+EOF
+    fi
 
-    echo ${new_instance} | sudo tee /mnt/$$/etc/hostname
+    # Setup hostame
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+        echo ${new_instance} | sudo tee /mnt/$$/etc/hostname
+    else
+        cat <<EOF | sudo tee /mnt/$$/etc/sysconfig/network
+NETWORKING=yes
+HOSTNAME=${new_instance}
+EOF
+    fi
+
     echo "nameserver 192.168.1.1" | sudo tee /mnt/$$/etc/resolv.conf
-
-    # hackity hack hack hack
-    sudo mkdir -p /mnt/$$/lib/modules
-    sudo cp -a /lib/modules/`uname -r` /mnt/$$/lib/modules
-
     sudo mkdir -p /mnt/$$/root/.ssh
     sudo cp ${HOME}/.ssh/id_rsa.pub /mnt/$$/root/.ssh/authorized_keys
     sudo chmod -R og-rwx /mnt/$$/root/.ssh
 
-    if [ ! -e /mnt/$$/usr/sbin/sshd ]; then
-	sudo chroot /mnt/$$ apt-get update
-	cat <<EOF | sudo tee /mnt/$$/usr/sbin/policy-rc.d
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+        # hackity hack hack hack
+        sudo mkdir -p /mnt/$$/lib/modules
+        sudo cp -a /lib/modules/`uname -r` /mnt/$$/lib/modules
+
+        if [ ! -e /mnt/$$/usr/sbin/sshd ]; then
+	    sudo chroot /mnt/$$ apt-get update
+	    cat <<EOF | sudo tee /mnt/$$/usr/sbin/policy-rc.d
 #!/bin/sh
 exit 101
 EOF
-	sudo chmod 755 /mnt/$$/usr/sbin/policy-rc.d
+	    sudo chmod 755 /mnt/$$/usr/sbin/policy-rc.d
 
-	sudo chroot /mnt/$$ apt-get install -y openssh-server
-	sudo rm -f /mnt/$$/usr/sbin/policy-rc.d
+	    sudo chroot /mnt/$$ apt-get install -y openssh-server
+    	    sudo rm -f /mnt/$$/usr/sbin/policy-rc.d
+        fi
+
+        sudo cp /etc/ssh/*key* /mnt/$$/etc/ssh
     fi
-
-    sudo cp /etc/ssh/*key* /mnt/$$/etc/ssh
 
     sudo umount ${LVM_ROOT}/${new_instance}
     sudo rm -rf /mnt/$$
