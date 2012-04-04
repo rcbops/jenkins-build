@@ -10,8 +10,9 @@ VGNAME=${VGNAME:-/dev/vg0}
 PVNAME=${PVNAME:-/dev/sda4}
 
 
-yum install -y git lvm2 bridge-utils vim sudo java*openjdk
+yum install -y git lvm2 bridge-utils vim sudo java*openjdk yum-utils ntp
 sed -ri /etc/sudoers -e 's/\# \%wheel/\%wheel/g'
+rm -fr /etc/localtime && ln -s /usr/share/zoneinfo/US/Central /etc/localtime
 
 if ( ! vgdisplay ${VGNAME} ); then
     if [[ "${MAKE_VG:-0}" -ne 1 ]]; then
@@ -135,6 +136,10 @@ DELAY=0
 
 EOF
 
+if (! brctl show | grep kvmbr0) ; then
+    brctl addbr kvmbr0
+fi
+
 echo "restarting networking. This may take around 15 seconds - don't be scared..."
 /etc/init.d/network restart
 
@@ -225,3 +230,8 @@ EOF
 chown jenkins: ~jenkins/.ipmirc
 
 sudo yum -y install dnsmasq
+
+echo "basic install finished. Now define the slave on the jenkins master
+and then run the following command here:
+
+systemctl start jenkins_slave.service"
