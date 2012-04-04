@@ -16,8 +16,13 @@ set -x
 jenkins_init
 jenkins_set_vars
 
+# Grab knife config etc..
+echo "Copying chef configuration files"
+cp -r ~/.chef chef-cookbooks
+
 # Get defined branch of chef-cookbooks
 git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
+cd chef-cookbooks
 
 # RVM is throwing an unbound variable error
 set +u
@@ -32,18 +37,11 @@ cookbooks=( glance keystone nova horizon )
 for book in ${cookbooks[@]}; do
         echo "Running FoodCritic against $book"
         # Epic fail on any violations (http://acrmp.github.com/foodcritic)
-	if ! ( foodcritic -f any -f ~FC020 chef-cookbooks/cookbooks/$book ); then
+	if ! ( foodcritic -f any -f ~FC020 cookbooks/$book ); then
 		echo "$book cookbook violates FoodCritic ruleset"
 		exit 1
 	fi
 done;
-
-# Grab knife config etc..
-echo "Copying chef configuration files"
-cp -r ~/.chef chef-cookbooks
-
-# Knife upload cookbooks to hosted chef
-cd chef-cookbooks
 
 echo "Uploading Cookbooks"
 # Using knife, as rake exits 0 even if knife throws an error
