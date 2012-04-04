@@ -1,0 +1,237 @@
+#!/bin/bash
+
+set -e
+set -u
+
+MODE=${MODE:-slave}
+JENKINS_MASTER=${JENKINS_MASTER:-build.monkeypuppetlabs.com}
+JENKINS_MASTER_PORT=${JENKINS_MASTER_PORT:-8080}
+VGNAME=${VGNAME:-/dev/vg0}
+PVNAME=${PVNAME:-/dev/sda4}
+
+
+yum install -y git lvm2 bridge-utils vim sudo java*openjdk yum-utils ntp
+sed -ri /etc/sudoers -e 's/\# \%wheel/\%wheel/g'
+rm -fr /etc/localtime && ln -s /usr/share/zoneinfo/US/Central /etc/localtime
+
+if ( ! vgdisplay ${VGNAME} ); then
+    if [[ "${MAKE_VG:-0}" -ne 1 ]]; then
+    echo -e "\n-----------------------------------------------------\n"
+    echo "You don't have a VG set up, and I won't set it up"
+    echo "unless you REALLY REALLY want me to."
+    echo
+    echo "If I *were* to set up a vg, I'd be setting up ${VGNAME}"
+    echo "using a pv of ${PVNAME}."
+    echo
+    echo "If this is correct, then you should re-run this with with"
+    echo "MAKE_VG environment variable set to 1.  Otherwise, update"
+    echo "the script, or set environmental variables VGNAME and PVNAME"
+    echo -e "\n-----------------------------------------------------\n"
+    exit 1
+    else
+    # here we go... sorry about your data.  my bad.
+    pvcreate ${PVNAME}
+    vgcreate ${VGNAME} ${PVNAME}
+    fi
+fi
+
+
+if ( ! grep jenkins /etc/passwd ); then
+    useradd -s /bin/bash jenkins
+    usermod -G wheel jenkins
+    mkdir /home/jenkins/.ssh
+    chmod -R go-rwx /home/jenkins/.ssh
+
+    mkdir -p /var/lib/jenkins
+    chown jenkins.jenkins /var/lib/jenkins
+
+    su -c "cd; git clone http://github.com/rcbops/jenkins-build" jenkins
+fi
+
+# this is all about Ron
+cat > /home/jenkins/.ssh/authorized_keys <<EOF
+ssh-dss AAAAB3NzaC1kc3MAAACBAIKoflC/gZn8VklqyH50OK/yImA0e34HcExnVFjuUaJVZFke8UQ66mTqrYjo4ihB0v2Vy9ycvW3lzxD6QO6UKTwx8jyee9zUSaQOVuWTF3G41ny1PEAjj1kFRJCWFB62LyUZ2clkIFuGJeSgUfB3+P23k/tdnveNzLqalLRbBjexAAAAFQD6iQEKxcs0e1RnbAzKgbwzfh36PwAAAIAiG3/lkzxweRXQCyYJP1MDlfPhdsBWc7n2eGDpUQiKlaZr5s0GmA1ElL0CNqsxzKm61HxomW59QZUxRkRPJWY7TsfP8Vbi8YwNyWBVZdYdBtO/cvIkPOY4lmAEaPvDg2A43l6afzaZvJbcInSbn4tuATUD2fYyIurx40hcryxZEgAAAIADDYwudrihNODaRZ73gz5f5hfSWDmLsanXN5bIJQp8NIE3ZpJUIWyhKPB5R61Kzgpq7SvsUrN81gO8DPEeKCjecCQOV8nx+hVxlEAuIuCKk0KctdUEPXbj5GuFYC/DvE8y7VIHjlZRYkB252DpE5BQn64XDkk93GDm6iybyLhXdw== ron@mac-laptop.dynamic.pedde.com
+EOF
+
+cat > /home/jenkins/.gitconfig <<EOF
+[user]
+        name = RCB Builder
+        email = rcb-deploy@lists.rackspace.com
+EOF
+chown -R jenkins:jenkins /home/jenkins/
+
+
+# check we have our slave jar file
+if [ ! -e /var/lib/jenkins/slave.jar ]; then
+    mkdir -p /var/lib/jenkins
+    wget http://build.monkeypuppetlabs.com:8080/jnlpJars/slave.jar -O /var/lib/jenkins/slave.jar
+    chown -R jenkins.jenkins /var/lib/jenkins
+fi
+
+# set up the systemd 'initscript'
+# oh the joys of systemd
+cat > /usr/lib/systemd/system/jenkins_slave.service <<"EOF"
+[Unit]
+Description=Jenkins slave agent
+After=syslog.target network.target
+
+[Service]
+User=jenkins
+WorkingDirectory=/var/lib/jenkins
+ExecStart=/bin/java -jar /var/lib/jenkins/slave.jar -jnlpUrl http://build.monkeypuppetlabs.com:8080/computer/HOSTNAME/slave-agent.jnlp
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sed -i "s/HOSTNAME/$(hostname)/g" /usr/lib/systemd/system/jenkins_slave.service
+
+mkdir -p /var/log/jenkins
+chown -R jenkins: /var/log/jenkins
+
+
+
+
+
+# jenkins should be installed at this point....
+# Now, let's install the fedora chroot
+
+
+echo "options kvm-intel nested=1" > /etc/modprobe.d/kvm
+
+
+
+
+for dist in fedora17; do
+
+    if [ ! -e ${VGNAME}/${dist} ]; then
+    echo "setting up $dist chroot..."
+    lvcreate --size=8g ${VGNAME} --name=${dist}
+    mke2fs -j ${VGNAME}/${dist}
+    mkdir -p /mnt/${dist}
+    mount -t ext3 ${VGNAME}/${dist} /mnt/${dist}
+    rpm --root /mnt/${dist} --initdb
+    # right now just grabs f17 fedora-release
+    yumdownloader --destdir=/mnt/${dist} fedora-release
+    rpm --root /mnt/${dist}/ -ivh --nodeps /mnt/${dist}/fedora-release*rpm
+    # install minimal packages
+    yum --installroot=/mnt/${dist} -y groupinstall base
+    umount /mnt/${dist}
+    rm -rf /mnt/${dist}
+    fi
+done
+
+# we don't like networkManager
+chkconfig network on
+
+if [ ! -e /etc/sysconfig/network-scripts/ifcfg-kvmbr0 ]; then
+    cat >> /etc/sysconfig/network-scripts/ifcfg-kvmbr0 <<EOF
+
+DEVICE=kvmbr0
+Type=bridge
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=192.168.1.1
+NETMASK=255.255.255.0
+DELAY=0
+
+EOF
+
+if (! brctl show | grep kvmbr0) ; then
+    brctl addbr kvmbr0
+fi
+
+echo "restarting networking. This may take around 15 seconds - don't be scared..."
+/etc/init.d/network restart
+
+fi
+
+
+mkdir -p /etc/jenkins-fed
+
+if [ ! -e /etc/jenkins-fed/jenkins-fed-ip.conf ]; then
+    for (( octet=1; octet < 255; octet++ )); do
+    echo "192.168.1.${octet} unallocated" >> /etc/jenkins-fed/jenkins-fed-ip.conf
+    done
+fi
+
+#if [ ! -e /etc/jenkins-deb/jenkins-deb.conf ]; then
+#    cat > /etc/jenkins-deb/jenkins-deb.conf <<EOF
+##DEBEMAIL='RCB Builder <rcb-deploy@lists.rackspace.com>'
+##GIT_BRANCH=master
+##SOURCE_BUILD_DIST=ubuntu         # ubuntu|debian
+##SOURCE_BUILD_RELEASE=natty       # maverick|natty|....
+##NOVA_RELEASE=diablo
+#MILESTONE=final
+##MAJOR_VERSION=2011.3
+##ARCH=amd64                       # amd64|i386
+##STRATEGY=lvm                     # lvm|cow
+#
+## these should get set by the jenkins job matrix, but are included
+## for completeness
+#
+## PACKAGE=                        # required for source builds
+## PACKAGE_VERSION=                # required for source builds
+## BINARY_BUILD_DIST=ubuntu        # required for binary builds
+## BINARY_BUILD_RELEASE=natty      # requried for binary builds
+#EOF
+#fi
+
+chmod 0770 /etc/jenkins-fed
+chmod 0660 /etc/jenkins-fed/*
+
+yum install -y libvirt kvm
+
+# set up firewall, turn on routing...
+sed -i /etc/sysctl.conf -e "s/^.*net.ipv4.ip_forward =.*/net.ipv4.ip_forward = 1/"
+
+cat > /etc/sysconfig/iptables <<EOF
+# Generated by iptables-save v1.4.8 on Wed May 18 09:26:56 2011
+*filter
+:INPUT DROP [3:360]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -p icmp -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -i kvmbr0 -j ACCEPT
+-A INPUT -s 192.168.1.0/24 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+# SERVER ONLY
+#-A INPUT -p tcp -m tcp --dport 8080 -j ACCEPT
+#-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+#-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+#-A INPUT -p tcp -m tcp --dport 38168 -s 184.106.53.0/24 -j ACCEPT
+#-A INPUT -p tcp -m tcp --dport 3142 -s 184.106.53.0/24 -j ACCEPT
+-A INPUT -d 127.0.0.0/8 ! -i lo -j REJECT --reject-with icmp-port-unreachable
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+COMMIT
+# Completed on Wed May 18 09:26:56 2011
+# Generated by iptables-save v1.4.8 on Wed May 18 09:26:56 2011
+*nat
+:PREROUTING ACCEPT [3:360]
+:POSTROUTING ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A POSTROUTING -o eth4 -j MASQUERADE
+COMMIT
+# Completed on Wed May 18 09:26:56 2011
+EOF
+
+systemctl restart iptables.service
+sysctl -p
+
+# copy jason's ipmprc
+
+cat > ~jenkins/.ipmirc <<EOF
+DRACIP='10.12.157.128'
+DRACUSER='root'
+DRACPASS='calvin'
+CWADNODE='184.106.53.10'
+EOF
+
+chown jenkins: ~jenkins/.ipmirc
+
+sudo yum -y install dnsmasq
+
+echo "basic install finished. Now define the slave on the jenkins master
+and then run the following command here:
+
+systemctl start jenkins_slave.service"
