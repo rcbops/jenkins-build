@@ -16,12 +16,14 @@ set -x
 jenkins_init
 jenkins_set_vars
 
+# Get defined branch of chef-cookbooks
+git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
+
 # Grab knife config etc..
 echo "Copying chef configuration files"
 cp -r ~/.chef chef-cookbooks
 
-# Get defined branch of chef-cookbooks
-git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
+# Move into the downloaded cookbooks directory
 cd chef-cookbooks
 
 # RVM is throwing an unbound variable error
