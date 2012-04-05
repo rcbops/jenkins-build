@@ -57,7 +57,7 @@ if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
 fi
 
 # Install system pre-reqs
-if [ ${BINARY_BUILD_VARIANT} = "debian ]; then
+if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
   ssh root@${IP} "apt-get install -y wget curl build-essential automake"
 else
   ssh root@${IP} "yum install -y wget tar"
