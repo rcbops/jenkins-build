@@ -41,18 +41,20 @@ start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu pre
 
 
 # Trying to fix a bug
-count=1
-while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
-    if [ $count -gt 3 ]; then
-        echo "Unable to install cgroup-lite"
-        exit 1
-    fi
-    if ! ( ssh root@${IP} "/usr/bin/cgroups-mount" ); then
-        :
-    fi 
-    sleep 2;
-    count=$(( count + 1 ));
-done
+if [ ${BINARY_BUILD_VARIANT} = "debian ]; then
+    count=1
+    while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
+        if [ $count -gt 3 ]; then
+            echo "Unable to install cgroup-lite"
+            exit 1
+        fi
+        if ! ( ssh root@${IP} "/usr/bin/cgroups-mount" ); then
+            :
+        fi 
+        sleep 2;
+        count=$(( count + 1 ));
+    done
+fi
 
 # Install system pre-reqs
 if [ ${BINARY_BUILD_VARIANT} = "debian ]; then
