@@ -106,6 +106,7 @@ function jenkins_set_vars() {
             [ubuntu]="debian"
             [debian]="debian"
             [fedora]="redhat"
+            [centos]="redhat"
             [redhat]="redhat"
         )
         BINARY_BUILD_VARIANT=${variantmaps[${BINARY_BUILD_DIST}]}
