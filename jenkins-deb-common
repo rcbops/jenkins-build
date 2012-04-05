@@ -67,7 +67,7 @@ function jenkins_set_vars() {
     SOURCE_BUILD_RELEASE=${SOURCE_BUILD_RELEASE-natty}
     PACKAGE_HOST=${PACKAGE_HOST-build.monkeypuppetlabs.com}
     IMAGE_CACHE=${IMAGE_CACHE:-build.monkeypuppetlabs.com}
-    DIST_CACHE=${DIST_CACHE:-build.monkeypuppetlabs.com:3142}
+    DIST_CACHE=${DIST_CACHE:-cache.monkeypuppetlabs.com:3142}
 
     # this should get overridden by the branch config
     if [ "${COMPONENT-}" != "" ]; then
