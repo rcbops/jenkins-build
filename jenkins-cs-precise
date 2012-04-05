@@ -13,12 +13,7 @@ PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 jenkins_init
 jenkins_set_vars
 
-# KONG_BRANCH=${NOVA_RELEASE}-${MILESTONE}
-#if [ "${KONG_BRANCH}" == "precise" ]; then
-#    KONG_BRANCH=ubuntu-precise
-#fi
-
-kvm_instance_name=${BINARY_BUILD_RELEASE}-cs
+kvm_instance_name=${BINARY_BUILD_RELEASE}-Essex-Allinone
 
 # this sets IP as a side-effect
 get_ip $kvm_instance_name
@@ -49,52 +44,40 @@ ssh root@${IP} apt-get install vlan -y --force-yes
 ssh root@${IP} vconfig add eth0 100
 ssh root@${IP} vconfig add eth0 101
 
-# Trying to fix a bug
-count=1
-while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
-    if [ $count -gt 3 ]; then
-        echo "Unable to install cgroup-lite"
-        exit 1
-    fi
-    if ! ( ssh root@${IP} "/usr/bin/cgroups-mount" ); then
-        :
-    fi 
-    sleep 2;
-    count=$(( count + 1 ));
-done
+if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+    # Trying to fix a bug
+    count=1
+    while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
+        if [ $count -gt 3 ]; then
+            echo "Unable to install cgroup-lite"
+            exit 1
+        fi
+        if ! ( ssh root@${IP} "/usr/bin/cgroups-mount" ); then
+            :
+        fi 
+        sleep 2;
+        count=$(( count + 1 ));
+    done
+fi
 
 # Install system pre-reqs
-ssh root@${IP} "apt-get install -y wget curl build-essential automake"
+if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+  ssh root@${IP} "apt-get install -y wget curl build-essential automake"
+else
+  ssh root@${IP} "yum install -y wget tar"
+fi
 
 # Install ruby/chef via opscode's fullstack installer
 ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)"
-#ssh root@${IP} apt-get install ruby ruby-dev libopenssl-ruby rdoc ri irb build-essential wget ssl-cert -y --force-yes
-#ssh root@${IP} 'wget http://production.cf.rubygems.org/rubygems/rubygems-1.8.10.tgz; tar -xvzf rubygems-1.8.10.tgz; ruby rubygems-1.8.10/setup.rb --no-format-executable; gem install --no-rdoc --no-ri chef'
 
 # Setup Hosted Chef
-ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; knife configure client ./client-config'
+ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
 ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client'
+
 ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
 # ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
 # ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
 ssh root@${IP} '/opt/opscode/bin/chef-client'
-
-sleep 20
-
-# box should be configured now....
-
-# Output package list before we run kong and exerstack
-ssh root@${IP} dpkg -l | grep '2012.1'
-
-# if ! ( ssh root@${IP} "cd /opt/kong; ./run_tests.sh --nova" ); then
-    # echo "Error in tests"
-    # exit 1
-# fi
-
-# if ! ( ssh root@${IP} "cd /opt/exerstack; ./exercise.sh" ); then
-    # echo "Error in tests"
-    # exit 1
-# fi
 
 trap - SIGINT SIGTERM EXIT ERR
 
