@@ -41,7 +41,7 @@ start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu pre
 
 
 # Trying to fix a bug
-if [ ${BINARY_BUILD_VARIANT} = "debian ]; then
+if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
     count=1
     while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
         if [ $count -gt 3 ]; then
@@ -59,13 +59,15 @@ fi
 # Install system pre-reqs
 if [ ${BINARY_BUILD_VARIANT} = "debian ]; then
   ssh root@${IP} "apt-get install -y wget curl build-essential automake"
+else
+  ssh root@${IP} "yum install -y wget tar"
 fi
 
 # Install ruby/chef via opscode's fullstack installer
 ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)"
 
 # Setup Hosted Chef
-ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; knife configure client ./client-config'
+ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
 ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client'
 
 # ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
