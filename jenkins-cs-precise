@@ -39,8 +39,12 @@ maybe_make_kvm_instance $kvm_instance_name
 trap "err_cleanup_chef ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
 
+if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+    ssh root@${IP} apt-get install vlan -y --force-yes
+else
+    ssh root@${IP} yum install -y vlan
+fi
 
-ssh root@${IP} apt-get install vlan -y --force-yes
 ssh root@${IP} vconfig add eth0 100
 ssh root@${IP} vconfig add eth0 101
 
