@@ -42,7 +42,7 @@ start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu pre
 if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
     ssh root@${IP} apt-get install vlan -y --force-yes
 else
-    ssh root@${IP} yum install -y vlan
+    ssh root@${IP} yum install -y vconfig
 fi
 
 ssh root@${IP} vconfig add eth0 100
