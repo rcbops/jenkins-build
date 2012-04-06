@@ -252,6 +252,7 @@ EOF
         cat <<EOF | sudo tee /mnt/$$/etc/hosts
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 127.0.1.1   ${new_instance}
+192.168.1.1	jenkins-host.localhost.localdomain jenkins-host
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 EOF
     fi
