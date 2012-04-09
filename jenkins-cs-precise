@@ -43,7 +43,7 @@ if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
     ssh root@${IP} apt-get install vlan -y --force-yes
 else
     ssh root@${IP} yum -y --exclude=kernel* update
-    ssh root@${IP} yum install -y vconfig perl gcc make
+    ssh root@${IP} yum install -y vconfig perl gcc make yum-fastestmirror
 fi
 
 ssh root@${IP} vconfig add eth0 100
