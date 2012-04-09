@@ -35,7 +35,10 @@ function err_cleanup_chef() {
 }
 
 MEMORY=2048000
-maybe_make_kvm_instance $kvm_instance_name
+if ! maybe_make_kvm_instance $kvm_instance_name; then
+    echo "Unable to create KVM Instance"
+    exit 1
+fi
 trap "err_cleanup_chef ${kvm_instance_name}" SIGINT SIGTERM EXIT ERR
 start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
 
