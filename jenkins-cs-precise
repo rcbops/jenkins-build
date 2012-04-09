@@ -98,10 +98,10 @@ ssh root@${IP} 'rm -rf /opt/exerstack/exercises/euca.sh'
 ssh root@${IP} 'rm -rf /opt/exerstack/exercises/glance.sh'
 ssh root@${IP} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
 
-if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
-    echo "Exerstack test suite failed"
-    exit 1
-fi
+#if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
+#    echo "Exerstack test suite failed"
+#    exit 1
+#fi
 
 trap - SIGINT SIGTERM EXIT ERR
 
