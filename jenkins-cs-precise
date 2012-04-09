@@ -87,7 +87,7 @@ ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscod
 
 ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
 # ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
-ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
+#ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
 ssh root@${IP} '/opt/opscode/bin/chef-client'
 
 sleep 20s
