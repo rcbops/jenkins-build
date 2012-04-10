@@ -77,7 +77,7 @@ fi
 ssh root@${IP} 'echo "alias wget=\"wget -q\"" >> ~/.bashrc '
 
 # Install ruby/chef via opscode's fullstack installer
-if ! ( ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
+if ! ( ssh root@${IP} "http_proxy=http://cache.monkeypuppetlabs.com:3128 bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
     echo "Unable to install Opscode FullStack Installer"
     exit 1
 fi
