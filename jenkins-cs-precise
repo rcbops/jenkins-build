@@ -99,7 +99,7 @@ sleep 20s
 
 # These tests are not working on essex yet
 ssh root@${IP} 'rm -rf /opt/exerstack/exercises/bundle.sh'
-ssh root@${IP} 'rm -rf /opt/exerstack/exercises/euca.sh'
+# ssh root@${IP} 'rm -rf /opt/exerstack/exercises/euca.sh'
 # ssh root@${IP} 'rm -rf /opt/exerstack/exercises/glance.sh'
 ssh root@${IP} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
 
