@@ -39,7 +39,7 @@ cookbooks=( glance keystone nova horizon )
 for book in ${cookbooks[@]}; do
         echo "Running FoodCritic against $book"
         # Epic fail on any violations (http://acrmp.github.com/foodcritic)
-	if ! ( foodcritic -f any -f ~FC020 cookbooks/$book ); then
+	if ! ( foodcritic -f any -f ~FC020 -f ~FC005 cookbooks/$book ); then
 		echo "$book cookbook violates FoodCritic ruleset"
 		exit 1
 	fi
