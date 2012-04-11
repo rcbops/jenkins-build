@@ -235,9 +235,9 @@ deb ${openstack_url} ${openstack_release} ${openstack_component}
 EOF
     else
         echo "current directory: `pwd`"
-        cat files/fedora.repo | sudo tee /mnt/$$/yum.repos.d/fedora.repo
-        cat files/fedora-updates.repo | sudo tee /mnt/$$/yum.repos.d/fedora-updates.repo
-        cat files/fedora-updates-testing.repo | sudo tee /mnt/$$/yum.repos.d/fedora-updates-testing.repo
+        cat files/fedora.repo | sudo tee /mnt/$$/etc/yum.repos.d/fedora.repo
+        cat files/fedora-updates.repo | sudo tee /mnt/$$/etc/yum.repos.d/fedora-updates.repo
+        cat files/fedora-updates-testing.repo | sudo tee /mnt/$$/etc/yum.repos.d/fedora-updates-testing.repo
 
         # Fishstick01 is running a squid cache for YUM
         cat <<EOF | sudo tee /mnt/$$/etc/yum.conf
