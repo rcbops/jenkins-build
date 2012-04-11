@@ -44,7 +44,7 @@ if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
 else
     ssh root@${IP} rm -f /etc/cron.daily/man-db.cron
     ssh root@${IP} yum -y --exclude=kernel* update
-    ssh root@${IP} yum install -y vconfig perl gcc make yum-fastestmirror
+    ssh root@${IP} yum install -y vconfig perl gcc make yum-fastestmirror redhat-lsb
     ssh root@${IP} modprobe nbd
 fi
 
