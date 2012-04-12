@@ -348,8 +348,12 @@ EOF
 	virt_template=${BASE_DIR}/virt-templates/default
 	if [ -e ${BASE_DIR}/virt-templates/$(hostname) ]; then
 	    virt_template=${BASE_DIR}/virt-templates/$(hostname)
-	elif [ -e ${BASE_DIR}/virt-templates/$INSTANCE_NAME ]; then
+    fi
+	if [ -e ${BASE_DIR}/virt-templates/$INSTANCE_NAME ]; then
 	    virt_template=${BASE_DIR}/virt-templates/$INSTANCE_NAME
+	fi
+	if [ -e ${BASE_DIR}/virt-templates/$(hostname)-$INSTANCE_NAME ]; then
+	    virt_template=${BASE_DIR}/virt-templates/$(hostname)-$INSTANCE_NAME
 	fi
 
 	eval "echo \"$(< ${virt_template})\"" > /tmp/newxml-${new_instance}
