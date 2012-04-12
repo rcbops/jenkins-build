@@ -72,6 +72,9 @@ if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
   ssh root@${IP} "apt-get install -y wget curl build-essential automake"
 else
   ssh root@${IP} "yum install -y wget tar"
+  ssh root@${IP} "mkdir RPMS; cd RPMS; wget http://cache.monkeypuppetlabs.com/RPMS/euca2ools-2.0.1-0.1.fc17.noarch.rpm"
+  ssh root@${IP} "cd RPMS; wget http://cache.monkeypuppetlabs.com/RPMS/python-boto-2.1.1-0.2.fc17.noarch.rpm"
+  ssh root@${IP} "cd RPMS; yum install -y *.rpm"
 fi
 
 # Try to quiet installer
