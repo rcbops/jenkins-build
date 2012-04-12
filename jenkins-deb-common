@@ -336,6 +336,10 @@ EOF
         sudo cp /etc/ssh/*key* /mnt/$$/etc/ssh
     fi
 
+    cat <<EOF | sudo tee --append /mnt/$$/root/.bashrc
+export http_proxy=http://184.106.53.105:3128
+EOF
+
     sudo umount ${LVM_ROOT}/${new_instance}
     sudo rm -rf /mnt/$$
 
