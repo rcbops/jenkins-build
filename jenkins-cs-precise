@@ -82,7 +82,7 @@ ssh root@${IP} 'echo "alias wget=\"wget -q\"" >> ~/.bashrc '
 
 # Install ruby/chef via opscode's fullstack installer
 if ! ( ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
-    echo "Unable to install Opscode FullStack Installer"
+    ECHO "uNable to install Opscode FullStack Installer"
     exit 1
 fi
 
@@ -94,7 +94,7 @@ if ! ( ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt
 fi
 
 ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
-# ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
+ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
 ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
 ssh root@${IP} '/opt/opscode/bin/chef-client'
 
@@ -108,6 +108,11 @@ ssh root@${IP} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
 
 if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
     echo "Exerstack test suite failed"
+    exit 1
+fi
+
+if ! ( ssh root@${IP} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+    echo "Kong test suite failed"
     exit 1
 fi
 
