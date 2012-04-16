@@ -19,9 +19,11 @@ compute_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Compute
 echo "Compute_Name: ${compute_name}"
 
 # this sets IP as a side-effect
-controller_ip=aquire_ip $controller_name
+get_ip $controller_name
+controller_ip=${IP}
 echo "Controller_IP: ${controller_ip}"
-compute_ip=aquire_ip $compute_name
+get_ip $compute_name
+compute_ip=${IP}
 echo "Compute_IP: ${compute_ip}"
 
 
