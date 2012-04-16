@@ -13,25 +13,43 @@ PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 jenkins_init
 jenkins_set_vars
 
-controller_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Controller
-echo "Controller_Name: ${controller_name}"
-compute_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Compute
-echo "Compute_Name: ${compute_name}"
+declare -a nodes
+nodes=( compute controller )
 
-# this sets IP as a side-effect
-get_ip $controller_name
-controller_ip=${IP}
-echo "Controller_IP: ${controller_ip}"
-get_ip $compute_name
-compute_ip=${IP}
-echo "Compute_IP: ${compute_ip}"
+declare -a host_info
 
-declare -a host_array
-host_array=( $controller_name $compute_name )
+for node in ${nodes[@]}; do
+   node_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-$host
+   get_ip $node_name 
+   node_ip=${IP}
+   #echo "Node: ${node_name}"
+   #echo ".. IP: ${node_ip}"
+   host_info=( "${node_name}:${node_ip}" )
+done
 
-for host in ${#host_array[@]}; do
-    print "$host"
-end
+for host in ${host_info[@]}; do
+    echo $host
+done
+
+#controller_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Controller
+#echo "Controller_Name: ${controller_name}"
+#compute_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Compute
+#echo "Compute_Name: ${compute_name}"
+
+## this sets IP as a side-effect
+#get_ip $controller_name
+#controller_ip=${IP}
+#echo "Controller_IP: ${controller_ip}"
+#get_ip $compute_name
+#compute_ip=${IP}
+#echo "Compute_IP: ${compute_ip}"
+
+#declare -a host_array
+#host_array=( $controller_name $compute_name )
+
+#for host in ${host_array[@]}; do
+#    print "$host"
+#end
 
 #function err_cleanup_chef() {
 #    # $1 - name
