@@ -704,6 +704,73 @@ function get_ip {
     release_lock
 }
 
+
+function aquire_ip {
+    # $1 - what to get IP for, from range in /etc/jenkins-deb/jenkins-deb-ip.conf
+    #      poor-man's IPAM
+    #
+    # /etc/jenkins-deb/jenkins-deb-ip.conf should look like this:
+    # 192.168.1.10 unallocated
+    # 192.168.1.11 unallocated
+    # ---
+    #
+    # allocation will be first-come, first-served allocated by name.  Once an
+    # ip has been allocated for a name, it will always be allocated to that
+    # name.  There is no cleanup, no ping tests, etc.
+    #
+    # clean it up yourself.
+    #
+
+    # first, load in the whole list
+
+    acquire_lock "index"  # trap handler already set
+
+    # declares in functions are by default local (without -x)
+    declare -A ip_list
+    declare -A host_list
+    local ip
+    local host
+    local ret
+
+    ip_list=()
+    host_list=()
+
+    while read line; do
+	ip=${line%% *}
+	host=${line##* }
+	ip_list[${ip}]=${host}
+	host_list[${host}]=${ip}
+    done < <(cat /etc/jenkins-deb/jenkins-deb-ip.conf)
+
+
+    # set the host to the passed-in host name
+    host=${1}
+
+    if [ "${host_list[${host}]-}" != "" ]; then
+	# already have an ip allocated for this host
+	ret=${host_list[${host}]}
+    else
+	# need to allocate and write the file back out.  Pick
+	# the last unallocated
+	ret=${host_list[unallocated]}
+	ip_list[${IP}]=${host}
+
+	# Now, write out the file
+	local tmpfile=$(mktemp)
+
+	for ip in ${!ip_list[@]}; do
+	    echo "Writing ${ip}"
+	    echo "${ip} ${ip_list[${ip}]}" >> ${tmpfile}
+	done
+
+	sort -t . -k 1,1n -k 2,2n -k 3,3n -k 4,4n ${tmpfile} > /etc/jenkins-deb/jenkins-deb-ip.conf
+	rm ${tmpfile}
+    fi
+
+    release_lock
+    return $ret
+}
+
 function increment_counter {
     # $1 - counter to increment
     # $2 - variable to return the result in
