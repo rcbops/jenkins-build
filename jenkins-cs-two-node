@@ -1,0 +1,141 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-precise}
+PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+controller_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Controller
+echo "Controller_Name: ${controller_name}"
+compute_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Compute
+echo "Compute_Name: ${Compute_Name}"
+
+# this sets IP as a side-effect
+controller_ip = aquire_ip $controller_name
+echo "Controller_IP: ${controller_ip}"
+compute_ip = aquire_ip $compute_name
+echo "Compute_IP: ${compute_ip}"
+
+
+#function err_cleanup_chef() {
+#    # $1 - name
+#    if [ "${NOCLEAN-0}" == "1" ]; then
+#        exit 0
+#    fi
+#
+#    # Delete node and client from chef-server
+#    ssh root@${IP} 'knife node delete $HOSTNAME -y'
+#    ssh root@${IP} 'knife client delete $HOSTNAME -y'
+#
+#    sudo virsh destroy ${1}
+#    sleep 5
+#    sudo lvremove -f ${LVM_ROOT}/${1}
+#    exit 1
+#}
+
+## global memory per vm
+#MEMORY=2048000
+
+## make controller vm
+#maybe_make_kvm_instance $controller_name
+#trap "err_cleanup_chef ${controller_name}" SIGINT SIGTERM EXIT ERR
+#start_kvm_instance $controller_name ${controller_ip} http://archive.ubuntu.com/ubuntu precise main
+
+## make compute vm
+#maybe_make_kvm_instance $compute_name
+#trap "err_cleanup_chef ${compute_name}" SIGINT SIGTERM EXIT ERR
+#start_kvm_instance $compute_name ${compute_ip} http://archive.ubuntu.com/ubuntu precise main
+
+
+#if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+#    ssh root@${IP} apt-get install vlan -y --force-yes
+#else
+#    ssh root@${IP} rm -f /etc/cron.daily/man-db.cron
+#    ssh root@${IP} yum -y --exclude=kernel* update
+#    ssh root@${IP} yum install -y vconfig perl gcc make yum-fastestmirror redhat-lsb
+#    ssh root@${IP} modprobe nbd
+#fi
+
+#ssh root@${IP} vconfig add eth0 100
+#ssh root@${IP} vconfig add eth0 101
+
+#if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+#    # Trying to fix a bug
+#    count=1
+#    while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
+#        if [ $count -gt 3 ]; then
+#            echo "Unable to install cgroup-lite"
+#            exit 1
+#        fi
+#        if ! ( ssh root@${IP} "/usr/bin/cgroups-mount" ); then
+#            :
+#        fi 
+#        sleep 2;
+#        count=$(( count + 1 ));
+#    done
+#fi
+
+## Install system pre-reqs
+#if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+#  ssh root@${IP} "apt-get install -y wget curl build-essential automake"
+#else
+#  ssh root@${IP} "yum install -y wget tar"
+#  #ssh root@${IP} "mkdir RPMS; cd RPMS; wget http://184.106.53.105/RPMS/euca2ools-2.0.1-0.1.fc17.noarch.rpm"
+#  #ssh root@${IP} "cd RPMS; wget http://184.106.53.105/RPMS/python-boto-2.1.1-0.2.fc17.noarch.rpm"
+#  #ssh root@${IP} "cd RPMS; yum install -y *.rpm"
+#fi
+
+## Try to quiet installer
+#ssh root@${IP} 'echo "alias wget=\"wget -q\"" >> ~/.bashrc '
+
+## Install ruby/chef via opscode's fullstack installer
+#if ! ( ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
+#    ECHO "uNable to install Opscode FullStack Installer"
+#    exit 1
+#fi
+
+## Setup Hosted Chef
+#ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+#if ! ( ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client' ); then
+#    echo "Unable to register with chef-server"
+#    exit 1
+#fi
+
+#ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
+#ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
+#ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
+#ssh root@${IP} '/opt/opscode/bin/chef-client'
+
+#sleep 20s
+
+## These tests are not working on essex yet
+#ssh root@${IP} 'rm -rf /opt/exerstack/exercises/bundle.sh'
+## ssh root@${IP} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
+
+#if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
+#    echo "Exerstack test suite failed"
+#    exit 1
+#fi
+
+#if ! ( ssh root@${IP} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+#    echo "Kong test suite failed"
+#    exit 1
+#fi
+
+#trap - SIGINT SIGTERM EXIT ERR
+
+## Delete node and client from chef-server
+#ssh root@${IP} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
+#ssh root@${IP} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
+
+#sudo virsh destroy ${kvm_instance_name}
+#sleep 5
+#sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
