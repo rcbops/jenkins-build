@@ -24,7 +24,7 @@ for node in ${nodes[@]}; do
    node_ip=${IP}
    #echo "Node: ${node_name}"
    #echo ".. IP: ${node_ip}"
-   host_info=( "${node_name}:${node_ip}" )
+   host_info=( ${host_info[@]} "${node_name}:${node_ip}" )
 done
 
 for host in ${host_info[@]}; do
