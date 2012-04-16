@@ -19,7 +19,7 @@ nodes=( compute controller )
 declare -a host_info
 
 for node in ${nodes[@]}; do
-   node_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-$host
+   node_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-$node
    get_ip $node_name 
    node_ip=${IP}
    #echo "Node: ${node_name}"
