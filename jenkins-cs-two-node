@@ -16,7 +16,7 @@ jenkins_set_vars
 controller_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Controller
 echo "Controller_Name: ${controller_name}"
 compute_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Compute
-echo "Compute_Name: ${Compute_Name}"
+echo "Compute_Name: ${compute_Name}"
 
 # this sets IP as a side-effect
 controller_ip = aquire_ip $controller_name
