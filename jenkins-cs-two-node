@@ -26,6 +26,12 @@ get_ip $compute_name
 compute_ip=${IP}
 echo "Compute_IP: ${compute_ip}"
 
+declare -a host_array
+host_array=( $controller_name $compute_name )
+
+for host in ${#host_array[@]}; do
+    print "$host"
+end
 
 #function err_cleanup_chef() {
 #    # $1 - name
