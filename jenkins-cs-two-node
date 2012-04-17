@@ -37,7 +37,7 @@ nodes=( compute controller )
 # Lets configure name and ip for each of the nodes
 declare -a host_info
 for node in ${nodes[@]}; do
-   node_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-$node
+   node_name=${BINARY_BUILD_RELEASE}-${PACKAGE}-$node
    get_ip $node_name 
    node_ip=${IP}
    host_info[${#host_info[@]}]="${node_name}:${node_ip}"
@@ -61,6 +61,12 @@ for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
     ip=$(echo $host | cut -d':' -f2)
     ssh root@${ip} "ifconfig eth0"
+
+    ## Install ruby/chef via opscode's fullstack installer
+    if ! ( ssh root@${ip} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
+        ECHO "Unable to install Opscode FullStack Installer"
+        exit 1
+    fi
 done
 
 # Cleanup after the run
@@ -75,11 +81,6 @@ for host in ${host_info[@]}; do
     sleep 5
     sudo lvremove -f ${LVM_ROOT}/${name}
 done
-
-## make controller vm
-#maybe_make_kvm_instance $controller_name
-#trap "err_cleanup_chef ${controller_name}" SIGINT SIGTERM EXIT ERR
-#start_kvm_instance $controller_name ${controller_ip} http://archive.ubuntu.com/ubuntu precise main
 
 
 #if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
