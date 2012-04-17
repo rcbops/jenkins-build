@@ -36,7 +36,7 @@ function err_cleanup_chef() {
 
 # This is an array of the roles you want to build for the test
 declare -a nodes
-nodes=( compute controller )
+nodes=( controller compute )
 
 # Lets configure name and ip for each of the nodes
 declare -a host_info
