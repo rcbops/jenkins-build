@@ -21,7 +21,8 @@ function err_cleanup_chef() {
     for host in ${host_info[@]}; do
         echo "destroying $host"
         name=$(echo $host | cut -d':' -f1)
-        ip=$(echo $host | cut -d':' -f2)
+        role=$(echo $host | cut -d':' -f2)
+        ip=$(echo $host | cut -d':' -f3)
 
         # Delete node and client from chef-server
         ssh root@${ip} 'knife node delete $HOSTNAME -y'
@@ -39,17 +40,19 @@ function err_cleanup_chef() {
 #    controller
 #    compute
 # the naming of these is extremely important
-# TODO(breu): need to extend this to define a role regardless of the name of the node
 declare -a nodes
-nodes=( controller compute )
+nodes=( controller:controller compute:compute )
 
 # Lets configure name and ip for each of the nodes
 declare -a host_info
 for node in ${nodes[@]}; do
-   node_name=${BINARY_BUILD_RELEASE}-${PACKAGE}-$node
-   get_ip $node_name 
-   node_ip=${IP}
-   host_info[${#host_info[@]}]="${node_name}:${node_ip}"
+    name=$(echo $node | cut -d':' -f1)
+    role=$(echo $node | cut -d':' -f2)
+    node_name=${BINARY_BUILD_RELEASE}-${PACKAGE}-$name
+    get_ip $node_name 
+    node_ip=${IP}
+    echo "building host_info ${node_name}:${role}:${node_ip}"
+    host_info[${#host_info[@]}]="${node_name}:${role}:${node_ip}"
 done
 
 # global memory spec for all vms built
@@ -59,7 +62,8 @@ MEMORY=2048000
 for host in ${host_info[@]}; do
     echo $host
     name=$(echo $host | cut -d':' -f1)
-    ip=$(echo $host | cut -d':' -f2)
+    role=$(echo $host | cut -d':' -f2)
+    ip=$(echo $host | cut -d':' -f3)
     maybe_make_kvm_instance $name
     start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
 done
@@ -68,7 +72,8 @@ trap "err_cleanup_chef" SIGINT SIGTERM ERR
 
 for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
-    ip=$(echo $host | cut -d':' -f2)
+    role=$(echo $host | cut -d':' -f2)
+    ip=$(echo $host | cut -d':' -f3)
     ssh root@${ip} "ifconfig eth0"
 
     if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
@@ -125,11 +130,14 @@ for host in ${host_info[@]}; do
         exit 1
     fi
 
-    if [[ $name =~ \.*controller\.* ]]; then
-        ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-controller]'
-    elif [[ $name =~ \.*compute\.* ]]; then
-        ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-compute]'
-    fi
+    case "$role" in
+        "controller")
+            ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-controller]'
+            ;;
+        "compute")
+            ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-compute]'
+            ;;
+    esac
     ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
     ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
     # ssh root@${ip} '/opt/opscode/bin/chef-client'
@@ -158,7 +166,8 @@ trap - SIGINT SIGTERM EXIT ERR
 # Cleanup after the run
 for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
-    ip=$(echo $host | cut -d':' -f2)
+    node=$(echo $host | cut -d':' -f2)
+    ip=$(echo $host | cut -d':' -f3)
     # Delete node and client from chef-server
     ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
     ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
