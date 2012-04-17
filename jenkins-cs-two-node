@@ -13,72 +13,71 @@ PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 jenkins_init
 jenkins_set_vars
 
+function err_cleanup_chef() {
+    # $1 - name
+    # $2 - ip
+    if [ "${NOCLEAN-0}" == "1" ]; then
+        exit 0
+    fi
+
+    # Delete node and client from chef-server
+    ssh root@${2} 'knife node delete $HOSTNAME -y'
+    ssh root@${2} 'knife client delete $HOSTNAME -y'
+
+    sudo virsh destroy ${1}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${1}
+    exit 1
+}
+
+# This is an array of the roles you want to build for the test
 declare -a nodes
 nodes=( compute controller )
 
+# Lets configure name and ip for each of the nodes
 declare -a host_info
-
 for node in ${nodes[@]}; do
    node_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-$node
    get_ip $node_name 
    node_ip=${IP}
-   #echo "Node: ${node_name}"
-   #echo ".. IP: ${node_ip}"
    host_info[${#host_info[@]}]="${node_name}:${node_ip}"
 done
 
+# global memory spec for all vms built
+MEMORY=2048000
+
+# Spinup VMs 
 for host in ${host_info[@]}; do
     echo $host
+    local name=$(echo $host | cut -d':' -f1)
+    local ip=$(echo $host | cut -d':' -f2)
+    maybe_make_kvm_instance $name
+    trap "err_cleanup_chef ${name} ${ip}" SIGINT SIGTERM EXIT ERR
+    start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
 done
 
-#controller_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Controller
-#echo "Controller_Name: ${controller_name}"
-#compute_name=${BINARY_BUILD_RELEASE}-Essex-Two-Node-Compute
-#echo "Compute_Name: ${compute_name}"
 
-## this sets IP as a side-effect
-#get_ip $controller_name
-#controller_ip=${IP}
-#echo "Controller_IP: ${controller_ip}"
-#get_ip $compute_name
-#compute_ip=${IP}
-#echo "Compute_IP: ${compute_ip}"
+for host in ${host_info[@]}; do
+    ssh root@${ip} "ifconfig eth0"
+done
 
-#declare -a host_array
-#host_array=( $controller_name $compute_name )
+# Cleanup after the run
+for host in ${host_info[@]}; do
+    local name=$(echo $host | cut -d':' -f1)
+    local ip=$(echo $host | cut -d':' -f2)
+    # Delete node and client from chef-server
+    ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
+    ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
 
-#for host in ${host_array[@]}; do
-#    print "$host"
-#end
-
-#function err_cleanup_chef() {
-#    # $1 - name
-#    if [ "${NOCLEAN-0}" == "1" ]; then
-#        exit 0
-#    fi
-#
-#    # Delete node and client from chef-server
-#    ssh root@${IP} 'knife node delete $HOSTNAME -y'
-#    ssh root@${IP} 'knife client delete $HOSTNAME -y'
-#
-#    sudo virsh destroy ${1}
-#    sleep 5
-#    sudo lvremove -f ${LVM_ROOT}/${1}
-#    exit 1
-#}
-
-## global memory per vm
-#MEMORY=2048000
+    sudo virsh destroy ${name}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${name}
+done
 
 ## make controller vm
 #maybe_make_kvm_instance $controller_name
 #trap "err_cleanup_chef ${controller_name}" SIGINT SIGTERM EXIT ERR
 #start_kvm_instance $controller_name ${controller_ip} http://archive.ubuntu.com/ubuntu precise main
-
-## make compute vm
-#maybe_make_kvm_instance $compute_name
-#trap "err_cleanup_chef ${compute_name}" SIGINT SIGTERM EXIT ERR
-#start_kvm_instance $compute_name ${compute_ip} http://archive.ubuntu.com/ubuntu precise main
 
 
 #if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
