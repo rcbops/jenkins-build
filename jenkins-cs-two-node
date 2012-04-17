@@ -59,7 +59,7 @@ for host in ${host_info[@]}; do
     start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
 done
 
-trap "err_cleanup_chef $nodes_names" SIGINT SIGTERM EXIT ERR
+trap "err_cleanup_chef" SIGINT SIGTERM EXIT ERR
 
 for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
