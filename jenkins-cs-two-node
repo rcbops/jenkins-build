@@ -35,6 +35,10 @@ function err_cleanup_chef() {
 }
 
 # This is an array of the roles you want to build for the test
+# This currently supports the following roles
+#    controller
+#    compute
+# the naming of these is extremely important
 declare -a nodes
 nodes=( controller compute )
 
