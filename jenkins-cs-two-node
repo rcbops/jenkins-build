@@ -129,23 +129,24 @@ for host in ${host_info[@]}; do
     ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
     # ssh root@${ip} '/opt/opscode/bin/chef-client'
 
+
+    #sleep 20s
+
+    # These tests are not working on essex yet
+    ssh root@${ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
+    # ssh root@${ip} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
+
+    #if ! ( ssh root@${ip} 'cd /opt/exerstack; ./exercise.sh' ); then
+    #    echo "Exerstack test suite failed"
+    #    exit 1
+    #fi
+
+    #if ! ( ssh root@${ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+    #    echo "Kong test suite failed"
+    #    exit 1
+    #fi
+
 done
-
-#sleep 20s
-
-## These tests are not working on essex yet
-#ssh root@${ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
-## ssh root@${ip} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
-
-#if ! ( ssh root@${ip} 'cd /opt/exerstack; ./exercise.sh' ); then
-#    echo "Exerstack test suite failed"
-#    exit 1
-#fi
-
-#if ! ( ssh root@${ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
-#    echo "Kong test suite failed"
-#    exit 1
-#fi
 
 trap - SIGINT SIGTERM EXIT ERR
 
