@@ -149,8 +149,8 @@ for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
     ip=$(echo $host | cut -d':' -f2)
     # Delete node and client from chef-server
-    ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
-    ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
+    #ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
+    #ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
 
     sudo virsh destroy ${name}
     sleep 5
