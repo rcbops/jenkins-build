@@ -73,6 +73,8 @@ for host in ${host_info[@]}; do
     #fi
 done
 
+trap - SIGINT SIGTERM EXIT ERR
+
 # Cleanup after the run
 for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
