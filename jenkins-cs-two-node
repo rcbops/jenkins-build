@@ -39,6 +39,7 @@ function err_cleanup_chef() {
 #    controller
 #    compute
 # the naming of these is extremely important
+# TODO(breu): need to extend this to define a role regardless of the name of the node
 declare -a nodes
 nodes=( controller compute )
 
