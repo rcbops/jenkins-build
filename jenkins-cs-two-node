@@ -120,9 +120,9 @@ for host in ${host_info[@]}; do
         exit 1
     fi
 
-    if [ $name =~ \.*controller\.* ]]; then
+    if [[ $name =~ \.*controller\.* ]]; then
         ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-controller]'
-    elif [ $name =~ \.*compute\.* ]]; then
+    elif [[ $name =~ \.*compute\.* ]]; then
         ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-compute]'
     fi
     ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
