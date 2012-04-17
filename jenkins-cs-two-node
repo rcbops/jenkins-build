@@ -119,12 +119,17 @@ for host in ${host_info[@]}; do
         echo "Unable to register with chef-server"
         exit 1
     fi
-done
 
-#ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
-#ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
-#ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
-#ssh root@${ip} '/opt/opscode/bin/chef-client'
+    if [ $name =~ \.*controller\.* ]]; then
+        ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-controller]'
+    elif [ $name =~ \.*compute\.* ]]; then
+        ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-compute]'
+    fi
+    ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
+    ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
+    # ssh root@${ip} '/opt/opscode/bin/chef-client'
+
+done
 
 #sleep 20s
 
