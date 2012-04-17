@@ -66,12 +66,81 @@ for host in ${host_info[@]}; do
     ip=$(echo $host | cut -d':' -f2)
     ssh root@${ip} "ifconfig eth0"
 
-    ## Install ruby/chef via opscode's fullstack installer
-    #if ! ( ssh root@${ip} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
-    #    ECHO "Unable to install Opscode FullStack Installer"
-    #    exit 1
-    #fi
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+        ssh root@${ip} apt-get install vlan -y --force-yes
+    else
+        ssh root@${ip} rm -f /etc/cron.daily/man-db.cron
+        ssh root@${ip} yum -y --exclude=kernel* update
+        ssh root@${ip} yum install -y vconfig perl gcc make yum-fastestmirror redhat-lsb
+        ssh root@${ip} modprobe nbd
+    fi
+
+    ssh root@${ip} vconfig add eth0 100
+    ssh root@${ip} vconfig add eth0 101
+
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+        # Trying to fix a bug
+        count=1
+        while ! ssh root@${ip} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
+            if [ $count -gt 3 ]; then
+                echo "Unable to install cgroup-lite"
+                exit 1
+            fi
+            if ! ( ssh root@${ip} "/usr/bin/cgroups-mount" ); then
+                :
+            fi 
+            sleep 2;
+            count=$(( count + 1 ));
+        done
+    fi
+
+    # Install system pre-reqs
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+      ssh root@${ip} "apt-get install -y wget curl build-essential automake"
+    else
+      ssh root@${ip} "yum install -y wget tar"
+      #ssh root@${ip} "mkdir RPMS; cd RPMS; wget http://184.106.53.105/RPMS/euca2ools-2.0.1-0.1.fc17.noarch.rpm"
+      #ssh root@${ip} "cd RPMS; wget http://184.106.53.105/RPMS/python-boto-2.1.1-0.2.fc17.noarch.rpm"
+      #ssh root@${ip} "cd RPMS; yum install -y *.rpm"
+    fi
+
+    # Try to quiet installer
+    ssh root@${ip} 'echo "alias wget=\"wget -q\"" >> ~/.bashrc '
+
+    # Install ruby/chef via opscode's fullstack installer
+    if ! ( ssh root@${ip} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
+        echo "Unable to install Opscode FullStack Installer"
+        exit 1
+    fi
 done
+
+# Setup Hosted Chef
+#ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+#if ! ( ssh root@${ip} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client' ); then
+#    echo "Unable to register with chef-server"
+#    exit 1
+#fi
+
+#ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
+#ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
+#ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
+#ssh root@${ip} '/opt/opscode/bin/chef-client'
+
+#sleep 20s
+
+## These tests are not working on essex yet
+#ssh root@${ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
+## ssh root@${ip} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
+
+#if ! ( ssh root@${ip} 'cd /opt/exerstack; ./exercise.sh' ); then
+#    echo "Exerstack test suite failed"
+#    exit 1
+#fi
+
+#if ! ( ssh root@${ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+#    echo "Kong test suite failed"
+#    exit 1
+#fi
 
 trap - SIGINT SIGTERM EXIT ERR
 
@@ -80,96 +149,10 @@ for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
     ip=$(echo $host | cut -d':' -f2)
     # Delete node and client from chef-server
-    #ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
-    #ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
+    ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
+    ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
 
     sudo virsh destroy ${name}
     sleep 5
     sudo lvremove -f ${LVM_ROOT}/${name}
 done
-
-
-#if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
-#    ssh root@${IP} apt-get install vlan -y --force-yes
-#else
-#    ssh root@${IP} rm -f /etc/cron.daily/man-db.cron
-#    ssh root@${IP} yum -y --exclude=kernel* update
-#    ssh root@${IP} yum install -y vconfig perl gcc make yum-fastestmirror redhat-lsb
-#    ssh root@${IP} modprobe nbd
-#fi
-
-#ssh root@${IP} vconfig add eth0 100
-#ssh root@${IP} vconfig add eth0 101
-
-#if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
-#    # Trying to fix a bug
-#    count=1
-#    while ! ssh root@${IP} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
-#        if [ $count -gt 3 ]; then
-#            echo "Unable to install cgroup-lite"
-#            exit 1
-#        fi
-#        if ! ( ssh root@${IP} "/usr/bin/cgroups-mount" ); then
-#            :
-#        fi 
-#        sleep 2;
-#        count=$(( count + 1 ));
-#    done
-#fi
-
-## Install system pre-reqs
-#if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
-#  ssh root@${IP} "apt-get install -y wget curl build-essential automake"
-#else
-#  ssh root@${IP} "yum install -y wget tar"
-#  #ssh root@${IP} "mkdir RPMS; cd RPMS; wget http://184.106.53.105/RPMS/euca2ools-2.0.1-0.1.fc17.noarch.rpm"
-#  #ssh root@${IP} "cd RPMS; wget http://184.106.53.105/RPMS/python-boto-2.1.1-0.2.fc17.noarch.rpm"
-#  #ssh root@${IP} "cd RPMS; yum install -y *.rpm"
-#fi
-
-## Try to quiet installer
-#ssh root@${IP} 'echo "alias wget=\"wget -q\"" >> ~/.bashrc '
-
-## Install ruby/chef via opscode's fullstack installer
-#if ! ( ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
-#    ECHO "uNable to install Opscode FullStack Installer"
-#    exit 1
-#fi
-
-## Setup Hosted Chef
-#ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
-#if ! ( ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client' ); then
-#    echo "Unable to register with chef-server"
-#    exit 1
-#fi
-
-#ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
-#ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
-#ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
-#ssh root@${IP} '/opt/opscode/bin/chef-client'
-
-#sleep 20s
-
-## These tests are not working on essex yet
-#ssh root@${IP} 'rm -rf /opt/exerstack/exercises/bundle.sh'
-## ssh root@${IP} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
-
-#if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
-#    echo "Exerstack test suite failed"
-#    exit 1
-#fi
-
-#if ! ( ssh root@${IP} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
-#    echo "Kong test suite failed"
-#    exit 1
-#fi
-
-#trap - SIGINT SIGTERM EXIT ERR
-
-## Delete node and client from chef-server
-#ssh root@${IP} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
-#ssh root@${IP} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
-
-#sudo virsh destroy ${kvm_instance_name}
-#sleep 5
-#sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
