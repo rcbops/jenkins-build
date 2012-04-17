@@ -24,8 +24,8 @@ function err_cleanup_chef() {
         ip=$(echo $host | cut -d':' -f2)
 
         # Delete node and client from chef-server
-        #ssh root@${ip} 'knife node delete $HOSTNAME -y'
-        #ssh root@${ip} 'knife client delete $HOSTNAME -y'
+        ssh root@${ip} 'knife node delete $HOSTNAME -y'
+        ssh root@${ip} 'knife client delete $HOSTNAME -y'
 
         sudo virsh destroy ${name}
         sleep 5
@@ -112,14 +112,14 @@ for host in ${host_info[@]}; do
         echo "Unable to install Opscode FullStack Installer"
         exit 1
     fi
-done
 
-# Setup Hosted Chef
-#ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
-#if ! ( ssh root@${ip} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client' ); then
-#    echo "Unable to register with chef-server"
-#    exit 1
-#fi
+    # Setup Hosted Chef
+    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+    if ! ( ssh root@${ip} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client' ); then
+        echo "Unable to register with chef-server"
+        exit 1
+    fi
+done
 
 #ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
 #ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
