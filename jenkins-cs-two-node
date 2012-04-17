@@ -14,19 +14,23 @@ jenkins_init
 jenkins_set_vars
 
 function err_cleanup_chef() {
-    # $1 - name
-    # $2 - ip
     if [ "${NOCLEAN-0}" == "1" ]; then
         exit 0
     fi
 
-    # Delete node and client from chef-server
-#    ssh root@${2} 'knife node delete $HOSTNAME -y'
-#    ssh root@${2} 'knife client delete $HOSTNAME -y'
+    for host in ${host_info[@]}; do
+        echo "destroying $host"
+        name=$(echo $host | cut -d':' -f1)
+        ip=$(echo $host | cut -d':' -f2)
 
-    sudo virsh destroy ${1}
-    sleep 5
-    sudo lvremove -f ${LVM_ROOT}/${1}
+        # Delete node and client from chef-server
+        #ssh root@${ip} 'knife node delete $HOSTNAME -y'
+        #ssh root@${ip} 'knife client delete $HOSTNAME -y'
+
+        sudo virsh destroy ${name}
+        sleep 5
+        sudo lvremove -f ${LVM_ROOT}/${name}
+    done
     exit 1
 }
 
@@ -52,10 +56,10 @@ for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
     ip=$(echo $host | cut -d':' -f2)
     maybe_make_kvm_instance $name
-    trap "err_cleanup_chef ${name} ${ip}" SIGINT SIGTERM EXIT ERR
     start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
 done
 
+trap "err_cleanup_chef $nodes_names" SIGINT SIGTERM EXIT ERR
 
 for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
@@ -63,10 +67,10 @@ for host in ${host_info[@]}; do
     ssh root@${ip} "ifconfig eth0"
 
     ## Install ruby/chef via opscode's fullstack installer
-    if ! ( ssh root@${ip} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
-        ECHO "Unable to install Opscode FullStack Installer"
-        exit 1
-    fi
+    #if ! ( ssh root@${ip} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
+    #    ECHO "Unable to install Opscode FullStack Installer"
+    #    exit 1
+    #fi
 done
 
 # Cleanup after the run
@@ -74,8 +78,8 @@ for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
     ip=$(echo $host | cut -d':' -f2)
     # Delete node and client from chef-server
-#    ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
-#    ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
+    #ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
+    #ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
 
     sudo virsh destroy ${name}
     sleep 5
