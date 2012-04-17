@@ -49,8 +49,8 @@ MEMORY=2048000
 # Spinup VMs 
 for host in ${host_info[@]}; do
     echo $host
-    local name=$(echo $host | cut -d':' -f1)
-    local ip=$(echo $host | cut -d':' -f2)
+    name=$(echo $host | cut -d':' -f1)
+    ip=$(echo $host | cut -d':' -f2)
     maybe_make_kvm_instance $name
     trap "err_cleanup_chef ${name} ${ip}" SIGINT SIGTERM EXIT ERR
     start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
@@ -63,8 +63,8 @@ done
 
 # Cleanup after the run
 for host in ${host_info[@]}; do
-    local name=$(echo $host | cut -d':' -f1)
-    local ip=$(echo $host | cut -d':' -f2)
+    name=$(echo $host | cut -d':' -f1)
+    ip=$(echo $host | cut -d':' -f2)
     # Delete node and client from chef-server
     ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
     ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
