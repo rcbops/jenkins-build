@@ -149,6 +149,8 @@ done
 
 sleep 20s
 
+echo "running tests against the controller node"
+
 for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
     role=$(echo $host | cut -d':' -f2)
