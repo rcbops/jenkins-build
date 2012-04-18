@@ -48,7 +48,7 @@ declare -a nodes
 nodes=( controller:controller compute:compute )
 
 chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
-chef_env_created=0
+chef_env_set=0
 
 # Lets configure name and ip for each of the nodes
 declare -a host_info
