@@ -27,9 +27,9 @@ function err_cleanup_chef() {
 
         echo "destroying $host"
         # Delete node and client from chef-server
-        ssh root@${ip} 'knife node delete $HOSTNAME -y -E ${chef_env}'
-        ssh root@${ip} 'knife client delete $HOSTNAME -y -E ${chef_env}'
-        ssh root@${ip} '/opt/opscode/bin/knife environment delete ${chef_env} -y'
+        ssh root@${ip} 'knife node delete $HOSTNAME -y -E '${chef_env}
+        ssh root@${ip} 'knife client delete $HOSTNAME -y -E '${chef_env}
+        ssh root@${ip} '/opt/opscode/bin/knife environment delete '${chef_env}' -y'
 
         sudo virsh destroy ${name}
         sleep 5
@@ -138,21 +138,21 @@ for host in ${host_info[@]}; do
     fi
 
     if [ $chef_env_set -eq 0 ]; then
-        ssh root@${ip} 'EDITOR=/bin/true /opt/opscode/bin/knife environment create ${chef_env} -d "${chef_env} jenkins role -y"
+        ssh root@${ip} 'EDITOR=/bin/true /opt/opscode/bin/knife environment create '${chef_env}' -d "'${chef_env}' jenkins role -y"
         chef_env_set=1
     fi
 
     case "$role" in
         "controller")
-            ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-controller] -E {$chef_env}'
+            ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-controller] -E '{$chef_env}
             ;;
         "compute")
-            ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-compute] -E {$chef_env}'
+            ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-compute] -E '{$chef_env}
             ;;
     esac
-    ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong] -E {$chef_env}'
-    ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack] -E {$chef_env}'
-    ssh root@${ip} '/opt/opscode/bin/chef-client -E {$chef_env}'
+    ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong] -E '{$chef_env}
+    ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack] -E '{$chef_env}
+    ssh root@${ip} '/opt/opscode/bin/chef-client -E '{$chef_env}
 
 done
 
@@ -191,9 +191,9 @@ for host in ${host_info[@]}; do
     node=$(echo $host | cut -d':' -f2)
     ip=$(echo $host | cut -d':' -f3)
     # Delete node and client from chef-server
-    ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y -E ${chef_env}'
-    ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y -E ${chef_env}'
-    ssh root@${ip} '/opt/opscode/bin/knife environment delete ${chef_env} -y'
+    ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y -E '${chef_env}
+    ssh root@${ip} '/opt/opscode/bin/knife client delete $HOSTNAME -y -E '${chef_env}
+    ssh root@${ip} '/opt/opscode/bin/knife environment delete '${chef_env}' -y'
 
     sudo virsh destroy ${name}
     sleep 5
