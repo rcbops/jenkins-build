@@ -97,9 +97,9 @@ if ! ( ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt
 fi
 
 ssh root@${IP} "EDITOR=/bin/true /opt/opscode/bin/knife environment create ${kvm_instance_name}"
-ssh root@${IP} "/opt/opscode/bin/knife -E ${kvm_instance_name} node run_list add \$HOSTNAME role[jenkins-allinone]"
-ssh root@${IP} "/opt/opscode/bin/knife -E ${kvm_instance_name} node run_list add \$HOSTNAME recipe[kong]"
-ssh root@${IP} "/opt/opscode/bin/knife -E ${kvm_instance_name} node run_list add \$HOSTNAME recipe[exerstack]"
+ssh root@${IP} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-allinone] -E ${kvm_instance_name}"
+ssh root@${IP} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[kong] -E ${kvm_instance_name}"
+ssh root@${IP} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[exerstack] -E ${kvm_instance_name}"
 ssh root@${IP} "/opt/opscode/bin/chef-client -E ${kvm_instance_name}"
 
 sleep 20s
