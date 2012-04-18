@@ -28,8 +28,9 @@ function err_cleanup_chef() {
     ssh root@${IP} 'cat /var/chef/cache/chef-stacktrace.out || :'
 
     # Delete node and client from chef-server
-    ssh root@${IP} 'knife node delete $HOSTNAME -y'
-    ssh root@${IP} 'knife client delete $HOSTNAME -y'
+    ssh root@${IP} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${kvm_instance_name}"
+    ssh root@${IP} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${kvm_instance_name}"
+    ssh root@${IP} "/opt/opscode/bin/knife environment delete -y ${kvm_instance_name}"
 
     sudo virsh destroy ${1}
     sleep 5
