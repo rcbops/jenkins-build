@@ -96,10 +96,11 @@ if ! ( ssh root@${IP} 'mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt
     exit 1
 fi
 
-ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[jenkins-allinone]'
-ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
-ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
-ssh root@${IP} '/opt/opscode/bin/chef-client'
+ssh root@${IP} 'EDITOR=/bin/true /opt/opscode/bin/knife environment create ${kvm_instance_name}'
+ssh root@${IP} '/opt/opscode/bin/knife -E ${kvm_instance_name} node run_list add $HOSTNAME role[jenkins-allinone]'
+ssh root@${IP} '/opt/opscode/bin/knife -E ${kvm_instance_name} node run_list add $HOSTNAME recipe[kong]'
+ssh root@${IP} '/opt/opscode/bin/knife -E ${kvm_instance_name} node run_list add $HOSTNAME recipe[exerstack]'
+ssh root@${IP} '/opt/opscode/bin/chef-client -E ${kvm_instance_name}'
 
 sleep 20s
 
@@ -120,8 +121,9 @@ fi
 trap - SIGINT SIGTERM EXIT ERR
 
 # Delete node and client from chef-server
-ssh root@${IP} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
-ssh root@${IP} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
+ssh root@${IP} '/opt/opscode/bin/knife -E ${kvm_instance_name} node delete $HOSTNAME -y'
+ssh root@${IP} '/opt/opscode/bin/knife -E ${kvm_instance_name} client delete $HOSTNAME -y'
+ssh root@${IP} '/opt/opscode/bin/knife environment delete ${kvm_instance_name} -y'
 
 sudo virsh destroy ${kvm_instance_name}
 sleep 5
