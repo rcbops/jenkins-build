@@ -143,7 +143,7 @@ for host in ${host_info[@]}; do
     esac
     ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[kong]'
     ssh root@${ip} '/opt/opscode/bin/knife node run_list add $HOSTNAME recipe[exerstack]'
-    # ssh root@${ip} '/opt/opscode/bin/chef-client'
+    ssh root@${ip} '/opt/opscode/bin/chef-client'
 
 
     #sleep 20s
