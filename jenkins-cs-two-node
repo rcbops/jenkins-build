@@ -154,7 +154,7 @@ for host in ${host_info[@]}; do
     role=$(echo $host | cut -d':' -f2)
     ip=$(echo $host | cut -d':' -f3)
 
-    if [[ "$role" == "controler" ]]; then
+    if [[ "$role" == "controller" ]]; then
         # These tests are not working on essex yet
         ssh root@${ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
         # ssh root@${ip} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
