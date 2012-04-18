@@ -36,6 +36,7 @@ function err_cleanup_chef() {
 }
 
 # This is an array of the roles you want to build for the test
+# Valid entries are in the form of <hostname>:<role to assign>
 # This currently supports the following roles
 #    controller
 #    compute
