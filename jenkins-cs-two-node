@@ -46,6 +46,8 @@ function err_cleanup_chef() {
 declare -a nodes
 nodes=( controller:controller compute:compute )
 
+chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
+
 # Lets configure name and ip for each of the nodes
 declare -a host_info
 for node in ${nodes[@]}; do
@@ -132,6 +134,8 @@ for host in ${host_info[@]}; do
         echo "Unable to register with chef-server"
         exit 1
     fi
+
+    #ssh root@${ip} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
 
     case "$role" in
         "controller")
