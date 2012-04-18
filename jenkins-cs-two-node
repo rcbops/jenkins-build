@@ -19,11 +19,13 @@ function err_cleanup_chef() {
     fi
 
     for host in ${host_info[@]}; do
-        echo "destroying $host"
         name=$(echo $host | cut -d':' -f1)
         role=$(echo $host | cut -d':' -f2)
         ip=$(echo $host | cut -d':' -f3)
+        echo "capturing stack trace output if it exists.  Errors are OK here"
+        ssh root@${ip} 'cat /var/chef/cache/chef-stacktrace.out'
 
+        echo "destroying $host"
         # Delete node and client from chef-server
         ssh root@${ip} 'knife node delete $HOSTNAME -y'
         ssh root@${ip} 'knife client delete $HOSTNAME -y'
