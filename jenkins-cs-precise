@@ -25,7 +25,7 @@ function err_cleanup_chef() {
     fi
 
     echo "capturing stack trace output if it exists.  Errors are OK here"
-    ssh root@${IP} 'cat /var/chef/cache/chef-stacktrace.out'
+    ssh root@${IP} 'cat /var/chef/cache/chef-stacktrace.out || :'
 
     # Delete node and client from chef-server
     ssh root@${IP} 'knife node delete $HOSTNAME -y'
