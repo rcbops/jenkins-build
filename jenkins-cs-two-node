@@ -138,7 +138,7 @@ for host in ${host_info[@]}; do
     fi
 
     if [ $chef_env_set -eq 0 ]; then
-        ssh root@${ip} 'EDITOR=/bin/true /opt/opscode/bin/knife environment create '${chef_env}' -d "'${chef_env}' jenkins role -y"
+        ssh root@${ip} 'EDITOR=/bin/true /opt/opscode/bin/knife environment create '${chef_env}' -d '${chef_env}
         chef_env_set=1
     fi
 
