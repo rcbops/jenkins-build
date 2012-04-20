@@ -27,15 +27,29 @@ function err_cleanup_chef() {
 
         echo "destroying $host"
         # Delete node and client from chef-server
-        ssh root@${ip} "knife node delete \$HOSTNAME -y -E ${chef_env}"
-        ssh root@${ip} "knife client delete \$HOSTNAME -y -E ${chef_env}"
-        ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y"
+        ssh root@${ip} "knife node delete \$HOSTNAME -y -E ${chef_env} || :"
+        ssh root@${ip} "knife client delete \$HOSTNAME -y -E ${chef_env} || :"
+        ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
         sudo virsh destroy ${name}
         sleep 5
         sudo lvremove -f ${LVM_ROOT}/${name}
     done
     exit 1
+}
+
+function get_ip_by_role() {
+    # return the first IP that matches the role
+    # $1 - role   
+
+    for host in ${host_info[@]}; do
+        name=$(echo $host | cut -d':' -f1)
+        role=$(echo $host | cut -d':' -f2)
+        ip=$(echo $host | cut -d':' -f3)
+        if [ "$1" == "${role}" ]; then
+            return ${ip}
+        fi
+    done
 }
 
 # This is an array of the roles you want to build for the test
@@ -161,6 +175,12 @@ done
 sleep 20s
 
 echo "running tests against the controller node"
+
+echo "setting up the routes"
+
+controller_ip=get_ip_by_role("controller")
+compute_ip=get_ip_by_role("compute")
+ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
 
 for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
