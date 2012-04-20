@@ -178,8 +178,8 @@ echo "running tests against the controller node"
 
 echo "setting up the routes"
 
-controller_ip=get_ip_by_role("controller")
-compute_ip=get_ip_by_role("compute")
+controller_ip=get_ip_by_role "controller"
+compute_ip=get_ip_by_role "compute" 
 ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
 
 for host in ${host_info[@]}; do
