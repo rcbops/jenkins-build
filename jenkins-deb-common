@@ -350,7 +350,7 @@ EOF
 	    virt_template=${BASE_DIR}/virt-templates/$(hostname)
     fi
 	if [ -e ${BASE_DIR}/virt-templates/$(hostname)-$BINARY_BUILD_DIST-$BINARY_BUILD_RELEASE ]; then
-	    virt_template=${BASE_DIR}/virt-templates/$INSTANCE_NAME
+	    virt_template=${BASE_DIR}/virt-templates/$(hostname)-$BINARY_BUILD_DIST-$BINARY_BUILD_RELEASE
 	fi
 	if [ -e ${BASE_DIR}/virt-templates/$INSTANCE_NAME ]; then
 	    virt_template=${BASE_DIR}/virt-templates/$INSTANCE_NAME
