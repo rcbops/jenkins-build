@@ -146,15 +146,15 @@ for host in ${host_info[@]}; do
 
     case "$role" in
         "controller")
-            ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-controller] -E {$chef_env}"
+            ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-controller] -E ${chef_env}"
             ;;
         "compute")
-            ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-compute] -E {$chef_env}"
+            ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-compute] -E ${chef_env}"
             ;;
     esac
-    ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[kong] -E {$chef_env}"
-    ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[exerstack] -E {$chef_env}"
-    ssh root@${ip} "/opt/opscode/bin/chef-client -E {$chef_env}"
+    ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[kong] -E ${chef_env}"
+    ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[exerstack] -E ${chef_env}"
+    ssh root@${ip} "/opt/opscode/bin/chef-client -E ${chef_env}"
 
 done
 
