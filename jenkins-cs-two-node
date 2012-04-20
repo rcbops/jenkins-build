@@ -84,6 +84,7 @@ for host in ${host_info[@]}; do
     ssh root@${ip} "ifconfig eth0"
 
     if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+        ssh root@${IP} apt-get update -y --force-yes
         ssh root@${IP} apt-get upgrade -y --force-yes
         ssh root@${ip} apt-get install vlan -y --force-yes
     else
