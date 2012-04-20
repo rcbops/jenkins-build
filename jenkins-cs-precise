@@ -44,6 +44,7 @@ trap "err_cleanup_chef ${kvm_instance_name}" SIGINT SIGTERM ERR
 start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
 
 if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+    ssh root@${IP} apt-get upgrade -y --force-yes
     ssh root@${IP} apt-get install vlan -y --force-yes
 else
     ssh root@${IP} rm -f /etc/cron.daily/man-db.cron
