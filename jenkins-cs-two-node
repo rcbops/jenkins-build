@@ -46,8 +46,8 @@ function get_ip_by_role() {
         name=$(echo $host | cut -d':' -f1)
         role=$(echo $host | cut -d':' -f2)
         ip=$(echo $host | cut -d':' -f3)
-        if [ "$1" == "${role}" ]; then
-            return ${ip}
+        if [ "${1}" == "${role}" ]; then
+            T_IP=${ip}
         fi
     done
 }
@@ -178,8 +178,10 @@ echo "running tests against the controller node"
 
 echo "setting up the routes"
 
-controller_ip=get_ip_by_role "controller"
-compute_ip=get_ip_by_role "compute" 
+get_ip_by_role "controller"
+controller_ip=$T_IP
+get_ip_by_role "compute" 
+compute_ip=$T_IP
 ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
 
 for host in ${host_info[@]}; do
