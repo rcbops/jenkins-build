@@ -200,12 +200,10 @@ for host in ${host_info[@]}; do
 
         if ! ( ssh root@${ip} 'cd /opt/exerstack; ./exercise.sh' ); then
             echo "Exerstack test suite failed"
-            exit 1
         fi
 
         if ! ( ssh root@${ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
             echo "Kong test suite failed"
-            exit 1
         fi
     fi
 done
