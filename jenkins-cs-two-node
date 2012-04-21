@@ -103,6 +103,8 @@ for host in ${host_info[@]}; do
         ssh root@${ip} apt-get install vlan -y --force-yes
     else
         ssh root@${ip} rm -f /etc/cron.daily/man-db.cron
+        ssh root@${ip} "/sbin/iptables -I INPUT 1 -s 192.168.1.0/24 -j ACCEPT"
+        ssh root@${ip} "/sbin/iptables -I INPUT 1 -s 192.168.100.0/24 -j ACCEPT"
         ssh root@${ip} yum -y --exclude=kernel* update
         ssh root@${ip} yum install -y vconfig perl gcc make yum-fastestmirror redhat-lsb
         ssh root@${ip} modprobe nbd
