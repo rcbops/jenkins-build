@@ -194,16 +194,19 @@ for host in ${host_info[@]}; do
     ip=$(echo $host | cut -d':' -f3)
 
     if [[ "$role" == "controller" ]]; then
+        trap "err_cleanup_chef" SIGINT SIGTERM ERR EXIT
         # These tests are not working on essex yet
         ssh root@${ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
         # ssh root@${ip} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
 
         if ! ( ssh root@${ip} 'cd /opt/exerstack; ./exercise.sh' ); then
             echo "Exerstack test suite failed"
+            exit 1
         fi
 
         if ! ( ssh root@${ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
             echo "Kong test suite failed"
+            exit 1
         fi
     fi
 done
