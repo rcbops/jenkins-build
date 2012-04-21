@@ -200,6 +200,10 @@ for host in ${host_info[@]}; do
         ssh root@${ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
         # ssh root@${ip} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
 
+        echo "setting up security groups for tests"
+        ssh root@${ip} "source /root/.novarc ; nova secgroup-add-rule default ICMP -1 -1 0.0.0.0/0 || :"
+        ssh root@${ip} "source /root/.novarc ; nova secgroup-add-rule default TCP 22 22 0.0.0.0/0 || :"
+
         if ! ( ssh root@${ip} 'cd /opt/exerstack; ./exercise.sh' ); then
             echo "Exerstack test suite failed"
             exit 1
