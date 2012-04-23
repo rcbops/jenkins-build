@@ -5,8 +5,8 @@
 
 
 # force a local default so this can be run on command line
-if [ -z $DISTRELEASE ]; then
-    DISTRELEASE=fedora16_x86_64
+if [ -z $BUILD_TARGET ]; then
+    BUILD_TARGET=fedora16_x86_64
 fi
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
@@ -47,6 +47,6 @@ sleep $RAND
 git reset --hard HEAD
 git pull
 if [ "${FORCE-0}" == "1" ]; then
-    sudo make $DISTRELEASE-clean
+    sudo make $BUILD_TARGET-clean
 fi
-sudo make $DISTRELEASE
+sudo make $BUILD_TARGET
