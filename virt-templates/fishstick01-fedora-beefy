@@ -30,6 +30,7 @@
     <interface type='bridge'>
       <source bridge='kvmbr0'/>
       <model type='virtio'/>
+      <driver name='vhost' txmode='iothread' ioeventfd='on' event_idx='on'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>
     <serial type='pty'>
