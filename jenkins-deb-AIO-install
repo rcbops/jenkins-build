@@ -143,7 +143,7 @@ sleep 20
 
 ## box should be configured now....
 
-ssh root@${IP} "cd /opt/kong; ./run_tests.sh --nova"
+ssh root@${IP} "cd /opt/kong; ./run_tests.sh --version $COMPONENT --nova"
 
 trap - SIGINT SIGTERM EXIT ERR
 
