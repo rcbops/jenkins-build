@@ -34,7 +34,9 @@ maybe_make_kvm_instance $kvm_instance_name
 trap "err_cleanup ${kvm_instance_name}" SIGINT SIGTERM ERR
 start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu precise main
 
+# update packages
 ssh root@${IP} yum -y --exclude=kernel* update
+ssh root@${IP} yum -y install vconfig perl gcc make yum-fastestmirror redhat-lsb
 
 sleep 20s
 
@@ -43,5 +45,5 @@ trap - SIGINT SIGTERM EXIT ERR
 sudo virsh destroy ${kvm_instance_name}
 sleep 5
 
-# here we need to merge the snapshot back into the original
-sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
+# here we merge the snapshot back into the original
+sudo lvconvert --merge ${LVM_ROOT}/${kvm_instance_name}
