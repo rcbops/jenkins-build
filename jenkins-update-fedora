@@ -37,6 +37,12 @@ start_kvm_instance $kvm_instance_name ${IP} http://archive.ubuntu.com/ubuntu pre
 # update packages
 ssh root@${IP} yum -y --exclude=kernel* update
 ssh root@${IP} yum -y install vconfig perl gcc make yum-fastestmirror redhat-lsb
+sleep 1s
+ssh root@${IP} sync
+sleep 1s
+ssh root@${IP} sync
+sleep 1s
+ssh root@${IP} sync
 
 sleep 20s
 
