@@ -92,9 +92,11 @@ if ! ( ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-sta
     exit 1
 fi
 
+EDITOR=/bin/true knife environment create ${kvm_instance_name}
+
 # Setup Hosted Chef
 ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
-if ! ( ssh root@${IP} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; EDITOR=/bin/true knife environment create ${kvm_instance_name}; /opt/opscode/bin/chef-client -E ${kvm_instance_name}" ); then
+if ! ( ssh root@${IP} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client -E ${kvm_instance_name}" ); then
     echo "Unable to register with chef-server"
     exit 1
 fi
