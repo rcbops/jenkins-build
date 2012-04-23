@@ -39,8 +39,8 @@ REPO=${repomap[${PACKAGE_REPO}]}
 
 declare -A chefmap
 chefmap=(
-    [diablo-d5]="https://github.com/rcbops/chef-cookbooks/raw/master/cookbooks-release-2011.3-d5.tgz"
-    [diablo-final]="https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz"
+    [diablo-d5]="https://github.com/rcbops/chef-cookbooks/raw/diablo/cookbooks-release-2011.3-d5.tgz"
+    [diablo-final]="https://raw.github.com/rcbops/chef-cookbooks/diablo/cookbooks.tgz"
 )
 
 CHEF_BRANCH=${NOVA_RELEASE}-${MILESTONE}
@@ -136,7 +136,6 @@ ssh root@${IP} apt-get install vlan -y --force-yes
 ssh root@${IP} vconfig add eth0 100
 ssh root@${IP} vconfig add eth0 101
 
-#run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz" /tmp/${kvm_instance_name}.json
 run_chef_solo ${IP} ${CHEF_URL} /tmp/${kvm_instance_name}.json
 
 sleep 20
