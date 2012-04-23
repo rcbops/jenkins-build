@@ -93,7 +93,7 @@ ssh root@${IP} apt-get install vlan -y --force-yes
 ssh root@${IP} vconfig add eth0 100
 ssh root@${IP} vconfig add eth0 101
 
-run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/${FROM_TARBALL}" /tmp/${kvm_instance_name}-FROM.json
+run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/diablo/${FROM_TARBALL}" /tmp/${kvm_instance_name}-FROM.json
 
 sleep 20
 
@@ -152,7 +152,7 @@ cat > /tmp/${kvm_instance_name}-TO.json <<EOF
 }
 EOF
 
-run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/${TO_TARBALL}" /tmp/${kvm_instance_name}-TO.json
+run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/diablo/${TO_TARBALL}" /tmp/${kvm_instance_name}-TO.json
 
 sleep 20
 

@@ -85,7 +85,7 @@ ssh root@${IP} apt-get install vlan -y --force-yes
 ssh root@${IP} vconfig add eth0 100
 ssh root@${IP} vconfig add eth0 101
 
-run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/master/cookbooks.tgz" ${tmpdir}/dna.json
+run_chef_solo ${IP} "https://raw.github.com/rcbops/chef-cookbooks/diablo/cookbooks.tgz" ${tmpdir}/dna.json
 
 sleep 20
 
