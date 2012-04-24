@@ -185,7 +185,7 @@ for host in ${host_info[@]}; do
                 ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-mysql-master] -E ${chef_env}"
                 ;;
             "keystone")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[keystone.rb] -E ${chef_env}"
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[keystone] -E ${chef_env}"
                 ;;
             "scheduler")
                 ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[nova-scheduler] -E ${chef_env}"
