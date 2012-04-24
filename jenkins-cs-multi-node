@@ -1,0 +1,243 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+# force a local default so this can be run on command line
+DISTRELEASE=${DISTRELEASE-ubuntu-precise}
+PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+function err_cleanup_chef() {
+    echo "*** In the trap handler err_cleanup_chef"
+    if [ "${NOCLEAN-0}" == "1" ]; then
+        exit 0
+    fi
+
+    for host in ${host_info[@]}; do
+        name=$(echo $host | cut -d':' -f1)
+        role=$(echo $host | cut -d':' -f2)
+        ip=$(echo $host | cut -d':' -f3)
+        echo "capturing stack trace output if it exists.  Errors are OK here"
+        ssh root@${ip} 'cat /var/chef/cache/chef-stacktrace.out || :'
+
+        echo "destroying $host"
+        # Delete node and client from chef-server
+        ssh root@${ip} "knife node delete \$HOSTNAME -y -E ${chef_env} || :"
+        ssh root@${ip} "knife client delete \$HOSTNAME -y -E ${chef_env} || :"
+        ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
+
+        sudo virsh destroy ${name}
+        sleep 5
+        sudo lvremove -f ${LVM_ROOT}/${name}
+    done
+    exit 1
+}
+
+function get_ip_by_role() {
+    # return the first IP that matches the role
+    # $1 - role   
+
+    for host in ${host_info[@]}; do
+        role=$(echo $host | cut -d':' -f2)
+        ip=$(echo $host | cut -d':' -f3)
+        OLD_IFS=$IFS
+        IFS=","
+        for var in ${role}; do
+            if [ "${1}" == "${var}" ]; then
+                T_IP=${ip}
+            fi
+        done
+        IFS=$OLD_IFS
+    done
+}
+
+# This is an array of the roles you want to build for the test
+# Valid entries are in the form of <hostname>:<role to assign>
+# This currently supports the following roles
+#    controller
+#    compute
+# the naming of these is extremely important
+declare -a nodes
+#nodes=( mysql:mysql keystone:keystone api:api scheduler:scheduler glance:glance misc:misc-services compute:compute )
+nodes=( mysql:mysql keystone:keystone )
+
+chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
+chef_env_set=0
+
+# Lets configure name and ip for each of the nodes
+declare -a host_info
+for node in ${nodes[@]}; do
+    name=$(echo $node | cut -d':' -f1)
+    role=$(echo $node | cut -d':' -f2)
+    node_name=${BINARY_BUILD_RELEASE}-${PACKAGE}-$name
+    get_ip $node_name 
+    node_ip=${IP}
+    echo "building host_info ${node_name}:${role}:${node_ip}"
+    host_info[${#host_info[@]}]="${node_name}:${role}:${node_ip}"
+done
+
+# global memory spec for all vms built
+MEMORY=2048000
+
+# Spinup VMs 
+for host in ${host_info[@]}; do
+    echo $host
+    name=$(echo $host | cut -d':' -f1)
+    role=$(echo $host | cut -d':' -f2)
+    ip=$(echo $host | cut -d':' -f3)
+    maybe_make_kvm_instance $name
+    start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
+done
+
+trap "err_cleanup_chef" SIGINT SIGTERM ERR
+
+for host in ${host_info[@]}; do
+    name=$(echo $host | cut -d':' -f1)
+    role=$(echo $host | cut -d':' -f2)
+    ip=$(echo $host | cut -d':' -f3)
+    ssh root@${ip} "ifconfig eth0"
+
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+        ssh root@${ip} apt-get update -y --force-yes
+        ssh root@${ip} "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --force-yes"
+        ssh root@${ip} apt-get install vlan -y --force-yes
+    else
+        ssh root@${ip} rm -f /etc/cron.daily/man-db.cron
+        #ssh root@${ip} "/sbin/iptables -I INPUT 1 -s 192.168.1.0/24 -j ACCEPT"
+        #ssh root@${ip} "/sbin/iptables -I INPUT 1 -s 192.168.100.0/24 -j ACCEPT"
+        ssh root@${ip} yum -y --exclude=kernel* update
+        ssh root@${ip} yum install -y vconfig perl gcc make yum-fastestmirror redhat-lsb
+        ssh root@${ip} modprobe nbd
+        ssh root@${ip} "/sbin/iptables -F"
+        ssh root@${ip} "/sbin/sysctl -w net.ipv4.ip_forward=1"
+    fi
+
+    ssh root@${ip} vconfig add eth0 100
+    ssh root@${ip} vconfig add eth0 101
+
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+        # Trying to fix a bug
+        count=1
+        while ! ssh root@${ip} "DEBIAN_FRONTEND=noninteractive apt-get install cgroup-lite -y --force-yes"; do
+            if [ $count -gt 3 ]; then
+                echo "Unable to install cgroup-lite"
+                exit 1
+            fi
+            if ! ( ssh root@${ip} "/usr/bin/cgroups-mount" ); then
+                :
+            fi 
+            sleep 2;
+            count=$(( count + 1 ));
+        done
+    fi
+
+    # Install system pre-reqs
+    if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
+      ssh root@${ip} "apt-get install -y wget curl build-essential automake"
+    else
+      ssh root@${ip} "yum install -y wget tar"
+      #ssh root@${ip} "mkdir RPMS; cd RPMS; wget http://184.106.53.105/RPMS/euca2ools-2.0.1-0.1.fc17.noarch.rpm"
+      #ssh root@${ip} "cd RPMS; wget http://184.106.53.105/RPMS/python-boto-2.1.1-0.2.fc17.noarch.rpm"
+      #ssh root@${ip} "cd RPMS; yum install -y *.rpm"
+    fi
+
+    # Try to quiet installer
+    ssh root@${ip} 'echo "alias wget=\"wget -q\"" >> ~/.bashrc '
+
+    # Install ruby/chef via opscode's fullstack installer
+    if ! ( ssh root@${ip} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
+        echo "Unable to install Opscode FullStack Installer"
+        exit 1
+    fi
+
+    # Setup Hosted Chef
+    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+
+    if [ $chef_env_set -eq 0 ]; then
+        EDITOR=/bin/true knife environment create ${chef_env} -d ${chef_env}
+        chef_env_set=1
+    fi
+
+    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client -E ${chef_env}" ); then
+        echo "Unable to register with chef-server"
+        exit 1
+    fi
+
+    OLD_IFS=$IFS
+    IFS=","
+    for role_variant in ${role}; do
+        case "$role_variant" in
+            "api")
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[nova-api] -E ${chef_env}"
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[kong] -E ${chef_env}"
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[exerstack] -E ${chef_env}"
+                ;;
+            "compute")
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-compute] -E ${chef_env}"
+                ;;
+            "mysql")
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-mysql-master] -E ${chef_env}"
+                ;;
+            "keystone")
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[keystone.rb] -E ${chef_env}"
+                ;;
+            "scheduler")
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[nova-scheduler] -E ${chef_env}"
+                ;;
+            "glance")
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[glance] -E ${chef_env}"
+                ;;
+            "misc-services")
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[nova-misc-services] -E ${chef_env}"
+                ;;
+        esac
+    done
+    IFS=$OLD_IFS
+    ssh root@${ip} "/opt/opscode/bin/chef-client -E ${chef_env}"
+
+done
+
+sleep 20s
+
+echo "running tests against the controller node"
+
+echo "setting up the routes"
+
+get_ip_by_role "api"
+controller_ip=$T_IP
+get_ip_by_role "compute" 
+compute_ip=$T_IP
+ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
+
+#ssh root@${controller_ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
+#if ! ( ssh root@${controller_ip} 'cd /opt/exerstack; ./exercise.sh' ); then
+#    echo "Exerstack test suite failed"
+#    exit 1
+#fi
+#if ! ( ssh root@${controller_ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+#    echo "Kong test suite failed"
+#    exit 1
+#fi
+
+trap - SIGINT SIGTERM EXIT ERR
+
+# Cleanup after the run
+for host in ${host_info[@]}; do
+    name=$(echo $host | cut -d':' -f1)
+    node=$(echo $host | cut -d':' -f2)
+    ip=$(echo $host | cut -d':' -f3)
+    # Delete node and client from chef-server
+    ssh root@${ip} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${chef_env} || :"
+    ssh root@${ip} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${chef_env} || :"
+    ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
+
+    sudo virsh destroy ${name}
+    sleep 5
+    sudo lvremove -f ${LVM_ROOT}/${name}
+done
