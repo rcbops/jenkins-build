@@ -191,7 +191,7 @@ for host in ${host_info[@]}; do
                 ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[nova-scheduler] -E ${chef_env}"
                 ;;
             "glance")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[glance] -E ${chef_env}"
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-glance] -E ${chef_env}"
                 ;;
             "misc-services")
                 ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[nova-misc-services] -E ${chef_env}"
