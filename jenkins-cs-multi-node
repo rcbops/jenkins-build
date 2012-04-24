@@ -174,7 +174,7 @@ for host in ${host_info[@]}; do
     for role_variant in ${role}; do
         case "$role_variant" in
             "api")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[nova-api] -E ${chef_env}"
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[api] -E ${chef_env}"
                 ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[kong] -E ${chef_env}"
                 ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[exerstack] -E ${chef_env}"
                 ;;
@@ -194,7 +194,7 @@ for host in ${host_info[@]}; do
                 ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-glance] -E ${chef_env}"
                 ;;
             "misc-services")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[nova-misc-services] -E ${chef_env}"
+                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[misc-services] -E ${chef_env}"
                 ;;
         esac
     done
