@@ -19,6 +19,7 @@ kvm_instance_name=${BINARY_BUILD_RELEASE}-Essex-Allinone
 get_ip $kvm_instance_name
 
 function err_cleanup_chef() {
+    echo "*** ENTERING THE TRAP HANDLER"
     # $1 - name
     if [ "${NOCLEAN-0}" == "1" ]; then
         exit 0
@@ -124,6 +125,8 @@ if ! ( ssh root@${IP} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); th
 fi
 
 trap - SIGINT SIGTERM EXIT ERR
+
+echo "*** STARTING NODE SHUTDOWN"
 
 # Delete node and client from chef-server
 ssh root@${IP} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${kvm_instance_name}"

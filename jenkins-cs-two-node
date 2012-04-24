@@ -14,7 +14,7 @@ jenkins_init
 jenkins_set_vars
 
 function err_cleanup_chef() {
-    echo "*** In the trap handler err_cleanup_chef"
+    echo "*** ENTERING THE TRAP HANDLER"
     if [ "${NOCLEAN-0}" == "1" ]; then
         exit 0
     fi
@@ -219,6 +219,8 @@ done
 
 
 trap - SIGINT SIGTERM EXIT ERR
+
+echo "*** STARTING NODE SHUTDOWN"
 
 # Cleanup after the run
 for host in ${host_info[@]}; do
