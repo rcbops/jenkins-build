@@ -65,7 +65,7 @@ function get_ip_by_role() {
 # the naming of these is extremely important
 declare -a nodes
 #nodes=( mysql:mysql keystone:keystone api:api scheduler:scheduler glance:glance misc:misc-services compute:compute )
-nodes=( mysql:mysql keystone:keystone )
+nodes=( mysql:mysql keystone:keystone api:api scheduler:scheduler glance:glance misc:misc-services compute:compute)
 
 chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
 chef_env_set=0
