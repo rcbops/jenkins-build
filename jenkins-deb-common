@@ -69,6 +69,7 @@ function jenkins_set_vars() {
     IMAGE_CACHE=${IMAGE_CACHE:-build.monkeypuppetlabs.com}
     # DIST_CACHE=${DIST_CACHE:-cache.monkeypuppetlabs.com:3142}
     DIST_CACHE=${DIST_CACHE:-`grep "cache.monkeypuppetlabs.com" /etc/hosts | awk '{print $1}'`:3142}
+    SQUID_CACHE=${SQUID_CACHE:-`grep "cache.monkeypuppetlabs.com" /etc/hosts | awk '{print $1}'`:3128}
 
     # this should get overridden by the branch config
     if [ "${COMPONENT-}" != "" ]; then
@@ -251,7 +252,7 @@ obsoletes=1
 gpgcheck=1
 plugins=1
 installonly_limit=3
-proxy=http://184.106.53.105:3128
+proxy=http://${SQUID_CACHE}
 EOF
     fi
 
