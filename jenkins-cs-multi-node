@@ -63,9 +63,9 @@ function get_ip_by_role() {
 declare -a nodes
 nodes=( mysql:role[jenkins-mysql-master]
         keystone:role[keystone]
+        glance:role[jenkins-glance]
         api:role[rabbitmq-server],role[nova-api],recipe[kong],recipe[exerstack]
         scheduler:role[nova-scheduler]
-        glance:role[jenkins-glance]
         misc:role[nova-misc-services]
         compute:role[jenkins-compute]
       )
