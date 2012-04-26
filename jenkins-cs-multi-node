@@ -188,7 +188,7 @@ echo "running tests against the controller node"
 
 echo "setting up the routes"
 
-get_ip_by_role "api"
+get_ip_by_role "nova-api"
 controller_ip=$T_IP
 get_ip_by_role "jenkins-compute" 
 compute_ip=$T_IP
