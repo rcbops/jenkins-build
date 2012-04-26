@@ -49,7 +49,7 @@ function get_ip_by_role() {
         OLD_IFS=$IFS
         IFS=","
         for var in ${role}; do
-            if [ "${1}" == "${var}" ]; then
+            if [ "role[${1}]" == "${var}" ]; then
                 T_IP=${ip}
             fi
         done
@@ -58,14 +58,17 @@ function get_ip_by_role() {
 }
 
 # This is an array of the roles you want to build for the test
-# Valid entries are in the form of <hostname>:<role to assign>
-# This currently supports the following roles
-#    controller
-#    compute
-# the naming of these is extremely important
+# Valid entries are in the form of <hostname>:role[<role>],... 
+# the naming of these is extremely important - they must match the chef roles
 declare -a nodes
-#nodes=( mysql:mysql keystone:keystone api:api scheduler:scheduler glance:glance misc:misc-services compute:compute )
-nodes=( mysql:mysql keystone:keystone api:api scheduler:scheduler glance:glance misc:misc-services compute:compute)
+nodes=( mysql:role[jenkins-mysql-master]
+        keystone:role[keystone]
+        api:role[rabbitmq-server],role[api],recipe[kong],recipe[exerstack]
+        scheduler:role[nova-scheduler]
+        glance:role[jenkins-glance]
+        misc:role[misc-services]
+        compute:role[jenkins-compute]
+      )
 
 chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
 chef_env_set=0
@@ -172,32 +175,7 @@ for host in ${host_info[@]}; do
     OLD_IFS=$IFS
     IFS=","
     for role_variant in ${role}; do
-        case "$role_variant" in
-            "api")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[rabbitmq-server] -E ${chef_env}"
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[api] -E ${chef_env}"
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[kong] -E ${chef_env}"
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[exerstack] -E ${chef_env}"
-                ;;
-            "compute")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-compute] -E ${chef_env}"
-                ;;
-            "mysql")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-mysql-master] -E ${chef_env}"
-                ;;
-            "keystone")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[keystone] -E ${chef_env}"
-                ;;
-            "scheduler")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[nova-scheduler] -E ${chef_env}"
-                ;;
-            "glance")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-glance] -E ${chef_env}"
-                ;;
-            "misc-services")
-                ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[misc-services] -E ${chef_env}"
-                ;;
-        esac
+        ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME ${role_variant} -E ${chef_env}"
     done
     IFS=$OLD_IFS
     ssh root@${ip} "/opt/opscode/bin/chef-client -E ${chef_env}"
@@ -212,7 +190,7 @@ echo "setting up the routes"
 
 get_ip_by_role "api"
 controller_ip=$T_IP
-get_ip_by_role "compute" 
+get_ip_by_role "jenkins-compute" 
 compute_ip=$T_IP
 ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
 
