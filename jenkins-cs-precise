@@ -13,6 +13,14 @@ PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 jenkins_init
 jenkins_set_vars
 
+# Cleanup from last run
+if [ -e nova-compute.log ]; then
+    rm nova-compute.log
+fi
+if [ -e nova-network.log ]; then
+    rm nova-network.log
+fi
+
 kvm_instance_name=${BINARY_BUILD_RELEASE}-Essex-Allinone
 
 # this sets IP as a side-effect
@@ -115,6 +123,9 @@ ssh root@${IP} 'rm -rf /opt/exerstack/exercises/bundle.sh'
 # ssh root@${IP} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
 
 if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
+    # Grabbing logs
+    scp root@${IP}:/var/log/nova-network.log .
+    scp root@${IP}:/var/log/nova-compute.log .
     echo "Exerstack test suite failed"
     exit 1
 fi
