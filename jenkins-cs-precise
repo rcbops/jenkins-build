@@ -124,8 +124,8 @@ ssh root@${IP} 'rm -rf /opt/exerstack/exercises/bundle.sh'
 
 if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
     # Grabbing logs
-    scp root@${IP}:/var/log/nova-network.log .
-    scp root@${IP}:/var/log/nova-compute.log .
+    scp root@${IP}:/var/log/nova/nova-network.log .
+    scp root@${IP}:/var/log/nova/nova-compute.log .
     echo "Exerstack test suite failed"
     exit 1
 fi
