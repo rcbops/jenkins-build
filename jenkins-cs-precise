@@ -14,12 +14,13 @@ jenkins_init
 jenkins_set_vars
 
 # Cleanup from last run
-if [ -e nova-compute.log ]; then
-    rm nova-compute.log
-fi
-if [ -e nova-network.log ]; then
-    rm nova-network.log
-fi
+declare -a log_files
+log_files=( "nothing.log" "nova-network.log" "nova-network.log")
+for file in ${log_files[@]}; do
+    if [ -e ${kvm_instance_name}-$file ]; then
+        rm ${kvm_instance_name}-$file
+    fi
+end
 
 kvm_instance_name=${BINARY_BUILD_RELEASE}-Essex-Allinone
 
@@ -123,7 +124,6 @@ ssh root@${IP} 'rm -rf /opt/exerstack/exercises/bundle.sh'
 # ssh root@${IP} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
 
 if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
-    # Grabbing logs
     scp root@${IP}:/var/log/nova/nova-network.log ./kvm_instance_name-nova-network.log
     scp root@${IP}:/var/log/nova/nova-compute.log ./kvm_instance_name-nova-compute.log
     echo "Exerstack test suite failed"
@@ -131,8 +131,12 @@ if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
 fi
 
 if ! ( ssh root@${IP} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+    scp root@${IP}:/var/log/nova/nova-network.log ./kvm_instance_name-nova-network.log
+    scp root@${IP}:/var/log/nova/nova-compute.log ./kvm_instance_name-nova-compute.log
     echo "Kong test suite failed"
     exit 1
+else
+    touch nothing.log
 fi
 
 trap - SIGINT SIGTERM EXIT ERR
