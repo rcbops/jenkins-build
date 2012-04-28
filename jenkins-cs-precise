@@ -13,6 +13,8 @@ PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 jenkins_init
 jenkins_set_vars
 
+kvm_instance_name=${BINARY_BUILD_RELEASE}-Essex-Allinone
+
 # Cleanup from last run
 declare -a log_files
 log_files=( "nothing.log" "nova-network.log" "nova-network.log")
@@ -21,8 +23,6 @@ for file in ${log_files[@]}; do
         rm ${kvm_instance_name}-$file
     fi
 done
-
-kvm_instance_name=${BINARY_BUILD_RELEASE}-Essex-Allinone
 
 # this sets IP as a side-effect
 get_ip $kvm_instance_name
