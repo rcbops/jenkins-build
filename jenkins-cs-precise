@@ -17,7 +17,7 @@ kvm_instance_name=${BINARY_BUILD_RELEASE}-Essex-Allinone
 
 # Cleanup from last run
 declare -a log_files
-log_files=( "nothing.log" "nova-network.log" "nova-network.log")
+log_files=( "nothing.log" "chef-stacktrace.out.log" "nova-network.log" "nova-network.log")
 for file in ${log_files[@]}; do
     if [ -e ${kvm_instance_name}-$file ]; then
         rm ${kvm_instance_name}-$file
@@ -35,7 +35,8 @@ function err_cleanup_chef() {
     fi
 
     echo "capturing stack trace output if it exists.  Errors are OK here"
-    ssh root@${IP} 'cat /var/chef/cache/chef-stacktrace.out || :'
+    scp root@${IP}:/var/chef/cache/chef-stacktrace.out ${kvm_instance_name}-chef-stacktrace.out.log
+    # ssh root@${IP} 'cat /var/chef/cache/chef-stacktrace.out || :'
 
     # Delete node and client from chef-server
     ssh root@${IP} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${kvm_instance_name}"
