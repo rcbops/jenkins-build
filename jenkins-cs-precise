@@ -20,7 +20,7 @@ for file in ${log_files[@]}; do
     if [ -e ${kvm_instance_name}-$file ]; then
         rm ${kvm_instance_name}-$file
     fi
-end
+done
 
 kvm_instance_name=${BINARY_BUILD_RELEASE}-Essex-Allinone
 
