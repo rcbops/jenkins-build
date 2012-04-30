@@ -94,6 +94,7 @@ ssh root@${IP} 'echo "alias wget=\"wget -q\"" >> ~/.bashrc '
 # Install ruby/chef via opscode's fullstack installer
 if ! ( ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
     ECHO "uNable to install Opscode FullStack Installer"
+    err_cleanup_chef
     exit 1
 fi
 
@@ -103,6 +104,7 @@ EDITOR=/bin/true knife environment create ${kvm_instance_name}
 ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
 if ! ( ssh root@${IP} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client -E ${kvm_instance_name}" ); then
     echo "Unable to register with chef-server"
+    err_cleanup_chef
     exit 1
 fi
 
@@ -124,6 +126,7 @@ if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh' ); then
     scp root@${IP}:/var/log/keystone/*.log .
     scp root@${IP}:/var/log/mysql/mysql.log .
     echo "Exerstack test suite failed"
+    err_cleanup_chef
     exit 1
 fi
 
@@ -133,6 +136,7 @@ if ! ( ssh root@${IP} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); th
     scp root@${IP}:/var/log/keystone/*.log .
     scp root@${IP}:/var/log/mysql/mysql.log .
     echo "Kong test suite failed"
+    err_cleanup_chef
     exit 1
 fi
 

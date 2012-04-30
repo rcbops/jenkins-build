@@ -156,6 +156,7 @@ for host in ${host_info[@]}; do
     # Install ruby/chef via opscode's fullstack installer
     if ! ( ssh root@${ip} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
         echo "Unable to install Opscode FullStack Installer"
+        err_cleanup_chef
         exit 1
     fi
 
@@ -169,6 +170,7 @@ for host in ${host_info[@]}; do
 
     if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client -E ${chef_env}" ); then
         echo "Unable to register with chef-server"
+        err_cleanup_chef
         exit 1
     fi
 
@@ -197,10 +199,12 @@ ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
 ssh root@${controller_ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
 if ! ( ssh root@${controller_ip} 'cd /opt/exerstack; ./exercise.sh' ); then
     echo "Exerstack test suite failed"
+    err_cleanup_chef
     exit 1
 fi
 if ! ( ssh root@${controller_ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
     echo "Kong test suite failed"
+    err_cleanup_chef
     exit 1
 fi
 
