@@ -81,6 +81,7 @@ else
     nodes=( node1:role[base]
             node2:role[base]
             node3:role[base]
+          )
 fi
 
 chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
