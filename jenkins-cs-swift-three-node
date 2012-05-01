@@ -73,7 +73,7 @@ function get_ip_by_role() {
 # the naming of these is extremely important - they must match the chef roles
 declare -a nodes
 if [ ${AUTHTYPE} == "keystone" ]; then
-    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone]
+    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone],recipe[kong],recipe[exerstack]
             node2:role[base]
             node3:role[base]
           )
@@ -205,29 +205,25 @@ for host in ${host_info[@]}; do
 
 done
 
-#sleep 20s
-#
-#echo "running tests against the controller node"
+sleep 20s
 
-# echo "setting up the routes"
+echo "running tests against the controller node"
 
-# get_ip_by_role "jenkins-nova-api"
-# controller_ip=$T_IP
-# get_ip_by_role "jenkins-compute" 
-# compute_ip=$T_IP
-# ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
+get_ip_by_role "kong"
+kong_ip=$T_IP
 
-# ssh root@${controller_ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
-# if ! ( ssh root@${controller_ip} 'cd /opt/exerstack; ./exercise.sh' ); then
-#     echo "Exerstack test suite failed"
-#     err_cleanup_chef
-#     exit 1
-# fi
-# if ! ( ssh root@${controller_ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
-#     echo "Kong test suite failed"
-#     err_cleanup_chef
-#     exit 1
-# fi
+# uncomment this once swift is deployable
+#ssh root@${kong_ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
+#if ! ( ssh root@${kong_ip} 'cd /opt/exerstack; ./exercise.sh' ); then
+#    echo "Exerstack test suite failed"
+#    err_cleanup_chef
+#    exit 1
+#fi
+#if ! ( ssh root@${kong_ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+#    echo "Kong test suite failed"
+#    err_cleanup_chef
+#    exit 1
+#fi
 
 trap - SIGINT SIGTERM EXIT ERR
 
