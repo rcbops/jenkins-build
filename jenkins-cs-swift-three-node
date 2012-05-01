@@ -84,7 +84,7 @@ else
           )
 fi
 
-chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
+chef_env=${BINARY_BUILD_RELEASE}-${AUTHTYPE}-${PACKAGE}
 chef_env_set=0
 
 # Lets configure name and ip for each of the nodes
