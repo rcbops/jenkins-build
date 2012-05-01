@@ -98,12 +98,11 @@ for host in ${host_info[@]}; do
     ip=$(echo $host | cut -d':' -f3)
     maybe_make_kvm_instance $name
     start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
+    ssh root@{ip} "modprobe acpiphp"
     for vd in $(echo {b..d}); do 
         sudo dd if=/dev/zero of=/tmp/${name}-${vd}.img bs=1M seek=1024 count=0
         sync
-        sleep 2s
         sudo virsh attach-disk ${name} /tmp/${name}-${vd}.img vd${vd}
-        sleep 5s
     done
     ssh root@${ip} "cat /proc/partitions"
 done
