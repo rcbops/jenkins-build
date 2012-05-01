@@ -91,7 +91,7 @@ function jenkins_set_vars() {
 	PACKAGE_VERSION=$(grep "urgency=" debian/changelog | sed -e 's/.*(\(.*\)).*/\1/' | head -n1)
     fi
 
-    JOB_NAME=${JOB_NAME-console-standalone}
+    JOB_NAME=${JOB_NAME-tty}
     PACKAGE=$(echo ${JOB_NAME} | cut -d '/' -f 1 | sed -r -e "s/-(source|binaries)$//")
 
     # distrelease set in arch matrix on binary build
