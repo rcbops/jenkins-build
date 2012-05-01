@@ -72,10 +72,16 @@ function get_ip_by_role() {
 # Valid entries are in the form of <hostname>:role[<role>],... 
 # the naming of these is extremely important - they must match the chef roles
 declare -a nodes
-nodes=( node1:role[base],role[mysql-master],role[keystone]
-        node2:role[base]
-        node3:role[base]
-      )
+if [ ${AUTHTYPE} == "keystone" ]; then
+    nodes=( node1:role[base],role[mysql-master],role[keystone]
+            node2:role[base]
+            node3:role[base]
+          )
+else
+    nodes=( node1:role[base]
+            node2:role[base]
+            node3:role[base]
+fi
 
 chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
 chef_env_set=0
