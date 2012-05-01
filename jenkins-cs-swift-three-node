@@ -6,6 +6,7 @@
 # force a local default so this can be run on command line
 DISTRELEASE=${DISTRELEASE-ubuntu-precise}
 # PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
+AUTHTYPE=${AUTHTYPE-swauth}
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
 . $(dirname $0)/jenkins-deb-common
@@ -79,7 +80,7 @@ declare -a host_info
 for node in ${nodes[@]}; do
     name=$(echo $node | cut -d':' -f1)
     role=$(echo $node | cut -d':' -f2)
-    node_name=${BINARY_BUILD_RELEASE}-${PACKAGE}-$name
+    node_name=${BINARY_BUILD_RELEASE}-${AUTHTYPE}-${PACKAGE}-$name
     get_ip $node_name 
     node_ip=${IP}
     echo "building host_info ${node_name}:${role}:${node_ip}"
