@@ -29,13 +29,12 @@ function err_cleanup_chef() {
     fi
 
     echo "capturing stack trace output if it exists.  Errors are OK here"
-    scp root@${IP}:/var/chef/cache/chef-stacktrace.out chef-stacktrace.out.log
-    # ssh root@${IP} 'cat /var/chef/cache/chef-stacktrace.out || :'
+    scp root@${IP}:/var/chef/cache/chef-stacktrace.out chef-stacktrace.out.log || :
 
     # Delete node and client from chef-server
-    ssh root@${IP} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${kvm_instance_name}"
-    ssh root@${IP} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${kvm_instance_name}"
-    ssh root@${IP} "/opt/opscode/bin/knife environment delete -y ${kvm_instance_name}"
+    ssh root@${IP} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${kvm_instance_name} || :"
+    ssh root@${IP} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${kvm_instance_name} || :"
+    ssh root@${IP} "/opt/opscode/bin/knife environment delete -y ${kvm_instance_name} || :"
 
     sudo virsh destroy ${1}
     sleep 5
@@ -148,9 +147,9 @@ trap - SIGINT SIGTERM EXIT ERR
 echo "*** STARTING NODE SHUTDOWN"
 
 # Delete node and client from chef-server
-ssh root@${IP} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${kvm_instance_name}"
-ssh root@${IP} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${kvm_instance_name}"
-ssh root@${IP} "/opt/opscode/bin/knife environment delete -y ${kvm_instance_name}"
+ssh root@${IP} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${kvm_instance_name} || :"
+ssh root@${IP} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${kvm_instance_name} || :"
+ssh root@${IP} "/opt/opscode/bin/knife environment delete -y ${kvm_instance_name} || :"
 
 sudo virsh destroy ${kvm_instance_name}
 sleep 5
