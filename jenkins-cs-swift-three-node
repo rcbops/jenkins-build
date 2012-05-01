@@ -43,7 +43,8 @@ function err_cleanup_chef() {
         sudo lvremove -f ${LVM_ROOT}/${name}
         for vd in $(echo {b..d}); do 
             if [ -e "/tmp/${name}-${vd}.img" ]; then
-            sudo rm -f /tmp/${name}-${vd}.img
+                sudo rm -f /tmp/${name}-${vd}.img
+            fi
         done
     done
     exit 1
