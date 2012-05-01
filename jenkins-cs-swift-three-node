@@ -99,7 +99,7 @@ for host in ${host_info[@]}; do
     start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
     for vd in $(echo {b..d}); do 
         sudo dd if=/dev/zero of=/tmp/${name}-${vd}.img bs=1M seek=1024 count=0
-        sudo virsh attach-disk ${name} /tmp/${host}-${vd}.img vd${vd}
+        sudo virsh attach-disk ${name} /tmp/${name}-${vd}.img vd${vd}
     done
 done
 
