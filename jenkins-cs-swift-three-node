@@ -32,6 +32,11 @@ function err_cleanup_chef() {
         ssh root@${ip} "knife client delete \$HOSTNAME -y -E ${chef_env} || :"
         ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
+        for vd in $(echo {b..d}); do 
+            sudo virsh detach-disk ${name} vd${vd}
+            sudo rm -f /tmp/${name}-${vd}.img
+        done
+
         sudo virsh destroy ${name}
         sleep 5
         sudo lvremove -f ${LVM_ROOT}/${name}
@@ -92,6 +97,10 @@ for host in ${host_info[@]}; do
     ip=$(echo $host | cut -d':' -f3)
     maybe_make_kvm_instance $name
     start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
+    for vd in $(echo {b..d}); do 
+        sudo dd if=/dev/zero of=/tmp/${name}-${vd}.img bs=1M seek=1024 count=0
+        sudo virsh attach-disk ${name} /tmp/${host}-${vd}.img vd${vd}
+    done
 done
 
 trap "err_cleanup_chef" SIGINT SIGTERM ERR
@@ -215,6 +224,11 @@ for host in ${host_info[@]}; do
     ssh root@${ip} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${chef_env} || :"
     ssh root@${ip} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${chef_env} || :"
     ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
+
+    for vd in $(echo {b..d}); do 
+        sudo virsh detach-disk ${name} vd${vd}
+        sudo rm -f /tmp/${name}-${vd}.img
+    done
 
     sudo virsh destroy ${name}
     sleep 5
