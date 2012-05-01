@@ -101,6 +101,7 @@ for host in ${host_info[@]}; do
         sudo dd if=/dev/zero of=/tmp/${name}-${vd}.img bs=1M seek=1024 count=0
         sudo virsh attach-disk ${name} /tmp/${name}-${vd}.img vd${vd}
     done
+    ssh root@${ip} "cat /proc/partitions"
 done
 
 trap "err_cleanup_chef" SIGINT SIGTERM ERR
