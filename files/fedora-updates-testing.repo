@@ -1,20 +1,28 @@
 [updates-testing]
 name=Fedora $releasever - $basearch - Test Updates
-baseurl=http://chi-10g-1-mirror.fastsoft.net/pub/linux/fedora/linux/updates/testing/$releasever/$basearch/
+failovermethod=priority
+#baseurl=http://download.fedoraproject.org/pub/fedora/linux/updates/testing/$releasever/$basearch/
+mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-f$releasever&arch=$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$basearch
 
 [updates-testing-debuginfo]
 name=Fedora $releasever - $basearch - Test Updates Debug
-baseurl=http://chi-10g-1-mirror.fastsoft.net/pub/linux/fedora/linux/updates/testing/$releasever/$basearch/debug/
+failovermethod=priority
+#baseurl=http://download.fedoraproject.org/pub/fedora/linux/updates/testing/$releasever/$basearch/debug/
+mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-debug-f$releasever&arch=$basear
+ch
 enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$basearch
 
 [updates-testing-source]
 name=Fedora $releasever - Test Updates Source
-baseurl=http://chi-10g-1-mirror.fastsoft.net/pub/linux/fedora/linux/updates/testing/$releasever/SRPMS/
+failovermethod=priority
+#baseurl=http://download.fedoraproject.org/pub/fedora/linux/updates/testing/$releasever/SRPMS/
+mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-source-f$releasever&arch=$basea
+rch
 enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$basearch
