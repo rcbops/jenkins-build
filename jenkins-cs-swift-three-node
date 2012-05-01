@@ -72,7 +72,7 @@ function get_ip_by_role() {
 # Valid entries are in the form of <hostname>:role[<role>],... 
 # the naming of these is extremely important - they must match the chef roles
 declare -a nodes
-nodes=( node1:role[base]
+nodes=( node1:role[base],role[mysql-master],role[keystone]
         node2:role[base]
         node3:role[base]
       )
@@ -93,7 +93,7 @@ for node in ${nodes[@]}; do
 done
 
 # global memory spec for all vms built
-MEMORY=1024000
+MEMORY=2048000
 
 # Spinup VMs 
 for host in ${host_info[@]}; do
