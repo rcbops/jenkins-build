@@ -100,7 +100,7 @@ for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
     role=$(echo $host | cut -d':' -f2)
     ip=$(echo $host | cut -d':' -f3)
-    ssh root@${ip} "ifconfig eth0"
+#    ssh root@${ip} "ifconfig eth0"
 
     if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
         ssh root@${ip} apt-get update -y --force-yes
