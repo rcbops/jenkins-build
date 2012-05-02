@@ -78,7 +78,7 @@ if [ ${AUTHTYPE} == "keystone" ]; then
             node3:role[base]
           )
 else
-    nodes=( node1:role[base]
+    nodes=( node1:role[base],recipe[kong],recipe[exerstack]
             node2:role[base]
             node3:role[base]
           )
