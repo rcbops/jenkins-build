@@ -197,7 +197,7 @@ compute_ip=$T_IP
 ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
 
 ssh root@${controller_ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
-if ! ( ssh root@${controller_ip} 'cd /opt/exerstack; ./exercise.sh' ); then
+if ! ( ssh root@${controller_ip} 'cd /opt/exerstack; ./exercise.sh essex-final euca.sh glance.sh keystone.sh nova-cli.sh ' ); then
     echo "Exerstack test suite failed"
     err_cleanup_chef
     exit 1

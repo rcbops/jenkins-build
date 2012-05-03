@@ -207,7 +207,7 @@ for host in ${host_info[@]}; do
         #ssh root@${ip} "source /root/.novarc ; nova secgroup-add-rule default ICMP -1 -1 0.0.0.0/0 || :"
         #ssh root@${ip} "source /root/.novarc ; nova secgroup-add-rule default TCP 22 22 0.0.0.0/0 || :"
 
-        if ! ( ssh root@${ip} 'cd /opt/exerstack; ./exercise.sh' ); then
+        if ! ( ssh root@${ip} 'cd /opt/exerstack; ./exercise.sh essex-final euca.sh glance.sh keystone.sh nova-cli.sh ' ); then
             echo "Exerstack test suite failed"
             err_cleanup_chef
             exit 1
