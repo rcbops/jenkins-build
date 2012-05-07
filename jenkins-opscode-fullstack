@@ -25,8 +25,8 @@ function err_cleanup_chef() {
     fi
 
     # Delete node and client from chef-server
-    ssh root@${IP} 'knife node delete $HOSTNAME -y'
-    ssh root@${IP} 'knife client delete $HOSTNAME -y'
+    ssh root@${IP} 'knife node delete $HOSTNAME -y || :'
+    ssh root@${IP} 'knife client delete $HOSTNAME -y || :'
 
     sudo virsh destroy ${1}
     sleep 5
@@ -80,8 +80,8 @@ ssh root@${IP} '/opt/opscode/bin/chef-client'
 trap - SIGINT SIGTERM EXIT ERR
 
 # Delete node and client from chef-server
-ssh root@${IP} '/opt/opscode/bin/knife node delete $HOSTNAME -y'
-ssh root@${IP} '/opt/opscode/bin/knife client delete $HOSTNAME -y'
+ssh root@${IP} '/opt/opscode/bin/knife node delete $HOSTNAME -y || :'
+ssh root@${IP} '/opt/opscode/bin/knife client delete $HOSTNAME -y || :'
 
 sudo virsh destroy ${kvm_instance_name}
 sleep 5
