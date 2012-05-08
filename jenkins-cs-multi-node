@@ -177,10 +177,19 @@ for host in ${host_info[@]}; do
     OLD_IFS=$IFS
     IFS=","
     for role_variant in ${role}; do
-        ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME ${role_variant} -E ${chef_env}"
+        if ! ( ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME ${role_variant} -E ${chef_env}" ); then
+            echo "Error adding role to node"
+            err_cleanup_chef
+            exit 1
+        fi
     done
+
     IFS=$OLD_IFS
-    ssh root@${ip} "/opt/opscode/bin/chef-client -E ${chef_env}"
+    if ! ( ssh root@${ip} "/opt/opscode/bin/chef-client -E ${chef_env}" ); then
+        echo "Chef run exited with a return code of $?"
+        err_cleanup_chef
+        exit 1
+    fi
 
 done
 
