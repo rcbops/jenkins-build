@@ -129,7 +129,7 @@ if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh essex-final euca.sh glan
     exit 1
 fi
 
-if ! ( ssh root@${IP} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+if ! ( ssh root@${IP} 'cd /opt/kong; ./run_tests.sh --version essex-final --nova' ); then
     scp root@${IP}:/var/log/nova/*.log .
     scp root@${IP}:/var/log/glance/*.log .
     scp root@${IP}:/var/log/keystone/*.log .

@@ -213,7 +213,7 @@ for host in ${host_info[@]}; do
             exit 1
         fi
 
-        if ! ( ssh root@${ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+        if ! ( ssh root@${ip} 'cd /opt/kong; ./run_tests.sh --version essex-final --nova' ); then
             echo "Kong test suite failed"
             err_cleanup_chef
             exit 1
