@@ -219,7 +219,7 @@ kong_ip=$T_IP
 #    err_cleanup_chef
 #    exit 1
 #fi
-#if ! ( ssh root@${kong_ip} 'cd /opt/kong; ./run_tests.sh --version essex-final' ); then
+#if ! ( ssh root@${kong_ip} 'cd /opt/kong; ./run_tests.sh --version essex-final --swift' ); then
 #    echo "Kong test suite failed"
 #    err_cleanup_chef
 #    exit 1
