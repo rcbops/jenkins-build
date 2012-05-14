@@ -199,10 +199,11 @@ for host in ${!host_info[@]}; do
     # Setup Hosted Chef
     ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
 
-    if [ $chef_env_set -eq 0 ]; then
-        EDITOR=/bin/true knife environment create ${chef_env} -d ${chef_env}
-        chef_env_set=1
-    fi
+    # TODO: DELETE ME
+    #if [ $chef_env_set -eq 0 ]; then
+    #    EDITOR=/bin/true knife environment create ${chef_env} -d ${chef_env}
+    #    chef_env_set=1
+    #fi
 
     if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client -E ${chef_env}" ); then
         echo "Unable to register with chef-server"
