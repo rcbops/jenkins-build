@@ -242,21 +242,21 @@ for x in $(seq 1 2); do
         name=$(echo ${host_info[$host]} | cut -d':' -f1)
         role=$(echo ${host_info[$host]} | cut -d':' -f2)
         ip=$(echo ${host_info[$host]} | cut -d':' -f3)
-        ssh root@${ip} "/opt/opscode/bin/chef-client -E ${chef_env}"
+        ssh root@${ip} "/opt/opscode/bin/chef-client -l debug -E ${chef_env}"
     done
 done
 
 echo "running tests against the swift-management node"
-get_ip_by_role "kong"
-kong_ip=$T_IP
+get_ip_by_role "swift-proxy-server"
+proxy_ip=$T_IP
 
 # uncomment this once swift is deployable
-if ! ( ssh root@${kong_ip} 'cd /opt/exerstack; ./exercise.sh essex-final keystone.sh swift.sh' ); then
+if ! ( ssh root@${proxy_ip} 'cd /opt/exerstack; ./exercise.sh essex-final keystone.sh swift.sh' ); then
     echo "Exerstack test suite failed"
     err_cleanup_chef
     exit 1
 fi
-if ! ( ssh root@${kong_ip} 'cd /opt/kong; ./run_tests.sh --version essex-final --swift' ); then
+if ! ( ssh root@${proxy_ip} 'cd /opt/kong; ./run_tests.sh --version essex-final --swift' ); then
     echo "Kong test suite failed"
     err_cleanup_chef
     exit 1
