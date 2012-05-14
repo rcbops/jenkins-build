@@ -73,9 +73,9 @@ function get_ip_by_role() {
 # the naming of these is extremely important - they must match the chef roles
 declare -a nodes
 if [ ${AUTHTYPE} == "keystone" ]; then
-    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone],recipe[kong],recipe[exerstack]
-            node2:role[base]
-            node3:role[base]
+    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone],recipe[kong],recipe[exerstack],role[swift-management-server],role[swift-proxy-server],role[swift-object-server],role[swift-container-server],role[swift-account-server]
+            node2:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
+            node3:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
           )
 else
     nodes=( node1:role[base],recipe[kong],recipe[exerstack]
