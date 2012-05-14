@@ -31,9 +31,9 @@ function err_cleanup_chef() {
         echo "destroying $host"
         # Delete node and client from chef-server
         # ssh root@${ip} "knife node delete \$HOSTNAME -y -E ${chef_env} || :"
-        knife node delete $HOSTNAME -y || :
+        knife node delete ${name} -y || :
         # ssh root@${ip} "knife client delete \$HOSTNAME -y -E ${chef_env} || :"
-        knife client delete $HOSTNAME -y || :
+        knife client delete ${name} -y || :
         # ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
         for vd in $(echo {b..d}); do 
@@ -253,9 +253,9 @@ for host in ${host_info[@]}; do
     ip=$(echo $host | cut -d':' -f3)
     # Delete node and client from chef-server
     # ssh root@${ip} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${chef_env} || :"
-    knife node delete $HOSTNAME -y || :
+    knife node delete ${name} -y || :
     # ssh root@${ip} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${chef_env} || :"
-    knife client delete $HOSTNAME -y || :
+    knife client delete ${name} -y || :
     # ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
     for vd in $(echo {b..d}); do 
