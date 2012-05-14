@@ -210,7 +210,7 @@ for host in ${!host_info[@]}; do
     fi
 
     # Add swift specific node attributes
-    node_json=$(mktmp)
+    node_json=$(mktemp)
     zone=$(( $host + 1 ))
     knife node show ${name} -Fj | sed -e "s/\"normal\": {/\"normal\": { \"swift\": { \"zone\": $zone },/" > ${node_json}.json
     if ! ( knife node from file ${node_json}.json ); then
