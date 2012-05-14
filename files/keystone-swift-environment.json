@@ -1,0 +1,35 @@
+{
+  "default_attributes": {
+  },
+  "cookbook_versions": {
+  },
+  "description": "",
+  "override_attributes": {
+    "swift": {
+      "disk_test_filter": [
+        "candidate =~ /sd[^a]/ or candidate =~ /hd[^a]/ or candidate =~ /vd[^a]/",
+        "File.exist?('/dev/' + candidate)",
+        "not system('/sbin/sfdisk -V /dev/' + candidate + '> /dev/null 2>&1')",
+        "info['removable'] = 0"
+      ],
+      "auto_rebuild_rings": true,
+      "authmode": "keystone",
+      "swift_hash": "107c0568ea84"
+    },
+    "osops_networks": {
+      "swift": "192.168.1.0/24",
+      "public": "192.168.1.0/24",
+      "mapping": {
+        "swift-lb": "public",
+        "swift-private": "swift"
+      } 
+    },
+    "mysql": {
+      "allow_remote_root": true,
+      "root_network_acl": "192.168.1.%"
+    } 
+  },
+  "name": "REPLACEME",
+  "chef_type": "environment",
+  "json_class": "Chef::Environment"
+} 
