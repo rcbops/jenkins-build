@@ -96,7 +96,7 @@ chef_env_set=0
 
 # lets create the chef environment
 tmp_env=$(mktemp)
-cat ~/jenkins-build/files/${AUTHTYPE}-swift-environment.json | sed -e "s/REPLACEME/${chef_env}/' > ${tmp_env}
+cat ~/jenkins-build/files/${AUTHTYPE}-swift-environment.json | sed -e "s/REPLACEME/${chef_env}/" > ${tmp_env}
 if ! ( knife environment from file ${tmp_env} ); then
     echo "Unable to create environment from ${tmp_env}"
     exit 1
