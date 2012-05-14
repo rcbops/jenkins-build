@@ -99,6 +99,7 @@ if ! ( knife environment from file ${tmp_env}.json ); then
 else
     rm ${tmp_env}.json
     chef_env_set=1
+    knife environment show ${chef_env} -Fj
 fi
 
 # Lets configure name and ip for each of the nodes
@@ -219,6 +220,7 @@ for host in ${!host_info[@]}; do
         exit 1
     else
         rm ${node_json}.json
+        knife node show ${name} -Fj
     fi
 
     OLD_IFS=$IFS
