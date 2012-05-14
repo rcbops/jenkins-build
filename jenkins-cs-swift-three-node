@@ -20,6 +20,7 @@ function err_cleanup_chef() {
         exit 0
     fi
 
+    knife environment delete ${chef_env} -y || :
     for host in ${host_info[@]}; do
         name=$(echo $host | cut -d':' -f1)
         role=$(echo $host | cut -d':' -f2)
@@ -29,9 +30,11 @@ function err_cleanup_chef() {
 
         echo "destroying $host"
         # Delete node and client from chef-server
-        ssh root@${ip} "knife node delete \$HOSTNAME -y -E ${chef_env} || :"
-        ssh root@${ip} "knife client delete \$HOSTNAME -y -E ${chef_env} || :"
-        ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
+        # ssh root@${ip} "knife node delete \$HOSTNAME -y -E ${chef_env} || :"
+        knife node delete $HOSTNAME -y || :
+        # ssh root@${ip} "knife client delete \$HOSTNAME -y -E ${chef_env} || :"
+        knife client delete $HOSTNAME -y || :
+        # ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
         for vd in $(echo {b..d}); do 
             sudo virsh detach-disk ${name} vd${vd} || :
@@ -73,9 +76,13 @@ function get_ip_by_role() {
 # the naming of these is extremely important - they must match the chef roles
 declare -a nodes
 if [ ${AUTHTYPE} == "keystone" ]; then
-    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone],recipe[kong],recipe[exerstack],role[swift-management-server],role[swift-proxy-server],role[swift-object-server],role[swift-container-server],role[swift-account-server]
-            node2:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
-            node3:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
+#    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone],recipe[kong],recipe[exerstack],role[swift-management-server],role[swift-proxy-server],role[swift-object-server],role[swift-container-server],role[swift-account-server]
+#            node2:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
+#            node3:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
+#          )
+    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone],recipe[kong],recipe[exerstack]
+            node2:role[base]
+            node3:role[base]
           )
 else
     nodes=( node1:role[base],recipe[kong],recipe[exerstack]
@@ -86,6 +93,17 @@ fi
 
 chef_env=${BINARY_BUILD_RELEASE}-${AUTHTYPE}-${PACKAGE}
 chef_env_set=0
+
+# lets create the chef environment
+tmp_env=$(mktemp)
+cat ~/jenkins-build/files/${AUTHTYPE}-swift-environment.json | sed -e "s/REPLACEME/${chef_env}/' > ${tmp_env}
+if ! ( knife environment from file ${tmp_env} ); then
+    echo "Unable to create environment from ${tmp_env}"
+    exit 1
+else
+    rm ${tmp_env}
+    chef_env_set=1
+fi
 
 # Lets configure name and ip for each of the nodes
 declare -a host_info
@@ -228,14 +246,17 @@ kong_ip=$T_IP
 trap - SIGINT SIGTERM EXIT ERR
 
 # Cleanup after the run
+knife environment delete ${chef_env} -y || :
 for host in ${host_info[@]}; do
     name=$(echo $host | cut -d':' -f1)
     node=$(echo $host | cut -d':' -f2)
     ip=$(echo $host | cut -d':' -f3)
     # Delete node and client from chef-server
-    ssh root@${ip} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${chef_env} || :"
-    ssh root@${ip} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${chef_env} || :"
-    ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
+    # ssh root@${ip} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${chef_env} || :"
+    knife node delete $HOSTNAME -y || :
+    # ssh root@${ip} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${chef_env} || :"
+    knife client delete $HOSTNAME -y || :
+    # ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
     for vd in $(echo {b..d}); do 
         sudo virsh detach-disk ${name} vd${vd}
