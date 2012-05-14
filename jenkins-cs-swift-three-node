@@ -76,13 +76,9 @@ function get_ip_by_role() {
 # the naming of these is extremely important - they must match the chef roles
 declare -a nodes
 if [ ${AUTHTYPE} == "keystone" ]; then
-#    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone],recipe[kong],recipe[exerstack],role[swift-management-server],role[swift-proxy-server],role[swift-object-server],role[swift-container-server],role[swift-account-server]
-#            node2:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
-#            node3:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
-#          )
-    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone],recipe[kong],recipe[exerstack]
-            node2:role[base]
-            node3:role[base]
+    nodes=( node1:role[base],role[jenkins-mysql-master],role[keystone],recipe[kong],recipe[exerstack],role[swift-management-server],role[swift-proxy-server],role[swift-object-server],role[swift-container-server],role[swift-account-server]
+            node2:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
+            node3:role[base],role[swift-object-server],role[swift-container-server],role[swift-account-server]
           )
 else
     nodes=( node1:role[base],recipe[kong],recipe[exerstack]
@@ -139,10 +135,10 @@ done
 
 trap "err_cleanup_chef" SIGINT SIGTERM ERR
 
-for host in ${host_info[@]}; do
-    name=$(echo $host | cut -d':' -f1)
-    role=$(echo $host | cut -d':' -f2)
-    ip=$(echo $host | cut -d':' -f3)
+for host in ${!host_info[@]}; do
+    name=$(echo ${host_info[$host]} | cut -d':' -f1)
+    role=$(echo ${host_info[$host]} | cut -d':' -f2)
+    ip=$(echo ${host_info[$host]} | cut -d':' -f3)
 #    ssh root@${ip} "ifconfig eth0"
 
     if [ ${BINARY_BUILD_VARIANT} = "debian" ]; then
@@ -211,6 +207,18 @@ for host in ${host_info[@]}; do
         echo "Unable to register with chef-server"
         err_cleanup_chef
         exit 1
+    fi
+
+    # Add swift specific node attributes
+    node_json=$(mktmp)
+    zone=$(( $host + 1 ))
+    knife node show ${name} -Fj | sed -e "s/\"normal\": {/\"normal\": { \"swift\": { \"zone\": $zone },/" > ${node_json}.json
+    if ! ( knife node from file ${node_json}.json ); then
+        echo "Unable to update node attributes from ${node_json}.json"
+        err_cleanup_chef
+        exit 1
+    else
+        rm ${node_json}.json
     fi
 
     OLD_IFS=$IFS
