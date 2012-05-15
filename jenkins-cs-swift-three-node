@@ -250,6 +250,9 @@ for x in 1 2 3 4; do
 	if ! (ssh root@${ip} "ps auxw | grep swif[t]"); then
 	    echo "No swift services running"
 	fi
+
+	echo "Sleeping to wait for stoopid solr to catch up"
+	sleep 20
     done
 done
 
