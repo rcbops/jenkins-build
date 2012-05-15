@@ -86,11 +86,11 @@ knife client delete -y os-compute02.rcbops.me || :
 knife environment delete -y essex_baremetal_multinode || :
 
 # Copy over bootstrap files
-scp ~/jenkins-build/files/djeep-bootstrap.sh root@${DJEEP_HOST}:~
-scp ~/jenkins-build/files/djeep-jenkins.yaml root@${DJEEP_HOST}:~
+scp ${SSH_OPTS} ~/jenkins-build/files/djeep-bootstrap.sh root@${DJEEP_HOST}:~
+scp ${SSH_OPTS} ~/jenkins-build/files/djeep-jenkins.yaml root@${DJEEP_HOST}:~
 
 # Rebuild djeep
-if ! ( ssh root@${DJEEP_HOST} "./djeep-bootstrap.sh" ); then
+if ! ( ssh ${SSH_OPTS} root@${DJEEP_HOST} "./djeep-bootstrap.sh" ); then
     echo "DJEEP Bootstrap did not complete successfully"
     exit 1
 fi
