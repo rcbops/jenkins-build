@@ -191,6 +191,10 @@ function maybe_make_kvm_instance() {
     base_instance=${LVM_ROOT}/${BINARY_BUILD_RELEASE}
     new_instance=${1}
 
+    if [ -e ${LVM_ROOT}/${new_instance} ]; then
+	sudo lvremove -f ${LVMROOT}/${new_instance}
+    fi
+
     if [ ! -e ${LVM_ROOT}/${new_instance} ]; then
 	sudo lvcreate ${LVM_ROOT}/${BINARY_BUILD_RELEASE} --size=${gigs}G --name=${new_instance} --snapshot
     else
