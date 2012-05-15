@@ -136,8 +136,6 @@ for host in ${host_info[@]}; do
     # if something is worth doing, it's worth doing RIGHT
     ssh root@${ip} 'find /sys -path "*pci*scsi*" -name "scan" | xargs -i -n1 /bin/bash -c "echo - - - > {}"'
     sleep 1
-    ssh root@${ip} "partprobe;partprobe;partprobe" # YEEEEEE HAW!
-    sleep 1
     ssh root@${ip} "cat /proc/partitions"
 done
 
