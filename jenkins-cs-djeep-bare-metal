@@ -30,7 +30,10 @@ function ipmi_restart() {
         # Power is on, we can powercycle
         # Gonna wilk it up here
         for i in $(seq 1 4); do
-            ssh ${SSH_OPTS} root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+            ssh ${SSH_OPTS} root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power off"
+        done
+        for i in $(seq 1 4); do
+            ssh ${SSH_OPTS} root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
         done
     else
         # Power is off, we can poweron
