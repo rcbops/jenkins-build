@@ -132,7 +132,12 @@ for host in ${host_info[@]}; do
         sync
         sudo virsh attach-disk ${name} /tmp/${name}-${vd}.img vd${vd}
     done
+
+    # if something is worth doing, it's worth doing RIGHT
+    ssh root@${ip} 'find /sys -path "*pci*scsi*" -name "scan" | xargs -i -n1 /bin/bash -c "echo - - - > {}"'
+    sleep 1
     ssh root@${ip} "partprobe;partprobe;partprobe" # YEEEEEE HAW!
+    sleep 1
     ssh root@${ip} "cat /proc/partitions"
 done
 
