@@ -192,7 +192,7 @@ function maybe_make_kvm_instance() {
     new_instance=${1}
 
     if [ -e ${LVM_ROOT}/${new_instance} ]; then
-	sudo lvremove -f ${LVMROOT}/${new_instance}
+	sudo lvremove -f ${LVM_ROOT}/${new_instance}
     fi
 
     if [ ! -e ${LVM_ROOT}/${new_instance} ]; then
