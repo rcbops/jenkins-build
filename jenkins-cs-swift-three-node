@@ -237,7 +237,7 @@ done
 sleep 20s
 
 # Swift needs a bunch of runs
-for x in $(seq 1 2 3 4); do
+for x in 1 2 3 4; do
     for host in ${!host_info[@]}; do
         name=$(echo ${host_info[$host]} | cut -d':' -f1)
         role=$(echo ${host_info[$host]} | cut -d':' -f2)
