@@ -1,0 +1,141 @@
+#!/bin/bash
+
+set -e
+set -x
+
+# Setup host variables
+DJEEP_HOST=${DJEEP_HOST:-10.127.52.107}
+CONTROLLER_HOST=${CONTROLLER_HOST:-10.127.52.108}
+CONTROLLER_DRAC=${CONTROLLER_DRAC:-10.127.55.108}
+COMPUTE01_HOST=${COMPUTE01_HOST:-10.127.52.109}
+COMPUTE01_DRAC=${COMPUTE01_DRAC:-10.127.55.109}
+COMPUTE02_HOST=${COMPUTE02_HOST:-10.127.52.110}
+COMPUTE02_DRAC=${COMPUTE02_DRAC:-10.127.55.110}
+DRACUSER=${DRACUSER:-root}
+DRACPASS=${DRACPASS:-calvincalvin}
+
+function ipmi_restart() {
+    set +x
+    # $1 - IP
+    ip=$1
+    echo "Running ipmi_restart using:"
+    echo " ip: ${ip}"
+
+    # First check the status
+    # This will return "Chassis Power is off|on"
+    status=$(ssh root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
+    if [ $status == "on" ]; then
+        # Power is on, we can powercycle
+        # Gonna wilk it up here
+        for i in $(seq 1 4); do
+            ssh root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+        done
+    else
+        # Power is off, we can poweron
+        # Gonna wilk it up here
+        for i in $(seq 1 4); do
+            ssh root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+        done
+    fi
+
+    # we need to sleep for 5 seconds and make sure the box came back online
+    sleep 15s
+    status=$(ssh root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
+    if [ $status == "off" ]; then
+        # Server did not come back online
+        sleep "Unable to powercycle server successfully"
+        exit 1
+    fi
+    set -x
+}
+
+function wait_for_ssh() {
+    # $1 - IP
+    ip=$1
+    log "Running ping_and_ssh using:"
+    log " ip: ${ip}"
+
+    count=1
+    while [ $count -lt 15 ]; do
+        count=$(( count + 1 ))
+        sleep 60s
+        if ( nc ${ip} 22 -w 1 -q 0 < /dev/null ); then
+            break
+        fi
+        if [ $count -eq 15 ]; then
+            echo "Server is not responding to ping"
+            exit 1
+        fi
+    done
+}
+
+
+# clean up chef nodes
+knife node delete -y os-controller.rcbops.me || :
+knife node delete -y os-compute01.rcbops.me || :
+knife node delete -y os-compute02.rcbops.me || :
+
+# clean up chef clients
+knife client delete -y os-controller.rcbops.me || :
+knife client delete -y os-compute01.rcbops.me || :
+knife client delete -y os-compute02.rcbops.me || :
+
+# clean up chef environment
+knife environment delete -y essex_baremetal_multinode || :
+
+# Copy over bootstrap files
+scp ~/jenkins-build/files/djeep-bootstrap.sh root@${DJEEP_HOST}:~
+scp ~/jenkins-build/files/djeep-jenkins.yaml root@${DJEEP_HOST}:~
+
+# Rebuild djeep
+if ! ( ssh root@${DJEEP_HOST} "./djeep-bootstrap.sh" ); then
+    echo "DJEEP Bootstrap did not complete successfully"
+    exit 1
+fi
+
+# Kick the Controller
+ipmi_restart ${CONTROLLER_DRAC}
+wait_for_ssh ${CONTROLLER_HOST}
+if ! ( knife node list | grep "os-controller.rcbops.me" ); then
+    echo "Node: os-controller.rcbops.me, not found in knife node list"
+    exit 1
+fi
+# Push the roles for the controller
+knife node run_list add os-controller.rcbops.me role[single-controller]
+knife node run_list add os-controller.rcbops.me recipe[exerstack]
+knife node run_list add os-controller.rcbops.me recipe[kong]
+if ! ( ssh root@${CONTROLLER_HOST} 'chef-client' ); then
+    echo "Chef-client run failed"
+    exit 1
+fi
+
+
+# Kick the Controller
+ipmi_restart ${COMPUTE01_DRAC}
+wait_for_ssh ${COMPUTE01_HOST}
+if ! ( knife node list | grep "os-compute01.rcbops.me" ); then
+    echo "Node: os-compute01.rcbops.me, not found in knife node list"
+    exit 1
+fi
+# Push the roles for the compute node
+knife node run_list add os-compute01.rcbops.me role[single-compute]
+if ! ( ssh root@${COMPUTE01_HOST} 'chef-client' ); then
+    echo "Chef-client run failed"
+    exit 1
+fi
+
+
+# Kick the Controller
+ipmi_restart ${COMPUTE02_DRAC}
+wait_for_ssh ${COMPUTE02_HOST}
+if ! ( knife node list | grep "os-compute02.rcbops.me" ); then
+    echo "Node: os-compute02.rcbops.me, not found in knife node list"
+    exit 1
+fi
+# Push the roles for the compute node
+knife node run_list add os-compute02.rcbops.me role[single-compute]
+if ! ( ssh root@${COMPUTE02_HOST} 'chef-client' ); then
+    echo "Chef-client run failed"
+    exit 1
+fi
+
