@@ -247,7 +247,9 @@ for x in 1 2 3 4; do
         ssh root@${ip} "/opt/opscode/bin/chef-client -l debug -E ${chef_env}"
 	echo "=== SERVICE STATUS RUN ${x} for ${name}"
 	ssh root@${ip} "netstat -ntpl"
-	ssh root@${ip} "ps auxw | grep swif[t]"
+	if ! (ssh root@${ip} "ps auxw | grep swif[t]"); then
+	    echo "No swift services running"
+	fi
     done
 done
 
