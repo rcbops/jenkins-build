@@ -246,8 +246,8 @@ for x in 1 2 3 4; do
 	echo "=== RUN ${x} for ${name} ==="
         ssh root@${ip} "/opt/opscode/bin/chef-client -l debug -E ${chef_env}"
 	echo "=== SERVICE STATUS RUN ${x} for ${name}"
-	ssh root@{ip} "netstat -ntpl"
-	ssh root@{ip} "ps auxw | grep swif[t]"
+	ssh root@${ip} "netstat -ntpl"
+	ssh root@${ip} "ps auxw | grep swif[t]"
     done
 done
 
