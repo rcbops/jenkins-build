@@ -84,8 +84,8 @@ knife client delete -y os-compute02.rcbops.me || :
 knife environment delete -y essex_baremetal_multinode || :
 
 # Copy over bootstrap files
-scp ~/jenkins-build/files/djeep-bootstrap.sh root@{DJEEP_HOST}:~
-scp ~/jenkins-build/files/djeep-jenkins.yaml root@{DJEEP_HOST}:~
+scp ~/jenkins-build/files/djeep-bootstrap.sh root@${DJEEP_HOST}:~
+scp ~/jenkins-build/files/djeep-jenkins.yaml root@${DJEEP_HOST}:~
 
 # Rebuild djeep
 if ! ( ssh root@${DJEEP_HOST} "./djeep-bootstrap.sh" ); then
@@ -102,24 +102,40 @@ if ! ( knife node list | grep "os-controller.rcbops.me" ); then
 fi
 # Push the roles for the controller
 knife node run_list add os-controller.rcbops.me role[single-controller]
+knife node run_list add os-controller.rcbops.me recipe[exerstack]
+knife node run_list add os-controller.rcbops.me recipe[kong]
 if ! ( ssh root@${CONTROLLER_HOST} 'chef-client' ); then
     echo "Chef-client run failed"
     exit 1
 fi
 
+
 # Kick the Controller
 ipmi_restart ${COMPUTE01_DRAC}
 wait_for_ssh ${COMPUTE01_HOST}
-if ! ( knife node list | grep "os-compute02.rcbops.me" ); then
-    echo "Node: os-compute02.rcbops.me, not found in knife node list"
+if ! ( knife node list | grep "os-compute01.rcbops.me" ); then
+    echo "Node: os-compute01.rcbops.me, not found in knife node list"
     exit 1
 fi
+# Push the roles for the compute node
+knife node run_list add os-compute01.rcbops.me role[single-compute]
+if ! ( ssh root@${COMPUTE01_HOST} 'chef-client' ); then
+    echo "Chef-client run failed"
+    exit 1
+fi
+
 
 # Kick the Controller
 ipmi_restart ${COMPUTE02_DRAC}
 wait_for_ssh ${COMPUTE02_HOST}
 if ! ( knife node list | grep "os-compute02.rcbops.me" ); then
     echo "Node: os-compute02.rcbops.me, not found in knife node list"
+    exit 1
+fi
+# Push the roles for the compute node
+knife node run_list add os-compute02.rcbops.me role[single-compute]
+if ! ( ssh root@${COMPUTE02_HOST} 'chef-client' ); then
+    echo "Chef-client run failed"
     exit 1
 fi
 
