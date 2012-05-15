@@ -61,13 +61,13 @@ function wait_for_ssh() {
     echo " ip: ${ip}"
 
     count=1
-    while [ $count -lt 15 ]; do
+    while [ $count -lt 25 ]; do
         count=$(( count + 1 ))
         sleep 60s
         if ( nc ${ip} 22 -w 1 -q 0 < /dev/null ); then
             break
         fi
-        if [ $count -eq 15 ]; then
+        if [ $count -eq 25 ]; then
             echo "Server is not responding to ping"
             exit 1
         fi
