@@ -17,7 +17,7 @@ DRACUSER=${DRACUSER:-root}
 DRACPASS=${DRACPASS:-calvincalvin}
 
 function ipmi_restart() {
-    set +x
+    # set +x
     # $1 - IP
     ip=$1
     echo "Running ipmi_restart using:"
@@ -48,7 +48,7 @@ function ipmi_restart() {
         sleep "Unable to powercycle server successfully"
         exit 1
     fi
-    set -x
+    # set -x
 }
 
 function wait_for_ssh() {
