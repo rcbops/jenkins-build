@@ -44,6 +44,14 @@
     description: Name of the validation private key file
     cluster: 2
 
+- model: rolemapper.config
+  pk: 25
+  fields:
+    key: ubuntu_mirror
+    value: 10.127.52.103:3142
+    description: ubuntu mirror host
+    cluster: 2
+
 - model: rolemapper.host
   pk: 11
   fields:
