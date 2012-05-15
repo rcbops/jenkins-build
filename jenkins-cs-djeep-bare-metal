@@ -57,8 +57,8 @@ function ipmi_restart() {
 function wait_for_ssh() {
     # $1 - IP
     ip=$1
-    log "Running ping_and_ssh using:"
-    log " ip: ${ip}"
+    echo "Running ping_and_ssh using:"
+    echo " ip: ${ip}"
 
     count=1
     while [ $count -lt 15 ]; do
