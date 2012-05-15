@@ -237,12 +237,17 @@ done
 sleep 20s
 
 # Swift needs a bunch of runs
-for x in $(seq 1 2 3); do
+for x in $(seq 1 2 3 4); do
     for host in ${!host_info[@]}; do
         name=$(echo ${host_info[$host]} | cut -d':' -f1)
         role=$(echo ${host_info[$host]} | cut -d':' -f2)
         ip=$(echo ${host_info[$host]} | cut -d':' -f3)
+
+	echo "=== RUN ${x} for ${name} ==="
         ssh root@${ip} "/opt/opscode/bin/chef-client -l debug -E ${chef_env}"
+	echo "=== SERVICE STATUS RUN ${x} for ${name}"
+	ssh root@{ip} "netstat -ntpl"
+	ssh root@{ip} "ps auxw | grep swif[t]"
     done
 done
 
