@@ -36,7 +36,7 @@ function err_cleanup_chef() {
         knife client delete ${name} -y || :
         # ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
-        for vd in $(echo {b..d}); do 
+        for vd in $(echo {b..d}); do
             sudo virsh detach-disk ${name} vd${vd} || :
             sudo rm -f /tmp/${name}-${vd}.img || :
         done
@@ -44,7 +44,7 @@ function err_cleanup_chef() {
         sudo virsh destroy ${name}
         sleep 5
         sudo lvremove -f ${LVM_ROOT}/${name}
-        for vd in $(echo {b..d}); do 
+        for vd in $(echo {b..d}); do
             if [ -e "/tmp/${name}-${vd}.img" ]; then
                 sudo rm -f /tmp/${name}-${vd}.img
             fi
@@ -55,7 +55,7 @@ function err_cleanup_chef() {
 
 function get_ip_by_role() {
     # return the first IP that matches the role
-    # $1 - role   
+    # $1 - role
 
     for host in ${host_info[@]}; do
         role=$(echo $host | cut -d':' -f2)
@@ -72,7 +72,7 @@ function get_ip_by_role() {
 }
 
 # This is an array of the roles you want to build for the test
-# Valid entries are in the form of <hostname>:role[<role>],... 
+# Valid entries are in the form of <hostname>:role[<role>],...
 # the naming of these is extremely important - they must match the chef roles
 declare -a nodes
 if [ ${AUTHTYPE} == "keystone" ]; then
@@ -108,7 +108,7 @@ for node in ${nodes[@]}; do
     name=$(echo $node | cut -d':' -f1)
     role=$(echo $node | cut -d':' -f2)
     node_name=${BINARY_BUILD_RELEASE}-${AUTHTYPE}-${PACKAGE}-$name
-    get_ip $node_name 
+    get_ip $node_name
     node_ip=${IP}
     echo "building host_info ${node_name}:${role}:${node_ip}"
     host_info[${#host_info[@]}]="${node_name}:${role}:${node_ip}"
@@ -117,7 +117,7 @@ done
 # global memory spec for all vms built
 MEMORY=2048000
 
-# Spinup VMs 
+# Spinup VMs
 for host in ${host_info[@]}; do
     echo $host
     name=$(echo $host | cut -d':' -f1)
@@ -126,7 +126,7 @@ for host in ${host_info[@]}; do
     maybe_make_kvm_instance $name
     start_kvm_instance $name $ip http://archive.ubuntu.com/ubuntu precise main
     ssh root@${ip} "modprobe acpiphp"
-    for vd in $(echo {b..d}); do 
+    for vd in $(echo {b..d}); do
         sudo dd if=/dev/zero of=/tmp/${name}-${vd}.img bs=1M seek=1024 count=0
         sync
         sudo virsh attach-disk ${name} /tmp/${name}-${vd}.img vd${vd}
@@ -170,7 +170,7 @@ for host in ${!host_info[@]}; do
             fi
             if ! ( ssh root@${ip} "/usr/bin/cgroups-mount" ); then
                 :
-            fi 
+            fi
             sleep 2;
             count=$(( count + 1 ));
         done
@@ -237,7 +237,7 @@ done
 sleep 20s
 
 # Swift needs a bunch of runs
-for x in $(seq 1 2); do
+for x in $(seq 1 2 3); do
     for host in ${!host_info[@]}; do
         name=$(echo ${host_info[$host]} | cut -d':' -f1)
         role=$(echo ${host_info[$host]} | cut -d':' -f2)
@@ -277,7 +277,7 @@ for host in ${host_info[@]}; do
     knife client delete ${name} -y || :
     # ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
-    for vd in $(echo {b..d}); do 
+    for vd in $(echo {b..d}); do
         sudo virsh detach-disk ${name} vd${vd}
         sudo rm -f /tmp/${name}-${vd}.img
     done
