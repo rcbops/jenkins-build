@@ -88,6 +88,7 @@ knife environment delete -y essex_baremetal_multinode || :
 # Copy over bootstrap files
 scp ${SSH_OPTS} ~/jenkins-build/files/djeep-bootstrap.sh root@${DJEEP_HOST}:~
 scp ${SSH_OPTS} ~/jenkins-build/files/djeep-jenkins.yaml root@${DJEEP_HOST}:~
+ssh ${SSH_OPTS} root@${DJEEP_HOST} "chmod 755 djeep-bootstrap.sh"
 
 # Rebuild djeep
 if ! ( ssh ${SSH_OPTS} root@${DJEEP_HOST} "./djeep-bootstrap.sh" ); then
