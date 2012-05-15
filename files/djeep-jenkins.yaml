@@ -1,0 +1,90 @@
+- model: rolemapper.cluster
+  pk: 2
+  fields:
+    short_name: jenkins
+    display_name: jenkins
+
+- model: rolemapper.config
+  pk: 20
+  fields:
+    key: gateway
+    value: 10.127.52.1
+    description: gateway ip for cluster
+    cluster: 2
+
+- model: rolemapper.config
+  pk: 21
+  fields:
+    key: chef_server_url
+    value: https://api.opscode.com/organizations/rcb
+    description: URL for chef-server
+    cluster: 2
+
+- model: rolemapper.config
+  pk: 22
+  fields:
+    key: validation_client_name
+    value: rcb-validator
+    description: Name of the validator client for the orginization
+    cluster: 2
+
+- model: rolemapper.config
+  pk: 23
+  fields:
+    key: chef_environment
+    value: essex_baremetal_multinode
+    description: Name of the environment in which the client will register
+    cluster: 2
+
+- model: rolemapper.config
+  pk: 24
+  fields:
+    key: chef_validation_pem
+    value: jenkins-validation.pem
+    description: Name of the validation private key file
+    cluster: 2
+
+- model: rolemapper.host
+  pk: 11
+  fields:
+    mac_address: 04:7d:7b:06:b3:bc
+    hostname: os-controller.rcbops.me
+    ip_address: 10.127.52.108
+    netmask: 255.255.252.0
+    gateway: 10.127.52.1
+    ipmi_ip: 10.127.55.108
+    state: managed
+    local_boot: false
+    role: 1
+    cluster: 2
+    kick_target: 9
+
+- model: rolemapper.host
+  pk: 12
+  fields:
+    mac_address: 04:7d:7b:06:b3:b4
+    hostname: os-compute01.rcbops.me
+    ip_address: 10.127.52.109
+    netmask: 255.255.252.0
+    gateway: 10.127.52.1
+    ipmi_ip: 10.127.55.109
+    state: managed
+    local_boot: false
+    role: 2
+    cluster: 2
+    kick_target: 9
+
+- model: rolemapper.host
+  pk: 13
+  fields:
+    mac_address: 04:7d:7b:06:b2:60
+    hostname: os-compute02.rcbops.me
+    ip_address: 10.127.52.110
+    netmask: 255.255.252.0
+    gateway: 10.127.52.1
+    ipmi_ip: 10.127.55.110
+    state: managed
+    local_boot: false
+    role: 2
+    cluster: 2
+    kick_target: 9
