@@ -4,6 +4,8 @@ set -e
 set -x
 
 # Setup host variables
+SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+
 DJEEP_HOST=${DJEEP_HOST:-10.127.52.107}
 CONTROLLER_HOST=${CONTROLLER_HOST:-10.127.52.108}
 CONTROLLER_DRAC=${CONTROLLER_DRAC:-10.127.55.108}
@@ -23,24 +25,24 @@ function ipmi_restart() {
 
     # First check the status
     # This will return "Chassis Power is off|on"
-    status=$(ssh root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
+    status=$(ssh ${SSH_OPTS} root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
     if [ $status == "on" ]; then
         # Power is on, we can powercycle
         # Gonna wilk it up here
         for i in $(seq 1 4); do
-            ssh root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
+            ssh ${SSH_OPTS} root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power cycle"
         done
     else
         # Power is off, we can poweron
         # Gonna wilk it up here
         for i in $(seq 1 4); do
-            ssh root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
+            ssh ${SSH_OPTS} root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power on"
         done
     fi
 
     # we need to sleep for 5 seconds and make sure the box came back online
     sleep 15s
-    status=$(ssh root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
+    status=$(ssh ${SSH_OPTS} root@${DJEEP_HOST} "ipmitool -I lanplus -H ${ip} -U ${DRACUSER} -P ${DRACPASS} chassis power status | cut -d ' ' -f4")
     if [ $status == "off" ]; then
         # Server did not come back online
         sleep "Unable to powercycle server successfully"
