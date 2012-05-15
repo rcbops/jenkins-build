@@ -13,6 +13,7 @@
         "info['removable'] = 0"
       ],
       "auto_rebuild_rings": true,
+	"wait_for": 3,
       "authmode": "keystone",
       "swift_hash": "107c0568ea84"
     },
@@ -22,14 +23,14 @@
       "mapping": {
         "swift-lb": "public",
         "swift-private": "swift"
-      } 
+      }
     },
     "mysql": {
       "allow_remote_root": true,
       "root_network_acl": "192.168.1.%"
-    } 
+    }
   },
   "name": "REPLACEME",
   "chef_type": "environment",
   "json_class": "Chef::Environment"
-} 
+}
