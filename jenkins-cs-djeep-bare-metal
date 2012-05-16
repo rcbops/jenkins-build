@@ -65,6 +65,7 @@ function wait_for_ssh() {
         count=$(( count + 1 ))
         sleep 60s
         if ( nc ${ip} 22 -w 1 -q 0 < /dev/null ); then
+            sleep 60s
             break
         fi
         if [ $count -eq 25 ]; then
