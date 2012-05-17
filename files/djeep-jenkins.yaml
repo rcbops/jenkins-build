@@ -82,17 +82,17 @@
     cluster: 2
     kick_target: 9
 
-- model: rolemapper.host
-  pk: 13
-  fields:
-    mac_address: 04:7d:7b:06:b2:60
-    hostname: os-compute02.rcbops.me
-    ip_address: 10.127.52.110
-    netmask: 255.255.252.0
-    gateway: 10.127.52.1
-    ipmi_ip: 10.127.55.110
-    state: managed
-    local_boot: false
-    role: 2
-    cluster: 2
-    kick_target: 9
+#- model: rolemapper.host
+#  pk: 13
+#  fields:
+#    mac_address: 04:7d:7b:06:b2:60
+#    hostname: os-compute02.rcbops.me
+#    ip_address: 10.127.52.110
+#    netmask: 255.255.252.0
+#    gateway: 10.127.52.1
+#    ipmi_ip: 10.127.55.110
+#    state: managed
+#    local_boot: false
+#    role: 2
+#    cluster: 2
+#    kick_target: 9
