@@ -298,8 +298,10 @@ for host in ${host_info[@]}; do
     # ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
     for vd in $(echo {b..d}); do
-        sudo virsh detach-disk ${name} vd${vd}
-        sudo rm -f /tmp/${name}-${vd}.img
+	if [ -e /tmp/${name}-${vd}.img ]; then
+            sudo virsh detach-disk ${name} vd${vd}
+            sudo rm -f /tmp/${name}-${vd}.img
+	fi
     done
 
     sudo virsh destroy ${name}
