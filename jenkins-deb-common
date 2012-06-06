@@ -304,6 +304,7 @@ TYPE=Ethernet
 IPV4_FAILURE_FATAL=yes
 IPV6INIT=no
 EOF
+        sudo rm -f /mnt/$$/etc/sysconfig/network-scripts/ifcfg-p2p1
     fi
 
     # Setup hostame
@@ -373,7 +374,7 @@ EOF
 
     # wait for the box to come up
     count=1
-    while [ $count -lt 10 ]; do
+    while [ $count -lt 20 ]; do
 	# wait for port 22 to open
 	count=$(( count + 1 ))
 	sleep 5
