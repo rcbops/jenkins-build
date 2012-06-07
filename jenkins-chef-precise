@@ -16,6 +16,9 @@ set -x
 jenkins_init
 jenkins_set_vars
 
+# Cleanup
+rm -rf chef-cookbooks || :
+
 # Get defined branch of chef-cookbooks
 git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cookbooks/
 
