@@ -13,7 +13,7 @@ PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 jenkins_init
 jenkins_set_vars
 
-kvm_instance_name=${BINARY_BUILD_RELEASE}-Essex-Allinone
+kvm_instance_name=${BINARY_BUILD_RELEASE}-essex-allinone
 
 # Cleanup from last run
 rm -rf *.log
