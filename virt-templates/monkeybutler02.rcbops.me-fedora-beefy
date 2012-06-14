@@ -2,7 +2,7 @@
   <name>${INSTANCE_NAME}</name>
   <memory>${MEMORY}</memory>
   <currentMemory>${MEMORY}</currentMemory>
-  <vcpu>1</vcpu>
+  <vcpu>2</vcpu>
   <os>
     <type arch='x86_64' machine='pc-0.12'>hvm</type>
     <kernel>/opt/Fedora-17/vmlinuz-3.3.0-0.rc3.git7.2.fc17.x86_64</kernel>
