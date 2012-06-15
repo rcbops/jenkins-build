@@ -26,9 +26,8 @@ git clone --recursive --branch ${GIT_BRANCH} https://github.com/rcbops/chef-cook
 echo "Copying chef configuration files"
 
 # Setup chef to use our jenkins server
-wget -O - -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz | tar -C chef-cookbooks/ -zxvf -
-
-#cp -r ~/.chef chef-cookbooks
+#wget -O - -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz | tar -C chef-cookbooks/ -zxvf -
+cp -r ~/.chef chef-cookbooks
 
 # Move into the downloaded cookbooks directory
 cd chef-cookbooks
