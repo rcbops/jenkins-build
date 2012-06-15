@@ -100,11 +100,11 @@ fi
 EDITOR=/bin/true knife environment create ${kvm_instance_name}
 
 # Setup Hosted Chef
-#ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+#ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
  
 # Setup chef to use our jenkins server
-ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; /opt/opscode/bin/knife configure client ./client-config'
-ssh root@${ip} "echo 'environment \"${kvm_instance_name}\"' >> ~/client-config/client.rb"
+ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; /opt/opscode/bin/knife configure client ./client-config'
+ssh root@${IP} "echo 'environment \"${kvm_instance_name}\"' >> ~/client-config/client.rb"
 
 if ! ( ssh root@${IP} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client" ); then
     echo "Unable to register with chef-server"
