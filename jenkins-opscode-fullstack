@@ -67,8 +67,8 @@ fi
 ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)"
 
 # Setup Hosted Chef
-ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef.tar.gz'
-ssh root@${IP} 'tar -xvzf chef.tar.gz'
+ssh root@${IP} 'wget http://c308412.r12.cf1.rackcdn.com/chef-server.tgz'
+ssh root@${IP} 'tar -xvzf chef-server.tgz'
 ssh root@${IP} '/opt/opscode/bin/knife configure client ./client-config'
 ssh root@${IP} 'mkdir /etc/chef'
 ssh root@${IP} 'cp -r ~/client-config/* /etc/chef/'

@@ -28,9 +28,9 @@ function err_cleanup_chef() {
 
         echo "destroying $host"
         # Delete node and client from chef-server
-        ssh root@${ip} "knife node delete \$HOSTNAME -y -E ${chef_env} || :"
-        ssh root@${ip} "knife client delete \$HOSTNAME -y -E ${chef_env} || :"
-        ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
+        knife node delete ${name} -y ||
+        knife client delete ${name} -y || :
+        /opt/opscode/bin/knife environment delete ${chef_env} -y || :
 
         sudo virsh destroy ${name}
         sleep 5
@@ -153,14 +153,19 @@ for host in ${host_info[@]}; do
     fi
 
     # Setup Hosted Chef
-    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+    #ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+ 
+    # Setup chef to use our jenkins server
+    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; /opt/opscode/bin/knife configure client ./client-config'
+
+    ssh root@${ip} "echo 'environment \"${chef_env}\"' >> ~/client-config/client.rb"
 
     if [ $chef_env_set -eq 0 ]; then
         EDITOR=/bin/true knife environment create ${chef_env} -d ${chef_env}
         chef_env_set=1
     fi
 
-    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client -E ${chef_env}" ); then
+    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client " ); then
         echo "Unable to register with chef-server"
         err_cleanup_chef
         exit 1
@@ -168,15 +173,15 @@ for host in ${host_info[@]}; do
 
     case "$role" in
         "controller")
-            ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-controller] -E ${chef_env}"
-            ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[kong] -E ${chef_env}"
-            ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[exerstack] -E ${chef_env}"
+            /opt/opscode/bin/knife node run_list add ${name} role[jenkins-controller]
+            /opt/opscode/bin/knife node run_list add ${name} recipe[kong]
+            /opt/opscode/bin/knife node run_list add ${name} recipe[exerstack]
             ;;
         "compute")
-            ssh root@${ip} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-compute] -E ${chef_env}"
+            /opt/opscode/bin/knife node run_list add ${name} role[jenkins-compute]
             ;;
     esac
-    ssh root@${ip} "/opt/opscode/bin/chef-client -E ${chef_env}"
+    ssh root@${ip} "/opt/opscode/bin/chef-client "
 
 done
 
@@ -232,9 +237,9 @@ for host in ${host_info[@]}; do
     node=$(echo $host | cut -d':' -f2)
     ip=$(echo $host | cut -d':' -f3)
     # Delete node and client from chef-server
-    ssh root@${ip} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${chef_env} || :"
-    ssh root@${ip} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${chef_env} || :"
-    ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
+    /opt/opscode/bin/knife node delete ${name} -y || :
+    /opt/opscode/bin/knife client delete ${name} -y || :
+    /opt/opscode/bin/knife environment delete ${chef_env} -y || :
 
     sudo virsh destroy ${name}
     sleep 5
