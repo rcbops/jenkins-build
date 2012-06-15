@@ -153,7 +153,10 @@ for host in ${host_info[@]}; do
     fi
 
     # Setup Hosted Chef
-    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+    #ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+ 
+    # Setup chef to use our jenkins server
+    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; /opt/opscode/bin/knife configure client ./client-config'
 
     if [ $chef_env_set -eq 0 ]; then
         EDITOR=/bin/true knife environment create ${chef_env} -d ${chef_env}
