@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+
+set -x
+set -e
+set -u
+
+GIT_ORGANIZATION_URL=${GIT_ORGANIZATION_URL:-"git@github.com:rcbops-cookbooks"}
+VERSION_FILE=${VERSION_FILE:-metatata.rb}
+GIT_REPO=${GIT_REPO:-kong}
+
+rm -rf ${GIT_REPO} || :
+
+# Checkout the repo
+git clone "${GIT_ORGANIZATION_URL}/${GIT_REPO}.git" 2>/dev/null
+
+cd ${GIT_REPO}
+
+# Setup non-global user.name
+git config user.name "rcbjenkins"
+git config user.email rcb-deploy@lists.rackspace.com
+
+# Version numbers are in major.minor.build
+# Figure out the old version
+old_ver=$(cat ${VERSION_FILE} | awk '/^version/{gsub("\042","",$NF);print $NF}')
+
+# Increase the build number
+new_ver=$(cat ${VERSION_FILE} | awk '/^version/{gsub("\042","",$NF);split($NF,a,".");print a[1]"."a[2]"."a[3]+1}')
+
+echo "Updating ${GIT_REPO} from ${old_ver} to ${new_ver}"
+
+# Replace the version stanza in the file
+sed -i "s/$old_ver/$new_ver/" ${VERSION_FILE}
+
+# Verify that git sees a difference
+git status
+
+# Add modifications to git
+git add ${VERSION_FILE}
+git commit -m "End of sprint version bump."
+git push
+
+# Clean up after our selves
+echo "Cleaning up"
+cd ..
+rm -rf ${GIT_REPO}
