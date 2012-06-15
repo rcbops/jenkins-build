@@ -32,9 +32,9 @@ function err_cleanup_chef() {
     scp root@${IP}:/var/chef/cache/chef-stacktrace.out chef-stacktrace.out.log || :
 
     # Delete node and client from chef-server
-    ssh root@${IP} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${kvm_instance_name} || :"
-    ssh root@${IP} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${kvm_instance_name} || :"
-    ssh root@${IP} "/opt/opscode/bin/knife environment delete -y ${kvm_instance_name} || :"
+    /opt/opscode/bin/knife node delete ${kvm_instance_name} -y || :
+    /opt/opscode/bin/knife client delete ${kvm_instance_name} -y || :
+    /opt/opscode/bin/knife environment delete -y ${kvm_instance_name} || :
 
     sudo virsh destroy ${1}
     sleep 5
@@ -104,18 +104,18 @@ EDITOR=/bin/true knife environment create ${kvm_instance_name}
  
 # Setup chef to use our jenkins server
 ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; /opt/opscode/bin/knife configure client ./client-config'
+ssh root@${ip} "echo 'environment \"${kvm_instance_name}\"' >> ~/client-config/client.rb"
 
-if ! ( ssh root@${IP} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client -E ${kvm_instance_name}" ); then
+if ! ( ssh root@${IP} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client" ); then
     echo "Unable to register with chef-server"
     err_cleanup_chef ${kvm_instance_name}
     exit 1
 fi
 
-#ssh root@${IP} "EDITOR=/bin/true /opt/opscode/bin/knife environment create ${kvm_instance_name}"
-ssh root@${IP} "/opt/opscode/bin/knife node run_list add \$HOSTNAME role[jenkins-allinone] -E ${kvm_instance_name}"
-ssh root@${IP} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[kong] -E ${kvm_instance_name}"
-ssh root@${IP} "/opt/opscode/bin/knife node run_list add \$HOSTNAME recipe[exerstack] -E ${kvm_instance_name}"
-ssh root@${IP} "/opt/opscode/bin/chef-client -E ${kvm_instance_name}"
+/opt/opscode/bin/knife node run_list add ${kvm_instance_name} role[jenkins-allinone]
+/opt/opscode/bin/knife node run_list add ${kvm_instance_name} recipe[kong] 
+/opt/opscode/bin/knife node run_list add ${kvm_instance_name} recipe[exerstack] 
+ssh root@${IP} "/opt/opscode/bin/chef-client "
 
 sleep 20s
 
@@ -146,14 +146,14 @@ fi
 # touching an ignore.log file to make the job not fail on artifact collection
 touch ignore.log
 
-trap - SIGINT SIGTERM EXIT ERR
+trap - SIGINT SIGTERM ERR
 
 echo "*** STARTING NODE SHUTDOWN"
 
 # Delete node and client from chef-server
-ssh root@${IP} "/opt/opscode/bin/knife node delete \$HOSTNAME -y -E ${kvm_instance_name} || :"
-ssh root@${IP} "/opt/opscode/bin/knife client delete \$HOSTNAME -y -E ${kvm_instance_name} || :"
-ssh root@${IP} "/opt/opscode/bin/knife environment delete -y ${kvm_instance_name} || :"
+/opt/opscode/bin/knife node delete ${kvm_instance_name} -y  || :
+/opt/opscode/bin/knife client delete ${kvm_instance_name} -y  || :
+/opt/opscode/bin/knife environment delete -y ${kvm_instance_name} || :
 
 sudo virsh destroy ${kvm_instance_name}
 sleep 5

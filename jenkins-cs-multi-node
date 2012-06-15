@@ -30,8 +30,8 @@ function err_cleanup_chef() {
 
         echo "destroying $host"
         # Delete node and client from chef-server
-        knife node delete ${name} -y -E ${chef_env} || :
-        knife client delete ${name} -y -E ${chef_env} || :
+        knife node delete ${name} -y || :
+        knife client delete ${name} -y || :
 
         if [ $chef_env_set -eq 0 ]; then
             knife environment delete ${chef_env} -y || :
@@ -177,7 +177,9 @@ for host in ${host_info[@]}; do
         chef_env_set=1
     fi
 
-    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client -E ${chef_env}" ); then
+    ssh root@${ip} "echo 'environment \"${chef_env}\"' >> ~/client-config/client.rb"
+
+    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client" ); then
         echo "Unable to register with chef-server"
         err_cleanup_chef
         exit 1
@@ -186,7 +188,7 @@ for host in ${host_info[@]}; do
     OLD_IFS=$IFS
     IFS=","
     for role_variant in ${role}; do
-        if ! ( /opt/opscode/bin/knife node run_list add ${name} ${role_variant} -E ${chef_env} ); then
+        if ! ( /opt/opscode/bin/knife node run_list add ${name} ${role_variant} ); then
             echo "Error adding role ${name} to node"
             err_cleanup_chef
             exit 1
@@ -194,7 +196,7 @@ for host in ${host_info[@]}; do
     done
 
     IFS=$OLD_IFS
-    if ! ( ssh root@${ip} "/opt/opscode/bin/chef-client -E ${chef_env}" ); then
+    if ! ( ssh root@${ip} "/opt/opscode/bin/chef-client" ); then
         echo "Chef run exited with a return code of $?"
         err_cleanup_chef
         exit 1
@@ -235,8 +237,8 @@ for host in ${host_info[@]}; do
     node=$(echo $host | cut -d':' -f2)
     ip=$(echo $host | cut -d':' -f3)
     # Delete node and client from chef-server
-    knife node delete ${name} -y -E ${chef_env} || :
-    knife client delete ${name} -y -E ${chef_env} || :
+    knife node delete ${name} -y || :
+    knife client delete ${name} -y || :
     if [ $chef_env_set -eq 0 ]; then
         knife environment delete ${chef_env} -y || :
         chef_env_deleted=1
