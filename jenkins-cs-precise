@@ -101,11 +101,11 @@ if ! ( ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-sta
     exit 1
 fi
 
-EDITOR=/bin/true knife environment create ${kvm_instance_name}
 
 # lets create the chef environment
+chef_env=${kvm_instance_name}
 tmp_env=$(mktemp)
-cat ~/jenkins-build/files/example-environment.json | sed -e "s/REPLACEWITHNAME/${kvm_instance_name}/" > ${tmp_env}.json
+cat ~/jenkins-build/files/example-environment.json | sed -e "s/REPLACEWITHNAME/${chef_env}/" > ${tmp_env}.json
 if ! ( knife environment from file ${tmp_env}.json ); then
     echo "Unable to create environment from ${tmp_env}.json"
     exit 1
