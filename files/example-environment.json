@@ -1,0 +1,53 @@
+{
+  "name": "REPLACEWITHNAME",
+  "description": "Example environment for Jenkins testing",
+  "cookbook_versions": {
+  },
+  "json_class": "Chef::Environment",
+  "chef_type": "environment",
+  "default_attributes": {
+  },
+  "override_attributes": {
+    "developer_mode": true,
+    "enable_monit": true,
+    "glance": {
+      "images": [ "tty" ],
+      "image_upload": true
+    },
+    "nova": {
+      "libvirt": { "virt_type": "qemu" },
+      "networks": [
+        {
+          "label": "public",
+          "ipv4_cidr": "192.168.100.0/24",
+          "bridge": "br100",
+          "bridge_dev": "eth0.100",
+          "num_networks": "1",
+          "network_size": "255",
+          "dns1": "8.8.8.8",
+          "dns2": "8.8.4.4"
+        },
+        {
+          "label": "private",
+          "ipv4_cidr": "192.168.200.0/24",
+          "bridge": "br101",
+          "bridge_dev": "eth0.101",
+          "num_networks": "1",
+          "network_size": "255",
+          "dns1": "8.8.8.8",
+          "dns2": "8.8.4.4"
+        }
+      ]
+    },
+    "mysql": {
+      "allow_remote_root": true,
+      "root_network_acl": "%"
+    },
+    "osops_networks": {
+      "nova": "192.168.1.0/24",
+      "public": "192.168.1.0/24",
+      "management": "192.168.1.0/24"
+    },
+    "package_component": "essex-final"
+  }
+}
