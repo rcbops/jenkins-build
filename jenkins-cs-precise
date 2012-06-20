@@ -31,6 +31,9 @@ function err_cleanup_chef() {
     echo "capturing stack trace output if it exists.  Errors are OK here"
     scp root@${IP}:/var/chef/cache/chef-stacktrace.out chef-stacktrace.out.log || :
 
+    echo "capturing collectd output"
+    scp -r root@${IP}:/etc/collectd root@50.57.52.245:~/ || :
+
     # Delete node and client from chef-server
     /opt/opscode/bin/knife node delete ${kvm_instance_name} -y || :
     /opt/opscode/bin/knife client delete ${kvm_instance_name} -y || :
