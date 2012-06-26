@@ -31,6 +31,10 @@ function err_cleanup_chef() {
     echo "capturing stack trace output if it exists.  Errors are OK here"
     scp root@${IP}:/var/chef/cache/chef-stacktrace.out chef-stacktrace.out.log || :
 
+    echo "capturing collectd output"
+    scp -r root@${IP}:/etc/collectd/ . || :
+
+
     # Delete node and client from chef-server
     /opt/opscode/bin/knife node delete ${kvm_instance_name} -y || :
     /opt/opscode/bin/knife client delete ${kvm_instance_name} -y || :
@@ -97,16 +101,27 @@ if ! ( ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-sta
     exit 1
 fi
 
-EDITOR=/bin/true knife environment create ${kvm_instance_name}
+
+# lets create the chef environment
+chef_env=${kvm_instance_name}
+tmp_env=$(mktemp)
+cat ~/jenkins-build/files/example-environment.json | sed -e "s/REPLACEWITHNAME/${chef_env}/" > ${tmp_env}.json
+if ! ( knife environment from file ${tmp_env}.json ); then
+    echo "Unable to create environment from ${tmp_env}.json"
+    exit 1
+else
+    rm ${tmp_env}.json
+    knife environment show ${chef_env} -Fj
+fi
 
 # Setup Hosted Chef
-#ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+#ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; knife configure client ./client-config'
  
 # Setup chef to use our jenkins server
-ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; /opt/opscode/bin/knife configure client ./client-config'
+ssh root@${IP} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; knife configure client ./client-config'
 ssh root@${IP} "echo 'environment \"${kvm_instance_name}\"' >> ~/client-config/client.rb"
 
-if ! ( ssh root@${IP} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client" ); then
+if ! ( ssh root@${IP} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; chef-client" ); then
     echo "Unable to register with chef-server"
     err_cleanup_chef ${kvm_instance_name}
     exit 1
@@ -115,7 +130,7 @@ fi
 /opt/opscode/bin/knife node run_list add ${kvm_instance_name} role[jenkins-allinone]
 /opt/opscode/bin/knife node run_list add ${kvm_instance_name} recipe[kong] 
 /opt/opscode/bin/knife node run_list add ${kvm_instance_name} recipe[exerstack] 
-ssh root@${IP} "/opt/opscode/bin/chef-client "
+ssh root@${IP} "chef-client "
 
 sleep 20s
 
