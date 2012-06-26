@@ -74,8 +74,8 @@ ssh root@${IP} 'mkdir /etc/chef'
 ssh root@${IP} 'cp -r ~/client-config/* /etc/chef/'
 ssh root@${IP} 'chef-client'
 
-ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[base]'
-ssh root@${IP} '/opt/opscode/bin/chef-client'
+ssh root@${IP} 'knife node run_list add $HOSTNAME role[base]'
+ssh root@${IP} 'chef-client'
 RET=$?
 echo "RETURN code: ${RET}"
 
