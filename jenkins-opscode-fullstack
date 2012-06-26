@@ -78,6 +78,7 @@ ssh root@${IP} '/opt/opscode/bin/knife node run_list add $HOSTNAME role[base]'
 ssh root@${IP} '/opt/opscode/bin/chef-client'
 RET=$?
 echo "RETURN code: ${RET}"
+
 trap - SIGINT SIGTERM EXIT ERR
 
 # Delete node and client from chef-server
