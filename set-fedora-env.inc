@@ -1,0 +1,3 @@
+export BINARY_BUILD_VARIANT=redhat
+export DISTRELEASE=fedora-beefy
+export BINARY_BUILD_DIST=fedora
