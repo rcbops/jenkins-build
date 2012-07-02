@@ -167,10 +167,10 @@ for host in ${host_info[@]}; do
     fi
 
     # Setup Hosted Chef
-    #ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+    #ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; knife configure client ./client-config'
 
     # Setup chef to use our jenkins server
-    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; /opt/opscode/bin/knife configure client ./client-config'
+    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; knife configure client ./client-config'
 
     if [ $chef_env_set -eq 0 ]; then
         EDITOR=/bin/true knife environment create ${chef_env} -d ${chef_env}
@@ -179,7 +179,7 @@ for host in ${host_info[@]}; do
 
     ssh root@${ip} "echo 'environment \"${chef_env}\"' >> ~/client-config/client.rb"
 
-    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client" ); then
+    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; chef-client" ); then
         echo "Unable to register with chef-server"
         err_cleanup_chef
         exit 1
@@ -188,7 +188,7 @@ for host in ${host_info[@]}; do
     OLD_IFS=$IFS
     IFS=","
     for role_variant in ${role}; do
-        if ! ( /opt/opscode/bin/knife node run_list add ${name} ${role_variant} ); then
+        if ! ( knife node run_list add ${name} ${role_variant} ); then
             echo "Error adding role ${name} to node"
             err_cleanup_chef
             exit 1
@@ -196,7 +196,7 @@ for host in ${host_info[@]}; do
     done
 
     IFS=$OLD_IFS
-    if ! ( ssh root@${ip} "/opt/opscode/bin/chef-client" ); then
+    if ! ( ssh root@${ip} "chef-client" ); then
         echo "Chef run exited with a return code of $?"
         err_cleanup_chef
         exit 1
