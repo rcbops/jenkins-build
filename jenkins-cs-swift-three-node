@@ -207,12 +207,6 @@ for host in ${!host_info[@]}; do
 
     ssh root@${ip} "echo 'environment \"${chef_env}\"' >> ~/client-config/client.rb"
 
-    # TODO: DELETE ME
-    #if [ $chef_env_set -eq 0 ]; then
-    #    EDITOR=/bin/true knife environment create ${chef_env} -d ${chef_env}
-    #    chef_env_set=1
-    #fi
-
     if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client " ); then
         echo "Unable to register with chef-server"
         err_cleanup_chef
