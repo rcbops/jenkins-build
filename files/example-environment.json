@@ -43,10 +43,16 @@
       "allow_remote_root": true,
       "root_network_acl": "%"
     },
+    "swift": {
+      "swift_hash": "107c0568ea84",
+      "authmode": "keystone",
+      "authkey": "3f281b71-ce89-4b27-a2ad-ad873d3f2760"
+    },
     "osops_networks": {
       "nova": "192.168.1.0/24",
       "public": "192.168.1.0/24",
       "management": "192.168.1.0/24"
+      "swift": "192.168.1.0/24"
     },
     "package_component": "essex-final"
   }
