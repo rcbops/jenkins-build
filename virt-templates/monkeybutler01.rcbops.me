@@ -1,0 +1,76 @@
+<domain type='kvm'>
+  <name>${INSTANCE_NAME}</name>
+  <memory>${MEMORY}</memory>
+  <currentMemory>${MEMORY}</currentMemory>
+  <vcpu>1</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-0.12'>hvm</type>
+    <kernel>/vmlinuz</kernel>
+    <initrd>/initrd.img</initrd>
+    <cmdline>root=/dev/vda</cmdline>
+    <boot dev='hd'/>
+  </os>
+  <cpu>
+    <model>Opteron_G3</model>
+    <vendor>AMD</vendor>
+    <topology sockets='1' cores='6' threads='1'/>
+    <feature policy='require' name='nodeid_msr'/>
+    <feature policy='require' name='wdt'/>
+    <feature policy='require' name='skinit'/>
+    <feature policy='require' name='ibs'/>
+    <feature policy='require' name='osvw'/>
+    <feature policy='require' name='3dnowprefetch'/>
+    <feature policy='require' name='cr8legacy'/>
+    <feature policy='require' name='extapic'/>
+    <feature policy='require' name='cmp_legacy'/>
+    <feature policy='require' name='3dnow'/>
+    <feature policy='require' name='3dnowext'/>
+    <feature policy='require' name='pdpe1gb'/>
+    <feature policy='require' name='fxsr_opt'/>
+    <feature policy='require' name='mmxext'/>
+    <feature policy='require' name='ht'/>
+    <feature policy='require' name='vme'/>
+  </cpu>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/bin/kvm</emulator>
+    <disk type='block' device='disk'>
+      <driver name='qemu' type='raw'/>
+      <source dev='${LVM_ROOT}/${INSTANCE_NAME}'/>
+      <target dev='vda' bus='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='kvmbr0'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='tablet' bus='usb'/>
+    <input type='mouse' bus='ps2'/>
+    <graphics type='vnc' port='-1' autoport='yes'/>
+    <sound model='ac97'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </sound>
+    <video>
+      <model type='cirrus' vram='9216' heads='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
