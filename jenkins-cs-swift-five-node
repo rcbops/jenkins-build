@@ -32,7 +32,6 @@ function err_cleanup_chef() {
         # Delete node and client from chef-server
         knife node delete ${name} -y || :
         knife client delete ${name} -y || :
-        # ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
         for vd in $(echo {b..d}); do
             sudo virsh detach-disk ${name} vd${vd} || :
@@ -205,10 +204,10 @@ for host in ${!host_info[@]}; do
     fi
 
     # Setup Hosted Chef
-    #ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; /opt/opscode/bin/knife configure client ./client-config'
+    #ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef.tar.gz; tar -xvzf chef.tar.gz; knife configure client ./client-config'
  
     # Setup chef to use our jenkins server
-    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; /opt/opscode/bin/knife configure client ./client-config'
+    ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; knife configure client ./client-config'
 
     ssh root@${ip} "echo 'environment \"${chef_env}\"' >> ~/client-config/client.rb"
 
@@ -218,7 +217,7 @@ for host in ${!host_info[@]}; do
     #    chef_env_set=1
     #fi
 
-    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; /opt/opscode/bin/chef-client -ldebug" ); then
+    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; chef-client -ldebug" ); then
         echo "Unable to register with chef-server"
         err_cleanup_chef
         exit 1
@@ -240,10 +239,10 @@ for host in ${!host_info[@]}; do
     OLD_IFS=$IFS
     IFS=","
     for role_variant in ${role}; do
-        /opt/opscode/bin/knife node run_list add ${name} ${role_variant}
+        knife node run_list add ${name} ${role_variant}
     done
     IFS=$OLD_IFS
-    ssh root@${ip} "/opt/opscode/bin/chef-client -ldebug"
+    ssh root@${ip} "chef-client -ldebug"
 
 done
 
@@ -257,7 +256,7 @@ for x in 1 2 3 4; do
         ip=$(echo ${host_info[$host]} | cut -d':' -f3)
 
 	echo "=== RUN ${x} for ${name} ==="
-        ssh root@${ip} "/opt/opscode/bin/chef-client -l debug "
+        ssh root@${ip} "chef-client -l debug "
 	echo "=== SERVICE STATUS RUN ${x} for ${name}"
 	ssh root@${ip} "netstat -ntpl"
 	if ! (ssh root@${ip} "ps auxw | grep swif[t]"); then
@@ -296,7 +295,6 @@ for host in ${host_info[@]}; do
     # Delete node and client from chef-server
     knife node delete ${name} -y || :
     knife client delete ${name} -y || :
-    # ssh root@${ip} "/opt/opscode/bin/knife environment delete ${chef_env} -y || :"
 
     for vd in $(echo {b..d}); do
 	if [ -e /tmp/${name}-${vd}.img ]; then
