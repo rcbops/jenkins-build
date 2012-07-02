@@ -173,7 +173,17 @@ for host in ${host_info[@]}; do
     ssh root@${ip} 'wget -q http://c308412.r12.cf1.rackcdn.com/chef-server.tgz; tar -xvzf chef-server.tgz; knife configure client ./client-config'
 
     if [ $chef_env_set -eq 0 ]; then
-        EDITOR=/bin/true knife environment create ${chef_env} -d ${chef_env}
+
+        # lets create the chef environment
+        tmp_env=$(mktemp)
+        cat ~/jenkins-build/files/example-environment.json | sed -e "s/REPLACEWITHNAME/${chef_env}/" > ${tmp_env}.json
+        if ! ( knife environment from file ${tmp_env}.json ); then
+            echo "Unable to create environment from ${tmp_env}.json"
+            exit 1
+        else
+            rm ${tmp_env}.json
+            knife environment show ${chef_env} -Fj
+        fi
         chef_env_set=1
     fi
 
