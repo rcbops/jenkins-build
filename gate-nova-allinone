@@ -175,4 +175,4 @@ sleep 5
 sudo lvremove -f ${LVM_ROOT}/${kvm_instance_name}
 
 # update pull request
-curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "* '${BUILD_URL}'consoleFull : SUCCESS"}'
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Nova All-In-One\n * '${BUILD_URL}'consoleFull : SUCCESS"}'

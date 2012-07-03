@@ -48,4 +48,4 @@ fi
 cd ..
 rm -rf chef-cookbooks
 
-curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "* '${BUILD_URL}'consoleFull : SUCCESS"}'
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Chef Server upload\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
