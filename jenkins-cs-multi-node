@@ -70,9 +70,9 @@ declare -a nodes
 nodes=( mysql:role[jenkins-mysql-master]
         keystone:role[keystone],role[rabbitmq-server]
         glance:role[jenkins-glance]
-        misc:role[nova-misc-services]
-        api:role[nova-setup],role[jenkins-nova-api],recipe[kong],recipe[exerstack]
+        api:role[nova-setup],role[jenkins-nova-api],role[nova-vncproxy],role[nova-volume],recipe[kong],recipe[exerstack]
         scheduler:role[nova-scheduler]
+        horizon:role[horizon-server]
         compute:role[jenkins-compute]
       )
 
