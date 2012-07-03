@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -x
+set -e
+set -u
+
+# Cleanup
+rm -rf ${GIT_REPO} || :
+
+# Clone the upstream repo
+if ! ( git clone ${GIT_CLONE_URL} ); then
+    echo "Unable to clone git repo: ${GIT_CLONE_URL}"
+    exit 1
+fi
+
+# Merge the proposed patch(es)
+cd ${GIT_REPO}
+if ! ( curl -s ${GIT_PATCH_URL} | git am ); then
+    echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
+    exit 1
+fi
+cd ../
+
+# RVM is throwing an unbound variable error
+set +x
+set +u
+# Tell RVM to use Ruby-1.9.3
+source /usr/local/rvm/scripts/rvm
+rvm use 1.9.3
+
+# Run FoodCritic validations
+echo "Running FoodCritic against ./${GIT_REPO}"
+if ! ( foodcritic -f any -f ~FC023 -f ~FC020 -f ~FC005 ${GIT_REPO} ); then
+    echo "Pull request does not conform to FoodCritic"
+    exit 1
+fi
+
+# Cleanup after ourselves
+echo "Cleaning up"
+cd ..
+rm -rf ${GIT_REPO}
+
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "* '${BUILD_URL}'consoleFull : SUCCESS"}'

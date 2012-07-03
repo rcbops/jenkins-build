@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -x
+set -e
+set -u
+
+# Cleanup
+rm -rf chef-cookbooks || :
+
+# Get defined branch of chef-cookbooks
+if ! ( git clone --recursive --branch ${GIT_BRANCH} ${GIT_MASTER_URL} ); then
+    echo "Unable to clone repository: ${GIT_MASTER_URL}"
+    exit 1
+fi
+
+# Setup chef to use our jenkins server
+cp -r ~/.chef chef-cookbooks
+
+# Move into the downloaded cookbooks directory
+cd chef-cookbooks
+
+# Merge the proposed patch(es)
+cd cookbooks/${GIT_REPO}
+if ! ( curl -s ${GIT_PATCH_URL} | git am ); then
+    echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
+    exit 1
+fi
+git diff
+
+# Move back up two levels
+cd ../..
+
+echo "Uploading Cookbooks"
+# Using knife, as rake exits 0 even if knife throws an error
+if ! ( knife cookbook upload --all ); then
+    echo "Unable to upload cookbooks to chef-server"
+    exit 1
+fi
+
+echo "Uploading Roles"
+# Using knife, as rake exits 0 even if knife throws an error
+if ! ( knife role from file roles/*.rb ); then
+    echo "Unable to upload roles to chef-server"
+    exit 1
+fi
+
+# Cleanup after ourselves
+cd ..
+rm -rf chef-cookbooks
+
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "* '${BUILD_URL}'consoleFull : SUCCESS"}'
