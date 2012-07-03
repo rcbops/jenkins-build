@@ -35,9 +35,10 @@ if ! ( foodcritic -f any -f ~FC023 -f ~FC020 -f ~FC005 ${GIT_REPO} ); then
     exit 1
 fi
 
-# Cleanup after ourselves
-echo "Cleaning up"
-cd ..
-rm -rf ${GIT_REPO}
+# Commenting this block out, as the compiler warnings needs the source to sick around in the workspace
+## Cleanup after ourselves
+#echo "Cleaning up"
+#cd ..
+#rm -rf ${GIT_REPO}
 
 curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule Foodcritic\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
