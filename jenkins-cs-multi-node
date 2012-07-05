@@ -67,12 +67,12 @@ function get_ip_by_role() {
 # Valid entries are in the form of <hostname>:role[<role>],... 
 # the naming of these is extremely important - they must match the chef roles
 declare -a nodes
-nodes=( mysql:role[jenkins-mysql-master]
+nodes=( mysql:role[mysql-master]
         keystone:role[keystone],role[rabbitmq-server]
         glance:role[jenkins-glance]
         api:role[nova-setup],role[nova-scheduler],role[nova-api],role[nova-vncproxy],role[nova-volume],recipe[kong],recipe[exerstack]
         horizon:role[horizon-server]
-        compute:role[jenkins-compute]
+        compute:role[compute]
       )
 
 chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
@@ -219,9 +219,9 @@ echo "running tests against the controller node"
 
 echo "setting up the routes"
 
-get_ip_by_role "jenkins-nova-api"
+get_ip_by_role "nova-api"
 controller_ip=$T_IP
-get_ip_by_role "jenkins-compute" 
+get_ip_by_role "compute" 
 compute_ip=$T_IP
 ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
 
