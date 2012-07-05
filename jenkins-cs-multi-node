@@ -72,7 +72,7 @@ nodes=( mysql:role[mysql-master]
         glance:role[jenkins-glance]
         api:role[nova-setup],role[nova-scheduler],role[nova-api],role[nova-vncproxy],role[nova-volume],recipe[kong],recipe[exerstack]
         horizon:role[horizon-server]
-        compute:role[compute]
+        compute:role[single-compute]
       )
 
 chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
