@@ -217,7 +217,7 @@ for host in ${!host_info[@]}; do
     #    chef_env_set=1
     #fi
 
-    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; chef-client -ldebug" ); then
+    if ! ( ssh root@${ip} "mkdir /etc/chef; cp -r ~/client-config/* /etc/chef/; chef-client" ); then
         echo "Unable to register with chef-server"
         err_cleanup_chef
         exit 1
@@ -242,7 +242,7 @@ for host in ${!host_info[@]}; do
         knife node run_list add ${name} ${role_variant}
     done
     IFS=$OLD_IFS
-    ssh root@${ip} "chef-client -ldebug"
+    ssh root@${ip} "chef-client"
 
 done
 
@@ -256,7 +256,7 @@ for x in 1 2 3 4; do
         ip=$(echo ${host_info[$host]} | cut -d':' -f3)
 
 	echo "=== RUN ${x} for ${name} ==="
-        ssh root@${ip} "chef-client -l debug "
+        ssh root@${ip} "chef-client"
 	echo "=== SERVICE STATUS RUN ${x} for ${name}"
 	ssh root@${ip} "netstat -ntpl"
 	if ! (ssh root@${ip} "ps auxw | grep swif[t]"); then
