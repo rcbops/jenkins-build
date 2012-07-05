@@ -20,6 +20,7 @@
     "osops_networks": {
       "swift": "192.168.1.0/24",
       "public": "192.168.1.0/24",
+      "nova": "192.168.1.0/24",
       "mapping": {
         "swift-lb": "public",
         "swift-private": "swift"
