@@ -206,35 +206,24 @@ get_ip_by_role "compute"
 compute_ip=$T_IP
 ssh root@${controller_ip} "ip route add 192.168.100.0/24 via ${compute_ip}"
 
-for host in ${host_info[@]}; do
-    name=$(echo $host | cut -d':' -f1)
-    role=$(echo $host | cut -d':' -f2)
-    ip=$(echo $host | cut -d':' -f3)
+ssh root@${controller_ip} 'nova-manage service list'
+ssh root@${controller_ip} 'cat /opt/exerstack/localrc'
 
-    if [[ "$role" == "controller" ]]; then
-        trap "err_cleanup_chef" SIGINT SIGTERM ERR EXIT
-        # These tests are not working on essex yet
-        ssh root@${ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
-        # ssh root@${ip} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
+trap "err_cleanup_chef" SIGINT SIGTERM ERR EXIT
+# These tests are not working on essex yet
+ssh root@${controller_ip} 'rm -rf /opt/exerstack/exercises/bundle.sh'
 
-        #echo "setting up security groups for tests"
-        #ssh root@${ip} "source /root/.novarc ; nova secgroup-add-rule default ICMP -1 -1 0.0.0.0/0 || :"
-        #ssh root@${ip} "source /root/.novarc ; nova secgroup-add-rule default TCP 22 22 0.0.0.0/0 || :"
+if ! ( ssh root@${controller_ip} 'cd /opt/exerstack; ./exercise.sh essex-final euca.sh glance.sh keystone.sh nova-cli.sh ' ); then
+    echo "Exerstack test suite failed"
+    err_cleanup_chef
+    exit 1
+fi
 
-        if ! ( ssh root@${ip} 'cd /opt/exerstack; ./exercise.sh essex-final euca.sh glance.sh keystone.sh nova-cli.sh ' ); then
-            echo "Exerstack test suite failed"
-            err_cleanup_chef
-            exit 1
-        fi
-
-        if ! ( ssh root@${ip} 'cd /opt/kong; ./run_tests.sh --version essex-final --nova' ); then
-            echo "Kong test suite failed"
-            err_cleanup_chef
-            exit 1
-        fi
-    fi
-done
-
+if ! ( ssh root@${controller_ip} 'cd /opt/kong; ./run_tests.sh --version essex-final --nova' ); then
+    echo "Kong test suite failed"
+    err_cleanup_chef
+    exit 1
+fi
 
 trap - SIGINT SIGTERM EXIT ERR
 
