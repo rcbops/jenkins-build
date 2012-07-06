@@ -138,7 +138,7 @@ sleep 20s
 ssh root@${IP} 'rm -rf /opt/exerstack/exercises/bundle.sh'
 # ssh root@${IP} 'rm -rf /opt/exerstack/exercises/keystone-manage.sh'
 
-if ! ( ssh root@${IP} 'cd /opt/exerstack; ./exercise.sh essex-final euca.sh glance.sh keystone.sh nova-cli.sh ' ); then
+if ! ( ssh root@${IP} 'cd /opt/exerstack; ONESHOT=1 ./exercise.sh essex-final euca.sh glance.sh keystone.sh nova-cli.sh ' ); then
     scp root@${IP}:/var/log/nova/*.log .
     scp root@${IP}:/var/log/glance/*.log .
     scp root@${IP}:/var/log/keystone/*.log .
