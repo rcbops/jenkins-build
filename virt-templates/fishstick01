@@ -13,7 +13,7 @@
   <cpu>
     <model>Opteron_G3</model>
     <vendor>AMD</vendor>
-    <topology sockets='2' cores='6' threads='1'/>
+    <topology sockets='1' cores='6' threads='1'/>
     <feature policy='require' name='wdt'/>
     <feature policy='require' name='skinit'/>
     <feature policy='require' name='osvw'/>
