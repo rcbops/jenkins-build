@@ -7,14 +7,15 @@
 DISTRELEASE=${DISTRELEASE-ubuntu-precise}
 # PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 AUTHTYPE=${AUTHTYPE-swauth}
-tmp_chef_env=${BINARY_BUILD_RELEASE-precise}-${AUTHTYPE-keystone}-${PACKAGE-tty}
-chef_env="`echo ${tmp_chef_env} | tr A-Z a-z`"
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
 . $(dirname $0)/jenkins-deb-common
 
 jenkins_init
 jenkins_set_vars
+
+tmp_chef_env=${BINARY_BUILD_RELEASE-precise}-${AUTHTYPE-keystone}-${PACKAGE-tty}
+chef_env="`echo ${tmp_chef_env} | tr A-Z a-z`"
 
 function err_cleanup_chef() {
     echo "*** In the trap handler err_cleanup_chef"
