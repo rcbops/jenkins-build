@@ -135,7 +135,6 @@ ssh root@${IP} "chef-client "
 sleep 20s
 
 ssh root@${IP} 'nova-manage service list'
-ssh root@${IP} 'cat /etc/nova/nova.conf'
 
 # These tests are not working on essex yet
 ssh root@${IP} 'rm -rf /opt/exerstack/exercises/bundle.sh'
@@ -146,6 +145,7 @@ if ! ( ssh root@${IP} 'cd /opt/exerstack; ONESHOT=1 ./exercise.sh essex-final eu
     scp root@${IP}:/var/log/glance/*.log .
     scp root@${IP}:/var/log/keystone/*.log .
     scp root@${IP}:/var/log/mysql/mysql.log .
+    scp root@${IP}:/etc/nova/nova.conf .
     echo "Exerstack test suite failed"
     err_cleanup_chef ${kvm_instance_name}
     exit 1
