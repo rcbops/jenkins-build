@@ -31,7 +31,7 @@ rvm use 1.9.3
 # Run FoodCritic validations
 echo "Running FoodCritic against ./${GIT_REPO}"
 # stop complaining about FC024
-if ! ( foodcritic -t any -t ~portability -f any -f ~FC023 -f ~FC020 -f ~FC005 ${GIT_REPO} ); then
+if ! ( foodcritic -f any -f ~FC023 -f ~FC020 -f ~FC005 -f ~FC024 ${GIT_REPO} ); then
     echo "Pull request does not conform to FoodCritic"
     exit 1
 fi

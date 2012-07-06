@@ -45,8 +45,7 @@ cookbooks=( collectd-graphite dsh glance graphite hardware horizon keystone moni
 for book in ${cookbooks[@]}; do
         echo "Running FoodCritic against $book"
         # Epic fail on any violations (http://acrmp.github.com/foodcritic)
-    # stop complaining about FC024
-	if ! ( foodcritic -t any -t ~portability -f any -f ~FC023 -f ~FC020 -f ~FC005 cookbooks/$book ); then
+	if ! ( foodcritic -f any -f ~FC023 -f ~FC020 -f ~FC005 -f ~FC024 cookbooks/$book ); then
 		echo "$book cookbook violates FoodCritic ruleset"
 		exit 1
 	fi
