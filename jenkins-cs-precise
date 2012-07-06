@@ -13,7 +13,9 @@ PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 jenkins_init
 jenkins_set_vars
 
-kvm_instance_name=${BINARY_BUILD_RELEASE}-essex-allinone
+t_kvm_instance_name=${BINARY_BUILD_RELEASE}-essex-allinone
+kvm_instance_name="`echo ${t_kvm_instance_name} | tr A-Z a-z`"
+chef_env=${kvm_instance_name}
 
 # Cleanup from last run
 rm -rf *.log
@@ -96,14 +98,13 @@ ssh root@${IP} 'echo "alias wget=\"wget -q\"" >> ~/.bashrc '
 
 # Install ruby/chef via opscode's fullstack installer
 if ! ( ssh root@${IP} "bash < <(curl -s http://s3.amazonaws.com/opscode-full-stack/install.sh)" ); then
-    ECHO "uNable to install Opscode FullStack Installer"
+    echo "Unable to install Opscode FullStack Installer"
     err_cleanup_chef ${kvm_instance_name}
     exit 1
 fi
 
 
 # lets create the chef environment
-chef_env=${kvm_instance_name}
 tmp_env=$(mktemp)
 cat ~/jenkins-build/files/example-environment.json | sed -e "s/REPLACEWITHNAME/${chef_env}/" > ${tmp_env}.json
 if ! ( knife environment from file ${tmp_env}.json ); then

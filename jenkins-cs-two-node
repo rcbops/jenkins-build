@@ -13,6 +13,9 @@ PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 jenkins_init
 jenkins_set_vars
 
+tmp_chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
+chef_env="`echo ${tmp_chef_env} | tr A-Z a-z`"
+
 function err_cleanup_chef() {
     echo "*** ENTERING THE TRAP HANDLER"
     if [ "${NOCLEAN-0}" == "1" ]; then
@@ -62,7 +65,6 @@ function get_ip_by_role() {
 declare -a nodes
 nodes=( controller:controller compute:compute )
 
-chef_env=${BINARY_BUILD_RELEASE}-${PACKAGE}
 chef_env_set=0
 
 # Lets configure name and ip for each of the nodes
@@ -70,7 +72,7 @@ declare -a host_info
 for node in ${nodes[@]}; do
     name=$(echo $node | cut -d':' -f1)
     role=$(echo $node | cut -d':' -f2)
-    node_name=${BINARY_BUILD_RELEASE}-${PACKAGE}-$name
+    node_name=${chef_env}-$name
     get_ip $node_name 
     node_ip=${IP}
     echo "building host_info ${node_name}:${role}:${node_ip}"

@@ -7,6 +7,8 @@
 DISTRELEASE=${DISTRELEASE-ubuntu-precise}
 # PACKAGE_REPO=${PACKAGE_REPO-proposed-packages}
 AUTHTYPE=${AUTHTYPE-swauth}
+tmp_chef_env=${BINARY_BUILD_RELEASE-precise}-${AUTHTYPE-keystone}-${PACKAGE-tty}
+chef_env="`echo ${tmp_chef_env} | tr A-Z a-z`"
 
 [ -e $(dirname $0)/jenkins-deb-common ] || exit 1
 . $(dirname $0)/jenkins-deb-common
@@ -86,7 +88,6 @@ else
           )
 fi
 
-chef_env=${BINARY_BUILD_RELEASE}-${AUTHTYPE}-${PACKAGE}
 chef_env_set=0
 
 # lets create the chef environment
@@ -106,7 +107,7 @@ declare -a host_info
 for node in ${nodes[@]}; do
     name=$(echo $node | cut -d':' -f1)
     role=$(echo $node | cut -d':' -f2)
-    node_name=${BINARY_BUILD_RELEASE}-${AUTHTYPE}-${PACKAGE}-$name
+    node_name=${chef_env}-$name
     get_ip $node_name
     node_ip=${IP}
     echo "building host_info ${node_name}:${role}:${node_ip}"
