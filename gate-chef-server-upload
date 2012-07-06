@@ -25,14 +25,9 @@ fi
 cd ..
 
 # Upload the cookbook
-#echo "Uploading ${GIT_REPO} Cookbook"
-#if ! ( knife cookbook upload -o . ${GIT_REPO} ); then
-#    echo "Unable to upload ${GIT_REPO} cookbook to chef-server"
-#    exit 1
-#fi
-echo "Uploading all Cookbooks"
-if ! ( knife cookbook upload -o . -a ); then
-    echo "Unable to upload cookbooks to chef-server"
+echo "Uploading ${GIT_REPO} Cookbook"
+if ! ( knife cookbook upload -o . ${GIT_REPO} ); then
+    echo "Unable to upload ${GIT_REPO} cookbook to chef-server"
     exit 1
 fi
 
