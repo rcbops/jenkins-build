@@ -41,6 +41,7 @@ else
     echo "*** NOTICE: libvirtd is up and should be running"
 fi
 
+set +e
 exec 200<$0
 RAND=$[ ( $RANDOM % 10 )  + 10 ]
 flock -n -e 200
@@ -51,6 +52,7 @@ else
     echo "missed the flock - sleeping for $RAND seconds"
     sleep $RAND
 fi
+set -e
 
 if [ "${FORCE-0}" == "1" ]; then
     sudo make $BUILD_TARGET-clean
