@@ -42,10 +42,15 @@ else
 fi
 
 RAND=$[ ( $RANDOM % 10 )  + 10 ]
-echo "sleeping for $RAND seconds before building"
-sleep $RAND
-git reset --hard HEAD
-git pull
+flock -n -e 200
+if [ $? -eq 0 ]; then
+    git reset --hard HEAD
+    git pull
+else
+    echo "missed the flock - sleeping for $RAND seconds"
+    sleep $RAND
+fi
+
 if [ "${FORCE-0}" == "1" ]; then
     sudo make $BUILD_TARGET-clean
 fi
