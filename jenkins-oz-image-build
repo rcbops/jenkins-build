@@ -41,6 +41,7 @@ else
     echo "*** NOTICE: libvirtd is up and should be running"
 fi
 
+exec 200<$0
 RAND=$[ ( $RANDOM % 10 )  + 10 ]
 flock -n -e 200
 if [ $? -eq 0 ]; then
