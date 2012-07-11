@@ -132,7 +132,8 @@ fi
 /opt/opscode/bin/knife node run_list add ${kvm_instance_name} recipe[exerstack] 
 ssh root@${IP} "chef-client "
 
-sleep 20s
+echo "Sleeping for 120 seconds to let nova-compute check in"
+sleep 120s
 
 ssh root@${IP} 'nova-manage service list'
 
