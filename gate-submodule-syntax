@@ -19,21 +19,15 @@ if ! ( curl -s ${GIT_PATCH_URL} | git am ); then
     echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
     exit 1
 fi
+cd ..
 
-# Check the syntax for all ruby files
-if ! ( find . -type f -name \*.rb -exec ruby --verbose -c {} + ); then
-    echo "Found Ruby syntax errors"
-    exit 1
-fi
-
-# Check the syntax for all erubis files
-if ! ( find . -type f -name \*.rb -exec erubis -z {} + ); then
-    echo "Found Erubis syntax errors"
+# Run knife cookbook test against the submodule
+if ! ( knife cookbook test -o . ${GIT_REPO} ); then
+    echo "Syntax check failed"
     exit 1
 fi
 
 # Cleanup after ourselves
-cd ..
 rm -rf ${GIT_REPO}
 
 curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule syntax\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
