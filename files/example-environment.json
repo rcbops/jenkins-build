@@ -14,8 +14,8 @@
       "images": [ "tty" ],
       "image_upload": true
     },
-    "patch_files_on_disk": true,
     "nova": {
+      "apply_patches": true,
       "libvirt": { "virt_type": "qemu" },
       "networks": [
         {
