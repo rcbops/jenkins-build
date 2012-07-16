@@ -11,7 +11,7 @@
     "developer_mode": true,
     "enable_monit": true,
     "glance": {
-      "images": [ "cirros" ],
+      "images": [ "cirros", "tty" ],
       "image_upload": true
     },
     "nova": {
