@@ -12,7 +12,11 @@
     "enable_monit": true,
     "glance": {
       "images": [ "tty" ],
-      "image_upload": true
+      "image_upload": true,
+      "image": {
+        "tty": "http://build.monkeypuppetlabs.com/ttylinux.tgz",
+        "cirros": "http://build.monkeypuppetlabs.com/cirros-0.3.0-x86_64-uec.tar.gz"
+      },
     },
     "nova": {
       "apply_patches": true,
