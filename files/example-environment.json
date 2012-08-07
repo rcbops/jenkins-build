@@ -11,7 +11,7 @@
     "developer_mode": true,
     "enable_monit": true,
     "glance": {
-      "images": [ "cirros", "tty" ],
+      "images": [ "cirros" ],
       "image_upload": true,
       "image": {
           "tty": "http://build.monkeypuppetlabs.com/ttylinux.tgz",
