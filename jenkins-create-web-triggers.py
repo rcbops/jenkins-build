@@ -46,7 +46,7 @@ pull_config_data = {
     "name": "web",
     "active": True,
     "config": {
-        "url": push_hook_url
+        "url": pull_hook_url
     }
 }
 
