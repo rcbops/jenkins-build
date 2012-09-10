@@ -2,7 +2,7 @@
 
 function jenkins_init() {
     if [ ! -z "${__JENKINS_INITIALIZED-}" ]; then
-	return
+        return
     fi
 
     __JENKINS_INIALIZED=1
@@ -28,22 +28,22 @@ function jenkins_am_interested() {
     local release=${DISTRELEASE##*-}
 
     case $2 in
-	diablo-d5)
-	    [[ ${release} > "oneiric" ]] && return 1
-	    return 0
-	    ;;
+        diablo-d5)
+            [[ ${release} > "oneiric" ]] && return 1
+            return 0
+            ;;
 
-	diablo-final)
-	    [[ ${release} > "oneiric" ]] && return 1
-	    return 0
-	    ;;
+        diablo-final)
+            [[ ${release} > "oneiric" ]] && return 1
+            return 0
+            ;;
 
-	essex-e3)
-	    return 0
-	    ;;
+        essex-e3)
+            return 0
+            ;;
 
-	*)
-	    return 0
+        *)
+            return 0
     esac
 
     return 0
@@ -52,7 +52,7 @@ function jenkins_am_interested() {
 # set default values for all the configuration options
 function jenkins_set_vars() {
     if [ ! -z "${__JENKINS_INITIALIZED-}" ]; then
-	return
+        return
     fi
 
     unset STRATEGY
@@ -73,11 +73,11 @@ function jenkins_set_vars() {
 
     # this should get overridden by the branch config
     if [ "${COMPONENT-}" != "" ]; then
-	NOVA_RELEASE=${COMPONENT%%-*}
-	MILESTONE=${COMPONENT##*-}
+        NOVA_RELEASE=${COMPONENT%%-*}
+        MILESTONE=${COMPONENT##*-}
     else
-	NOVA_RELEASE=${NOVA_RELEASE-essex}
-	MILESTONE=${MILESTONE-e3}
+        NOVA_RELEASE=${NOVA_RELEASE-essex}
+        MILESTONE=${MILESTONE-e3}
     fi
 
     MAJOR_VERSION=${MAJOR_VERSION-2012.1}
@@ -88,7 +88,7 @@ function jenkins_set_vars() {
 
     # we only see this on source builds
     if [ -e debian/changelog ]; then
-	PACKAGE_VERSION=$(grep "urgency=" debian/changelog | sed -e 's/.*(\(.*\)).*/\1/' | head -n1)
+        PACKAGE_VERSION=$(grep "urgency=" debian/changelog | sed -e 's/.*(\(.*\)).*/\1/' | head -n1)
     fi
 
     JOB_NAME=${JOB_NAME-tty}
@@ -96,12 +96,12 @@ function jenkins_set_vars() {
 
     # distrelease set in arch matrix on binary build
     if [ "${DISTRELEASE:-}" != "" ]; then
-	BINARY_BUILD_DIST=${DISTRELEASE%%-*}
-	BINARY_BUILD_RELEASE=${DISTRELEASE##*-}
+        BINARY_BUILD_DIST=${DISTRELEASE%%-*}
+        BINARY_BUILD_RELEASE=${DISTRELEASE##*-}
     fi
 
     # figure out if this is a debian-ish or redhat-ish dist
-    if [ "${BINARY_BUILD_DIST}" != "" ]; then
+    if [ "${BINARY_BUILD_DIST:-}" != "" ]; then
         declare -A variantmaps
         variantmaps=(
             [ubuntu]="debian"
@@ -171,11 +171,11 @@ function run_chef_solo() {
 
     # ruby ssl on maverick defaults to verify certs, and chef can't download recipies from https
     if [[ ${tarball} =~ "http" ]]; then
-	tarball_file=$(mktemp)
-	wget ${tarball} -O ${tarball_file}
-	tarball=$(basename ${tarball})
-	scp ${tarball_file} root@${ip}:~/${tarball}
-	rm ${tarball_file}
+        tarball_file=$(mktemp)
+        wget ${tarball} -O ${tarball_file}
+        tarball=$(basename ${tarball})
+        scp ${tarball_file} root@${ip}:~/${tarball}
+        rm ${tarball_file}
     fi
 
     ssh root@${ip} "DEBIAN_FRONTEND=noninteractive apt-get install -y chef"
@@ -192,14 +192,14 @@ function maybe_make_kvm_instance() {
     new_instance=${1}
 
     if [ -e ${LVM_ROOT}/${new_instance} ]; then
-	sudo lvremove -f ${LVM_ROOT}/${new_instance}
+        sudo lvremove -f ${LVM_ROOT}/${new_instance}
     fi
 
     if [ ! -e ${LVM_ROOT}/${new_instance} ]; then
-	sudo lvcreate ${LVM_ROOT}/${BINARY_BUILD_RELEASE} --size=${gigs}G --name=${new_instance} --snapshot
+        sudo lvcreate ${LVM_ROOT}/${BINARY_BUILD_RELEASE} --size=${gigs}G --name=${new_instance} --snapshot
     else
-	echo "Logical volume ${LVM_ROOT}/${new_instance} already exists"
-	return 1
+        echo "Logical volume ${LVM_ROOT}/${new_instance} already exists"
+        return 1
     fi
 }
 
@@ -223,9 +223,9 @@ function start_kvm_instance() {
     sudo mount ${LVM_ROOT}/${new_instance} /mnt/$$
 
     function start_kvm_instance_cleanup() {
-	sudo umount /mnt/$$
-	sudo rm -rf /mnt/$$
-	return 1
+        sudo umount /mnt/$$
+        sudo rm -rf /mnt/$$
+        return 1
     }
 
     trap "start_kvm_instance_cleanup; return 1" SIGINT SIGTERM ERR
@@ -328,15 +328,15 @@ EOF
         sudo cp -a /lib/modules/`uname -r` /mnt/$$/lib/modules
 
         if [ ! -e /mnt/$$/usr/sbin/sshd ]; then
-	    sudo chroot /mnt/$$ apt-get update
-	    cat <<EOF | sudo tee /mnt/$$/usr/sbin/policy-rc.d
+            sudo chroot /mnt/$$ apt-get update
+            cat <<EOF | sudo tee /mnt/$$/usr/sbin/policy-rc.d
 #!/bin/sh
 exit 101
 EOF
-	    sudo chmod 755 /mnt/$$/usr/sbin/policy-rc.d
+            sudo chmod 755 /mnt/$$/usr/sbin/policy-rc.d
 
-	    sudo chroot /mnt/$$ apt-get install -y openssh-server
-    	    sudo rm -f /mnt/$$/usr/sbin/policy-rc.d
+            sudo chroot /mnt/$$ apt-get install -y openssh-server
+            sudo rm -f /mnt/$$/usr/sbin/policy-rc.d
         fi
 
         sudo cp /etc/ssh/*key* /mnt/$$/etc/ssh
@@ -347,40 +347,40 @@ EOF
 
     # See if we have a virsh definition for this
     if ! $( sudo virsh list | grep -q "${new_instance}" ); then
-	# make a new virsh definition
-	# Varibles that get substituted in this template
-	# are $MEMORY, $INSTANCE_NAME, and ${LVM_ROOT}
-	INSTANCE_NAME=${new_instance}
-	virt_template=${BASE_DIR}/virt-templates/default
-	if [ -e ${BASE_DIR}/virt-templates/$(hostname) ]; then
-	    virt_template=${BASE_DIR}/virt-templates/$(hostname)
+        # make a new virsh definition
+        # Varibles that get substituted in this template
+        # are $MEMORY, $INSTANCE_NAME, and ${LVM_ROOT}
+        INSTANCE_NAME=${new_instance}
+        virt_template=${BASE_DIR}/virt-templates/default
+        if [ -e ${BASE_DIR}/virt-templates/$(hostname) ]; then
+            virt_template=${BASE_DIR}/virt-templates/$(hostname)
     fi
-	if [ -e ${BASE_DIR}/virt-templates/$(hostname)-$BINARY_BUILD_DIST-$BINARY_BUILD_RELEASE ]; then
-	    virt_template=${BASE_DIR}/virt-templates/$(hostname)-$BINARY_BUILD_DIST-$BINARY_BUILD_RELEASE
-	fi
-	if [ -e ${BASE_DIR}/virt-templates/$INSTANCE_NAME ]; then
-	    virt_template=${BASE_DIR}/virt-templates/$INSTANCE_NAME
-	fi
-	if [ -e ${BASE_DIR}/virt-templates/$(hostname)-$INSTANCE_NAME ]; then
-	    virt_template=${BASE_DIR}/virt-templates/$(hostname)-$INSTANCE_NAME
-	fi
+        if [ -e ${BASE_DIR}/virt-templates/$(hostname)-$BINARY_BUILD_DIST-$BINARY_BUILD_RELEASE ]; then
+            virt_template=${BASE_DIR}/virt-templates/$(hostname)-$BINARY_BUILD_DIST-$BINARY_BUILD_RELEASE
+        fi
+        if [ -e ${BASE_DIR}/virt-templates/$INSTANCE_NAME ]; then
+            virt_template=${BASE_DIR}/virt-templates/$INSTANCE_NAME
+        fi
+        if [ -e ${BASE_DIR}/virt-templates/$(hostname)-$INSTANCE_NAME ]; then
+            virt_template=${BASE_DIR}/virt-templates/$(hostname)-$INSTANCE_NAME
+        fi
 
-	eval "echo \"$(< ${virt_template})\"" > /tmp/newxml-${new_instance}
-	sudo virsh create /tmp/newxml-${new_instance}
-	rm /tmp/newxml-${new_instance}
+        eval "echo \"$(< ${virt_template})\"" > /tmp/newxml-${new_instance}
+        sudo virsh create /tmp/newxml-${new_instance}
+        rm /tmp/newxml-${new_instance}
     else
-	sudo virsh start ${new_instance}
+        sudo virsh start ${new_instance}
     fi
 
     # wait for the box to come up
     count=1
     while [ $count -lt 20 ]; do
-	# wait for port 22 to open
-	count=$(( count + 1 ))
-	sleep 5
-	if ( nc ${my_ip} 22 -w 1 -q 0 < /dev/null ); then
-	    break
-	fi
+        # wait for port 22 to open
+        count=$(( count + 1 ))
+        sleep 5
+        if ( nc ${my_ip} 22 -w 1 -q 0 < /dev/null ); then
+            break
+        fi
     done
     sleep 5
 
@@ -407,18 +407,18 @@ function promote_repo() {
     [ -e ${PROPOSED_REPO} ] || die "No ${PROPOSED_REPO}"
 
     if [ "${1-}" != "" ]; then
-	subrepo=$1
-	if [ ! -d ${PROPOSED_REPO}/${subrepo} ]; then
-	    release_lock
-	    echo "Bad repo"
-	    return 1
-	fi
+        subrepo=$1
+        if [ ! -d ${PROPOSED_REPO}/${subrepo} ]; then
+            release_lock
+            echo "Bad repo"
+            return 1
+        fi
 
-	rm -rf /srv/packages/${subrepo}/*
-	cp -a ${PROPOSED_REPO}/${subrepo} /srv/packages
+        rm -rf /srv/packages/${subrepo}/*
+        cp -a ${PROPOSED_REPO}/${subrepo} /srv/packages
     else
-	rm -rf /srv/packages/*
-	cp -a ${PROPOSED_REPO}/* /srv/packages
+        rm -rf /srv/packages/*
+        cp -a ${PROPOSED_REPO}/* /srv/packages
     fi
 
     release_lock
@@ -438,20 +438,20 @@ function verify_pbuilder() {
     trap "lockfile-remove /tmp/build-${pbuilder}" SIGINT SIGTERM EXIT ERR
 
     if ! (schroot --list --all-session | grep -q ${pbuilder}); then
-	log "Building pbuilder for ${pbuilder}"
+        log "Building pbuilder for ${pbuilder}"
 
-	schroot -c ${distro_chroot} -n ${pbuilder} -b
-	log "Updating pbuilder"
+        schroot -c ${distro_chroot} -n ${pbuilder} -b
+        log "Updating pbuilder"
 
-	schroot -c ${pbuilder} -r -u root -- apt-get update
-	log "Installing pbuilder..."
+        schroot -c ${pbuilder} -r -u root -- apt-get update
+        log "Installing pbuilder..."
 
-	schroot -c ${pbuilder} -r -u root -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get --force-yes -y install pbuilder aptitude git-buildpackage'
-	log "Cleanup"
+        schroot -c ${pbuilder} -r -u root -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get --force-yes -y install pbuilder aptitude git-buildpackage'
+        log "Cleanup"
 
-	schroot -c ${pbuilder} -r -u root -- /etc/init.d/atd stop
+        schroot -c ${pbuilder} -r -u root -- /etc/init.d/atd stop
     else
-	log "pbuilder schroot exists... skipping"
+        log "pbuilder schroot exists... skipping"
     fi
 
     lockfile-remove /tmp/build-${pbuilder}
@@ -464,13 +464,13 @@ function build_source_package {
     local build_args=""
     local relative_build_dir=".."
     if [ "${1-}" != "" ]; then
-	build_args="--git-export-dir=${1}"
-	relative_build_dir=${1}
+        build_args="--git-export-dir=${1}"
+        relative_build_dir=${1}
     fi
 
     if [ -e debian/control ]; then
-	# kind of cheesy
-	set_component_from_dsc debian/control
+        # kind of cheesy
+        set_component_from_dsc debian/control
     fi
 
     distro_chroot=${SOURCE_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}
@@ -482,7 +482,7 @@ function build_source_package {
 
     # apply patches before dpkg-buildpackage
     if [ -s debian/patches/series ]; then
-	quilt push -a
+        quilt push -a
     fi
 
     schroot -c ${pbuilder} -r -u root -- apt-get update -y
@@ -499,7 +499,7 @@ function build_source_package {
 
     # for the jenkins post-deploy job
     if [ "" != "${JENKINS_HOME-}" ] && [ "" != "${JOB_NAME-}" ] && [ "" != "${BUILD_NUMBER-}" ]; then
-	mkdir -p ${JENKINS_HOME}/userContent/${JOB_NAME}/${BUILD_NUMBER}
+        mkdir -p ${JENKINS_HOME}/userContent/${JOB_NAME}/${BUILD_NUMBER}
     fi
 }
 
@@ -509,8 +509,8 @@ function set_component_from_dsc() {
     dsc=${1}
     RCB_COMPONENT=$(grep -i "rcb-component" "${dsc}" | awk '{ print $2 }')
     if [ "${RCB_COMPONENT-}" != "" ]; then
-	NOVA_RELEASE=${RCB_COMPONENT%%-*}
-	MILESTONE=${RCB_COMPONENT##*-}
+        NOVA_RELEASE=${RCB_COMPONENT%%-*}
+        MILESTONE=${RCB_COMPONENT##*-}
     fi
 }
 
@@ -521,16 +521,16 @@ function build_binary_packages() {
     set_component_from_dsc ${dsc}
 
     if ( ! jenkins_am_interested ${DISTRELEASE} ${NOVA_RELEASE}-${MILESTONE} ); then
-	return 0
+        return 0
     fi
 
     distro_chroot=${BINARY_BUILD_RELEASE}-${NOVA_RELEASE}-${MILESTONE}
 
     DEB_BUILD_OPTIONS="nodocs nocheck" sbuild \
-	-n -A -d ${NOVA_RELEASE}-${MILESTONE} \
-	--append-to-version=~${BINARY_BUILD_RELEASE} \
+        -n -A -d ${NOVA_RELEASE}-${MILESTONE} \
+        --append-to-version=~${BINARY_BUILD_RELEASE} \
         -m "${DEBEMAIL}" -k ${SIGNING_KEY} \
-	-c ${distro_chroot} ${dsc}
+        -c ${distro_chroot} ${dsc}
 
     # drop a java properties file with the NOVA_RELEASE and MILESTONE, so
     # we can kick off the right package and kong tests...
@@ -542,7 +542,7 @@ function upload_to_incoming() {
     set_component_from_dsc ${dsc}
 
     if ( ! jenkins_am_interested ${DISTRELEASE} ${NOVA_RELEASE}-${MILESTONE} ); then
-	return 0
+        return 0
     fi
 
     # dump the packages into proposed packages.  The repotest will
@@ -566,79 +566,79 @@ function import_proposed_packages() {
     binary_packages=$(find ${INCOMING_PACKAGES} -name "*deb")
 
     for pkg in $source_packages; do
-    	base_pkg=$(echo $pkg | sed -e s#${INCOMING_PACKAGES}##)
-	base_name=$(basename $base_pkg)
+        base_pkg=$(echo $pkg | sed -e s#${INCOMING_PACKAGES}##)
+        base_name=$(basename $base_pkg)
 
-    	details=(${base_pkg//\// })
+        details=(${base_pkg//\// })
 
-    	nova_release=${details[0]}
-    	milestone=${details[1]}
-    	release=${details[2]}
+        nova_release=${details[0]}
+        milestone=${details[1]}
+        release=${details[2]}
 
-	# see if this .dsc has already been imported
-	# if ( ! find ${PROPOSED_REPO} -name "${base_name}" ); then
-    	#     reprepro -b ${PROPOSED_REPO} -S ${nova_release}-${milestone} \
-    	# 	includedsc ${release} ${pkg}
-	# else
-	#     log "Skipping ${base_name} -- exists in repo"
-	# fi
+        # see if this .dsc has already been imported
+        # if ( ! find ${PROPOSED_REPO} -name "${base_name}" ); then
+        #     reprepro -b ${PROPOSED_REPO} -S ${nova_release}-${milestone} \
+        #       includedsc ${release} ${pkg}
+        # else
+        #     log "Skipping ${base_name} -- exists in repo"
+        # fi
 
-	# naw, on second though, just try and blindly stick it in
-	package_name=${base_name%%_*}
+        # naw, on second though, just try and blindly stick it in
+        package_name=${base_name%%_*}
 
-	# for dist in ${PROPOSED_REPO}/dists; do
-	#     if ( reprepro -b ${PROPOSED_REPO} -C ${nova_release}-${milestone} removesrc ${dist} ${package_name} ); then
-	# 	log "Removed ${package_name}"
-	#     fi
-	# done
+        # for dist in ${PROPOSED_REPO}/dists; do
+        #     if ( reprepro -b ${PROPOSED_REPO} -C ${nova_release}-${milestone} removesrc ${dist} ${package_name} ); then
+        #       log "Removed ${package_name}"
+        #     fi
+        # done
 
-	if ( reprepro -b ${PROPOSED_REPO}/${nova_release}-${milestone} -C ${nova_release}-${milestone} \
-	    includedsc ${release} ${pkg} ); then
-	    log "Uploaded ${pkg}"
-	fi
+        if ( reprepro -b ${PROPOSED_REPO}/${nova_release}-${milestone} -C ${nova_release}-${milestone} \
+            includedsc ${release} ${pkg} ); then
+            log "Uploaded ${pkg}"
+        fi
     done
 
     for pkg in $binary_packages; do
-	base_pkg=$(echo $pkg | sed -e s#${INCOMING_PACKAGES}##)
-	base_name=$(basename $base_pkg)
+        base_pkg=$(echo $pkg | sed -e s#${INCOMING_PACKAGES}##)
+        base_name=$(basename $base_pkg)
 
-	details=(${base_pkg//\// })
+        details=(${base_pkg//\// })
 
-	nova_release=${details[0]}
-	milestone=${details[1]}
-	release=${details[2]}
+        nova_release=${details[0]}
+        milestone=${details[1]}
+        release=${details[2]}
 
-	# pkg_file=${PROPOSED_REPO}/dists/${release}/${nova_release}-${milestone}/binary-${ARCH}/Packages
+        # pkg_file=${PROPOSED_REPO}/dists/${release}/${nova_release}-${milestone}/binary-${ARCH}/Packages
         #
-	# if ( ! grep -q "$base_name" ${pkg_file} ); then
-	#     reprepro -b ${PROPOSED_REPO} -S ${nova_release}-${milestone} \
-	# 	includedeb ${release} ${pkg}
-	# else
-	#     log "Skipping ${base_name} - package exists in ${release} repo for ${nova_release}-${milestone}"
-	# fi
-	package_name=${base_name%%_*}
+        # if ( ! grep -q "$base_name" ${pkg_file} ); then
+        #     reprepro -b ${PROPOSED_REPO} -S ${nova_release}-${milestone} \
+        #       includedeb ${release} ${pkg}
+        # else
+        #     log "Skipping ${base_name} - package exists in ${release} repo for ${nova_release}-${milestone}"
+        # fi
+        package_name=${base_name%%_*}
 
-	if ( reprepro -b ${PROPOSED_REPO}/${nova_release}-${milestone} -C ${nova_release}-${milestone} remove ${release} ${package_name} ); then
-	    log "Removed package ${package_name}"
-	fi
+        if ( reprepro -b ${PROPOSED_REPO}/${nova_release}-${milestone} -C ${nova_release}-${milestone} remove ${release} ${package_name} ); then
+            log "Removed package ${package_name}"
+        fi
 
-	if ( reprepro -b ${PROPOSED_REPO}/${nova_release}-${milestone} -C ${nova_release}-${milestone} \
-	    includedeb ${release} ${pkg} ); then
-	    log "Uploaded ${pkg}"
-	fi
+        if ( reprepro -b ${PROPOSED_REPO}/${nova_release}-${milestone} -C ${nova_release}-${milestone} \
+            includedeb ${release} ${pkg} ); then
+            log "Uploaded ${pkg}"
+        fi
 
     done
 
 
 
     # for source_pkg in ${INCOMING_PACKAGES}/*dsc; do
-    # 	reprepro -b ${PROPOSED_REPO} -S ${NOVA_RELEASE}-${MILESTONE} \
-    # 	    includedsc ${BINARY_BUILD_RELEASE} ${source_pkg}
+    #   reprepro -b ${PROPOSED_REPO} -S ${NOVA_RELEASE}-${MILESTONE} \
+    #       includedsc ${BINARY_BUILD_RELEASE} ${source_pkg}
     # done
 
     # for source_pkg in ${INCOMING_PACKAGES}/*deb; do
-    # 	reprepro -b /src/proposed-packages -S ${NOVA_RELEASE}-${MILESTONE} \
-    # 	    includedeb ${BINARY_BUILD_RELEASE} ${source_pkg}
+    #   reprepro -b /src/proposed-packages -S ${NOVA_RELEASE}-${MILESTONE} \
+    #       includedeb ${BINARY_BUILD_RELEASE} ${source_pkg}
     # done
 
     rm -rf ${INCOMING_PACKAGES}/*
@@ -679,10 +679,10 @@ function get_ip {
     host_list=()
 
     while read line; do
-	ip=${line%% *}
-	host=${line##* }
-	ip_list[${ip}]=${host}
-	host_list[${host}]=${ip}
+        ip=${line%% *}
+        host=${line##* }
+        ip_list[${ip}]=${host}
+        host_list[${host}]=${ip}
     done < <(cat /etc/jenkins-deb/jenkins-deb-ip.conf)
 
 
@@ -690,24 +690,24 @@ function get_ip {
     host=${1}
 
     if [ "${host_list[${host}]-}" != "" ]; then
-	# already have an ip allocated for this host
-	IP=${host_list[${host}]}
+        # already have an ip allocated for this host
+        IP=${host_list[${host}]}
     else
-	# need to allocate and write the file back out.  Pick
-	# the last unallocated
-	IP=${host_list[unallocated]}
-	ip_list[${IP}]=${host}
+        # need to allocate and write the file back out.  Pick
+        # the last unallocated
+        IP=${host_list[unallocated]}
+        ip_list[${IP}]=${host}
 
-	# Now, write out the file
-	local tmpfile=$(mktemp)
+        # Now, write out the file
+        local tmpfile=$(mktemp)
 
-	for ip in ${!ip_list[@]}; do
-	    echo "Writing ${ip}"
-	    echo "${ip} ${ip_list[${ip}]}" >> ${tmpfile}
-	done
+        for ip in ${!ip_list[@]}; do
+            echo "Writing ${ip}"
+            echo "${ip} ${ip_list[${ip}]}" >> ${tmpfile}
+        done
 
-	sort -t . -k 1,1n -k 2,2n -k 3,3n -k 4,4n ${tmpfile} > /etc/jenkins-deb/jenkins-deb-ip.conf
-	rm ${tmpfile}
+        sort -t . -k 1,1n -k 2,2n -k 3,3n -k 4,4n ${tmpfile} > /etc/jenkins-deb/jenkins-deb-ip.conf
+        rm ${tmpfile}
     fi
 
     release_lock
@@ -745,10 +745,10 @@ function aquire_ip {
     host_list=()
 
     while read line; do
-	ip=${line%% *}
-	host=${line##* }
-	ip_list[${ip}]=${host}
-	host_list[${host}]=${ip}
+        ip=${line%% *}
+        host=${line##* }
+        ip_list[${ip}]=${host}
+        host_list[${host}]=${ip}
     done < <(cat /etc/jenkins-deb/jenkins-deb-ip.conf)
 
 
@@ -756,24 +756,24 @@ function aquire_ip {
     host=${1}
 
     if [ "${host_list[${host}]-}" != "" ]; then
-	# already have an ip allocated for this host
-	ret=${host_list[${host}]}
+        # already have an ip allocated for this host
+        ret=${host_list[${host}]}
     else
-	# need to allocate and write the file back out.  Pick
-	# the last unallocated
-	ret=${host_list[unallocated]}
-	ip_list[${IP}]=${host}
+        # need to allocate and write the file back out.  Pick
+        # the last unallocated
+        ret=${host_list[unallocated]}
+        ip_list[${IP}]=${host}
 
-	# Now, write out the file
-	local tmpfile=$(mktemp)
+        # Now, write out the file
+        local tmpfile=$(mktemp)
 
-	for ip in ${!ip_list[@]}; do
-	    echo "Writing ${ip}"
-	    echo "${ip} ${ip_list[${ip}]}" >> ${tmpfile}
-	done
+        for ip in ${!ip_list[@]}; do
+            echo "Writing ${ip}"
+            echo "${ip} ${ip_list[${ip}]}" >> ${tmpfile}
+        done
 
-	sort -t . -k 1,1n -k 2,2n -k 3,3n -k 4,4n ${tmpfile} > /etc/jenkins-deb/jenkins-deb-ip.conf
-	rm ${tmpfile}
+        sort -t . -k 1,1n -k 2,2n -k 3,3n -k 4,4n ${tmpfile} > /etc/jenkins-deb/jenkins-deb-ip.conf
+        rm ${tmpfile}
     fi
 
     release_lock
@@ -810,14 +810,14 @@ function lv_remove() {
     #
 
     if (! sudo lvremove -f ${LVM_ROOT}/${lvm_name}); then
-	# try and remove the mapper entries
-	if [ -e ${mapper_name}-cow ]; then
-	    sudo dmsetup remove ${mapper_name}-cow
-	fi
+        # try and remove the mapper entries
+        if [ -e ${mapper_name}-cow ]; then
+            sudo dmsetup remove ${mapper_name}-cow
+        fi
 
-	if [ -e ${mapper_name} ]; then
-	    sudo dmsetup remove ${mapper_name}
-	fi
+        if [ -e ${mapper_name} ]; then
+            sudo dmsetup remove ${mapper_name}
+        fi
     fi
 
     sudo lvremove -f ${LVM_ROOT}/${lvm_name}
@@ -830,4 +830,3 @@ fi
 
 export IMPORTED_JENKINS=1
 jenkins_init
-
