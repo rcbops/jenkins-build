@@ -48,7 +48,7 @@ for i in $BUILD_PACKAGE_ARCH; do
     SRCRPM=$(HOME=${BUILD_ROOT}/${BUILD_JOB} rpmbuild -vv -ts ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz | grep "Wrote:" | awk '{print $2'})
     echo "SRCRPM=${SRCRPM}"
 
-    mock --resultdir=${BUILD_ROOT}/${BUILD_JOB} -r FIXME ${SRCRPM}
+    mock --resultdir=${BUILD_ROOT}/${BUILD_JOB} -r ${i} ${SRCRPM}
 
 
     mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
