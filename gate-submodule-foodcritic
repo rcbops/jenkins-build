@@ -13,13 +13,22 @@ if ! ( git clone ${GIT_CLONE_URL} ); then
     exit 1
 fi
 
-# Merge the proposed patch(es)
-cd ${GIT_REPO}
-if ! ( curl -s ${GIT_PATCH_URL} | git am ); then
+# -- TRYING ANOTHER METHOD -- #
+## Merge the proposed patch(es)
+#cd ${GIT_REPO}
+#if ! ( curl -s ${GIT_PATCH_URL} | git am ); then
+#    echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
+#    exit 1
+#fi
+#cd ../
+
+# Apply the proposed diff
+pushd ${GIT_REPO}
+if ! ( curl -s ${GIT_DIFF_URL} | git apply ); then
     echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
     exit 1
 fi
-cd ../
+popd
 
 # RVM is throwing an unbound variable error
 set +x
@@ -31,7 +40,7 @@ rvm use 1.9.3
 # Run FoodCritic validations
 echo "Running FoodCritic against ./${GIT_REPO}"
 # stop complaining about FC024
-if ! ( foodcritic -f any -f ~FC023 -f ~FC020 -f ~FC005 -f ~FC024 ${GIT_REPO} ); then
+if ! ( foodcritic -f any -f ~FC005 -f ~FC014 -f ~FC015 -f ~FC020 -f ~FC023 -f ~FC024 ${GIT_REPO} ); then
     echo "Pull request does not conform to FoodCritic"
     exit 1
 fi
