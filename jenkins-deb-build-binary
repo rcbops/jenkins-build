@@ -10,23 +10,24 @@ should_upload=0
 
 if [ -z "${SOURCE_BUILD_NUMBER-}" ]; then
     if [ -z "${1-}" ]; then
-	die "Must pass either jenkins source build number in SOURCE_BUILD_NUMBER, or a dsc in arg1"
+        die "Must pass either jenkins source build number in SOURCE_BUILD_NUMBER, or a dsc in arg1"
     else
-	DSCFILE=${1}
+        DSCFILE=${1}
     fi
-else 
+else
     should_upload=1
     rm -rf *.deb *.changes *.dsc *.tar.gz
 
-    cp ${JENKINS_HOME}/userContent/${PACKAGE}-source/${SOURCE_BUILD_NUMBER}/* . 
-#    rm -rf ${JENKINS_HOME}/userContent/${PACKAGE}-source/${SOURCE_BUILD_NUMBER}/* 
+    cp ${JENKINS_HOME}/userContent/${PACKAGE}-source/${SOURCE_BUILD_NUMBER}/* .
+#    rm -rf ${JENKINS_HOME}/userContent/${PACKAGE}-source/${SOURCE_BUILD_NUMBER}/*
 
     DSCFILE=$(echo *dsc)
     if [ "${DSCFILE}" == '*dsc' ] || [[ "${DSCFILE}" =~ " " ]]; then
-	die "Bad number of dsc files in ${JENKINS_HOME}/userContent/${PACKAGE}-source/${SOURCE_BUILD_NUMBER}"
+        die "Bad number of dsc files in ${JENKINS_HOME}/userContent/${PACKAGE}-source/${SOURCE_BUILD_NUMBER}"
     fi
 fi
 
+echo "DSCFILE: ${DSCFILE}"
 
 build_binary_packages ${DSCFILE}
 
