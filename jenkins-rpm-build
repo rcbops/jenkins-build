@@ -18,6 +18,18 @@ BUILD_PACKAGE=${RPM_PACKAGE-roush-agent}
 BUILD_PACKAGE_VERSION=${PACKAGE_VERSION-1.0}
 BUILD_PACKAGE_ARCH=${PACKAGE_ARCH-epel-6-x86_64}
 
+BUILD_ROOT="/home/jenkins/workspace/jenkins-rpm-build"
+mkdir -p ${BUILD_ROOT}/${BUILD_JOB}
+cd ${BUILD_ROOT}/${BUILD_JOB}
+BUILD_GIT_REPO=${GIT_REPO-https://github.com/rpedde/roush-agent}
+
+git clone ${BUILD_GIT_REPO} ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+sed -i "s/^%define ver [0-9]*/%define ver ${BUILD_JOB}/g" ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SPEC/roush-agent.spec
+cp ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SOURCES/* .
+tar zcf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+SRCRPM=$(HOME=${BUILD_ROOT}/${BUILD_JOB} rpmbuild -vv -ts ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz | grep "Wrote:" | awk '{print $2'})
+echo "SRCRPM=${SRCRPM}"
+
 for i in $BUILD_PACKAGE_ARCH; do
     REPO_PACKAGE_VERSION=`echo $BUILD_PACKAGE_ARCH | cut -d "-" -f 2`
     REPO_PACKAGE_ARCH=`echo $BUILD_PACKAGE_ARCH | cut -d "-" -f 3`
@@ -32,24 +44,7 @@ for i in $BUILD_PACKAGE_ARCH; do
         exit 1
     fi
 
-    BUILD_GIT_REPO=${GIT_REPO-https://github.com/rpedde/roush-agent}
-    BUILD_ROOT="/home/jenkins/workspace/jenkins-rpm-build"
-
-    mkdir -p ${BUILD_ROOT}/${BUILD_JOB}
-    cd ${BUILD_ROOT}/${BUILD_JOB}
-
-    git clone ${BUILD_GIT_REPO} ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
-
-    sed -i "s/^%define ver [0-9]*/%define ver ${BUILD_JOB}/g" ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SPEC/roush-agent.spec
-    cp ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SOURCES/* .
-
-    tar zcf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
-
-    SRCRPM=$(HOME=${BUILD_ROOT}/${BUILD_JOB} rpmbuild -vv -ts ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz | grep "Wrote:" | awk '{print $2'})
-    echo "SRCRPM=${SRCRPM}"
-
     mock --resultdir=${BUILD_ROOT}/${BUILD_JOB} -r ${i} ${SRCRPM}
-
 
     mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
     mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
@@ -64,5 +59,6 @@ done;
 
 echo "Cleanup"
 if [ -d "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}" ]; then
-        rm -rf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+    rm -rf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+    rm -rf ${BUILD_ROOT}/${BUILD_JOB}
 fi
