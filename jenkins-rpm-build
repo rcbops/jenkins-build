@@ -25,7 +25,7 @@ REPO_PACKAGE_DISTRO=""
 if [ "$TEMP_REPO_PACKAGE_DISTRO" == "epel" ]; then
     REPO_PACKAGE_DISTRO="RedHat"
 elif [ "$TEMP_REPO_PACKAGE_DISTRO" == "fedora" ]; then
-    REPO_PACKAGE_DISTRO="fedora"
+    REPO_PACKAGE_DISTRO="Fedora"
 else
     echo "incorrect distro definition"
     exit 1
