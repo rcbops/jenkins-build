@@ -31,9 +31,9 @@ SRCRPM=$(HOME=${BUILD_ROOT}/${BUILD_JOB} rpmbuild -vv -ts ${BUILD_PACKAGE}-${BUI
 echo "SRCRPM=${SRCRPM}"
 
 for i in $BUILD_PACKAGE_ARCH; do
-    REPO_PACKAGE_VERSION=`echo $BUILD_PACKAGE_ARCH | cut -d "-" -f 2`
-    REPO_PACKAGE_ARCH=`echo $BUILD_PACKAGE_ARCH | cut -d "-" -f 3`
-    TEMP_REPO_PACKAGE_DISTRO=`echo $BUILD_PACKAGE_ARCH | cut -d "-" -f 1`
+    REPO_PACKAGE_VERSION=`echo $i | cut -d "-" -f 2`
+    REPO_PACKAGE_ARCH=`echo $i | cut -d "-" -f 3`
+    TEMP_REPO_PACKAGE_DISTRO=`echo $i | cut -d "-" -f 1`
     REPO_PACKAGE_DISTRO=""
     if [ "$TEMP_REPO_PACKAGE_DISTRO" == "epel" ]; then
         REPO_PACKAGE_DISTRO="RedHat"
