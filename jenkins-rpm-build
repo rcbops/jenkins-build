@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+BUILD_JOB=${JOB-na}
+BUILD_PACKAGE=${RPM_PACKAGE-roush-agent}
+BUILD_PACKAGE_VERSION=${PACKAGE_VERSION-1.0}
+BUILD_PACKAGE_ARCH=${PACKAGE_ARCH-epel-6-x86_64}
+REPO_PACKAGE_DISTRO=${REPO_PACKAGE_DISTRO-RedHat}
+REPO_PACKAGE_VERSION=${REPO_PACKAGE_VERSION-6}
+REPO_PACKAGE_ARCH=${REPO_PACKAGE_ARCH-x86_64}
+BUILD_GIT_REPO=${GIT_REPO-https://github.com/rpedde/roush-agent}
+
+BUILD_ROOT="/home/jenkins/workspace/jenkins-rpm-build"
+
+mkdir -p ${BUILD_ROOT}/${BUILD_PACKAGE_ARCH}-${BUILD_JOB}
+cd ${BUILD_ROOT}/${BUILD_PACKAGE_ARCH}-${BUILD_JOB}
+
+if [ -d "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}" ]; then
+    rm -rf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+fi
+
+git clone ${BUILD_GIT_REPO} ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+
+sed -i "s/^%define ver [0-9]*/%define ver ${BUILD_JOB}/g" ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SPEC/roush-agent.spec
+cp ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SOURCES/* .
+
+tar zcf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+
+SRCRPM=$(rpmbuild -vv -ts ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz | grep "Wrote:" | awk '{print $2'})
+echo "SRCRPM=${SRCRPM}"
+
+mock --resultdir=${BUILD_ROOT}/${BUILD_PACKAGE_ARCH}-${BUILD_JOB} -r ${BUILD_PACKAGE_ARCH} ${SRCRPM}
+
+
+mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
+mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
+mv ${BUILD_ROOT}/${BUILD_PACKAGE_ARCH}-${BUILD_JOB}/*.src.rpm /home/jenkins/workspace/jenkins-rpm-build/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SR
+PMS
+mv ${BUILD_ROOT}/${BUILD_PACKAGE_ARCH}-${BUILD_JOB}/*.rpm /home/jenkins/workspace/jenkins-rpm-build/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO
+_PACKAGE_ARCH}
+
+createrepo ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
+createrepo ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
+
+echo "Cleanup"
+if [ -d "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}" ]; then
+        rm -rf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+fi
