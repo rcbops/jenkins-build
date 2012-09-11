@@ -519,8 +519,10 @@ function build_binary_packages() {
 
     # we need to figure out the nova_release and milestone from the .dch
     set_component_from_dsc ${dsc}
+    log "Attempting packaging for ${NOVA_RELEASE}-${MILESTONE} on ${DISTRELEASE}"
 
     if ( ! jenkins_am_interested ${DISTRELEASE} ${NOVA_RELEASE}-${MILESTONE} ); then
+        log "Not interested in this package"
         return 0
     fi
 
