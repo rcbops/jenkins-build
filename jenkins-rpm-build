@@ -10,15 +10,24 @@
 jenkins_init
 jenkins_set_vars
 
-BUILD_JOB=${JOB-na}
+BUILD_JOB=${BUILD_NUMBER-na}
 BUILD_PACKAGE=${RPM_PACKAGE-roush-agent}
 BUILD_PACKAGE_VERSION=${PACKAGE_VERSION-1.0}
 BUILD_PACKAGE_ARCH=${PACKAGE_ARCH-epel-6-x86_64}
-REPO_PACKAGE_DISTRO=${REPO_PACKAGE_DISTRO-RedHat}
-REPO_PACKAGE_VERSION=${REPO_PACKAGE_VERSION-6}
-REPO_PACKAGE_ARCH=${REPO_PACKAGE_ARCH-x86_64}
-BUILD_GIT_REPO=${GIT_REPO-https://github.com/rpedde/roush-agent}
+REPO_PACKAGE_VERSION=`echo $BUILD_PACKAGE_ARCH | cut -d "-" -f 2`
+REPO_PACKAGE_ARCH=`echo $BUILD_PACKAGE_ARCH | cut -d "-" -f 3`
+TEMP_REPO_PACKAGE_DISTRO=`echo $BUILD_PACKAGE_ARCH | cut -d "-" -f 1`
+REPO_PACKAGE_DISTRO=""
+if [ "$TEMP_REPO_PACKAGE_DISTRO" == "epel" ]; then
+    REPO_PACKAGE_DISTRO="RedHat"
+elif [ "$TEMP_REPO_PACKAGE_DISTRO" == "fedora" ]; then
+    REPO_PACKAGE_DISTRO="fedora"
+else
+    echo "incorrect distro definition"
+    exit 1
+fi
 
+BUILD_GIT_REPO=${GIT_REPO-https://github.com/rpedde/roush-agent}
 BUILD_ROOT="/home/jenkins/workspace/jenkins-rpm-build"
 
 mkdir -p ${BUILD_ROOT}/${BUILD_PACKAGE_ARCH}-${BUILD_JOB}
@@ -35,7 +44,7 @@ cp ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SOURCES/* .
 
 tar zcf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
 
-SRCRPM=$(rpmbuild -vv -ts ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz | grep "Wrote:" | awk '{print $2'})
+SRCRPM=$(HOME=${BUILD_ROOT}/${BUILD_PACKAGE_ARCH}-${BUILD_JOB} rpmbuild -vv -ts ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz | grep "Wrote:" | awk '{print $2'})
 echo "SRCRPM=${SRCRPM}"
 
 mock --resultdir=${BUILD_ROOT}/${BUILD_PACKAGE_ARCH}-${BUILD_JOB} -r ${BUILD_PACKAGE_ARCH} ${SRCRPM}
