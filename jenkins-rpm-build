@@ -9,6 +9,23 @@
 jenkins_init
 jenkins_set_vars
 
+function err_cleanup() {
+    echo "*** In the trap handler err_cleanup"
+    if [ "${NOCLEAN-0}" == "1" ]; then
+        exit 0
+    fi
+    echo "Cleanup"
+    if [ -d "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}" ]; then
+        rm -rf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+    fi
+    if [ -d "${BUILD_ROOT}/${BUILD_JOB}" ]; then
+        rm -rf ${BUILD_ROOT}/${BUILD_JOB}
+    fi
+}
+
+trap "err_cleanup_chef" SIGINT SIGTERM ERR EXIT
+
+
 BUILD_JOB=${BUILD_NUMBER-na}
 if [ "$BUILD_JOB" == "na" ]; then
     echo "You need to define BUILD_NUMBER"
@@ -24,8 +41,17 @@ cd ${BUILD_ROOT}/${BUILD_JOB}
 BUILD_GIT_REPO=${GIT_REPO-https://github.com/rpedde/roush-agent}
 
 git clone ${BUILD_GIT_REPO} ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
-sed -i "s/^%define ver [0-9]*/%define ver ${BUILD_JOB}/g" ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SPEC/roush-agent.spec
-cp ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SOURCES/* .
+#
+# format for our repos should be
+# package-name/redhat/SPEC/specfile.spec
+# package-name/redhat/SOURCES/any_source_files
+#
+if [ -e "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SPEC/${BUILD_PACKAGE}.spec" ]; then
+    sed -i "s/^%define ver [0-9]*/%define ver ${BUILD_JOB}/g" ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SPEC/${BUILD_PACKAGE}.spec
+fi
+if [ -d "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SOURCES" ]; then
+    cp ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SOURCES/* .
+fi
 tar zcf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
 SRCRPM=$(HOME=${BUILD_ROOT}/${BUILD_JOB} rpmbuild -vv -ts ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz | grep "Wrote:" | awk '{print $2'})
 echo "SRCRPM=${SRCRPM}"
@@ -57,8 +83,6 @@ for i in $BUILD_PACKAGE_ARCH; do
     createrepo ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
 done;
 
-echo "Cleanup"
-if [ -d "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}" ]; then
-    rm -rf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
-    rm -rf ${BUILD_ROOT}/${BUILD_JOB}
-fi
+rsync -avz -e ssh /home/jenkins/workspace/jenkins-rpm-build/repo/ build@184.106.53.105:/var/www/repo-testing/
+
+exit 0
