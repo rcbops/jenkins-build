@@ -23,7 +23,7 @@ function err_cleanup() {
     fi
 }
 
-trap "err_cleanup_chef" SIGINT SIGTERM ERR EXIT
+trap "err_cleanup" SIGINT SIGTERM ERR EXIT
 
 
 BUILD_JOB=${BUILD_NUMBER-na}
