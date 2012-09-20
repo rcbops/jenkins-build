@@ -36,7 +36,10 @@ push_config_data = {
     "name": "web",
     "active": True,
     "config": {
-        "url": push_hook_url
+        "url": push_hook_url,
+        "insecure_ssl": "1",
+        "content_type": "form"
+    }
     }
 }
 
