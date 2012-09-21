@@ -40,7 +40,6 @@ push_config_data = {
         "insecure_ssl": "1",
         "content_type": "form"
     }
-    }
 }
 
 pull_hook_url = "http://build.monkeypuppetlabs.com/gitpost/pullreq/"
