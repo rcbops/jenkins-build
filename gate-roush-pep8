@@ -21,7 +21,7 @@ if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
 fi
 
 # Run knife cookbook test against the submodule
-if ! ( ./run_tests.sh -pV ); then
+if ! ( ./run_tests.sh -p -V ); then
     echo "PEP8 check failed"
     exit 1
 fi
