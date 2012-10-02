@@ -36,12 +36,14 @@ push_config_data = {
     "name": "web",
     "active": True,
     "config": {
-        "url": push_hook_url
+        "url": push_hook_url,
+        "insecure_ssl": "1",
+        "content_type": "form"
     }
 }
 
 pull_hook_url = "http://build.monkeypuppetlabs.com/gitpost/pullreq/"
-pull_data = {"events": [ "pull_request" ]}
+pull_data = {"events": [ "pull_request", "issue_comment" ]}
 pull_config_data = {
     "name": "web",
     "active": True,
@@ -78,7 +80,7 @@ for repo in repo_list:
         if hook['name'] == "web" and hook['config']['url'] == pull_hook_url:
             has_pull_hook = True
             # Make sure pull hook is config'd for pull_request event
-            if "pull_request" not in hook['events']:
+            if "pull_request" not in hook['events'] or "issue_comment" not in hook['events']:
                 print ".. Pull_Request Hook not configured for pull_request events.. FIXING"
                 response, content = http.request(hook['url'], 'PATCH', headers=headers, body=json.dumps(pull_data)) 
                 if response.status != 200:

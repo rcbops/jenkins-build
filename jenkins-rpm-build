@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# $1 = test repo number
+#
+
+[ -e $(dirname $0)/jenkins-deb-common ] || exit 1
+. $(dirname $0)/jenkins-deb-common
+
+jenkins_init
+jenkins_set_vars
+
+function err_cleanup() {
+    echo "*** In the trap handler err_cleanup"
+    if [ "${NOCLEAN-0}" == "1" ]; then
+        exit 0
+    fi
+    echo "Cleanup"
+    if [ -d "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}" ]; then
+        rm -rf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+    fi
+    if [ -d "${BUILD_ROOT}/${BUILD_JOB}" ]; then
+        rm -rf ${BUILD_ROOT}/${BUILD_JOB}
+    fi
+}
+
+trap "err_cleanup" SIGINT SIGTERM ERR EXIT
+
+
+BUILD_JOB=${BUILD_NUMBER-na}
+if [ "$BUILD_JOB" == "na" ]; then
+    echo "You need to define BUILD_NUMBER"
+    exit 1
+fi
+BUILD_PACKAGE=${RPM_PACKAGE-roush-agent}
+BUILD_PACKAGE_VERSION=${PACKAGE_VERSION-1.0}
+BUILD_PACKAGE_ARCH="epel-6-x86_64 epel-6-i386 fedora-17-x86_64 fedora-17-i386"
+
+BUILD_ROOT="/home/jenkins/workspace/jenkins-rpm-build"
+mkdir -p ${BUILD_ROOT}/${BUILD_JOB}
+cd ${BUILD_ROOT}/${BUILD_JOB}
+BUILD_GIT_REPO=${GIT_REPO-https://github.com/rpedde/roush-agent}
+
+git clone ${BUILD_GIT_REPO} ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+#
+# format for our repos should be
+# package-name/redhat/SPEC/specfile.spec
+# package-name/redhat/SOURCES/any_source_files
+#
+if [ -e "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SPEC/${BUILD_PACKAGE}.spec" ]; then
+    sed -i "s/^%define ver [0-9]*/%define ver ${BUILD_JOB}/g" ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SPEC/${BUILD_PACKAGE}.spec
+fi
+if [ -d "${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SOURCES" ]; then
+    cp ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}/redhat/SOURCES/* .
+fi
+tar zcf ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+SRCRPM=$(HOME=${BUILD_ROOT}/${BUILD_JOB} rpmbuild -vv -ts ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}.tgz | grep "Wrote:" | awk '{print $2'})
+echo "SRCRPM=${SRCRPM}"
+
+for i in $BUILD_PACKAGE_ARCH; do
+    REPO_PACKAGE_VERSION=`echo $i | cut -d "-" -f 2`
+    REPO_PACKAGE_ARCH=`echo $i | cut -d "-" -f 3`
+    TEMP_REPO_PACKAGE_DISTRO=`echo $i | cut -d "-" -f 1`
+    REPO_PACKAGE_DISTRO=""
+    if [ "$TEMP_REPO_PACKAGE_DISTRO" == "epel" ]; then
+        REPO_PACKAGE_DISTRO="RedHat"
+    elif [ "$TEMP_REPO_PACKAGE_DISTRO" == "fedora" ]; then
+        REPO_PACKAGE_DISTRO="Fedora"
+    else
+        echo "incorrect distro definition"
+        exit 1
+    fi
+
+    mock --resultdir=${BUILD_ROOT}/${BUILD_JOB} -r ${i} ${SRCRPM}
+
+    mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
+    mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
+    ~/sign-rpm.exp ${BUILD_ROOT}/${BUILD_JOB}/*.src.rpm
+    mv ${BUILD_ROOT}/${BUILD_JOB}/*.src.rpm ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
+    ~/sign-rpm.exp ${BUILD_ROOT}/${BUILD_JOB}/*.rpm
+    mv ${BUILD_ROOT}/${BUILD_JOB}/*.rpm ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
+
+    createrepo ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
+    createrepo ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
+done;
+
+rsync -avz -e ssh /home/jenkins/workspace/jenkins-rpm-build/repo/ build@184.106.53.105:/var/www/repo-testing/
+
+exit 0
