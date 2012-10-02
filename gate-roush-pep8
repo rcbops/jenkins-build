@@ -8,7 +8,7 @@ set -u
 rm -rf ${GIT_REPO} || :
 
 # Clone the upstream repo
-if ! ( git clone ${GIT_CLONE_URL} ); then
+if ! ( git clone ${GIT_SSH_URL} ); then
     echo "Unable to clone git repo: ${GIT_CLONE_URL}"
     exit 1
 fi
