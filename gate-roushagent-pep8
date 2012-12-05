@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -x
+set -e
+set -u
+
+# Cleanup
+rm -rf ${GIT_REPO} || :
+
+# Clone the upstream repo
+if ! ( git clone ${GIT_SSH_URL} ); then
+    echo "Unable to clone git repo: ${GIT_CLONE_URL}"
+    exit 1
+fi
+
+# Apply the proposed diff
+pushd ${GIT_REPO}
+if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
+    echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
+    exit 1
+fi
+
+# Need to build a virtualenv
+if ! ( virtualenv .venv ); then
+    echo "Unable to build a VirtualENV"
+    exit 1
+fi
+
+# Use the venv
+source .venv/bin/activate
+
+# Need to install pip
+if ! ( pip install pep8 ); then
+    echo "Unable to install pep8"
+    exit 1
+fi
+
+# Run knife cookbook test against the submodule
+if ! ( pep8 . --exclude=.venv --repeat --show-pep8 --show-source ); then
+    echo "PEP8 check failed"
+    exit 1
+fi
+popd
+
+# Exit the venv
+deactivate
+
+# Cleanup after ourselves
+rm -rf ${GIT_REPO}
+
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Roush PEP8\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
