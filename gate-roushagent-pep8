@@ -27,23 +27,23 @@ if ! ( virtualenv .venv ); then
 fi
 
 # Use the venv
-source .venv/bin/activate
+# source .venv/bin/activate
 
 # Need to install pip
-if ! ( pip install pep8 ); then
+if ! ( tools/with_venv.sh pip install pep8 ); then
     echo "Unable to install pep8"
     exit 1
 fi
 
 # Run knife cookbook test against the submodule
-if ! ( pep8 . --exclude=.venv --repeat --show-pep8 --show-source ); then
+if ! ( tools/with_venv.sh pep8 . --exclude=.venv --repeat --show-pep8 --show-source ); then
     echo "PEP8 check failed"
     exit 1
 fi
 popd
 
 # Exit the venv
-deactivate
+# deactivate
 
 # Cleanup after ourselves
 rm -rf ${GIT_REPO}
