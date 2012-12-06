@@ -27,13 +27,14 @@ if ! ( virtualenv .venv ); then
 fi
 
 # Need to install pip
-if ! ( tools/with_venv.sh pip install pep8 ); then
-    echo "Unable to install pep8"
+if ! ( tools/with_venv.sh pip install -r tools/pip-requires ); then
+    echo "Unable to install pip-requires"
     exit 1
 fi
 
 # Run the agent test suite
-if ! ( tools/with_venv.sh python test.py ); then
+noseopts="-v --with-xunit --with-coverage --cover-package=roushagent"
+if ! ( tools/with_venv.sh nose ${noseopts} test.py ); then
     echo "Test suite check failed"
     exit 1
 fi
