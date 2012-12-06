@@ -20,21 +20,8 @@ if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
     exit 1
 fi
 
-# Need to build a virtualenv
-if ! ( virtualenv .venv ); then
-    echo "Unable to build a VirtualENV"
-    exit 1
-fi
-
-# Need to install pip
-if ! ( tools/with_venv.sh pip install -r tools/pip-requires ); then
-    echo "Unable to install pip-requires"
-    exit 1
-fi
-
 # Run the agent test suite
-noseopts="-v --with-xunit --with-coverage --cover-package=roushagent"
-if ! ( tools/with_venv.sh nosetests ${noseopts} test.py ); then
+if ! ( ./run_tests.sh -c -V ); then
     echo "Test suite check failed"
     exit 1
 fi
