@@ -32,9 +32,9 @@ if ! ( tools/with_venv.sh pip install pep8 ); then
     exit 1
 fi
 
-# Run pep8 checks
-if ! ( tools/with_venv.sh pep8 . --exclude=.venv --repeat --show-pep8 --show-source ); then
-    echo "PEP8 check failed"
+# Run the agent test suite
+if ! ( tools/with_venv.sh python test.py ); then
+    echo "Test suite check failed"
     exit 1
 fi
 popd
@@ -42,4 +42,4 @@ popd
 # Cleanup after ourselves
 rm -rf ${GIT_REPO}
 
-curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: RoushAgent PEP8\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: RoushAgent Test Suite\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
