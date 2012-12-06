@@ -34,7 +34,7 @@ fi
 
 # Run the agent test suite
 noseopts="-v --with-xunit --with-coverage --cover-package=roushagent"
-if ! ( tools/with_venv.sh nose ${noseopts} test.py ); then
+if ! ( tools/with_venv.sh nosetests ${noseopts} test.py ); then
     echo "Test suite check failed"
     exit 1
 fi
