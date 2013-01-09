@@ -56,7 +56,7 @@ for repo in repo_list:
     has_irc_hook = False
     for hook in hook_list:
         # pprint(hook)
-        if hook['name'] == "irc":
+        if 'name' in hook and hook['name'] == "irc":
             has_irc_hook = True
             # Make sure irc_hook is config'd for pull_req
             if "pull_request" not in hook['events']:

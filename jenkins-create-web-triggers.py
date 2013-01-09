@@ -66,7 +66,7 @@ for repo in repo_list:
 
     for hook in hook_list:
 #        # pprint(hook)
-        if hook['name'] == "web" and hook['config']['url'] == push_hook_url:
+        if 'name' in hook and hook['name'] == "web" and hook['config']['url'] == push_hook_url:
             has_push_hook = True
             # Make sure push hook is config'd for push event
             if "push" not in hook['events']:
@@ -77,7 +77,7 @@ for repo in repo_list:
                     sys.exit(1)
             else:
                 print ".. Push Hook is configured for push events"
-        if hook['name'] == "web" and hook['config']['url'] == pull_hook_url:
+        if 'name' in hook and hook['name'] == "web" and hook['config']['url'] == pull_hook_url:
             has_pull_hook = True
             # Make sure pull hook is config'd for pull_request event
             if "pull_request" not in hook['events'] or "issue_comment" not in hook['events']:
