@@ -26,7 +26,8 @@ headers = {
 
 print "Grabbing all repos from https://github.com/rcbops-cookbooks"
 
-path = "https://api.github.com/orgs/rcbops-cookbooks/repos"
+# github paginates, this will be an issue once we have ~100 repos
+path = "https://api.github.com/orgs/rcbops-cookbooks/repos?per_page=100"
 
 response, content = http.request(path, 'GET', headers=headers)
 
@@ -71,7 +72,7 @@ for repo in repo_list:
             # Make sure push hook is config'd for push event
             if "push" not in hook['events']:
                 print ".. Push Hook not configured for push events.. FIXING"
-                response, content = http.request(hook['url'], 'PATCH', headers=headers, body=json.dumps(push_data)) 
+                response, content = http.request(hook['url'], 'PATCH', headers=headers, body=json.dumps(push_data))
                 if response.status != 200:
                     print ".... FAILED TO UPDATE PUSH HOOK FOR %s" % (repo['name'])
                     sys.exit(1)
@@ -82,7 +83,7 @@ for repo in repo_list:
             # Make sure pull hook is config'd for pull_request event
             if "pull_request" not in hook['events'] or "issue_comment" not in hook['events']:
                 print ".. Pull_Request Hook not configured for pull_request events.. FIXING"
-                response, content = http.request(hook['url'], 'PATCH', headers=headers, body=json.dumps(pull_data)) 
+                response, content = http.request(hook['url'], 'PATCH', headers=headers, body=json.dumps(pull_data))
                 if response.status != 200:
                     print ".... FAILED TO UPDATE PULL_REQUEST HOOK FOR %s" % (repo['name'])
                     sys.exit(1)

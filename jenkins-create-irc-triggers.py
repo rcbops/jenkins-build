@@ -26,7 +26,8 @@ headers = {
 
 print "Grabbing all repos from https://github.com/rcbops-cookbooks"
 
-path = "https://api.github.com/orgs/rcbops-cookbooks/repos"
+# github paginates, this will be an issue once we have ~100 repos
+path = "https://api.github.com/orgs/rcbops-cookbooks/repos?per_page=100"
 
 response, content = http.request(path, 'GET', headers=headers)
 
@@ -61,7 +62,7 @@ for repo in repo_list:
             # Make sure irc_hook is config'd for pull_req
             if "pull_request" not in hook['events']:
                 print ".. IRC Hook not configured for pull_req... FIXING"
-                response, content = http.request(hook['url'], 'PATCH', headers=headers, body=json.dumps(event_data)) 
+                response, content = http.request(hook['url'], 'PATCH', headers=headers, body=json.dumps(event_data))
                 if response.status != 200:
                     print ".... FAILED TO UPDATE IRC HOOK FOR %s" % (repo['name'])
                     sys.exit(1)
