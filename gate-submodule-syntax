@@ -34,9 +34,13 @@ popd
 if ! ( knife cookbook test -o . ${GIT_REPO} ); then
     echo "Syntax check failed"
     exit 1
+else
+    echo "syntax check succeeded"
+    RETVAL=0
 fi
 
 # Cleanup after ourselves
 rm -rf ${GIT_REPO}
 
 curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule syntax\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+exit ${RETVAL}
