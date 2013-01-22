@@ -54,7 +54,7 @@ cd ..
 
 # Tar up the archive
 DIST_FILENAME="${DIST_NAME}-${RELEASE}.tgz"
-tar zcv -s "/${DIST_DIRECTORY}/${DIST_NAME}-${RELEASE}/" -f ${DIST_FILENAME} ${DIST_DIRECTORY}
+tar zcv --xform "s/${DIST_DIRECTORY}/${DIST_NAME}-${RELEASE}/" -f ${DIST_FILENAME} ${DIST_DIRECTORY}
 
 # Upload
 
