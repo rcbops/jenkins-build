@@ -1,29 +1,25 @@
 #!/usr/bin/env python
 
-import argparse
+from optparse import OptionParser
 import json
 import sys
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Maintain chef release manifest')
+    usage = "usage: %prog manifest version url"
+    parser = OptionParser(usage)
 
-    parser.add_argument('manifest', type=argparse.FileType('r+'),
-                        help='the manifest file to maintain')
-
-    parser.add_argument('version', type=str,
-                        help='the version being recorded inthe manifest')
-
-    parser.add_argument('url', type=str,
-                        help='the location of the versions tarball download')
     try:
-        args = parser.parse_args(sys.argv[1:])
-        source = args.manifest
+        (options, args) = parser.parse_args(sys.argv[1:])
+
+        if len(args) != 3:
+            parser.error("manifest, version and url are required")
+
+        source = open(args[0], 'r+')
 
         manifest = json.load(source)
 
-        add_version(manifest, args.version, args.url)
+        add_version(manifest, args[1], args[2])
 
         source.seek(0)
         source.write(json.dumps(manifest, sort_keys=True, indent=2))
