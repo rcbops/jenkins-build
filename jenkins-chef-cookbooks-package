@@ -84,14 +84,12 @@ echo "******************************************************************"
 echo "upload here"
 echo "******************************************************************"
 # upload manifest
-echo "RUNNING: "'~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/CURRENT.manifest" "PROD-cookbooks" "CURRENT.manifest"'
 ~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/CURRENT.manifest" "PROD-cookbooks" "CURRENT.manifest"
 # upload tarball
-echo "RUNNING: "'~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}" "PROD-cookbooks" "${TAR_PKG_DIR_NAME}-${GIT_TAG}"'
 ~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}.tgz" "PROD-cookbooks" "${TAR_PKG_DIR_NAME}-${GIT_TAG}.tgz"
 
 echo "******************************************************************"
-echo "items are located here: ${WORKSPACE}
+echo "items are located here: ${WORKSPACE}"
 echo "MANIFEST: http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/CURRENT.manifest"
 echo "TARBALL: http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/${TAR_PKG_DIR_NAME}-${GIT_TAG}"
 echo "******************************************************************"
