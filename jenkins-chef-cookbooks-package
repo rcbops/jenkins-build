@@ -12,6 +12,8 @@ if [[ -z ${WORKSPACE} ]]; then
     export WORKSPACE=$(mktemp -d)
     echo "using WORKSPACE ${WORKSPACE}"
     WORKSPACE_CREATED=1
+else
+    rm -rf ${WORKSPACE}
 fi
 
 cd ${WORKSPACE}
