@@ -11,8 +11,8 @@ curl -s -D - -H "X-Auth-Key: $API" -H "X-Auth-User: $USER_NAME" https://api.moss
 
 STORAGE_URL=$(cat $TMPFILE | grep ^X-Storage-Url | awk '{print $2}' | sed 's/\r//g')
 AUTH_TOKEN=$(cat $TMPFILE | grep ^X-Auth-Token | awk '{print $2}' | sed 's/\r//g')
-echo "Storage URL: $STORAGE_URL"
-echo "Auth Token: $AUTH_TOKEN"
+#echo "Storage URL: $STORAGE_URL"
+#echo "Auth Token: $AUTH_TOKEN"
 
 if [[ "$1" = "put" ]]; then
     FNAME=$2
