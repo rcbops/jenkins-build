@@ -1,62 +1,110 @@
 #!/bin/bash
 
 # force a local default so this can be run on command line
-JENKINS_BUILD_DIR=${JENKINS_BUILD_DIR-.}
-GIT_BRANCH=${GIT_BRANCH-master}
-GIT_CLONE_URL=${GIT_CLONE_URL-git://github.com/rcbops/chef-cookbooks.git}
-DIST_NAME=${DIST_NAME-chef-cookbooks}
-DIST_DIRECTORY=${DIST_DIRECTORY-tmp}
+GIT_BRANCH=${GIT_BRANCH:-master}
+GIT_CLONE_URL=${GIT_CLONE_URL:-git://github.com/rcbops/chef-cookbooks.git}
+TAR_PKG_DIR_NAME=${TAR_PKG_DIR_NAME:-chef-cookbooks}
+GIT_TAG=${GIT_TAG:-unset}
+WORKSPACE_CREATED=0
+NOCLEAN=${NOCLEAN:=0}
 
-# Cleanup
-rm -rf ./${DIST_DIRECTORY}
-rm chef-cookbooks-*.tgz
+if [[ -z ${WORKSPACE} ]]; then
+    export WORKSPACE=$(mktemp -d)
+    echo "using WORKSPACE ${WORKSPACE}"
+    WORKSPACE_CREATED=1
+fi
 
+cd ${WORKSPACE}
+
+echo "******************************************************************"
+echo "cloning ${GIT_CLONE_URL}"
+echo "******************************************************************"
 # Clone the upstream repo
-if ! ( git clone ${GIT_CLONE_URL} ./${DIST_DIRECTORY} ); then
+if ! ( git clone ${GIT_CLONE_URL} ${WORKSPACE}/git-checkout ); then
     echo "Unable to clone git repo: ${GIT_CLONE_URL}"
     exit 1
 fi
 
-# Change directory to clone
-cd ./${DIST_DIRECTORY}
+cd ${WORKSPACE}/git-checkout
 
-# Change to branch
-if ! ( git checkout ${GIT_BRANCH} ); then
-  echo "Unable to checkout branch: ${GIT_BRANCH}"
-  exit 1
-fi
-
-# Find the latest tag if no release is specified
-RELEASE=${RELEASE-$(git describe --abbrev=0 --tags)}
-
+echo "******************************************************************"
+echo "checking out ${GIT_TAG}"
+echo "******************************************************************"
 # Change to tag
-if ! ( git checkout ${RELEASE} ); then
-  echo "Unable to checkout branch: ${RELEASE}"
+if ! ( git checkout ${GIT_TAG} ); then
+  echo "Unable to checkout branch: ${GIT_TAG}"
   exit 1
 fi
 
+echo "******************************************************************"
+echo "submodule init"
+echo "******************************************************************"
 # Pull in submodules
 if ! ( git submodule init ); then
   echo "Unable to init submodules"
   exit 1
 fi
 
+echo "******************************************************************"
+echo "submodule update"
+echo "******************************************************************"
 if ! ( git submodule update ); then
   echo "Unable to update submodules"
   exit 1
 fi
 
+echo "******************************************************************"
+echo "cleaning up after git"
+echo "******************************************************************"
 # Remove .git files/directories
-find . -name ".git*" -exec rm -rf {} \;
+find ${WORKSPACE}/git-checkout -name ".git*" -exec rm -rf {} \; 2>/dev/null
 
-# Back out of tmp
-cd ..
+# Back out of the working root
+cd ${WORKSPACE}
+
+echo "******************************************************************"
+echo "creating the tarball"
+echo "******************************************************************"
+mv ${WORKSPACE}/git-checkout ${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}
+DIST_FILENAME=${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}".tgz"
 
 # Tar up the archive
-DIST_FILENAME="${DIST_NAME}-${RELEASE}.tgz"
-tar zcv --xform "s/${DIST_DIRECTORY}/${DIST_NAME}-${RELEASE}/" -f ${DIST_FILENAME} ${DIST_DIRECTORY}
+tar zcvf ${DIST_FILENAME} ${TAR_PKG_DIR_NAME}-${GIT_TAG}
+
+echo "******************************************************************"
+echo "update the manifest"
+echo "******************************************************************"
+# grab the current manifest
+~/jenkins-build/scripts/cf-upload.sh get "PROD-cookbooks" "CURRENT.manifest" > ${WORKSPACE}/CURRENT.manifest
+# Update Manifest
+~/jenkins-build/scripts/manifest.py ${WORKSPACE}/CURRENT.manifest ${GIT_TAG} "http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/${DIST_FILENAME}"
+
+MANIFEST_LENGTH=$(wc -l "${WORKSPACE}/CURRENT.manifest" | awk '{print $1}')
+if [[ ${MANIFEST_LENGTH} = 0 ]]; then
+    echo "DANGER!  We have an empty manifest file.  Giving up!"
+    exit 1;
+fi
 
 # Upload
+echo "******************************************************************"
+echo "upload here"
+echo "******************************************************************"
+# upload manifest
+~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/CURRENT.manifest" "PROD-cookbooks" "CURRENT.manifest"
+# upload tarball
+~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}.tgz" "PROD-cookbooks" "${TAR_PKG_DIR_NAME}-${GIT_TAG}.tgz"
 
-# Update Manifest
-${JENKINS_BUILD_DIR}/scripts/manifest.py CURRENT.manifest ${RELEASE} "http://foo/${DIST_FILENAME}"
+echo "******************************************************************"
+echo "items are located here: ${WORKSPACE}"
+echo "MANIFEST: http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/CURRENT.manifest"
+echo "TARBALL: http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/${TAR_PKG_DIR_NAME}-${GIT_TAG}"
+echo "******************************************************************"
+
+if [[ $NOCLEAN = 1 ]]; then
+    exit 0
+fi
+
+if [[ $WORKSPACE_CREATED = 1 ]]; then
+    echo "deleting the workspace"
+    rm -rf ${WORKSPACE}
+fi
