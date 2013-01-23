@@ -5,6 +5,13 @@ GIT_BRANCH=${GIT_BRANCH:-master}
 GIT_CLONE_URL=${GIT_CLONE_URL:-git://github.com/rcbops/chef-cookbooks.git}
 TAR_PKG_DIR_NAME=${TAR_PKG_DIR_NAME:-chef-cookbooks}
 GIT_TAG=${GIT_TAG:-unset}
+WORKSPACE_CREATED=0
+
+if [[ -z ${WORKSPACE} ]]; then
+    export WORKSPACE=$(mktemp -d)
+    echo "using WORKSPACE ${WORKSPACE}"
+    WORKSPACE_CREATED=1
+fi
 
 cd ${WORKSPACE}
 
@@ -51,3 +58,7 @@ tar zcvf ${DIST_FILENAME} ${DIST_DIRECTORY}
 #${JENKINS_BUILD_DIR}/scripts/manifest.py CURRENT.manifest ${RELEASE} "http://foo/${DIST_FILENAME}"
 
 ls -lR ${WORKSPACE}
+
+if [[ $WORKSPACE_CREATED = 1 ]]; then
+    echo "delete workspace here"
+fi
