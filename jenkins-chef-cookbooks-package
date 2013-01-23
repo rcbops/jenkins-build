@@ -74,16 +74,24 @@ tar zcvf ${DIST_FILENAME} ${TAR_PKG_DIR_NAME}-${GIT_TAG}
 echo "******************************************************************"
 echo "update the manifest"
 echo "******************************************************************"
+# grab the current manifest
+curl http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/CURRENT.manifest > ${WORKSPACE}/CURRENT.manifest
 # Update Manifest
-#${JENKINS_BUILD_DIR}/scripts/manifest.py CURRENT.manifest ${RELEASE} "http://foo/${DIST_FILENAME}"
+~/jenkins-build/scripts/manifest.py ${WORKSPACE}/CURRENT.manifest ${GIT_TAG} "http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/${DIST_FILENAME}"
 
 # Upload
 echo "******************************************************************"
 echo "upload here"
 echo "******************************************************************"
+# upload manifest
+~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/CURRENT.manifest" "PROD-cookbooks" "CURRENT.manifest"
+# upload tarball
+~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}" "PROD-cookbooks" "${TAR_PKG_DIR_NAME}-${GIT_TAG}"
 
 echo "******************************************************************"
 echo "items are located here: ${WORKSPACE}
+echo "MANIFEST: http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/CURRENT.manifest"
+echo "TARBALL: http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/${TAR_PKG_DIR_NAME}-${GIT_TAG}"
 echo "******************************************************************"
 
 if [[ $NOCLEAN = 1 ]]; then

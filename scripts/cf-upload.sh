@@ -5,7 +5,7 @@
 TMPFILE=`mktemp`
 
 # SOURCE API AND USER_NAME HERE
-source files/cloud-creds
+source ~/jenkins-build/files/cloud-creds
 
 curl -s -D - -H "X-Auth-Key: $API" -H "X-Auth-User: $USER_NAME" https://api.mosso.com/auth > $TMPFILE
 
