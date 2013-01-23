@@ -75,7 +75,7 @@ echo "******************************************************************"
 echo "update the manifest"
 echo "******************************************************************"
 # grab the current manifest
-curl http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/CURRENT.manifest > ${WORKSPACE}/CURRENT.manifest
+~/jenkins-build/scripts/cf-upload.sh get "PROD-cookbooks" "CURRENT.manifest" > ${WORKSPACE}/CURRENT.manifest
 # Update Manifest
 ~/jenkins-build/scripts/manifest.py ${WORKSPACE}/CURRENT.manifest ${GIT_TAG} "http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/${DIST_FILENAME}"
 

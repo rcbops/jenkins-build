@@ -9,12 +9,12 @@ TMPFILE=`mktemp`
 
 curl -s -D - -H "X-Auth-Key: $API" -H "X-Auth-User: $USER_NAME" https://api.mosso.com/auth > $TMPFILE
 
-STORAGE_URL="`cat $TMPFILE | grep ^X-Storage-Url | cut -d \" \" -f 2`"
-AUTH_TOKEN="`cat $TMPFILE | grep ^X-Auth-Token | cut -d \" \" -f 2`"
-#echo "Storage URL: $STORAGE_URL"
-#echo " Auth Token: $AUTH_TOKEN"
+STORAGE_URL=$(cat $TMPFILE | grep ^X-Storage-Url | awk '{print $2}' | sed 's/\r//g')
+AUTH_TOKEN=$(cat $TMPFILE | grep ^X-Auth-Token | awk '{print $2}' | sed 's/\r//g')
+echo "Storage URL: $STORAGE_URL"
+echo "Auth Token: $AUTH_TOKEN"
 
-if [ "$1" == "put" ]; then
+if [[ "$1" = "put" ]]; then
     FNAME=$2
     CONTAINER="`echo $3 | sed 's/ /%20/g'`"
     DEST_FNAME="`echo $4 | sed 's/ /%20/g'`"
@@ -32,6 +32,14 @@ if [ "$1" == "put" ]; then
         rm -f $TMPFILE
         exit 1
     fi
+elif [[ "$1" = "get" ]]; then
+    if [ -z $3 ]; then
+        echo "usage: get <container name> <file name>"
+        exit 1;
+    fi
+    FNAME="`echo $3 | sed 's/ /%20/g'`"
+    CONTAINER="`echo $2 | sed 's/ /%20/g'`"
+    curl -H "X-Auth-Token: ${AUTH_TOKEN}" "${STORAGE_URL}/${CONTAINER}/${FNAME}"
 fi
 
 rm -f $TMPFILE
