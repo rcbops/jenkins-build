@@ -15,6 +15,9 @@ fi
 
 cd ${WORKSPACE}
 
+echo "******************************************************************"
+echo "cloning ${GIT_CLONE_URL}"
+echo "******************************************************************"
 # Clone the upstream repo
 if ! ( git clone ${GIT_CLONE_URL} ${WORKSPACE}/git-checkout ); then
     echo "Unable to clone git repo: ${GIT_CLONE_URL}"
@@ -23,39 +26,60 @@ fi
 
 cd ${WORKSPACE}/git-checkout
 
+echo "******************************************************************"
+echo "checking out ${GIT_TAG}"
+echo "******************************************************************"
 # Change to tag
 if ! ( git checkout ${GIT_TAG} ); then
   echo "Unable to checkout branch: ${GIT_TAG}"
   exit 1
 fi
 
+echo "******************************************************************"
+echo "submodule init"
+echo "******************************************************************"
 # Pull in submodules
 if ! ( git submodule init ); then
   echo "Unable to init submodules"
   exit 1
 fi
 
+echo "******************************************************************"
+echo "submodule update"
+echo "******************************************************************"
 if ! ( git submodule update ); then
   echo "Unable to update submodules"
   exit 1
 fi
 
+echo "******************************************************************"
+echo "cleaning up after git"
+echo "******************************************************************"
 # Remove .git files/directories
-find . -name ".git*" -exec rm -rf {} \;
+find ${WORKSPACE}/git-checkout -name ".git*" -exec rm -rf {} \; 2>/dev/null
 
 # Back out of the working root
-cd ..
+cd ${WORKSPACE}
 
+echo "******************************************************************"
+echo "creating the tarball"
+echo "******************************************************************"
 mv ${WORKSPACE}/git-checkout ${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}
-DIST_FILENAME=${WORKSPACE}/"${DIST_NAME}-${GIT_TAG}.tgz"
+DIST_FILENAME=${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}".tgz"
 
 # Tar up the archive
-tar zcvf ${DIST_FILENAME} ${DIST_DIRECTORY}
+tar zcvf ${DIST_FILENAME} ${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}
 
-# Upload
-
+echo "******************************************************************"
+echo "update the manifest"
+echo "******************************************************************"
 # Update Manifest
 #${JENKINS_BUILD_DIR}/scripts/manifest.py CURRENT.manifest ${RELEASE} "http://foo/${DIST_FILENAME}"
+
+# Upload
+echo "******************************************************************"
+echo "upload here"
+echo "******************************************************************"
 
 ls -lR ${WORKSPACE}
 
