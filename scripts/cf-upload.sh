@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
 # ./push.sh put images/fedora15_x86_64.img.gz "RCB OPS" fedora15_x86_64.img.gz
 
 TMPFILE=`mktemp`
 
 # SOURCE API AND USER_NAME HERE
-source ~/jenkins-build/files/cloud-creds
+. ~/jenkins-build/files/cloud-creds
 
 curl -s -D - -H "X-Auth-Key: $API" -H "X-Auth-User: $USER_NAME" https://api.mosso.com/auth > $TMPFILE
 
@@ -26,8 +26,7 @@ if [ "$1" == "put" ]; then
     #echo "    MD5 Sum: $MD5"
 
     echo "Uploading $FNAME to cloudfiles container $3..."
-    curl -s -X "PUT" -T "$FNAME" -D - -H "ETag: $MD5" -H "Content-Type: application/x-compressed" -H "X-Auth-Token: $AUTH_TOKEN" -H "X-Object-Meta-Author
-: Jenkins" "${STORAGE_URL%?}/$CONTAINER/$DEST_FNAME" > /dev/null
+    curl -s -X "PUT" -T "$FNAME" -D - -H "ETag: $MD5" -H "Content-Type: application/x-compressed" -H "X-Auth-Token: $AUTH_TOKEN" -H "X-Object-Meta-Author: Jenkins" "${STORAGE_URL%?}/$CONTAINER/$DEST_FNAME" > /dev/null
     if [ $? -ne 0 ]; then
         echo "Upload of $FNAME failed"
         rm -f $TMPFILE
