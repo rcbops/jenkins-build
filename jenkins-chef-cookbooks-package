@@ -81,8 +81,7 @@ echo "******************************************************************"
 echo "upload here"
 echo "******************************************************************"
 
-ls -lR ${WORKSPACE}
-
 if [[ $WORKSPACE_CREATED = 1 ]]; then
-    echo "delete workspace here"
+    echo "deleting the workspace"
+    rm -rf ${WORKSPACE}
 fi
