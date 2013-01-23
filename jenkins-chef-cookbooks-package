@@ -1,37 +1,24 @@
 #!/bin/bash
 
 # force a local default so this can be run on command line
-JENKINS_BUILD_DIR=${JENKINS_BUILD_DIR-.}
-GIT_BRANCH=${GIT_BRANCH-master}
-GIT_CLONE_URL=${GIT_CLONE_URL-git://github.com/rcbops/chef-cookbooks.git}
-DIST_NAME=${DIST_NAME-chef-cookbooks}
-DIST_DIRECTORY=${DIST_DIRECTORY-tmp}
+GIT_BRANCH=${GIT_BRANCH:-master}
+GIT_CLONE_URL=${GIT_CLONE_URL:-git://github.com/rcbops/chef-cookbooks.git}
+TAR_PKG_DIR_NAME=${TAR_PKG_DIR_NAME:-chef-cookbooks}
+GIT_TAG=${GIT_TAG:-unset}
 
-# Cleanup
-rm -rf ./${DIST_DIRECTORY}
-rm chef-cookbooks-*.tgz
+cd ${WORKSPACE}
 
 # Clone the upstream repo
-if ! ( git clone ${GIT_CLONE_URL} ./${DIST_DIRECTORY} ); then
+if ! ( git clone ${GIT_CLONE_URL} ${WORKSPACE}/git-checkout ); then
     echo "Unable to clone git repo: ${GIT_CLONE_URL}"
     exit 1
 fi
 
-# Change directory to clone
-cd ./${DIST_DIRECTORY}
-
-# Change to branch
-if ! ( git checkout ${GIT_BRANCH} ); then
-  echo "Unable to checkout branch: ${GIT_BRANCH}"
-  exit 1
-fi
-
-# Find the latest tag if no release is specified
-RELEASE=${RELEASE-$(git describe --abbrev=0 --tags)}
+cd ${WORKSPACE}/git-checkout
 
 # Change to tag
-if ! ( git checkout ${RELEASE} ); then
-  echo "Unable to checkout branch: ${RELEASE}"
+if ! ( git checkout ${GIT_TAG} ); then
+  echo "Unable to checkout branch: ${GIT_TAG}"
   exit 1
 fi
 
@@ -49,14 +36,18 @@ fi
 # Remove .git files/directories
 find . -name ".git*" -exec rm -rf {} \;
 
-# Back out of tmp
+# Back out of the working root
 cd ..
 
+mv ${WORKSPACE}/git-checkout ${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}
+DIST_FILENAME=${WORKSPACE}/"${DIST_NAME}-${GIT_TAG}.tgz"
+
 # Tar up the archive
-DIST_FILENAME="${DIST_NAME}-${RELEASE}.tgz"
-tar zcv --xform "s/${DIST_DIRECTORY}/${DIST_NAME}-${RELEASE}/" -f ${DIST_FILENAME} ${DIST_DIRECTORY}
+tar zcvf ${DIST_FILENAME} ${DIST_DIRECTORY}
 
 # Upload
 
 # Update Manifest
-${JENKINS_BUILD_DIR}/scripts/manifest.py CURRENT.manifest ${RELEASE} "http://foo/${DIST_FILENAME}"
+#${JENKINS_BUILD_DIR}/scripts/manifest.py CURRENT.manifest ${RELEASE} "http://foo/${DIST_FILENAME}"
+
+ls -lR ${WORKSPACE}
