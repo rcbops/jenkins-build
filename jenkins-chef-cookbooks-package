@@ -84,8 +84,10 @@ echo "******************************************************************"
 echo "upload here"
 echo "******************************************************************"
 # upload manifest
+echo "RUNNING: "'~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/CURRENT.manifest" "PROD-cookbooks" "CURRENT.manifest"'
 ~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/CURRENT.manifest" "PROD-cookbooks" "CURRENT.manifest"
 # upload tarball
+echo "RUNNING: "'~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}" "PROD-cookbooks" "${TAR_PKG_DIR_NAME}-${GIT_TAG}"'
 ~/jenkins-build/scripts/cf-upload.sh put "${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}" "PROD-cookbooks" "${TAR_PKG_DIR_NAME}-${GIT_TAG}"
 
 echo "******************************************************************"
