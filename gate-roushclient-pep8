@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -x
+set -e
+set -u
+
+# Cleanup
+rm -rf ${GIT_REPO} || :
+
+# Clone the upstream repo
+if ! ( git clone ${GIT_SSH_URL} ); then
+    echo "Unable to clone git repo: ${GIT_CLONE_URL}"
+    exit 1
+fi
+
+# Apply the proposed diff
+pushd ${GIT_REPO}
+if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
+    echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
+    exit 1
+fi
+
+# Run pep8 tests
+if ! ( ./run_tests.sh -p ); then
+    echo "Pep8 check failed."
+    exit 1
+fi
+popd
+
+# Cleanup after ourselves
+rm -rf ${GIT_REPO}
+
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: RoushClient PEP8\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
