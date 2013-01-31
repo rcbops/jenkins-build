@@ -69,7 +69,7 @@ if GIT_USER in member_list:
     msg = 'Merged automatically by jenkins after successful gate test'
     body = {'commit_message': msg}
     response, content = http.request(GIT_PULL_URL + '/merge', 'PUT',
-                                     headers=headers, body=body)
+                                     headers=headers, body=json.dumps(body))
     if response.status == 200:
         print "Merged successfully."
         sys.exit(0)
@@ -89,5 +89,5 @@ else:
           'by a core team member.' % (GIT_USER)
     body = {'body': msg}
     response, content = http.request(GIT_COMMENT_URL, 'POST',
-                                     headers=headers, body=body)
+                                     headers=headers, body=json.dumps(body))
     sys.exit(0)
