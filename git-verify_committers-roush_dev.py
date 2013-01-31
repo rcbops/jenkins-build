@@ -35,7 +35,7 @@ team_path = base + "/orgs/rcbops/teams"
 
 # Build a dict out of the teams for the rcbops organization
 response, content = http.request(team_path, 'GET', headers=headers)
-teams = {x['name']: x['id'] for x in json.loads(content)}
+teams = dict((x['name'],x['id']) for x in json.loads(content))
 
 print 'Looking up members for team: roush-devs'
 
