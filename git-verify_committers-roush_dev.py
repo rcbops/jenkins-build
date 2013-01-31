@@ -38,13 +38,10 @@ team_path = base + "/orgs/rcbops/teams"
 response, content = http.request(team_path, 'GET', headers=headers)
 teams = dict((x['name'],x['id']) for x in json.loads(content))
 
-print 'Looking up members for team: roush-devs'
-
 # Build a list out of the users for the roush-devs team
 member_path = base + '/teams/%s/members' % (teams['roush-devs'])
 response, content = http.request(member_path, 'GET', headers=headers)
 member_list = [x['login'] for x in json.loads(content)]
-pprint(member_list)
 
 # Grab the environment variables
 GIT_USER = os.environ.get('GIT_USER')
@@ -71,16 +68,16 @@ if GIT_USER in member_list:
     response, content = http.request(GIT_PULL_URL + '/merge', 'PUT',
                                      headers=headers, body=json.dumps(body))
     if response.status == 200:
-        print "Merged successfully."
+        print ".... Merged successfully."
         sys.exit(0)
     elif response.status == 405:
-        print "Unable to merge, most likely needs to be rebased."
+        print ".... Unable to merge, most likely needs to be rebased."
         # Probably should post a comment back to github
         sys.exit(1)
     else:
         # unexpected failure
-        print "Received an unexpected error while attempting to merge."
-        print ".... Status Code: %s" % response.status
+        print ".... Received an unexpected error while attempting to merge."
+        print "........ Status Code: %s" % response.status
         sys.exit(1)
 else:
 # http://developer.github.com/v3/issues/comments/#create-a-comment
@@ -90,4 +87,5 @@ else:
     body = {'body': msg}
     response, content = http.request(GIT_COMMENT_URL, 'POST',
                                      headers=headers, body=json.dumps(body))
+    print ".... Not Merged, non-core submitter."
     sys.exit(0)
