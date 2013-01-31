@@ -30,7 +30,8 @@ http = httplib2.Http()
 headers = _build_headers(username, password)
 
 # base = "https://api.github.com"
-base = "https://developer.github.com"
+# base = "https://developer.github.com"
+base = "https://api.github.com"
 team_path = base + "/orgs/rcbops/teams"
 
 # Build a dict out of the teams for the rcbops organization
