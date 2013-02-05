@@ -5,7 +5,9 @@ set -e
 set -u
 
 # Cleanup
-rm -rf ${GIT_REPO} || :
+# rm -rf ${GIT_REPO} || :
+rm -rf ./* || :
+rm -rf ./.* || :
 
 # Clone the upstream repo
 if ! ( git clone ${GIT_SSH_URL} ); then
@@ -14,7 +16,7 @@ if ! ( git clone ${GIT_SSH_URL} ); then
 fi
 
 # Apply the proposed diff
-pushd ${GIT_REPO}
+# pushd ${GIT_REPO}
 if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
     echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
     exit 1
@@ -25,7 +27,7 @@ if ! ( ./run_tests.sh -c -V ); then
     echo "Test suite check failed"
     exit 1
 fi
-popd
+# popd
 
 # Cleanup after ourselves
 # rm -rf ${GIT_REPO}
