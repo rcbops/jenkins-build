@@ -5,9 +5,7 @@ set -e
 set -u
 
 # Cleanup
-# rm -rf ${GIT_REPO} || :
-rm -rf ./* || :
-rm -rf ./.* || :
+rm -rf ${GIT_REPO} || :
 
 # Clone the upstream repo
 if ! ( git clone ${GIT_SSH_URL} ); then
@@ -16,7 +14,7 @@ if ! ( git clone ${GIT_SSH_URL} ); then
 fi
 
 # Apply the proposed diff
-# pushd ${GIT_REPO}
+pushd ${GIT_REPO}
 if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
     echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
     exit 1
@@ -39,9 +37,9 @@ if ! ( tools/with_venv.sh pep8 . --exclude=.venv --repeat --show-pep8 --show-sou
     echo "PEP8 check failed"
     exit 1
 fi
-# popd
+popd
 
 # Cleanup after ourselves
-# rm -rf ${GIT_REPO}
+rm -rf ${GIT_REPO}
 
 curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: RoushAgent PEP8\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
