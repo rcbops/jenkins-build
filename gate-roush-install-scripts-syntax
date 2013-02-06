@@ -26,7 +26,7 @@ fi
 file_list=$(find . -name '*.sh')
 for file in ${file_list}; do
 	echo "Checking syntax on ${file}"
-	sh -n ${file}
+	bash -n ${file}
 	if [[ $? -ne 0 ]]; then
 		clean_status=1
 	fi
