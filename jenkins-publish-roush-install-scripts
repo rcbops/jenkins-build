@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# force a local default so this can be run on command line
+REPO_NAME=${REPO_NAME:-roush-install-scripts}
+GIT_BRANCH=${GIT_BRANCH:-master}
+GIT_CLONE_URL=${GIT_CLONE_URL:-git://github.com/rcbops/${REPO_NAME}.git}
+NOCLEAN=${NOCLEAN:=0}
+
+echo "******************************************************************"
+echo "cloning ${GIT_CLONE_URL}"
+echo "******************************************************************"
+# Clone the upstream repo
+if ! ( git clone ${GIT_CLONE_URL} ); then
+    echo "Unable to clone git repo: ${GIT_CLONE_URL}"
+    exit 1
+fi
+
+pushd ${REPO_NAME}
+
+echo "******************************************************************"
+echo "checking out ${GIT_TAG}"
+echo "******************************************************************"
+# Change to tag
+if ! ( git checkout ${GIT_TAG} ); then
+  echo "Unable to checkout branch: ${GIT_TAG}"
+  exit 1
+fi
+
+echo "******************************************************************"
+echo "cleaning up after git"
+echo "******************************************************************"
+# Remove .git files/directories
+find ./ -name ".git*" -exec rm -rf {} \; 2>/dev/null
+
+echo "******************************************************************"
+echo "publishing shell scripts"
+echo "******************************************************************"
+file_list=$(ls *.sh)
+for file in $file_list; do
+	~/jenkins-build/scripts/cf-upload.sh put "${file}" "PROD-roush" "${file}"
+done
+
+echo "******************************************************************"
+echo "FILES HAVE BEEN PUBLISHED"
+for file in $file_list; do
+	echo "${file} https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/${file}"
+done
+echo "******************************************************************"
+
+if [[ $NOCLEAN = 1 ]]; then
+    exit 0
+fi
