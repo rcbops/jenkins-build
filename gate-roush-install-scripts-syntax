@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -x
+set -e
+set -u
+
+# global clean status flag
+clean_status=0
+
+# Cleanup
+rm -rf ${GIT_REPO} || :
+
+# Clone the upstream repo
+if ! ( git clone ${GIT_SSH_URL} ); then
+    echo "Unable to clone git repo: ${GIT_CLONE_URL}"
+    exit 1
+fi
+
+# Apply the proposed diff
+pushd ${GIT_REPO}
+if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
+    echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
+    exit 1
+fi
+
+file_list=$(find . -name '*.sh')
+for file in ${file_list}; do
+	echo "Checking syntax on ${file}"
+	sh -n ${file}
+	if [[ $? -ne 0 ]]; then
+		clean_status=1
+	fi
+	echo ""
+done
+
+if [[ ${clean_status} -ne 0 ]]; then
+	echo "Syntax check failed"
+	exit 1
+fi
+popd
+
+# Cleanup after ourselves
+rm -rf ${GIT_REPO}
+
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: roush-install-scripts SYNTAX\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
