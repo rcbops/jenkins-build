@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -x
+set -e
+set -u
+
+# Cleanup
+rm -rf ./* || :
+rm -rf ./.* || :
+
+# Clone the upstream repo
+if ! ( git clone ${GIT_REPO} ./ ); then
+    echo "Unable to clone git repo: ${GIT_REPO}"
+    exit 1
+fi
+
+# Run tests with coverage enabled
+if ! ( ./run_tests.sh -c -V ); then
+    echo "Test suite check failed"
+    exit 1
+fi
