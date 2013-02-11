@@ -21,19 +21,7 @@ if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
 fi
 
 # Need to build a virtualenv
-if ! ( virtualenv .venv ); then
-    echo "Unable to build a VirtualENV"
-    exit 1
-fi
-
-# Need to install pip
-if ! ( tools/with_venv.sh pip install pep8 ); then
-    echo "Unable to install pep8"
-    exit 1
-fi
-
-# Run pep8 checks
-if ! ( tools/with_venv.sh pep8 . --exclude=.venv --repeat --show-pep8 --show-source ); then
+if ! ( ./run_tests.sh -p ); then
     echo "PEP8 check failed"
     exit 1
 fi
