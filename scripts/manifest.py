@@ -32,15 +32,8 @@ def main():
 
 def add_version(manifest, version, url):
     manifest['current'] = version
+    manifest['versions'][version] = {"url": url}
 
-    for existing_version in manifest['versions']:
-        if version in existing_version:
-            existing_version[version] = url
-            return
-
-    new_version = {}
-    new_version[version] = url
-    manifest['versions'].append(new_version)
     return
 
 if __name__ == '__main__':
