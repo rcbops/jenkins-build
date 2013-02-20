@@ -75,12 +75,17 @@ DIST_FILENAME=${WORKSPACE}/${TAR_PKG_DIR_NAME}-${GIT_TAG}".tgz"
 tar zcvf ${DIST_FILENAME} ${TAR_PKG_DIR_NAME}-${GIT_TAG}
 
 echo "******************************************************************"
+echo "calculate md5 for tarball"
+echo "******************************************************************"
+TAR_PKG_MD5=`md5sum ${TAR_PKG_DIR_NAME}-${GIT_TAG}.tgz | awk '{ print $1 }'`
+
+echo "******************************************************************"
 echo "update the manifest"
 echo "******************************************************************"
 # grab the current manifest
 ~/jenkins-build/scripts/cf-upload.sh get "PROD-cookbooks" "CURRENT.manifest" > ${WORKSPACE}/CURRENT.manifest
 # Update Manifest
-~/jenkins-build/scripts/manifest.py ${WORKSPACE}/CURRENT.manifest ${GIT_TAG} "http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/${TAR_PKG_DIR_NAME}-${GIT_TAG}.tgz"
+~/jenkins-build/scripts/manifest.py ${WORKSPACE}/CURRENT.manifest ${GIT_TAG} "http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/${TAR_PKG_DIR_NAME}-${GIT_TAG}.tgz" ${TAR_PKG_MD5}
 
 MANIFEST_LENGTH=$(wc -l "${WORKSPACE}/CURRENT.manifest" | awk '{print $1}')
 if [[ ${MANIFEST_LENGTH} = 0 ]]; then
