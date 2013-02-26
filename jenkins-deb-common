@@ -487,23 +487,6 @@ function build_source_package {
 
     schroot -c ${pbuilder} -r -u root -- apt-get update -y
     schroot -c ${pbuilder} -r -u root -- /usr/lib/pbuilder/pbuilder-satisfydepends
-
-# test package bump
-    if [[ ${APPEND_BUILD_NUMBER_TO_PACKAGE} = "1" ]]; then
-        changelog_tmp_file=$(mktemp build_version_bump-XXXXXX)
-cat > ${changelog_tmp_file} <<EOF
-${PACKAGE} (${PACKAGE_VERSION}-${BUILD_NUMBER}) UNRELEASED; urgency=low
-
-  * Jenkins Built Release
-
- -- Jenkins Builder <rcb@rackspace.com>  $(date -R)
-
-$(cat debian/changelog)
-EOF
-        mv -f ${changelog_tmp_file} debian/changelog
-    fi
-# end test package bump
-
     schroot -c ${pbuilder} -r -- git-buildpackage --git-pristine-tar -i.* -tc -S --git-ignore-new --git-ignore-branch ${build_args}
 
     release_lock
