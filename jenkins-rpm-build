@@ -38,9 +38,15 @@ BUILD_PACKAGE_ARCH="epel-6-x86_64 epel-6-i386 fedora-17-x86_64 fedora-17-i386"
 BUILD_ROOT="/home/jenkins/workspace/jenkins-rpm-build"
 mkdir -p ${BUILD_ROOT}/${BUILD_JOB}
 cd ${BUILD_ROOT}/${BUILD_JOB}
-BUILD_GIT_REPO=${GIT_REPO-https://github.com/rpedde/roush-agent}
+BUILD_GIT_REPO=${GIT_REPO:-unset}
 
-git clone ${BUILD_GIT_REPO} ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+git clone ${BUILD_GIT_REPO} ${BUILD_PACKAGE}-tmp
+# get the version from the spec file...
+if [ -e "${BUILD_PACKAGE}-tmp/redhat/SPEC/${BUILD_PACKAGE}.spec" ]; then
+       BUILD_PACKAGE_VERSION=$(grep ^Version: "${BUILD_PACKAGE}-tmp/redhat/SPEC/${BUILD_PACKAGE}.spec" | awk '{print $2}')
+fi
+mv ${BUILD_PACKAGE}-tmp ${BUILD_PACKAGE}-${BUILD_PACKAGE_VERSION}
+
 #
 # format for our repos should be
 # package-name/redhat/SPEC/specfile.spec
