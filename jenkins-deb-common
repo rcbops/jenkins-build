@@ -488,7 +488,7 @@ function build_source_package {
     schroot -c ${pbuilder} -r -u root -- apt-get update -y
     schroot -c ${pbuilder} -r -u root -- /usr/lib/pbuilder/pbuilder-satisfydepends
     if [[ ${APPEND_BUILD_NUMBER_TO_PACKAGE} = "1" ]]; then
-        schroot -c jenkins-precise-rcb-utils-pbuilder -r -- git-dch -a -N ${PACKAGE_VERSION}-${BUILD_NUMBER} -S
+        schroot -c jenkins-precise-rcb-utils-pbuilder -r -- git-dch -a -N ${PACKAGE_VERSION}-${BUILD_NUMBER} -S --id-length=10
         schroot -c jenkins-precise-rcb-utils-pbuilder -r -- git-buildpackage '-i.*' -tc -S --git-ignore-new --git-ignore-branch --git-upstream-tag=master
         schroot -c jenkins-precise-rcb-utils-pbuilder -r -- git reset --hard HEAD
     else
