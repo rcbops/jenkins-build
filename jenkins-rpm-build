@@ -77,6 +77,14 @@ for i in $BUILD_PACKAGE_ARCH; do
     fi
 
     mock --resultdir=${BUILD_ROOT}/${BUILD_JOB} -r ${i} ${SRCRPM}
+    for i in $(ls *.log); do
+        echo "##########################"
+        echo "# LOGFILE: $i"
+        echo "##########################"
+        cat $i
+        echo ""
+        echo ""
+    done
 
     mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
     mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
