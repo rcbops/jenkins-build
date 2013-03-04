@@ -9,6 +9,8 @@
 jenkins_init
 jenkins_set_vars
 
+PROMOTE=${PROMOTE:-0}
+
 function err_cleanup() {
     echo "*** In the trap handler err_cleanup"
     if [ "${NOCLEAN-0}" == "1" ]; then
@@ -86,17 +88,29 @@ for i in $BUILD_PACKAGE_ARCH; do
         echo ""
     done
 
+    ~/sign-rpm.exp ${BUILD_ROOT}/${BUILD_JOB}/*.src.rpm
+    ~/sign-rpm.exp ${BUILD_ROOT}/${BUILD_JOB}/*.rpm
+
     mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
     mkdir -p ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
-    ~/sign-rpm.exp ${BUILD_ROOT}/${BUILD_JOB}/*.src.rpm
+
+    if [[ "${PROMOTE}" = "1" ]]; then
+        mkdir -p ${BUILD_ROOT}/prod-repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
+        mkdir -p ${BUILD_ROOT}/prod-repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
+        cp ${BUILD_ROOT}/${BUILD_JOB}/*.src.rpm ${BUILD_ROOT}/prod-repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
+        cp ${BUILD_ROOT}/${BUILD_JOB}/*.rpm ${BUILD_ROOT}/prod-repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
+        createrepo ${BUILD_ROOT}/prod-repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
+        createrepo ${BUILD_ROOT}/prod-repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
+    fi
+        
     mv ${BUILD_ROOT}/${BUILD_JOB}/*.src.rpm ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
-    ~/sign-rpm.exp ${BUILD_ROOT}/${BUILD_JOB}/*.rpm
     mv ${BUILD_ROOT}/${BUILD_JOB}/*.rpm ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
 
     createrepo ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/SRPMS
     createrepo ${BUILD_ROOT}/repo/${REPO_PACKAGE_DISTRO}/${REPO_PACKAGE_VERSION}/${REPO_PACKAGE_ARCH}
 done;
 
-rsync -avz -e ssh /home/jenkins/workspace/jenkins-rpm-build/repo/ build@184.106.53.105:/var/www/repo-testing/
+#rsync -avz -e ssh /home/jenkins/workspace/jenkins-rpm-build/repo/ build@184.106.53.105:/var/www/repo-testing/
+/home/jenkins/workspace/jenkins-rpm-build/sync-repo.sh
 
 exit 0
