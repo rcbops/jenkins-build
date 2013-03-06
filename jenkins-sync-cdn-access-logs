@@ -1,0 +1,13 @@
+#!/bin/bash
+
+. ~/.swiftcreds
+SWIFT_CONTAINER=".CDN_ACCESS_LOGS"
+
+for i in $(~/swift -v -U ${SWIFT_ACCOUNT} -K ${SWIFT_PASSWORD} -A https://auth.api.rackspacecloud.com/v1.0 list ${SWIFT_CONTAINER} | grep "^PROD"); do
+  if [[ ! -f $i ]]; then
+    ~/swift -v -U ${SWIFT_ACOCUNT} -K ${SWIFT_PASSWORD} -A https://auth.api.rackspacecloud.com/v1.0 download ${SWIFT_CONTAINER} $i
+  fi
+done
+
+rsync -avz -e ssh $(pwd)/ jenkins@166.78.106.202:/var/www/opencenter.rackspace.com/logs/cdn/
+
