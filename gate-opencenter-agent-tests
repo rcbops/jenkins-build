@@ -13,8 +13,14 @@ if ! ( git clone ${GIT_SSH_URL} ); then
     exit 1
 fi
 
-# Apply the proposed diff
 pushd ${GIT_REPO}
+# Checkout ${GIT_BRANCH}
+if ! ( git checkout ${GIT_BRANCH} ); then
+    echo "Unable to checkout branch: ${GIT_BRANC}"
+    exit 1
+fi
+
+# Apply the proposed diff
 if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
     echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
     exit 1
