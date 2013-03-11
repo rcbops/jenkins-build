@@ -24,7 +24,6 @@ if ! ( git checkout ${GIT_BRANCH} ); then
 fi
 
 # Apply the proposed diff
-pushd ${GIT_REPO}
 if ! ( curl -s -n ${GIT_DIFF_URL} | git apply ); then
     echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
     exit 1
