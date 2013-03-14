@@ -39,7 +39,7 @@ response, content = http.request(team_path, 'GET', headers=headers)
 teams = dict((x['name'],x['id']) for x in json.loads(content))
 
 # Build a list out of the users for the roush-devs team
-member_path = base + '/teams/%s/members' % (teams['roush-devs'])
+member_path = base + '/teams/%s/members' % (teams['rcbops-devs'])
 response, content = http.request(member_path, 'GET', headers=headers)
 member_list = [x['login'] for x in json.loads(content)]
 
