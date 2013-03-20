@@ -13,6 +13,17 @@ PROMOTE=${PROMOTE:-0}
 
 function err_cleanup() {
     echo "*** In the trap handler err_cleanup"
+
+    # dumping the log files...
+    for i in $(ls *.log); do
+        echo "##########################"
+        echo "# LOGFILE: $i"
+        echo "##########################"
+        cat $i
+        echo ""
+        echo ""
+    done
+
     if [ "${NOCLEAN-0}" == "1" ]; then
         exit 0
     fi
@@ -87,14 +98,7 @@ for i in $BUILD_PACKAGE_ARCH; do
     fi
 
     mock --resultdir=${BUILD_ROOT}/${BUILD_JOB} -r ${i} ${SRCRPM}
-    for i in $(ls *.log); do
-        echo "##########################"
-        echo "# LOGFILE: $i"
-        echo "##########################"
-        cat $i
-        echo ""
-        echo ""
-    done
+    rm *.log
 
     ~/sign-rpm.exp ${BUILD_ROOT}/${BUILD_JOB}/*.src.rpm
     ~/sign-rpm.exp ${BUILD_ROOT}/${BUILD_JOB}/*.rpm
