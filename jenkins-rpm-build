@@ -36,6 +36,8 @@ function err_cleanup() {
     if [ -d "${BUILD_ROOT}/${BUILD_JOB}" ]; then
         rm -rf ${BUILD_ROOT}/${BUILD_JOB}
     fi
+
+    exit 1
 }
 
 trap "err_cleanup" SIGINT SIGTERM ERR EXIT
