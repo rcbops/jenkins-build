@@ -36,13 +36,21 @@ fi
 BUILD_PACKAGE=${RPM_PACKAGE-roush-agent}
 BUILD_PACKAGE_VERSION=${PACKAGE_VERSION-1.0}
 BUILD_PACKAGE_ARCH="epel-6-x86_64 fedora-17-x86_64"
+GIT_BRANCH=${GIT_BRANCH:-master}
 
 BUILD_ROOT="/home/jenkins/workspace/jenkins-rpm-build"
 mkdir -p ${BUILD_ROOT}/${BUILD_JOB}
 cd ${BUILD_ROOT}/${BUILD_JOB}
 BUILD_GIT_REPO=${GIT_REPO:-unset}
 
+# clone the repo
 git clone ${BUILD_GIT_REPO} ${BUILD_PACKAGE}-tmp
+
+# checkout the branch we are building from
+pushd ${BUILD_PACKAGE}-tmp
+git checkout ${BUILD_GIT_REPO}
+popd
+
 # get the version from the spec file...
 if [ -e "${BUILD_PACKAGE}-tmp/redhat/SPEC/${BUILD_PACKAGE}.spec" ]; then
        BUILD_PACKAGE_VERSION=$(grep ^Version: "${BUILD_PACKAGE}-tmp/redhat/SPEC/${BUILD_PACKAGE}.spec" | awk '{print $2}')
