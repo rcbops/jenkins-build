@@ -446,9 +446,6 @@ function verify_pbuilder() {
         schroot -c ${pbuilder} -r -u root -- apt-get update
         log "Installing pbuilder..."
 
-        log "installing keys..."
-        schroot -c ${pbuilder} -r -u root -- apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 765C5E49F87CBDE0
-
         schroot -c ${pbuilder} -r -u root -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get --force-yes -y install pbuilder aptitude git-buildpackage'
         log "Cleanup"
 
@@ -488,6 +485,7 @@ function build_source_package {
         quilt push -a
     fi
 
+    schroot -c ${pbuilder} -r -u root -- apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 765C5E49F87CBDE0
     schroot -c ${pbuilder} -r -u root -- apt-get update -y
     schroot -c ${pbuilder} -r -u root -- /usr/lib/pbuilder/pbuilder-satisfydepends
     if [[ ${APPEND_BUILD_NUMBER_TO_PACKAGE} = "1" ]]; then
