@@ -14,7 +14,8 @@ PROMOTE=${PROMOTE:-0}
 function err_cleanup() {
     echo "*** In the trap handler err_cleanup"
 
-    trap - SIGINT SIGTERM ERR EXIT
+    trap - SIGINT SIGTERM EXIT ERR
+    set +x
 
     # dumping the log files...
     for i in $(ls *.log); do
@@ -128,5 +129,7 @@ done;
 
 #rsync -avz -e ssh /home/jenkins/workspace/jenkins-rpm-build/repo/ build@184.106.53.105:/var/www/repo-testing/
 /home/jenkins/workspace/jenkins-rpm-build/sync-repo.sh
+
+trap - SIGINT SIGTERM EXIT ERR
 
 exit 0
