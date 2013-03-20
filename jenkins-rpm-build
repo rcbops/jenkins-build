@@ -14,6 +14,8 @@ PROMOTE=${PROMOTE:-0}
 function err_cleanup() {
     echo "*** In the trap handler err_cleanup"
 
+    trap - SIGINT SIGTERM ERR
+
     # dumping the log files...
     for i in $(ls *.log); do
         echo "##########################"
