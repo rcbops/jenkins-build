@@ -5,9 +5,10 @@ import ConfigParser
 import httplib2
 import json
 import os
+import re
 import sys
 
-from pprint import pprint
+# from pprint import pprint
 from io import StringIO
 
 
@@ -17,6 +18,16 @@ def _build_headers(user, passwd):
         'Authorization': 'Basic ' + auth
     }
     return ret
+
+
+def _check_for_rallyid(msg):
+    pattern = '[Ii]ssue\s[A-Z][A-Z][0-9]{1,4}'
+    match = re.match(pattern, msg)
+    if match is not None:
+        return match.group(0)
+    else:
+        return None
+
 
 config_file = ".rcbjenkins-git-creds"
 file_path = os.path.abspath(os.path.join(os.getenv("HOME"), config_file))
@@ -36,7 +47,7 @@ team_path = base + "/orgs/rcbops/teams"
 
 # Build a dict out of the teams for the rcbops organization
 response, content = http.request(team_path, 'GET', headers=headers)
-teams = dict((x['name'],x['id']) for x in json.loads(content))
+teams = dict((x['name'], x['id']) for x in json.loads(content))
 
 # Build a list out of the users for the roush-devs team
 member_path = base + '/teams/%s/members' % (teams['rcbops-devs'])
@@ -47,6 +58,7 @@ member_list = [x['login'] for x in json.loads(content)]
 GIT_USER = os.environ.get('GIT_USER')
 GIT_PULL_URL = os.environ.get('GIT_PULL_URL')
 GIT_COMMENT_URL = os.environ.get('GIT_COMMENT_URL')
+GIT_COMMIT_MSG_BODY = os.environ.get('GIT_COMMIT_MSG_BODY')
 
 if GIT_USER is None:
     print "Environment variable GIT_USER not found, aborting."
@@ -62,23 +74,41 @@ if GIT_COMMENT_URL is None:
 
 # Check if the user submitting the pull-req is part of the team
 if GIT_USER in member_list:
-# http://developer.github.com/v3/pulls/#merge-a-pull-request-merge-buttontrade
-    msg = 'Merged automatically by jenkins after successful gate test'
-    body = {'commit_message': msg}
-    response, content = http.request(GIT_PULL_URL + '/merge', 'PUT',
-                                     headers=headers, body=json.dumps(body))
-    if response.status == 200:
-        print ".... Merged successfully."
-        sys.exit(0)
-    elif response.status == 405:
-        print ".... Unable to merge, most likely needs to be rebased."
-        # Probably should post a comment back to github
-        sys.exit(1)
+    # Submitter is a core member, lets make sure the commit msg is ok
+    rallyid = _check_for_rallyid(GIT_COMMIT_MSG_BODY)
+    if rallyid is not None:
+        # TODO(shep): should probably update the rallyid here
+        msg = 'Merged automatically by jenkins after successful gate test'
+        body = {'commit_message': msg}
+        response, content = http.request(GIT_PULL_URL + '/merge', 'PUT',
+                                         headers=headers,
+                                         body=json.dumps(body))
+        # http://developer.github.com/v3/pulls/#merge-a-pull-\
+        #   request-merge-buttontrade
+        if response.status == 200:
+            print ".... Merged successfully."
+            sys.exit(0)
+        elif response.status == 405:
+            print ".... Unable to merge, most likely needs to be rebased."
+            # Probably should post a comment back to github
+            sys.exit(1)
+        else:
+            # unexpected failure
+            print ".... Received an unexpected error when attempting merge."
+            print "........ Status Code: %s" % response.status
+            sys.exit(1)
     else:
-        # unexpected failure
-        print ".... Received an unexpected error while attempting to merge."
-        print "........ Status Code: %s" % response.status
-        sys.exit(1)
+        # Commit message does not contain a RallyID
+        msg = 'Commit message does not contain a RallyID. ' \
+              'Please update the body of the commit message with '\
+              '"Issue AA1111", where AA1111 is a valid RallyID.'
+        body = {'body': msg}
+        response, content = http.request(GIT_COMMENT_URL,
+                                         'POST', headers=headers,
+                                         body=json.dumps(body))
+        print ".... Not Merged, commit msg did not have RallyID."
+        sys.exit(0)
+
 else:
 # http://developer.github.com/v3/issues/comments/#create-a-comment
     msg = 'Not automatically merged, %s is not an approved committer. ' \
