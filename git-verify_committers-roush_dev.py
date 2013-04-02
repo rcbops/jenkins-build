@@ -58,7 +58,7 @@ member_list = [x['login'] for x in json.loads(content)]
 GIT_USER = os.environ.get('GIT_USER')
 GIT_PULL_URL = os.environ.get('GIT_PULL_URL')
 GIT_COMMENT_URL = os.environ.get('GIT_COMMENT_URL')
-GIT_COMMIT_MSG_BODY = os.environ.get('GIT_COMMIT_MSG_BODY')
+GIT_COMMIT_MSG_BODY = os.environ.get('GIT_COMMIT_MSG_BODY', '')
 
 if GIT_USER is None:
     print "Environment variable GIT_USER not found, aborting."
