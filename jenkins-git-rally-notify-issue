@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+
+#
+# see: https://developer.help.rallydev.com/python-toolkit-rally-rest-api
+#
+
+import ConfigParser
+from io import StringIO
+import json
+import os
+import re
+import requests
+import sys
+
+from pyral import Rally, rallySettings
+
+action = os.getenv('ACTION')
+title = os.getenv('TITLE')
+body = os.getenv('BODY')
+issue_url = os.getenv('ISSUE_URL')
+repo_name = os.getenv('REPO_NAME')
+issue_api_url = os.getenv('ISSUE_API_URL')
+issue_num = os.getenv('ISSUE_NUM')
+
+# truncate the github issue body to fit in rally description max
+# length of 32768
+if body:
+    body = (body[:32600] + '...\n\ndescription truncated. See %s for full details' % issue_url) if len(body) > 32767 else body
+
+rally_conf_file = ".rcbjenkins-rally-creds"
+file_path = os.path.abspath(os.path.join(os.getenv("HOME"), rally_conf_file))
+rally_config = StringIO(u'[default]\n%s' % open(file_path).read())
+parser = ConfigParser.ConfigParser()
+parser.readfp(rally_config)
+rally_server = parser.get('default', 'server')
+rally_user = parser.get('default', 'user')
+rally_password = parser.get('default', 'password')
+rally_project = parser.get('default', 'project')
+
+rally = Rally(rally_server, rally_user, rally_password, project=rally_project)
+
+proj = rally.getProject()
+print "Filing defect against Project: %s" % project
+
+defect_data = {'Name': '%s: %s' % (repo_name, title),
+               'State': 'Open',
+               'ScheduleState': 'Defined',
+               'Project': proj.ref,
+               'Notes': issue_url,
+               'Description': body}
+try:
+    defect = rally.create('Defect', defect_data)
+except Exception, details:
+    sys.stderr.write('ERROR: %s \n' % details)
+    sys.exit(1)
+
+print "Defect created, ObjectID: %s  FormattedID: %s" % (defect.oid, defect.FormattedID)
+
+
+########################################################################
+# update github issue by adding rally defect ID to the title           #
+########################################################################
+
+# Trying the config block from git-verify_committers-roush_dev.py
+config_file = ".rcbjenkins-git-creds"
+file_path = os.path.abspath(os.path.join(os.getenv("HOME"), config_file))
+config = StringIO(u'[default]\n%s' % open(file_path).read())
+parser = ConfigParser.ConfigParser()
+parser.readfp(config)
+github_user, github_pass = parser.get('default', 'user').split(':')
+
+#credfile = '/home/jenkins/.rcbjenkins-git-creds'
+#f = open(credfile, 'r')
+#creds = f.read()
+#f.close()
+
+#m = re.search('(\w+):(\w+)', creds)
+#github_user = m.group(1)
+#github_pass = m.group(2)
+
+payload = {'title': '[%s]: %s' % (defect.FormattedID, title)}
+
+try:
+    r = requests.patch(issue_api_url, data=json.dumps(payload), auth=(github_user, github_pass))
+    return_json = json.loads(r.content)
+except Exception, details:
+    sys.stderr.write('ERROR: %s \n' % details)
+    sys.exit(1)
+
+if r.ok:
+    print "updated github issue title successfully"
+    print "new title:   %s" % json.dumps(return_json['title'])
+else:
+    print "something went wrong when updating title"
+    print return_json
