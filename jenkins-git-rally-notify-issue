@@ -8,11 +8,11 @@ import ConfigParser
 from io import StringIO
 import json
 import os
-import re
+#import re
 import requests
 import sys
 
-from pyral import Rally, rallySettings
+from pyral import Rally
 
 action = os.getenv('ACTION')
 title = os.getenv('TITLE')
@@ -41,7 +41,7 @@ rally_project = parser.get('default', 'project')
 rally = Rally(rally_server, rally_user, rally_password, project=rally_project)
 
 proj = rally.getProject()
-print "Filing defect against Project: %s" % project
+print "Filing defect against Project: %s" % rally_project
 
 notes = '<a href="%s">Github issue #%s</a>' % (issue_url, issue_num)
 
@@ -57,7 +57,8 @@ except Exception, details:
     sys.stderr.write('ERROR: %s \n' % details)
     sys.exit(1)
 
-print "Defect created, ObjectID: %s  FormattedID: %s" % (defect.oid, defect.FormattedID)
+print "Defect created, ObjectID: %s  FormattedID: %s" % (defect.oid,
+                                                         defect.FormattedID)
 
 
 ########################################################################
@@ -84,7 +85,9 @@ github_user, github_pass = parser.get('default', 'user').split(':')
 payload = {'title': '[%s]: %s' % (defect.FormattedID, title)}
 
 try:
-    r = requests.patch(issue_api_url, data=json.dumps(payload), auth=(github_user, github_pass))
+    r = requests.patch(issue_api_url,
+                       data=json.dumps(payload),
+                       auth=(github_user, github_pass))
     return_json = json.loads(r.content)
 except Exception, details:
     sys.stderr.write('ERROR: %s \n' % details)
