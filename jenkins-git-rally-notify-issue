@@ -16,7 +16,7 @@ from pyral import Rally, rallySettings
 
 action = os.getenv('ACTION')
 title = os.getenv('TITLE')
-body = os.getenv('BODY')
+body = os.getenv('BODY', '')
 issue_url = os.getenv('ISSUE_URL')
 repo_name = os.getenv('REPO_NAME')
 issue_api_url = os.getenv('ISSUE_API_URL')
@@ -24,8 +24,9 @@ issue_num = os.getenv('ISSUE_NUM')
 
 # truncate the github issue body to fit in rally description max
 # length of 32768
-if body:
-    body = (body[:32600] + '...\n\ndescription truncated. See %s for full details' % issue_url) if len(body) > 32767 else body
+if len(body) > 32767:
+    msg = '...\n\ndescription truncated. See %s for full details' % issue_url
+    body = ''.join((body[:32600], msg))
 
 rally_conf_file = ".rcbjenkins-rally-creds"
 file_path = os.path.abspath(os.path.join(os.getenv("HOME"), rally_conf_file))
