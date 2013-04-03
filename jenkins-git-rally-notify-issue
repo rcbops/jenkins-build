@@ -42,11 +42,13 @@ rally = Rally(rally_server, rally_user, rally_password, project=rally_project)
 proj = rally.getProject()
 print "Filing defect against Project: %s" % project
 
+notes = '<a href="%s">Github issue #%s</a>' % (issue_url, issue_num)
+
 defect_data = {'Name': '%s: %s' % (repo_name, title),
                'State': 'Open',
                'ScheduleState': 'Defined',
                'Project': proj.ref,
-               'Notes': issue_url,
+               'Notes': notes,
                'Description': body}
 try:
     defect = rally.create('Defect', defect_data)
