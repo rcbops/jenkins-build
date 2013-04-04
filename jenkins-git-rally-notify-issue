@@ -20,7 +20,7 @@ body = os.getenv('BODY', '')
 issue_url = os.getenv('ISSUE_URL')
 repo_name = os.getenv('REPO_NAME')
 issue_api_url = os.getenv('ISSUE_API_URL')
-issue_num = os.getenv('ISSUE_NUM')
+issue_num = issue_url.split('/')[-1]
 
 # truncate the github issue body to fit in rally description max
 # length of 32768
@@ -45,7 +45,7 @@ rally = Rally(rally_server, rally_user, rally_password, project=rally_project)
 proj = rally.getProject()
 print "Filing defect against Project: %s" % rally_project
 
-notes = '<a href="%s" target="_blank">Github issue</a>' % issue_url
+notes = '<a href="%s" target="_blank">Github issue #%s</a>' % (issue_url, issue_num)
 
 defect_data = {'Name': '%s: %s' % (repo_name, title),
                'State': 'Open',
