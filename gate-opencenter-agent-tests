@@ -36,4 +36,4 @@ popd
 # Cleanup after ourselves
 # rm -rf ${GIT_REPO}
 
-curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: RoushAgent Test Suite\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: OpenCenterAgent Test Suite\n * '${BUILD_URL}'consoleFull : SUCCESS"}'

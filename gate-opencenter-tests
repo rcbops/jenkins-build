@@ -34,4 +34,4 @@ if ! ( ./run_tests.sh -V ); then
 fi
 # popd
 
-curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Roush Test Suite\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: OpenCenter Test Suite\n * '${BUILD_URL}'consoleFull : SUCCESS"}'

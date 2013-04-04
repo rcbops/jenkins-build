@@ -35,4 +35,4 @@ popd
 # Cleanup after ourselves
 rm -rf ${GIT_REPO}
 
-curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: RoushClient PEP8\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: OpenCenterClient PEP8\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
