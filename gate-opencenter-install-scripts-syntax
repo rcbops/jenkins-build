@@ -48,4 +48,4 @@ popd
 # Cleanup after ourselves
 rm -rf ${GIT_REPO}
 
-curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: roush-install-scripts SYNTAX\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: opencenter-install-scripts SYNTAX\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
