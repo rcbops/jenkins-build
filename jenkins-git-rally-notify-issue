@@ -16,7 +16,10 @@ from pyral import Rally
 
 action = os.getenv('ACTION')
 title = os.getenv('TITLE')
-body = os.getenv('BODY', '')
+if action == "opened":
+    body = os.getenv('BODY', '')
+elif action == "created":
+    body = os.getenv('COMMENT_BODY', '')
 issue_url = os.getenv('ISSUE_URL')
 repo_name = os.getenv('REPO_NAME')
 issue_api_url = os.getenv('ISSUE_API_URL')
@@ -40,64 +43,83 @@ rally_user = parser.get('default', 'user')
 rally_password = parser.get('default', 'password')
 rally_project = parser.get('default', 'project')
 
+# create rally object to interact with rally api
 rally = Rally(rally_server, rally_user, rally_password, project=rally_project)
 
 proj = rally.getProject()
-print "Filing defect against Project: %s" % rally_project
 
-notes = '<a href="%s" target="_blank">Github issue #%s</a>' % (issue_url, issue_num)
+def create_defect():
+    print "Filing defect against Project: %s" % rally_project
 
-defect_data = {'Name': '%s: %s' % (repo_name, title),
+    notes = '<a href="%s" target="_blank">Github issue #%s</a>' % (issue_url, issue_num)
+
+    defect_data = {'Name': '%s: %s' % (repo_name, title),
                'State': 'Open',
                'ScheduleState': 'Defined',
                'Project': proj.ref,
                'Notes': notes,
                'Description': body}
-try:
-    defect = rally.create('Defect', defect_data)
-except Exception, details:
-    sys.stderr.write('ERROR: %s \n' % details)
-    sys.exit(1)
+    try:
+        defect = rally.create('Defect', defect_data)
+    except Exception, details:
+        sys.stderr.write('ERROR: %s \n' % details)
+        sys.exit(1)
 
-print "Defect created, ObjectID: %s  FormattedID: %s" % (defect.oid,
+    print "Defect created, ObjectID: %s  FormattedID: %s" % (defect.oid,
                                                          defect.FormattedID)
 
+    # now update github issue by adding rally defect ID to the title
 
-########################################################################
-# update github issue by adding rally defect ID to the title           #
-########################################################################
+    config_file = ".rcbjenkins-git-creds"
+    file_path = os.path.abspath(os.path.join(os.getenv("HOME"), config_file))
+    config = StringIO(u'[default]\n%s' % open(file_path).read())
+    parser = ConfigParser.ConfigParser()
+    parser.readfp(config)
+    github_user, github_pass = parser.get('default', 'user').split(':')
 
-# Trying the config block from git-verify_committers-roush_dev.py
-config_file = ".rcbjenkins-git-creds"
-file_path = os.path.abspath(os.path.join(os.getenv("HOME"), config_file))
-config = StringIO(u'[default]\n%s' % open(file_path).read())
-parser = ConfigParser.ConfigParser()
-parser.readfp(config)
-github_user, github_pass = parser.get('default', 'user').split(':')
+    payload = {'title': '[%s]: %s' % (defect.FormattedID, title)}
 
-#credfile = '/home/jenkins/.rcbjenkins-git-creds'
-#f = open(credfile, 'r')
-#creds = f.read()
-#f.close()
+    try:
+        response = requests.patch(issue_api_url,
+                           data=json.dumps(payload),
+                           auth=(github_user, github_pass))
+        return_json = json.loads(response.content)
+    except Exception, details:
+        sys.stderr.write('ERROR: %s \n' % details)
+        sys.exit(1)
 
-#m = re.search('(\w+):(\w+)', creds)
-#github_user = m.group(1)
-#github_pass = m.group(2)
+    if response.ok:
+        print "updated github issue title successfully"
+        print "new title:   %s" % json.dumps(return_json['title'])
+    else:
+        print "something went wrong when updating title"
+        print return_json
 
-payload = {'title': '[%s]: %s' % (defect.FormattedID, title)}
+def create_discussion_item():
+    # get the defectID from the issue title
+    try:
+        defectID = re.search(r'\[([A-Z]+\d+)\]', title).group(1)
+    except AttributeError:
+        print "could not get defect ID from github issue title"
+        sys.exit(1)
 
-try:
-    r = requests.patch(issue_api_url,
-                       data=json.dumps(payload),
-                       auth=(github_user, github_pass))
-    return_json = json.loads(r.content)
-except Exception, details:
-    sys.stderr.write('ERROR: %s \n' % details)
-    sys.exit(1)
+    print "Adding a new discussion item to defect [%s]" % defectID
 
-if r.ok:
-    print "updated github issue title successfully"
-    print "new title:   %s" % json.dumps(return_json['title'])
-else:
-    print "something went wrong when updating title"
-    print return_json
+    # get the defect object so we can extract the oid
+    defect = rally.get('Defect', query='FormattedID = %s' % defectID, instance=True)
+
+    # build the discussion data dict
+    discussion_data = {"Artifact": defect.oid, "Text": comment_body}
+
+    # create the discussion entry (or 'ConversationPost' in rally api parlance)
+    try:
+        discussion = rally.create('ConversationPost', discussion_data)
+    except Exception, details:
+        sys.stderr.write('ERROR: %s \n' % details)
+        sys.exit(1)
+    print "Defect updated with a new discussion entry"
+
+if action == "opened":
+    create_defect
+elif action == "created":
+    create_discussion_item
