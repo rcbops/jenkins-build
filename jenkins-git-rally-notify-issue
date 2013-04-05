@@ -120,6 +120,6 @@ def create_discussion_item():
     print "Defect updated with a new discussion entry"
 
 if action == "opened":
-    create_defect
+    create_defect()
 elif action == "created":
-    create_discussion_item
+    create_discussion_item()
