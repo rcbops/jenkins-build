@@ -109,7 +109,7 @@ def create_discussion_item():
     defect = rally.get('Defect', query='FormattedID = %s' % defectID, instance=True)
 
     # build the discussion data dict
-    discussion_data = {"Artifact": defect.oid, "Text": comment_body}
+    discussion_data = {"Artifact": defect.oid, "Text": body}
 
     # create the discussion entry (or 'ConversationPost' in rally api parlance)
     try:
