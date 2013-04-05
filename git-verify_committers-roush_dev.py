@@ -21,7 +21,7 @@ def _build_headers(user, passwd):
 
 
 def _check_for_rallyid(msg):
-    pattern = '[Ii]ssue\s[A-Z][A-Z][0-9]{1,4}'
+    pattern = '[Ii][Ss][Ss][Uu][Ee]\s[A-Z][A-Z][0-9]{1,4}'
     # Match starts at the beginning of the string.. no good
     # match = re.match(pattern, msg)
     match = re.search(pattern, msg)
