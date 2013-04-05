@@ -106,7 +106,7 @@ def create_discussion_item():
 
     # prepend some text to the body
     global body
-    prepend = "%s said this on github:" % comment_user
+    prepend = "<b>%s</b> said this on github:" % comment_user
     body = prepend + '<br><br>' + '"' + body + '"'
 
     print "Adding a new discussion item to defect [%s]" % defectID
