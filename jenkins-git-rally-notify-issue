@@ -105,6 +105,7 @@ def create_discussion_item():
         sys.exit(1)
 
     # prepend some text to the body
+    global body
     prepend = "%s said this on github:" % comment_user
     body = prepend + '\n\n' + '"' + body + '"'
 
