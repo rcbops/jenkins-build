@@ -24,6 +24,7 @@ issue_url = os.getenv('ISSUE_URL')
 repo_name = os.getenv('REPO_NAME')
 issue_api_url = os.getenv('ISSUE_API_URL')
 issue_num = issue_url.split('/')[-1]
+comment_user = os.getenv('COMMENT_USER', '')
 
 # truncate the github issue body to fit in rally description max
 # length of 32768
@@ -102,6 +103,10 @@ def create_discussion_item():
     except AttributeError:
         print "could not get defect ID from github issue title"
         sys.exit(1)
+
+    # prepend some text to the body
+    prepend = "%s said this on github:" % comment_user
+    body = prepend + '\n\n' + '"' + body + '"'
 
     print "Adding a new discussion item to defect [%s]" % defectID
 
