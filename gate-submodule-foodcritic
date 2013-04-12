@@ -24,6 +24,10 @@ fi
 
 # Apply the proposed diff
 pushd ${GIT_REPO}
+
+# make sure we are applying to the correct branch (eg folsom)
+git checkout ${SUBMOD_BRANCH}
+
 if ! ( curl -s ${GIT_DIFF_URL} | git apply ); then
     echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
     exit 1
