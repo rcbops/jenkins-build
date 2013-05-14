@@ -23,8 +23,8 @@ parser.add_argument('--dir_service', action='store_true', dest='dir_service', re
 parser.add_argument('--dir_version', action='store', dest='dir_version', required=False, default='openldap',
                     help="Which form of directory management will it use? (openldap/389)")
 
-parser.add_argument('--os', action="store", dest="os", required=False, default='ubuntu',
-                    help="Operating System to use for Open Stack")
+parser.add_argument('--os_distro', action="store", dest="os_distro", required=False, default='ubuntu',
+                    help="Operating System Distribution to build OpenStack on")
 
 parser.add_argument('--action', action="store", dest="action", required=False, default="build",
                     help="Action to do for Open Stack (build/destroy/add)")
@@ -38,18 +38,18 @@ results = parser.parse_args()
 
 """
 Steps
-1. Make an environment for {{name}}-{{os}}-openstack
-2. Grab (cluster_size) amount of active models and change their env to {{os}}-{{name}}
+1. Make an environment for {{name}}-{{os_distro}}-openstack
+2. Grab (cluster_size) amount of active models and change their env to {{os_distro}}-{{name}}
 3. Pick one for the controller, set roles, run chef-client
 4. Pick the rest as computes, set roles, run chef-client
 """
 rpcsqa = rpcsqa_helper(results.razor_ip)
 
-# Remove broker fails for qa-%os-pool
-rpcsqa.remove_broker_fail("qa-%s-pool" % results.os)
+# Remove broker fails for qa-%os_distro-pool
+rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
 
 #Prepare environment
-env = rpcsqa.prepare_environment(results.os, results.name)
+env = rpcsqa.prepare_environment(results.os_distro, results.name)
 
 # Clean up the current running environment
 rpcsqa.cleanup_environment(env)
@@ -57,8 +57,8 @@ rpcsqa.cleanup_environment(env)
 # Set the cluster size
 cluster_size = int(results.cluster_size)
 
-# Gather all the nodes for the os
-all_nodes = rpcsqa.gather_all_nodes(results.os)
+# Gather all the nodes for the os_distro
+all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 
 if results.action == "build":
 
@@ -80,7 +80,7 @@ if results.action == "build":
     rpcsqa.check_cluster_size(all_nodes, cluster_size)
 
     # gather the nodes and set there environment
-    openstack_list = rpcsqa.gather_size_nodes(results.os, env, cluster_size)
+    openstack_list = rpcsqa.gather_size_nodes(results.os_distro, env, cluster_size)
 
     # If there were no nodes available, exit
     if not openstack_list:
