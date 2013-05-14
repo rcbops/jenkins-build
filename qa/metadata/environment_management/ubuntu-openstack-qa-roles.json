@@ -1,0 +1,4 @@
+{
+    "0": "role[qa-single-controller]",
+    "1": "role[qa-single-compute]"
+}

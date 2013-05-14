@@ -1,0 +1,6 @@
+{
+    "0": "role[qa-389-ubuntu]",
+    "1": "role[qa-single-controller]",
+    "2": "role[qa-single-api]",
+    "3": "role[qa-single-compute]"
+}
