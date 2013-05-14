@@ -23,7 +23,7 @@ def run_remote_ssh_cmd(server_ip, user, passwd, remote_cmd):
         return {'success': True, 'return': ret, 'exception': None}
     except CalledProcessError, cpe:
         return {'success': False,
-                'retrun': None,
+                'return': None,
                 'exception': cpe,
                 'command': command}
 
