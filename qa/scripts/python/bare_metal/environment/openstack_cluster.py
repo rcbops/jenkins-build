@@ -8,8 +8,11 @@ from rpcsqa_helper import *
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', action="store", dest="name", required=False, default="glance-cf",
+parser.add_argument('--name', action="store", dest="name", required=False, default="test",
                     help="This will be the name for the Open Stack chef environment")
+
+parser.add_argument('--feature_set', action="store", dest="feature_set", required=False, default="glance-cf",
+                    help="This will be the feature_set for the Open Stack chef environment")
 
 parser.add_argument('--cluster_size', action="store", dest="cluster_size", required=False, default=4,
                     help="Size of the Open Stack cluster.")
@@ -23,7 +26,7 @@ parser.add_argument('--dir_service', action='store_true', dest='dir_service', re
 parser.add_argument('--dir_version', action='store', dest='dir_version', required=False, default='openldap',
                     help="Which form of directory management will it use? (openldap/389)")
 
-parser.add_argument('--os_distro', action="store", dest="os_distro", required=False, default='ubuntu',
+parser.add_argument('--os_distro', action="store", dest="os_distro", required=False, default='precise',
                     help="Operating System Distribution to build OpenStack on")
 
 parser.add_argument('--action', action="store", dest="action", required=False, default="build",
@@ -38,8 +41,8 @@ results = parser.parse_args()
 
 """
 Steps
-1. Make an environment for {{name}}-{{os_distro}}
-2. Grab (cluster_size) amount of active models and change their env to {{os_distro}}-{{name}}
+1. Make an environment for {{name}}-{{os_distro}}-{{feature_set}}
+2. Grab (cluster_size) amount of active models and change their env to {{name}}-{{os_distro}}-{{feature_set}}
 3. Pick one for the controller, set roles, run chef-client
 4. Pick the rest as computes, set roles, run chef-client
 """
@@ -49,7 +52,7 @@ rpcsqa = rpcsqa_helper(results.razor_ip)
 rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
 
 #Prepare environment
-env = rpcsqa.prepare_environment(results.os_distro, results.name)
+env = rpcsqa.prepare_environment(results.name, results.os_distro, results.feature_set)
 
 # Clean up the current running environment
 rpcsqa.cleanup_environment(env)
