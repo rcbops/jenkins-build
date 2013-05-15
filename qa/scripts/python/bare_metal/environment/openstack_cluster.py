@@ -38,7 +38,7 @@ results = parser.parse_args()
 
 """
 Steps
-1. Make an environment for {{name}}-{{os_distro}}-openstack
+1. Make an environment for {{name}}-{{os_distro}}
 2. Grab (cluster_size) amount of active models and change their env to {{os_distro}}-{{name}}
 3. Pick one for the controller, set roles, run chef-client
 4. Pick the rest as computes, set roles, run chef-client
@@ -76,10 +76,10 @@ if results.action == "build":
     else:
         print "Cluster size is %i." % cluster_size
 
-    #Collect the amount of servers we need for the openstack install
+    # Collect the amount of servers we need for the openstack install
     rpcsqa.check_cluster_size(all_nodes, cluster_size)
 
-    # gather the nodes and set there environment
+    # Gather the nodes and set there environment
     openstack_list = rpcsqa.gather_size_nodes(results.os_distro, env, cluster_size)
 
     # If there were no nodes available, exit
@@ -97,7 +97,7 @@ if results.action == "build":
         computes = openstack_list[3:]
 
         # Build directory service server
-        rpcsqa.build_dir_server(dir_server)
+        rpcsqa.build_dir_server(dir_server, results.dir_version)
 
         # Build HA Controllers
         rpcsqa.build_controller(ha_controller_1, True, 1)

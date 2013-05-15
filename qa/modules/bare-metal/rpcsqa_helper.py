@@ -20,13 +20,13 @@ class rpcsqa_helper:
         
         return outl
 
-    def build_dir_server(self, dir_node):
+    def build_dir_server(self, dir_node, dir_version):
         chef_node = Node(dir_node)
 
         # We dont support 389 yet, so exit if it is not ldap
-        if results.dir_version != 'openldap':
+        if dir_version != 'openldap':
             print "%s as a directory service is not yet supported...exiting" \
-                % results.dir_version
+                % dir_version
             sys.exit(1)
 
         # Build directory service node
@@ -34,7 +34,7 @@ class rpcsqa_helper:
         root_pass = self.razor_password(chef_node)
         chef_node['in_use'] = 'directory-server'
         chef_node.run_list = [
-            "role[qa-%s-%s]" % (results.dir_version, results.os)]
+            "role[qa-%s-%s]" % (dir_version, results.os)]
         chef_node.save()
 
         print "Updating server...this may take some time"

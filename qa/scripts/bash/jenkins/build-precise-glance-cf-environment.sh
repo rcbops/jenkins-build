@@ -3,8 +3,8 @@
 # Source the file that has our environment variables
 source ~/source_files/CLOUD_FILES_AUTH.sh
 
-template_filename='/var/lib/jenkins/rpcsqa/chef-cookbooks/environments/templates/precise-glance-cf.json'
-environment_filename='/var/lib/jenkins/rpcsqa/chef-cookbooks/environments/precise-glance-cf.json'
+template_filename='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/templates/precise-glance-cf.json'
+environment_filename='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/precise-glance-cf.json'
 
 ## copy the environment file to the proper directory
 echo "Copying template to environment..."
