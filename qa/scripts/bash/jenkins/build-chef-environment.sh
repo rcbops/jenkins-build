@@ -24,7 +24,7 @@ function build_default() {
 
     ## replace the lines we are looking for
     echo "Replacing template values with real values..."
-    result=`sed -i 's/<NAME>/'$${NAME}-${OS_DISTRO}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
 
     # build chef environment
