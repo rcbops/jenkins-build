@@ -5,8 +5,8 @@ function build_glance_cf() {
     echo "Building ${OS_DISTRO}-${FEATURE_SET} chef environment for OpenStack component $PACKAGE_COMPONENT"
 
     # set filenames
-    template_filename='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/templates/${OS_DISTRO}-${FEATURE_SET}.json'
-    environment_filename='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/${OS_DISTRO}-${FEATURE_SET}.json'
+    template_filename="/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/templates/${OS_DISTRO}-${FEATURE_SET}.json"
+    environment_filename="/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/${OS_DISTRO}-${FEATURE_SET}.json"
     
     # source our secret file with hidden info
     source ~/source_files/CLOUD_FILES_AUTH.sh
@@ -35,8 +35,8 @@ function build_keystone_ldap() {
     export LDAP_IP=`knife search node 'role:qa-openldap-ubuntu' | grep IP | awk '{print $2}'`
 
     # set filenames
-    template_filename='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/templates/${OS_DISTRO}-${FEATURE_SET}.json'
-    environment_filename='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/${OS_DISTRO}-${FEATURE_SET}.json'
+    template_filename="/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/templates/${OS_DISTRO}-${FEATURE_SET}.json"
+    environment_filename="/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/${OS_DISTRO}-${FEATURE_SET}.json"
 
     ## copy the environment file to the proper directory
     echo "Copying template to environment..."
@@ -60,8 +60,8 @@ function build_nova_quantum() {
 function build_opencenter() {
     echo "Building ${OS_DISTRO}-${FEATURE_SET} chef environment for OpenStack component $PACKAGE_COMPONENT"
     # Set temp file and perm file
-    template_filename='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/templates/${OS_DISTRO}-${FEATURE_SET}.json'
-    environment_filename='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/${OS_DISTRO}-${FEATURE_SET}.json'
+    template_filename="/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/templates/${OS_DISTRO}-${FEATURE_SET}.json"
+    environment_filename="/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/${OS_DISTRO}-${FEATURE_SET}.json"
 
     ## copy the environment file to the proper directory
     echo "Copying template to environment..."
