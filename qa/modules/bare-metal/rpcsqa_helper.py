@@ -170,7 +170,7 @@ class rpcsqa_helper:
         if len(chef_nodes) < size:
             print "*****************************************************"
             print "Not enough nodes for the cluster_size given: %s " \
-                   % cluster_size
+                   % size
             print "*****************************************************"
             sys.exit(1)
 
