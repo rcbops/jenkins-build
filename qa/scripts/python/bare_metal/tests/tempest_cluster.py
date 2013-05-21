@@ -102,32 +102,27 @@ with open(tempest_config_path, 'w') as w:
     print tempest_config
     w.write(tempest_config)
 
+xunit = ' '
+if results.xunit:
+    file = '%s-%s-%s.xunit' % (
+        time.strftime("%Y-%m-%d-%H:%M:%S",
+                      time.gmtime()),
+        results.name,
+        results.os)
+    xunit = ' --with-xunit --xunit-file=%s ' % file
+command = ("export TEMPEST_CONFIG=%s; "
+           "python -u /usr/local/bin/nosetests%s%s/tempest/tests" % (
+               tempest_config_path,
+               xunit,
+               tempest_dir))
 
-
-# Do this in jenkins
-
-# xunit = ' '
-# if results.xunit:
-#     file = '%s-%s-%s.xunit' % (
-#         time.strftime("%Y-%m-%d-%H:%M:%S",
-#                       time.gmtime()),
-#         results.name,
-#         results.os)
-#     xunit = ' --with-xunit --xunit-file=%s ' % file
-# command = ("export TEMPEST_CONFIG=%s; "
-#            "python -u /usr/local/bin/nosetests%s%s/tempest/tests" % (
-#                tempest_config_path,
-#                xunit,
-#                tempest_dir))
-
-# # Run tests
-# try:
-#     print "!! ## -- Running tempest -- ## !!"
-#     print command
-#     check_call_return = check_call(command, shell=True)
-#     print "!!## -- Tempest tests ran successfully  -- ##!!"
-# except CalledProcessError, cpe:
-#     print "!!## -- Tempest tests failed -- ##!!"
-#     print "!!## -- Return Code: %s -- ##!!" % cpe.returncode
-#     print "!!## -- Output: %s -- ##!!" % cpe.output
-#     sys.exit(1)
+# Run tests
+try:
+    print "!! ## -- Running tempest -- ## !!"
+    print command
+    check_call_return = check_call(command, shell=True)
+    print "!!## -- Tempest tests ran successfully  -- ##!!"
+except CalledProcessError, cpe:
+    print "!!## -- Tempest tests failed -- ##!!"
+    print "!!## -- Return Code: %s -- ##!!" % cpe.returncode
+    print "!!## -- Output: %s -- ##!!" % cpe.output
