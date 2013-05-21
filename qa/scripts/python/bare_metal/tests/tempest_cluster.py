@@ -1,9 +1,11 @@
 import sys
 import json
+import time
 import argparse
 import requests
 from pprint import pprint
 from string import Template
+from subprocess import check_call, CalledProcessError
 from rpcsqa_helper import rpcsqa_helper
 
 # Parse arguments from the cmd line
@@ -28,7 +30,7 @@ parser.add_argument('--keystone_admin_pass', action="store",
                     default="ostackdemo")
 parser.add_argument('-xunit', action="store_true",
                     dest="xunit", required=False,
-                    default=False)
+                    default=True)
 results = parser.parse_args()
 
 # Gather information of cluster
@@ -94,8 +96,7 @@ tempest_dir = "%s/%s/tempest" % (results.tempest_root, results.tempest_version)
 sample_path = "%s/etc/base_%s.conf" % (tempest_dir, results.tempest_version)
 with open(sample_path) as f:
     tempest_config = Template(f.read()).substitute(cluster)
-tempest_config_path = "%s/etc/%s-%s.conf" % (tempest_dir, results.name,
-                                             results.os_distro)
+tempest_config_path = "%s/etc/%s.conf" % (tempest_dir, env.name)
 with open(tempest_config_path, 'w') as w:
     print "####### Tempest Config #######"
     print tempest_config_path
@@ -104,11 +105,10 @@ with open(tempest_config_path, 'w') as w:
 
 xunit = ' '
 if results.xunit:
-    file = '%s-%s-%s.xunit' % (
+    file = '%s-%s.xunit' % (
         time.strftime("%Y-%m-%d-%H:%M:%S",
                       time.gmtime()),
-        results.name,
-        results.os)
+        env.name)
     xunit = ' --with-xunit --xunit-file=%s ' % file
 command = ("export TEMPEST_CONFIG=%s; "
            "python -u /usr/local/bin/nosetests%s%s/tempest/tests" % (
