@@ -1,9 +1,11 @@
 import sys
 import json
+import time
 import argparse
 import requests
 from pprint import pprint
 from string import Template
+from subprocess import check_call, CalledProcessError
 from rpcsqa_helper import rpcsqa_helper
 
 # Parse arguments from the cmd line
@@ -28,7 +30,7 @@ parser.add_argument('--keystone_admin_pass', action="store",
                     default="ostackdemo")
 parser.add_argument('-xunit', action="store_true",
                     dest="xunit", required=False,
-                    default=False)
+                    default=True)
 results = parser.parse_args()
 
 # Gather information of cluster
@@ -54,9 +56,13 @@ auth = {
 }
 
 # Gather cluster information from the cluster
-username = 'admin'
+# Gather cluster information from the cluster
+username = 'demo'
 password = results.keystone_admin_pass
-tenant = 'admin'
+tenant = 'demo'
+admin_username = 'admin'
+admin_password = results.keystone_admin_pass
+admin_tenant = 'admin'
 cluster = {'host': ip,
            'username': username,
            'password': password,
@@ -65,9 +71,9 @@ cluster = {'host': ip,
            'alt_password': password,
            'alt_tenant': tenant}
 if results.tempest_version == 'grizzly':
-    cluster['admin_username'] = username
-    cluster['admin_password'] = password
-    cluster['admin_tenant'] = tenant
+    cluster['admin_username'] = admin_username
+    cluster['admin_password'] = admin_password
+    cluster['admin_tenant'] = admin_tenant
 try:
     r = requests.post(token_url, data=json.dumps(auth),
                       headers={'Content-type': 'application/json'})
@@ -94,40 +100,33 @@ tempest_dir = "%s/%s/tempest" % (results.tempest_root, results.tempest_version)
 sample_path = "%s/etc/base_%s.conf" % (tempest_dir, results.tempest_version)
 with open(sample_path) as f:
     tempest_config = Template(f.read()).substitute(cluster)
-tempest_config_path = "%s/etc/%s-%s.conf" % (tempest_dir, results.name,
-                                             results.os)
+tempest_config_path = "%s/etc/%s.conf" % (tempest_dir, env.name)
 with open(tempest_config_path, 'w') as w:
     print "####### Tempest Config #######"
     print tempest_config_path
     print tempest_config
     w.write(tempest_config)
 
+xunit = ' '
+if results.xunit:
+    file = '%s-%s.xunit' % (
+        time.strftime("%Y-%m-%d-%H:%M:%S",
+                      time.gmtime()),
+        env.name)
+    xunit = ' --with-xunit --xunit-file=%s ' % file
+command = ("export TEMPEST_CONFIG=%s; "
+           "python -u /usr/local/bin/nosetests%s%s/tempest/tests" % (
+               tempest_config_path,
+               xunit,
+               tempest_dir))
 
-
-# Do this in jenkins
-
-# xunit = ' '
-# if results.xunit:
-#     file = '%s-%s-%s.xunit' % (
-#         time.strftime("%Y-%m-%d-%H:%M:%S",
-#                       time.gmtime()),
-#         results.name,
-#         results.os)
-#     xunit = ' --with-xunit --xunit-file=%s ' % file
-# command = ("export TEMPEST_CONFIG=%s; "
-#            "python -u /usr/local/bin/nosetests%s%s/tempest/tests" % (
-#                tempest_config_path,
-#                xunit,
-#                tempest_dir))
-
-# # Run tests
-# try:
-#     print "!! ## -- Running tempest -- ## !!"
-#     print command
-#     check_call_return = check_call(command, shell=True)
-#     print "!!## -- Tempest tests ran successfully  -- ##!!"
-# except CalledProcessError, cpe:
-#     print "!!## -- Tempest tests failed -- ##!!"
-#     print "!!## -- Return Code: %s -- ##!!" % cpe.returncode
-#     print "!!## -- Output: %s -- ##!!" % cpe.output
-#     sys.exit(1)
+# Run tests
+try:
+    print "!! ## -- Running tempest -- ## !!"
+    print command
+    check_call_return = check_call(command, shell=True)
+    print "!!## -- Tempest tests ran successfully  -- ##!!"
+except CalledProcessError, cpe:
+    print "!!## -- Tempest tests failed -- ##!!"
+    print "!!## -- Return Code: %s -- ##!!" % cpe.returncode
+    print "!!## -- Output: %s -- ##!!" % cpe.output
