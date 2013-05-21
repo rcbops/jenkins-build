@@ -556,3 +556,26 @@ class rpcsqa_helper:
             print "Platform Family %s is not supported." \
             % chef_node['platform_family']
             sys.exit(1)
+            
+    def cluster_controller(self, environment):
+        controller_name = "qa-ha-controller1"
+        q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
+                                                       controller_name)
+        search = Search("node").query(q)
+        if not search:
+            return None
+        return Node(search[0]['name'])
+
+    def cluster_environment(self, name, os, feature_set):
+        name = "%s-%s-%s" % (name, os, feature_set)
+        env = Environment(name)
+        return env
+
+
+
+
+
+
+
+
+
