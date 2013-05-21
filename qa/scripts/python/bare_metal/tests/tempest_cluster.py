@@ -56,9 +56,13 @@ auth = {
 }
 
 # Gather cluster information from the cluster
-username = 'admin'
+# Gather cluster information from the cluster
+username = 'demo'
 password = results.keystone_admin_pass
-tenant = 'admin'
+tenant = 'demo'
+admin_username = 'admin'
+admin_password = results.keystone_admin_pass
+admin_tenant = 'admin'
 cluster = {'host': ip,
            'username': username,
            'password': password,
@@ -67,9 +71,9 @@ cluster = {'host': ip,
            'alt_password': password,
            'alt_tenant': tenant}
 if results.tempest_version == 'grizzly':
-    cluster['admin_username'] = username
-    cluster['admin_password'] = password
-    cluster['admin_tenant'] = tenant
+    cluster['admin_username'] = admin_username
+    cluster['admin_password'] = admin_password
+    cluster['admin_tenant'] = admin_tenant
 try:
     r = requests.post(token_url, data=json.dumps(auth),
                       headers={'Content-type': 'application/json'})
