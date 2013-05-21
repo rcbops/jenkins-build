@@ -571,3 +571,18 @@ class rpcsqa_helper:
             print "Platform Family %s is not supported." \
                 % chef_node['platform_family']
             sys.exit(1)
+            
+    def node_search(self, query=None):
+        search = Search("node").query(query)
+        return (Node(n['name']) for n in search)
+
+    def run_cmd_on_node(self, node=None, cmd=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        run_remote_ssh_cmd(ip, user, password, cmd)
+
+    def environment_exists(self, env):
+        if not Search("environment").query("name:%s" % env):
+            return False
+        return True
