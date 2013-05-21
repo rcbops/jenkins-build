@@ -95,7 +95,7 @@ sample_path = "%s/etc/base_%s.conf" % (tempest_dir, results.tempest_version)
 with open(sample_path) as f:
     tempest_config = Template(f.read()).substitute(cluster)
 tempest_config_path = "%s/etc/%s-%s.conf" % (tempest_dir, results.name,
-                                             results.os)
+                                             results.os_distro)
 with open(tempest_config_path, 'w') as w:
     print "####### Tempest Config #######"
     print tempest_config_path
