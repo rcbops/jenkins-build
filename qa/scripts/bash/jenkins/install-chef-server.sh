@@ -41,7 +41,7 @@ function id_OS {
 OS_TYPE="undef"
 id_OS
 
-CHEF_SERVER_VERSION=${CHEF_SERVER_VERSION:-11.0.4-1}
+CHEF_SERVER_VERSION=${CHEF_SERVER_VERSION:-11.0.8-1}
 
 if [[ $OS_TYPE = "debian"  ]] || [[ $OS_TYPE = "ubuntu" ]]; then
     locale-gen en_US.UTF-8
@@ -60,8 +60,8 @@ PRIMARY_INTERFACE=$(ip route list match 0.0.0.0 | awk 'NR==1 {print $5}')
 MY_IP=$(ip addr show dev ${PRIMARY_INTERFACE} | awk 'NR==3 {print $2}' | cut -d '/' -f1)
 CHEF_UNIX_USER=${CHEF_UNIX_USER:-root}
 # due to http://tickets.opscode.com/browse/CHEF-3849 CHEF_FE_PORT is not used yet
-CHEF_FE_PORT=${CHEF_FE_PORT:-80}
-CHEF_FE_SSL_PORT=${CHEF_FE_SSL_PORT:-443}
+CHEF_FE_PORT=${CHEF_FE_PORT:-8040}
+CHEF_FE_SSL_PORT=${CHEF_FE_SSL_PORT:-4443}
 CHEF_URL=${CHEF_URL:-https://${MY_IP}:${CHEF_FE_SSL_PORT}}
 
 if [ ! -e "/etc/chef-server/chef-server.rb" ]; then

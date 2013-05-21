@@ -1,6 +1,7 @@
 import sys
 import time
 from chef import *
+from chef_helper import *
 from server_helper import *
 from razor_api import razor_api
 
@@ -19,6 +20,38 @@ class rpcsqa_helper:
             outl += '\n\t'+attr+' : '+str(getattr(self, attr))
         
         return outl
+
+    def bootstrap_chef(self, client_node, server_node):
+        '''
+        @summary: installes chef client on a node and bootstraps it to chef_server
+        @param node: node to install chef client on
+        @type node: String
+        @param chef_server: node that is the chef server
+        @type chef_server: String
+        '''
+
+        # Gather the chef info for the nodes
+        chef_server_node = Node(server_node)
+        chef_client_node = Node(client_node)
+
+        chef_server_ip = chef_server_node['ipaddress']
+        chef_server_password = self.razor_password(server_node)
+
+        chef_client_ip = chef_client_node['ipaddress']
+        chef_client_password = self.razor_password(client_node)
+
+        # install chef client and bootstrap
+        cmd = 'knife bootstrap %s -x root -P %s' % (chef_client_ip, 
+                                                    chef_client_password)
+
+        ssh_run = run_remote_ssh_cmd(chef_server_ip, 
+                                     'root', 
+                                     chef_server_password,
+                                     cmd)
+
+        if ssh_run['success']:
+            print "Successfully bootstraped chef-client on %s \
+            to chef-server on %s" % (client_node, server_node)
 
     def build_dir_server(self, dir_node, dir_version):
         chef_node = Node(dir_node)
@@ -89,82 +122,141 @@ class rpcsqa_helper:
                    % results.dir_version
             sys.exit(1)
 
-    def build_computes(self, computes):
+    def build_computes(self, computes, remote=False, chef_config_file=None):
+        '''
+        @summary: This will build out all the computes for a openstack 
+        environment, if remote is set it will use a remote chef server, if not
+        it will use the current configured one.
+        '''
         # Run computes
         print "Making the compute nodes..."
         for compute in computes:
             compute_node = Node(compute)
             compute_node['in_use'] = "compute"
-            compute_node.run_list = ["role[qa-single-compute]"]
+            compute_node.run_list = ["role[single-compute]"]
             compute_node.save()
 
-            print "Updating server...this may take some time"
-            self.update_node(compute_node)
+            if remote:
+                remote_chef = chef_helper(chef_config_file)
+                remote_chef.build_compute(compute, 
+                                          'root', 
+                                          self.razor_password(compute_node))
+            else:
+                print "Updating server...this may take some time"
+                self.update_node(compute_node)
 
-            if compute_node['platform_family'] == 'rhel':
-                print "Platform is RHEL family, disabling iptables"
-                self.disable_iptables(compute_node)
+                if compute_node['platform_family'] == 'rhel':
+                    print "Platform is RHEL family, disabling iptables"
+                    self.disable_iptables(compute_node)
 
-            # Run chef client twice
-            print "Running chef-client on compute node: %s, \
-                   this may take some time..." % compute
-            run1 = self.run_chef_client(compute_node)
-            if run1['success']:
-                print "First chef-client run successful, \
-                       starting second run..."
-                run2 = self.run_chef_client(compute_node)
-                if run2['success']:
-                    print "Second chef-client run successful..."
+                # Run chef client twice
+                print "Running chef-client on compute node: %s, \
+                       this may take some time..." % compute
+                run1 = self.run_chef_client(compute_node)
+                if run1['success']:
+                    print "First chef-client run successful, \
+                           starting second run..."
+                    run2 = self.run_chef_client(compute_node)
+                    if run2['success']:
+                        print "Second chef-client run successful..."
+                    else:
+                        print "Error running chef-client for compute %s" % compute
+                        print run2
+                        sys.exit(1)
                 else:
                     print "Error running chef-client for compute %s" % compute
-                    print run2
+                    print run1
                     sys.exit(1)
-            else:
-                print "Error running chef-client for compute %s" % compute
-                print run1
-                sys.exit(1)
 
-    def build_controller(self, controller_node, ha=False, ha_num=0):
-        # Check for ha
+    def build_controller(self, controller_node, ha_num=0, 
+                         remote=False, chef_config_file=None):
+        '''
+        @summary: This will build out a controller node based on location.
+        if remote, use a passed config file to build a chef_helper class and
+        build with that class, otherwise build with the current chef config
+        '''
         chef_node = Node(controller_node)
-        if ha:
-            print "Making %s the ha-controller%s node" % (
-                controller_node, ha_num)
+        if ha_num not 0:
+            print "Making %s the ha-controller%s node" % (controller_node, ha_num)
             chef_node['in_use'] = "ha-controller%s" % ha_num
-            chef_node.run_list = ["role[qa-ha-controller%s]" % ha_num]
+            chef_node.run_list = ["role[ha-controller%s]" % ha_num]
         else:
             print "Making %s the controller node" % controller_node
             chef_node['in_use'] = "controller"
-            chef_node.run_list = ["role[qa-ha-controller1]"]
-        # save node
+            chef_node.run_list = ["role[ha-controller1]"]
         chef_node.save()
 
-        print "Updating server...this may take some time"
-        self.update_node(chef_node)
-
-        if chef_node['platform_family'] == 'rhel':
-            print "Platform is RHEL family, disabling iptables"
-            self.disable_iptables(chef_node)
-
-        # Run chef-client twice
-        print "Running chef-client for controller node, \
-               this may take some time..."
-        run1 = self.run_chef_client(chef_node)
-        if run1['success']:
-            print "First chef-client run successful, starting second run..."
-            run2 = self.run_chef_client(chef_node)
-            if run2['success']:
-                print "Second chef-client run successful..."
-            else:
-                print "Error running chef-client for controller %s" \
-                      % controller
-                print run2
-                sys.exit(1)
+        # If remote is set, then we are building with a remote chef server
+        if remote:
+            remote_chef = chef_helper(chef_config_file)
+            remote_chef.build_controller(controller_node, 
+                                         ha_num, 
+                                         'root', 
+                                         self.razor_password(chef_node))
         else:
-            print "Error running chef-client for controller %s" \
-                   % controller_node
-            print run1
+            print "Updating server...this may take some time"
+            self.update_node(chef_node)
+
+            if chef_node['platform_family'] == 'rhel':
+                print "Platform is RHEL family, disabling iptables"
+                self.disable_iptables(chef_node)
+
+            # Run chef-client twice
+            print "Running chef-client for controller node, \
+                   this may take some time..."
+            run1 = self.run_chef_client(chef_node)
+            if run1['success']:
+                print "First chef-client run successful, starting second run..."
+                run2 = self.run_chef_client(chef_node)
+                if run2['success']:
+                    print "Second chef-client run successful..."
+                else:
+                    print "Error running chef-client for controller %s" % controller_node
+                    print run2
+                    sys.exit(1)
+            else:
+                print "Error running chef-client for controller %s" % controller_node
+                print run1
+                sys.exit(1)
+
+    def build_chef_server(self, controller_node):
+        '''
+        @summary: This method will build a chef server VM on the controller_node with IP chef_server_ip.
+        @param controller_node: Chef node name that will be the controller_node
+        @type controller_node: String
+        '''
+
+        # Load controller node
+        chef_node = Node(controller_node)
+        install_script = '/var/lib/jenkins/jenkins-build/qa/scripts/bash/jenkins/install-chef-server.sh'
+        controller_ip = chef_node['ipaddress']
+        controller_pass = self.razor_password(controller_node)
+
+        # SCP install script to controller node
+        scp_run = run_remote_scp_cmd(controller_ip, 
+                                     'root', 
+                                     controller_pass, 
+                                     install_script)
+        if scp_run['success']:
+            print "Successfully copied chef server install \
+            script to controller node %s" % controller_node
+        else:
+            print "Failed to copy chef server install script to \
+            controller node %s" % controller_node
+            print scp_run
             sys.exit(1)
+
+        # Run the install script
+        to_run_list = ['chmod u+x ./install-chef-server.sh', 
+                       './install-chef-server.sh']
+        for cmd in to_run_list:
+            ssh_run = run_remote_ssh_cmd(controller_ip, 
+                                         'root', 
+                                         controller_pass, 
+                                         cmd)
+            if ssh_run['success']:
+                print "command: %s ran successfully on %s" % (cmd, 
+                                                              controller_node)
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:
@@ -303,6 +395,52 @@ class rpcsqa_helper:
             sys.exit(1)
 
         return ret_nodes
+
+    def install_cookbooks(self, chef_server, openstack_release):
+        '''
+        @summary: This will install git and then pull the proper 
+        cookbooks into chef.
+        @param chef_server: The node that the chef server is installed on
+        @type chef_server: String 
+        @param openstack_release: grizzly, folsom, diablo
+        @type oepnstack_release: String 
+        '''
+
+        # Gather node info
+        chef_server_node = Node(chef_server)
+        chef_server_ip = chef_server_node['ipaddress']
+        chef_server_password = self.razor_password(chef_server)
+        chef_server_platform = chef_server_node['platform'] 
+
+        # Install git and clone rcbops repo
+        rcbops_git = 'git@github.com:rcbops/chef-cookbooks.git'
+        if chef_server_platform == 'ubuntu':
+            to_run_list = ['apt-get install git -y', 
+                           'mkdir -p /opt/rcbops',
+                           'cd /opt/rcbops; git clone --recursive %s' % rcbops_git,
+                           'cd /opt/rcbops; git branch -t %s remotes/origin/%s' % (openstack_release, openstack_release),
+                           'cd /opt/rcbops; git checkout %s' % openstack_release,
+                           'cd /opt/rcbops; git submodule init; git submodule update']
+        elif chef_server_platform == 'centos' || chef_server_platform == 'redhat':
+            to_run_list = ['yum install git -y', 
+                           'mkdir -p /opt/rcbops',
+                           'cd /opt/rcbops; git clone --recursive %s' % rcbops_git,
+                           'cd /opt/rcbops; git branch -t %s remotes/origin/%s' % (openstack_release, openstack_release),
+                           'cd /opt/rcbops; git checkout %s' % openstack_release,
+                           'cd /opt/rcbops; git submodule init; git submodule update']
+        else:
+            print "Platform %s not supported" % chef_server_platform
+            sys.exit(1)
+
+        for cmd in to_run_list:
+            run_cmd = run_remote_ssh_cmd(chef_server_ip, 
+                                         'root', 
+                                         chef_server_password, 
+                                         cmd)
+            if not run_cmd['success']:
+                print "Command: %s failed to run on %s" % (cmd, chef_server)
+                print run_cmd
+                sys.exit(1)
 
     def install_opencenter(self, server, install_script, 
                            role, oc_server_ip='0.0.0.0'):

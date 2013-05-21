@@ -11,6 +11,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--name', action="store", dest="name", required=False, default="test",
                     help="This will be the name for the Open Stack chef environment")
 
+parser.add_argument('--branch', action="store", dest="branch", required=False, default="folsom",
+                    help="The OpenStack Distribution to install (i.e. diablo, folsom, grizzly")
+
 parser.add_argument('--feature_set', action="store", dest="feature_set", required=False, default="glance-cf",
                     help="This will be the feature_set for the Open Stack chef environment")
 
@@ -101,6 +104,20 @@ if results.action == "build":
 
         # Build directory service server
         rpcsqa.build_dir_server(dir_server, results.dir_version)
+
+        # Remove Chef from Nodes
+        for node in openstack_list[1:]:
+            rpcsqa.remove_chef(node)
+
+        # Build Chef Server
+        rpcsqa.build_chef_server(ha_controller_1)
+
+        # Install the proper cookbooks
+        rpcsqa.install_cookbooks(ha_controller_1, results.branch)
+
+        # Bootstrap chef client onto nodes
+        for node in openstack_list[1:]:
+            rpcsqa.bootstrap_chef(node, ha_controller_1)
 
         # Build HA Controllers
         rpcsqa.build_controller(ha_controller_1, True, 1)

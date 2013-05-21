@@ -54,3 +54,35 @@ def run_remote_scp_cmd(server_ip, user, passwd, to_copy):
                 'exception': cpe,
                 'command': command}
 
+def disable_iptables(self, ip, user, password, logfile="STDOUT"):
+        commands = '/etc/init.d/iptables save; \
+                    /etc/init.d/iptables stop; \
+                    /etc/init.d/iptables save'
+        return self.run_remote_ssh_cmd(ip, user, password, commands)
+
+def update(self, ip, platform, user, password):
+        '''
+        @summary: Updates the chef node
+        @param ip: ip of the server to update
+        @type ip: String
+        @param platform: The servers platform
+        @type platform: String
+        @param user: user name on controller node
+        @type user: String
+        @param password: password for the user
+        @type password: String
+        '''
+        ip = chef_node['ipaddress']
+        if platform == "ubuntu":
+            self.run_remote_ssh_cmd(ip, 
+                                    user, 
+                                    password, 
+                                    'apt-get update -y; apt-get upgrade -y')
+        elif platform == "rhel" || platform == 'centos':
+            self.run_remote_ssh_cmd(ip, 
+                                    user, 
+                                    password, 
+                                    'yum update -y')
+        else:
+            print "Platform %s is not supported." % platform
+            sys.exit(1)
