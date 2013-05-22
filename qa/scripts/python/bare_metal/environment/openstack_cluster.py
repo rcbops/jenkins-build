@@ -102,10 +102,9 @@ if results.action == "build":
         controller = openstack_list[0]
         computes = openstack_list[1:]
 
-        # Remove Chef from Nodes
-        for node in openstack_list:
-            rpcsqa.remove_chef(node)
-
+        # Remove Chef from controller Node
+        rpcsqa.remove_chef(controller)
+        
         # Build Chef Server
         rpcsqa.build_chef_server(controller)
 
@@ -119,6 +118,7 @@ if results.action == "build":
         for node in openstack_list:
             rpcsqa.bootstrap_chef(node, controller)
 
+        '''
         # Make servers
         rpcsqa.build_controller(controller)
         rpcsqa.build_computes(computes)
@@ -128,6 +128,7 @@ if results.action == "build":
         print "Controller: %s" % rpcsqa.print_server_info(controller)
         rpcsqa.print_computes_info(computes)
         print "********************************************************************"
+        '''
         sys.exit()
 
     # Build cluster accordingly

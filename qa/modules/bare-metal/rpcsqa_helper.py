@@ -717,10 +717,12 @@ class rpcsqa_helper:
 
     def setup_remote_chef_client(self, controller, chef_environment):
 
+        # Gather chef server info
         chef_server = Node(controller)
         chef_server_ip = chef_server['ipaddress']
         chef_server_password = self.razor_password(chef_server)
 
+        # Set up file for storing chef validation info locally
         print "Setting up client directory on localhost"
         chef_file_path = self.setup_remote_chef_client_folder(chef_environment)
 
@@ -730,16 +732,17 @@ class rpcsqa_helper:
 
         for item in to_run_list:
             get_file_from_server(chef_server_ip, 'root', chef_server_password,
-                                 '/etc/chef/%s' % item, chef_file_path)
+                                 '/etc/chef-server/%s' % item, chef_file_path)
             subprocess.check_call('chown jenkins:jenkins %s/%s' % (chef_file_path, item)
 
         # setup remote chef client using files
         command = "knife configure --user %s \
         --server_url https://%s:4443 --validation-client-name %s \
-        --validation-key %s" % ('jenkins', 
+        --validation-key %s/%s" % ('remote-jenkins', 
                                 chef_server_ip,
                                 'chef-validator',
-                                )
+                                chef_file_path,
+                                'chef-validator.pem')
 
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
