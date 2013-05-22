@@ -38,6 +38,10 @@ function id_OS {
     fi
 }
 
+function install_chef_client {
+    curl -L http://www.opscode.com/chef/install.sh | sudo bash
+}
+
 OS_TYPE="undef"
 id_OS
 
@@ -109,12 +113,13 @@ EOF
         fi
     fi
 
+    install_chef_client
     mkdir -p ${HOMEDIR}/.chef
     cp /etc/chef-server/{chef-validator.pem,chef-webui.pem,admin.pem} ${HOMEDIR}/.chef
     chown -R ${CHEF_UNIX_USER}: ${HOMEDIR}/.chef
 
     if [[ ! -e ${HOMEDIR}/.chef/knife.rb ]]; then
-       cat <<EOF | /opt/chef-server/bin/knife configure -i
+       cat <<EOF | /opt/chef/bin/knife configure -i
 ${HOMEDIR}/.chef/knife.rb
 ${CHEF_URL}
 root
