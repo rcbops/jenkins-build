@@ -100,27 +100,27 @@ class rpcsqa_helper:
 
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
-            if results.dir_version == 'openldap':
+            if dir_version == 'openldap':
                 scp_run = run_remote_scp_cmd(ip, 'root', root_pass,
                     '/var/lib/jenkins/source_files/ldif/*.ldif')
                 if scp_run['success']:
                     ssh_run = run_remote_ssh_cmd(ip, 'root', root_pass,
                         "ldapadd -x -D \"cn=admin,dc=dev,dc=rcbops,dc=me\" \
                         -f base.ldif -w@privatecloud")
-            elif results.dir_version == '389':
+            elif dir_version == '389':
                 # Once we support 389, code here to import needed config files
                 print "389 is not yet supported..."
                 sys.exit(1)
             else:
-                print "%s is not supported...exiting" % results.dir_version
+                print "%s is not supported...exiting" % dir_version
                 sys.exit(1)
 
         if scp_run['success'] and ssh_run['success']:
             print "Directory Service: %s successfully set up..." \
-                % results.dir_version
+                % dir_version
         else:
             print "Failed to set-up Directory Service: %s..." \
-                % results.dir_version
+                % dir_version
             sys.exit(1)
 
     def build_computes(self, computes, remote=False, chef_config_file=None):
