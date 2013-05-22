@@ -13,7 +13,7 @@ class rpcsqa_helper:
         self.chef.set_default()
 
     def __repr__(self):
-        """ Print out current instnace of razor_api"""
+        """ Print out current instance of razor_api"""
         outl = 'class :'+self.__class__.__name__
         
         for attr in self.__dict__:

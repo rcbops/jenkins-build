@@ -35,6 +35,9 @@ parser.add_argument('--os_distro', action="store", dest="os_distro", required=Fa
 parser.add_argument('--action', action="store", dest="action", required=False, default="build",
                     help="Action to do for Open Stack (build/destroy/add)")
 
+parser.add_argument('--remote_chef', action="store_true", dest="remote_chef", required=False, default=False,
+                    help="Build a new chef server for this deploy")
+
 #Defaulted arguments
 parser.add_argument('--razor_ip', action="store", dest="razor_ip", default="198.101.133.3",
                     help="IP for the Razor server")
@@ -93,6 +96,37 @@ if results.action == "build":
         print "No nodes available..."
         sys.exit(1)
 
+    if results.remote_chef:
+
+        # Set each servers roles
+        controller = openstack_list[0]
+        computes = openstack_list[1:]
+
+        # Remove Chef from Nodes
+        for node in openstack_list:
+            rpcsqa.remove_chef(node)
+
+        # Build Chef Server
+        rpcsqa.build_chef_server(controller)
+
+        # Install the proper cookbooks
+        rpcsqa.install_cookbooks(controller, results.branch)
+
+        # Bootstrap chef client onto nodes
+        for node in openstack_list:
+            rpcsqa.bootstrap_chef(node, controller)
+
+        # Make servers
+        rpcsqa.build_controller(controller)
+        rpcsqa.build_computes(computes)
+
+        # print all servers info
+        print "********************************************************************"
+        print "Controller: %s" % rpcsqa.print_server_info(controller)
+        rpcsqa.print_computes_info(computes)
+        print "********************************************************************"
+        sys.exit()
+
     # Build cluster accordingly
     if results.dir_service and results.ha_enabled:
 
@@ -104,20 +138,6 @@ if results.action == "build":
 
         # Build directory service server
         rpcsqa.build_dir_server(dir_server, results.dir_version)
-
-        # Remove Chef from Nodes
-        for node in openstack_list[1:]:
-            rpcsqa.remove_chef(node)
-
-        # Build Chef Server
-        rpcsqa.build_chef_server(ha_controller_1)
-
-        # Install the proper cookbooks
-        rpcsqa.install_cookbooks(ha_controller_1, results.branch)
-
-        # Bootstrap chef client onto nodes
-        for node in openstack_list[1:]:
-            rpcsqa.bootstrap_chef(node, ha_controller_1)
 
         # Build HA Controllers
         rpcsqa.build_controller(ha_controller_1, True, 1)
