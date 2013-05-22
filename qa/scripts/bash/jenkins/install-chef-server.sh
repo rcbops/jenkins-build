@@ -123,11 +123,12 @@ EOF
 ${HOMEDIR}/.chef/knife.rb
 ${CHEF_URL}
 root
-chef-webui
-${HOMEDIR}/.chef/chef-webui.pem
+admin
+${HOMEDIR}/.chef/admin.pem
 chef-validator
 ${HOMEDIR}/.chef/chef-validator.pem
 
+ostackdemo
 EOF
         # setup the path
         echo 'export PATH=${PATH}:/opt/chef-server/bin' >> ${HOMEDIR}/.profile
