@@ -173,7 +173,7 @@ if results.action == "build":
         computes = openstack_list[2:]
 
         # Build the dir server
-        rpcsqa.build_dir_server(dir_server, results.dir_version, results.os)
+        rpcsqa.build_dir_server(dir_server, results.dir_version, results.os_distro)
 
         # Build controller
         rpcsqa.build_controller(controller)
