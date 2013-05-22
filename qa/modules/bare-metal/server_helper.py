@@ -2,11 +2,11 @@ import time
 import sys
 from subprocess import check_call, CalledProcessError
 
-def run_remote_ssh_cmd(server_ip, user, passwd, remote_cmd):
+def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
     """
     @param server_ip
     @param user
-    @param passwd
+    @param password
     @param remote_cmd
     @return A map based on pass / fail run info
     """
@@ -14,7 +14,7 @@ def run_remote_ssh_cmd(server_ip, user, passwd, remote_cmd):
                "-o UserKnownHostsFile=/dev/null "
                "-o StrictHostKeyChecking=no "
                "-o LogLevel=quiet "
-               "-l %s %s '%s'") % (passwd,
+               "-l %s %s '%s'") % (password,
                                    user,
                                    server_ip,
                                    remote_cmd)
@@ -27,11 +27,11 @@ def run_remote_ssh_cmd(server_ip, user, passwd, remote_cmd):
                 'exception': cpe,
                 'command': command}
 
-def run_remote_scp_cmd(server_ip, user, passwd, to_copy):
+def run_remote_scp_cmd(server_ip, user, password, to_copy):
     """
     @param server_ip
     @param user
-    @param passwd
+    @param password
     @param to_copy
     @return A map based on pass / fail run info
     """
@@ -39,7 +39,7 @@ def run_remote_scp_cmd(server_ip, user, passwd, to_copy):
                "-o UserKnownHostsFile=/dev/null "
                "-o StrictHostKeyChecking=no "
                "-o LogLevel=quiet "
-               "%s %s@%s:~/") % (passwd,
+               "%s %s@%s:~/") % (password,
                                  to_copy,
                                  user,
                                  server_ip)
@@ -67,7 +67,7 @@ def get_file_from_server(server_ip, user, password, path_to_file, copy_location)
                "-o UserKnownHostsFile=/dev/null "
                "-o StrictHostKeyChecking=no "
                "-o LogLevel=quiet "
-               "%s@%s:%s %s") % (passwd, user, server_ip, 
+               "%s@%s:%s %s") % (password, user, server_ip, 
                                  path_to_file, copy_location)
 
 def disable_iptables(self, ip, user, password, logfile="STDOUT"):
