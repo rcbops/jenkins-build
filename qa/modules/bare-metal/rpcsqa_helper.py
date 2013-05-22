@@ -55,7 +55,7 @@ class rpcsqa_helper:
             print "Successfully bootstraped chef-client on %s \
             to chef-server on %s" % (client_node, server_node)
 
-    def build_dir_server(self, dir_node, dir_version):
+    def build_dir_server(self, dir_node, dir_version, os):
         chef_node = Node(dir_node)
 
         # We dont support 389 yet, so exit if it is not ldap
@@ -68,8 +68,7 @@ class rpcsqa_helper:
         ip = chef_node['ipaddress']
         root_pass = self.razor_password(chef_node)
         chef_node['in_use'] = 'directory-server'
-        chef_node.run_list = [
-            "role[qa-%s-%s]" % (dir_version, results.os)]
+        chef_node.run_list = ["role[qa-%s-%s]" % (dir_version, os)]
         chef_node.save()
 
         print "Updating server...this may take some time"
