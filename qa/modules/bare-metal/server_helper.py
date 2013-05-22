@@ -74,14 +74,14 @@ def update(self, ip, platform, user, password):
         '''
         ip = chef_node['ipaddress']
         if platform == "ubuntu":
-            self.run_remote_ssh_cmd(ip, 
-                                    user, 
-                                    password, 
+            self.run_remote_ssh_cmd(ip,
+                                    user,
+                                    password,
                                     'apt-get update -y; apt-get upgrade -y')
-        elif platform == "rhel" || platform == 'centos':
-            self.run_remote_ssh_cmd(ip, 
-                                    user, 
-                                    password, 
+        elif platform == "rhel" or platform == 'centos':
+            self.run_remote_ssh_cmd(ip,
+                                    user,
+                                    password,
                                     'yum update -y')
         else:
             print "Platform %s is not supported." % platform
