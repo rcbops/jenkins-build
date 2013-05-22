@@ -131,7 +131,7 @@ ${HOMEDIR}/.chef/chef-validator.pem
 ostackdemo
 EOF
         # setup the path
-        echo 'export PATH=${PATH}:/opt/chef-server/bin' >> ${HOMEDIR}/.profile
+        echo 'export PATH=${PATH}:/opt/chef/bin' >> ${HOMEDIR}/.profile
     fi
 
     # these are only returned on a run where we actually install chef-server

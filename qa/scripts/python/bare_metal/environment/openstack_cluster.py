@@ -111,11 +111,11 @@ if results.action == "build":
         # Build Chef Server
         rpcsqa.build_chef_server(controller)
 
-        # Setup Remote Client
-        rpcsqa.setup_remote_chef_client(controller, env)
-
         # Install the proper cookbooks
         rpcsqa.install_cookbooks(controller, results.branch)
+
+        # Setup Remote Client
+        rpcsqa.setup_remote_chef_client(controller, env)
 
         # Bootstrap chef client onto nodes
         for node in openstack_list:
