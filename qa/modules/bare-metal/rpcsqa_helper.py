@@ -82,7 +82,7 @@ class rpcsqa_helper:
 
         # Run chef-client twice
         print "Running chef-client for directory service node, \
-               this may take some time..."
+        this may take some time..."
         run1 = self.run_chef_client(chef_node)
         if run1['success']:
             print "First chef-client run successful...starting second run..."
@@ -205,8 +205,7 @@ class rpcsqa_helper:
                 self.disable_iptables(chef_node)
 
             # Run chef-client twice
-            print "Running chef-client for controller node, \
-                   this may take some time..."
+            print "Running chef-client for controller node, this may take some time..."
             run1 = self.run_chef_client(chef_node)
             if run1['success']:
                 print "First chef-client run successful, starting second run..."
@@ -235,17 +234,18 @@ class rpcsqa_helper:
         controller_ip = chef_node['ipaddress']
         controller_pass = self.razor_password(chef_node)
 
+        #update node
+        self.update_node(chef_node)
+
         # SCP install script to controller node
         scp_run = run_remote_scp_cmd(controller_ip,
                                      'root',
                                      controller_pass,
                                      install_script)
         if scp_run['success']:
-            print "Successfully copied chef server install \
-            script to controller node %s" % controller_node
+            print "Successfully copied chef server install script to controller node %s" % controller_node
         else:
-            print "Failed to copy chef server install script to \
-            controller node %s" % controller_node
+            print "Failed to copy chef server install script to controller node %s" % controller_node
             print scp_run
             sys.exit(1)
 
@@ -407,8 +407,7 @@ class rpcsqa_helper:
                     break
 
         if count < cluster_size:
-            print "Not enough available nodes for requested cluster \
-                size of %s, try again later..." % cluster_size
+            print "Not enough available nodes for requested cluster size of %s, try again later..." % cluster_size
             sys.exit(1)
 
         return ret_nodes
@@ -731,14 +730,17 @@ class rpcsqa_helper:
         to_run_list = ['chef-validator.pem']
 
         for item in to_run_list:
-            get_file_ret = get_file_from_server(chef_server_ip, 'root', chef_server_password, '/etc/chef-server/%s' % item, chef_file_path)
+            get_file_ret = get_file_from_server(chef_server_ip, 
+                                                'root', 
+                                                chef_server_password, 
+                                                '/etc/chef-server/%s' % item, chef_file_path)
             if not get_file_ret['success']:
                 print "Failed to copy %s from server @ %s, check stuff" % (item, chef_server_ip)
                 print get_file_ret
                 sys.exit(1)
 
         # setup remote chef client using files
-        command = "knife configure --user %s --server_url %s --validation-client-name %s --validation-key %s/%s" % ('remote-jenkins', 'https://%s:4443' % chef_server_ip, 'chef-validator', chef_file_path, 'chef-validator.pem')
+        command = "knife configure --user %s --server-url %s --validation-client-name %s --validation-key %s/%s" % ('remote-jenkins', 'https://%s:4443' % chef_server_ip, 'chef-validator', chef_file_path, 'chef-validator.pem')
 
         try:
             check_call(command, shell=True)

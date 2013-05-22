@@ -60,7 +60,7 @@ PRIMARY_INTERFACE=$(ip route list match 0.0.0.0 | awk 'NR==1 {print $5}')
 MY_IP=$(ip addr show dev ${PRIMARY_INTERFACE} | awk 'NR==3 {print $2}' | cut -d '/' -f1)
 CHEF_UNIX_USER=${CHEF_UNIX_USER:-root}
 # due to http://tickets.opscode.com/browse/CHEF-3849 CHEF_FE_PORT is not used yet
-CHEF_FE_PORT=${CHEF_FE_PORT:-8040}
+CHEF_FE_PORT=${CHEF_FE_PORT:-8090}
 CHEF_FE_SSL_PORT=${CHEF_FE_SSL_PORT:-4443}
 CHEF_URL=${CHEF_URL:-https://${MY_IP}:${CHEF_FE_SSL_PORT}}
 
