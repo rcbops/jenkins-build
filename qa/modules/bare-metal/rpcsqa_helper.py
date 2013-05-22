@@ -424,7 +424,7 @@ class rpcsqa_helper:
         # Gather node info
         chef_server_node = Node(chef_server)
         chef_server_ip = chef_server_node['ipaddress']
-        chef_server_password = self.razor_password(chef_server)
+        chef_server_password = self.razor_password(chef_server_node)
         chef_server_platform = chef_server_node['platform']
 
         # Install git and clone rcbops repo
