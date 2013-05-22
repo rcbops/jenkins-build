@@ -428,7 +428,7 @@ class rpcsqa_helper:
         chef_server_platform = chef_server_node['platform']
 
         # Install git and clone rcbops repo
-        rcbops_git = 'git@github.com:rcbops/chef-cookbooks.git'
+        rcbops_git = 'https://github.com/rcbops/chef-cookbooks.git'
         if chef_server_platform == 'ubuntu':
             to_run_list = ['apt-get install git -y',
                            'mkdir -p /opt/rcbops',
