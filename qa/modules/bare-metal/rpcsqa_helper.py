@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 from chef import *
@@ -6,6 +5,7 @@ from chef_helper import *
 from server_helper import *
 from razor_api import razor_api
 from subprocess import check_call, CalledProcessError
+
 
 class rpcsqa_helper:
 

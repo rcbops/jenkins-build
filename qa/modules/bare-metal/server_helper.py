@@ -1,6 +1,6 @@
-import time
 import sys
 from subprocess import check_call, CalledProcessError
+
 
 def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
     """
@@ -26,6 +26,7 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
                 'return': None,
                 'exception': cpe,
                 'command': command}
+
 
 def run_remote_scp_cmd(server_ip, user, password, to_copy):
     """
@@ -54,6 +55,7 @@ def run_remote_scp_cmd(server_ip, user, password, to_copy):
                 'exception': cpe,
                 'command': command}
 
+
 def get_file_from_server(server_ip, user, password, path_to_file, copy_location):
     """
     @param server_ip: The servers ip to get file from
@@ -67,8 +69,11 @@ def get_file_from_server(server_ip, user, password, path_to_file, copy_location)
                "-o UserKnownHostsFile=/dev/null "
                "-o StrictHostKeyChecking=no "
                "-o LogLevel=quiet "
-               "%s@%s:%s %s") % (password, user, server_ip, 
-                                 path_to_file, copy_location)
+               "%s@%s:%s %s") % (password,
+                                 user,
+                                 server_ip,
+                                 path_to_file,
+                                 copy_location)
 
     try:
         ret = check_call(command, shell=True)
@@ -81,11 +86,13 @@ def get_file_from_server(server_ip, user, password, path_to_file, copy_location)
                 'exception': cpe,
                 'command': command}
 
+
 def disable_iptables(self, ip, user, password, logfile="STDOUT"):
         commands = '/etc/init.d/iptables save; \
                     /etc/init.d/iptables stop; \
                     /etc/init.d/iptables save'
         return self.run_remote_ssh_cmd(ip, user, password, commands)
+
 
 def update(self, ip, platform, user, password):
         '''
@@ -99,7 +106,6 @@ def update(self, ip, platform, user, password):
         @param password: password for the user
         @type password: String
         '''
-        ip = chef_node['ipaddress']
         if platform == "ubuntu":
             self.run_remote_ssh_cmd(ip, user, password,
                                     'apt-get update -y; apt-get upgrade -y')
