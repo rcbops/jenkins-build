@@ -38,6 +38,10 @@ function id_OS {
     fi
 }
 
+function install_chef_client {
+    curl -L http://www.opscode.com/chef/install.sh | sudo bash
+}
+
 OS_TYPE="undef"
 id_OS
 
@@ -60,7 +64,7 @@ PRIMARY_INTERFACE=$(ip route list match 0.0.0.0 | awk 'NR==1 {print $5}')
 MY_IP=$(ip addr show dev ${PRIMARY_INTERFACE} | awk 'NR==3 {print $2}' | cut -d '/' -f1)
 CHEF_UNIX_USER=${CHEF_UNIX_USER:-root}
 # due to http://tickets.opscode.com/browse/CHEF-3849 CHEF_FE_PORT is not used yet
-CHEF_FE_PORT=${CHEF_FE_PORT:-8040}
+CHEF_FE_PORT=${CHEF_FE_PORT:-8090}
 CHEF_FE_SSL_PORT=${CHEF_FE_SSL_PORT:-4443}
 CHEF_URL=${CHEF_URL:-https://${MY_IP}:${CHEF_FE_SSL_PORT}}
 
@@ -109,23 +113,25 @@ EOF
         fi
     fi
 
+    install_chef_client
     mkdir -p ${HOMEDIR}/.chef
     cp /etc/chef-server/{chef-validator.pem,chef-webui.pem,admin.pem} ${HOMEDIR}/.chef
     chown -R ${CHEF_UNIX_USER}: ${HOMEDIR}/.chef
 
     if [[ ! -e ${HOMEDIR}/.chef/knife.rb ]]; then
-       cat <<EOF | /opt/chef-server/bin/knife configure -i
+       cat <<EOF | /opt/chef/bin/knife configure -i
 ${HOMEDIR}/.chef/knife.rb
 ${CHEF_URL}
 root
-chef-webui
-${HOMEDIR}/.chef/chef-webui.pem
+admin
+${HOMEDIR}/.chef/admin.pem
 chef-validator
 ${HOMEDIR}/.chef/chef-validator.pem
 
+ostackdemo
 EOF
         # setup the path
-        echo 'export PATH=${PATH}:/opt/chef-server/bin' >> ${HOMEDIR}/.profile
+        echo 'export PATH=${PATH}:/opt/chef/bin' >> ${HOMEDIR}/.profile
     fi
 
     # these are only returned on a run where we actually install chef-server
