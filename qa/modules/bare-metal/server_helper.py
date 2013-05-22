@@ -54,6 +54,22 @@ def run_remote_scp_cmd(server_ip, user, passwd, to_copy):
                 'exception': cpe,
                 'command': command}
 
+def get_file_from_server(server_ip, user, password, path_to_file, copy_location):
+    """
+    @param server_ip: The servers ip to get file from
+    @param user: remote server user
+    @param password: remote users password
+    @param path_to_file: file to copy
+    @param copy_location: place on localhost to place file
+    """
+
+    command = ("sshpass -p %s scp "
+               "-o UserKnownHostsFile=/dev/null "
+               "-o StrictHostKeyChecking=no "
+               "-o LogLevel=quiet "
+               "%s@%s:%s %s") % (passwd, user, server_ip, 
+                                 path_to_file, copy_location)
+
 def disable_iptables(self, ip, user, password, logfile="STDOUT"):
         commands = '/etc/init.d/iptables save; \
                     /etc/init.d/iptables stop; \
@@ -74,15 +90,10 @@ def update(self, ip, platform, user, password):
         '''
         ip = chef_node['ipaddress']
         if platform == "ubuntu":
-            self.run_remote_ssh_cmd(ip,
-                                    user,
-                                    password,
+            self.run_remote_ssh_cmd(ip, user, password,
                                     'apt-get update -y; apt-get upgrade -y')
         elif platform == "rhel" or platform == 'centos':
-            self.run_remote_ssh_cmd(ip,
-                                    user,
-                                    password,
-                                    'yum update -y')
+            self.run_remote_ssh_cmd(ip, user, password, 'yum update -y')
         else:
             print "Platform %s is not supported." % platform
             sys.exit(1)

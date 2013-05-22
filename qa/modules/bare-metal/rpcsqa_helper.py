@@ -1,10 +1,11 @@
+import os
 import sys
 import time
 from chef import *
 from chef_helper import *
 from server_helper import *
 from razor_api import razor_api
-
+from subprocess import check_call, CalledProcessError
 
 class rpcsqa_helper:
 
@@ -697,6 +698,48 @@ class rpcsqa_helper:
             print "Environment mismatch, setting environment"
             chef_node.chef_environment = environment
             chef_node.save()
+
+    def setup_remote_chef_client_folder(self, chef_environment_name):
+        '''
+        This will set up a directory for each chef environment locally
+        so that we can have local clients for all of the environments
+        chef servers.
+        '''
+        chef_file_path = "/var/lib/jenkins/rcbops-qa/remote-chef-clients/%s/.chef" % chef_environment_name
+        command = "mkdir -p %s" % chef_file_path
+        try:
+            ret = check_call(command, shell=True)
+            return chef_file_path
+        except CalledProcessError, cpe:
+            print "Failed to setup directory for %s" % chef_environment_name
+            print "Exception: %s" % cpe
+            sys.exit(1)
+
+    def setup_remote_chef_client(self, controller, chef_environment):
+
+        chef_server = Node(controller)
+        chef_server_ip = chef_server['ipaddress']
+        chef_server_password = self.razor_password(chef_server)
+
+        print "Setting up client directory on localhost"
+        chef_file_path = self.setup_remote_chef_client_folder(chef_environment)
+
+        # Log onto server and copy chef-validator.pem and chef-webui.pem
+        print "Copying new chef server validation files"
+        to_run_list = ['chef-validator.pem', 'chef-webui.pem']
+
+        for item in to_run_list:
+            get_file_from_server(chef_server_ip, 'root', chef_server_password,
+                                 '/etc/chef/%s' % item, chef_file_path)
+            subprocess.check_call('chown jenkins:jenkins %s/%s' % (chef_file_path, item)
+
+        # setup remote chef client using files
+        command = "knife configure --user %s \
+        --server_url https://%s:4443 --validation-client-name %s \
+        --validation-key %s" % ('jenkins', 
+                                chef_server_ip,
+                                'chef-validator',
+                                )
 
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
