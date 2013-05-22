@@ -5,6 +5,7 @@ from chef_helper import *
 from server_helper import *
 from razor_api import razor_api
 
+
 class rpcsqa_helper:
 
     def __init__(self, razor_ip='198.101.133.3'):
@@ -15,10 +16,10 @@ class rpcsqa_helper:
     def __repr__(self):
         """ Print out current instance of razor_api"""
         outl = 'class :'+self.__class__.__name__
-        
+
         for attr in self.__dict__:
             outl += '\n\t'+attr+' : '+str(getattr(self, attr))
-        
+
         return outl
 
     def bootstrap_chef(self, client_node, server_node):
@@ -89,7 +90,7 @@ class rpcsqa_helper:
                 print "Second chef-client run successful..."
             else:
                 print "Error running chef-client for directory node %s" \
-                       % chef_node
+                    % chef_node
                 print run2
                 sys.exit(1)
         else:
@@ -100,10 +101,10 @@ class rpcsqa_helper:
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
             if results.dir_version == 'openldap':
-                scp_run = run_remote_scp_cmd(ip, 'root', root_pass, 
+                scp_run = run_remote_scp_cmd(ip, 'root', root_pass,
                     '/var/lib/jenkins/source_files/ldif/*.ldif')
                 if scp_run['success']:
-                    ssh_run = run_remote_ssh_cmd(ip, 'root', root_pass, 
+                    ssh_run = run_remote_ssh_cmd(ip, 'root', root_pass,
                         "ldapadd -x -D \"cn=admin,dc=dev,dc=rcbops,dc=me\" \
                         -f base.ldif -w@privatecloud")
             elif results.dir_version == '389':
@@ -116,10 +117,10 @@ class rpcsqa_helper:
 
         if scp_run['success'] and ssh_run['success']:
             print "Directory Service: %s successfully set up..." \
-                   % results.dir_version
+                % results.dir_version
         else:
             print "Failed to set-up Directory Service: %s..." \
-                   % results.dir_version
+                % results.dir_version
             sys.exit(1)
 
     def build_computes(self, computes, remote=False, chef_config_file=None):
@@ -230,7 +231,7 @@ class rpcsqa_helper:
         chef_node = Node(controller_node)
         install_script = '/var/lib/jenkins/jenkins-build/qa/scripts/bash/jenkins/install-chef-server.sh'
         controller_ip = chef_node['ipaddress']
-        controller_pass = self.razor_password(controller_node)
+        controller_pass = self.razor_password(chef_node)
 
         # SCP install script to controller node
         scp_run = run_remote_scp_cmd(controller_ip, 
@@ -247,7 +248,7 @@ class rpcsqa_helper:
             sys.exit(1)
 
         # Run the install script
-        to_run_list = ['chmod u+x ./install-chef-server.sh', 
+        to_run_list = ['chmod u+x ~/install-chef-server.sh', 
                        './install-chef-server.sh']
         for cmd in to_run_list:
             ssh_run = run_remote_ssh_cmd(controller_ip, 
@@ -262,7 +263,7 @@ class rpcsqa_helper:
         if len(chef_nodes) < size:
             print "*****************************************************"
             print "Not enough nodes for the cluster_size given: %s " \
-                   % size
+                % size
             print "*****************************************************"
             sys.exit(1)
 
@@ -300,7 +301,7 @@ class rpcsqa_helper:
         print "Cloning repo with setup script..."
         rcps_dir = "/opt/rpcs"
         repo = "https://%s:%s@github.com/rsoprivatecloud/scripts" \
-                % (github_user, github_pass)
+               % (github_user, github_pass)
         command = "mkdir -p /opt/rpcs; git clone %s %s" % (repo, rcps_dir)
         download_run = run_remote_ssh_cmd(node_ip,
                                           'root',
@@ -308,12 +309,26 @@ class rpcsqa_helper:
                                           command)
         if not download_run['success']:
             print "Failed to clone script repo on server %s@%s" \
-                   % (chef_node, node_ip)
+                % (chef_node, node_ip)
             print "Return Code: %s" % download_run['exception'].returncode
             print "Exception: %s" % download_run['exception']
             sys.exit(1)
         else:
             print "Successfully cloned repo with setup script..."
+
+    def cluster_controller(self, environment):
+        controller_name = "qa-ha-controller1"
+        q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
+                                                       controller_name)
+        search = Search("node").query(q)
+        if not search:
+            return None
+        return Node(search[0]['name'])
+
+    def cluster_environment(self, name, os, feature_set):
+        name = "%s-%s-%s" % (name, os, feature_set)
+        env = Environment(name)
+        return env
 
     def disable_iptables(self, chef_node, logfile="STDOUT"):
         ip = chef_node['ipaddress']
@@ -326,8 +341,8 @@ class rpcsqa_helper:
     def environment_has_controller(self, environment):
         # Load Environment
         nodes = Search('node').query("chef_environment:%s" % environment)
-        roles = ['role[qa-single-controller]', 
-                 'role[qa-ha-controller1]', 
+        roles = ['role[qa-single-controller]',
+                 'role[qa-ha-controller1]',
                  'role[qa-ha-controller2]']
         for node in nodes:
             chef_node = Node(node['name'])
@@ -373,16 +388,16 @@ class rpcsqa_helper:
         # Gather the nodes for the requested OS
         nodes = Search('node').query("name:qa-%s-pool*" % os)
 
-        # Take a node from the default environment that 
+        # Take a node from the default environment that
         # has its network interfaces set.
         for n in nodes:
             name = n['name']
             node = Node(name)
-            if ((node.chef_environment == "_default" or 
-                node.chef_environment == environment) and 
-            "recipe[network-interfaces]" in node.run_list):
+            if ((node.chef_environment == "_default" or
+                node.chef_environment == environment) and
+                    "recipe[network-interfaces]" in node.run_list):
                 self.set_nodes_environment(node, environment)
-                ret_nodes.append(name)          
+                ret_nodes.append(name)
                 print "Taking node: %s" % name
                 count += 1
 
@@ -456,27 +471,27 @@ class rpcsqa_helper:
         print ""
         print ""
         if chef_node['platform_family'] == "debian":
-            run_remote_ssh_cmd(chef_node['ipaddress'], 'root', 
-                root_pass, 'apt-get update -y -qq')
+            run_remote_ssh_cmd(chef_node['ipaddress'], 'root',
+                               root_pass, 'apt-get update -y -qq')
         elif chef_node['platform_family'] == "rhel":
             run_remote_ssh_cmd(chef_node['ipaddress'], 'root', root_pass,
                                ('yum update -y -q;'
                                 '/etc/init.d/iptables save;'
                                 '/etc/init.d/iptables stop'))
         command = "bash <(curl %s) --role=%s --ip=%s" % (
-                   install_script, role, oc_server_ip)
+            install_script, role, oc_server_ip)
         print command
-        ret = run_remote_ssh_cmd(chef_node['ipaddress'], 
-                                 'root', 
-                                 root_pass, 
+        ret = run_remote_ssh_cmd(chef_node['ipaddress'],
+                                 'root',
+                                 root_pass,
                                  command)
         if not ret['success']:
             print "Failed to install opencenter %s" % type
 
-    def install_opencenter_vm(self, vm_ip, oc_server_ip, 
+    def install_opencenter_vm(self, vm_ip, oc_server_ip,
                               install_script, role, user, passwd):
         command = "bash <(curl %s) --role=%s --ip=%s" % (
-                   install_script, role, oc_server_ip)
+            install_script, role, oc_server_ip)
         install_run = run_remote_ssh_cmd(vm_ip, user, passwd, command)
         if not install_run['success']:
             print "Failed to install OpenCenter %s on VM..." % role
@@ -487,7 +502,7 @@ class rpcsqa_helper:
             print "OpenCenter %s successfully installed on vm with ip %s" \
                 % (role, vm_ip)
 
-    def install_server_vms(self, server, opencenter_server_ip, 
+    def install_server_vms(self, server, opencenter_server_ip,
                            chef_server_ip, vm_bridge, vm_bridge_device):
         chef_node = Node(server)
         node_ip = chef_node['ipaddress']
@@ -505,7 +520,7 @@ class rpcsqa_helper:
         install_run = run_remote_ssh_cmd(node_ip, 'root', root_pass, command)
         if not install_run['success']:
             print "Failed VM setup script on server %s@%s" % (
-                   chef_node, node_ip)
+                chef_node, node_ip)
             print "Command ran: %s" % install_run['command']
             print "Return Code: %s" % install_run['exception'].returncode
             print "Exception: %s" % install_run['exception']
@@ -517,8 +532,8 @@ class rpcsqa_helper:
         command = "ping -c 5 %s" % ip_address
         try:
             ret = check_call(command, shell=True)
-            return {'success': True, 
-                    'return': ret, 
+            return {'success': True,
+                    'return': ret,
                     'exception': None}
         except CalledProcessError, cpe:
             return {'success': False,
@@ -636,9 +651,9 @@ class rpcsqa_helper:
                 command = "apt-get remove --purge -y chef; rm -rf /etc/chef"
             elif chef_node['platform_family'] == "rhel":
                 command = 'yum remove -y chef; rm -rf /etc/chef /var/chef'
-            run = run_remote_ssh_cmd(chef_node['ipaddress'], 
-                                     'root', 
-                                     root_pass, 
+            run = run_remote_ssh_cmd(chef_node['ipaddress'],
+                                     'root',
+                                     root_pass,
                                      command)
         except:
             raise Exception("Error removing chef")
@@ -649,7 +664,7 @@ class rpcsqa_helper:
             chef_node['in_use'] = 0
             chef_node.save()
             print "Running network interfaces for %s" % chef_node
-          
+
             #Run chef client thrice
             run1 = self.run_chef_client(chef_node)
             run2 = self.run_chef_client(chef_node)
@@ -662,7 +677,7 @@ class rpcsqa_helper:
                 print "First run: %s" % run1
                 print "Second run: %s" % run2
                 print "Final run: %s" % run3
-                raise Exception("Failed to set network interface for %s" \
+                raise Exception("Failed to set network interface for %s"
                                 % chef_node)
 
     def set_node_in_use(self, node, role):
@@ -686,11 +701,26 @@ class rpcsqa_helper:
         ip = chef_node['ipaddress']
         root_pass = self.razor_password(chef_node)
         if chef_node['platform_family'] == "debian":
-            run_remote_ssh_cmd(ip, 'root', root_pass, 
-                'apt-get update -y; apt-get upgrade -y')
+            run_remote_ssh_cmd(ip, 'root', root_pass,
+                               'apt-get update -y; apt-get upgrade -y')
         elif chef_node['platform_family'] == "rhel":
             run_remote_ssh_cmd(ip, 'root', root_pass, 'yum update -y')
         else:
             print "Platform Family %s is not supported." \
-            % chef_node['platform_family']
+                % chef_node['platform_family']
             sys.exit(1)
+            
+    def node_search(self, query=None):
+        search = Search("node").query(query)
+        return (Node(n['name']) for n in search)
+
+    def run_cmd_on_node(self, node=None, cmd=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        run_remote_ssh_cmd(ip, user, password, cmd)
+
+    def environment_exists(self, env):
+        if not Search("environment").query("name:%s" % env):
+            return False
+        return True
