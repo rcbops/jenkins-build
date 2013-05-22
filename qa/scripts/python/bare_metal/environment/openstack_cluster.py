@@ -1,8 +1,5 @@
 #!/usr/bin/python
-import os
 import sys
-import time
-import requests
 import argparse
 from rpcsqa_helper import *
 
