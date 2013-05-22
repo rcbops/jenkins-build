@@ -16,10 +16,10 @@ class chef_helper:
     def __repr__(self):
         """ Print out current instance of chef_api"""
         outl = 'class :'+self.__class__.__name__
-        
+
         for attr in self.__dict__:
             outl += '\n\t'+attr+' : '+str(getattr(self, attr))
-        
+
         return outl
 
     def build_compute(self, compute_node, user=None, password=None):
@@ -42,7 +42,7 @@ class chef_helper:
         update(chef_node)
 
         platform = chef_node['platform']
-        if platform == 'centos' || platform == 'redhat':
+        if platform == 'centos' or platform == 'redhat':
             print "Platform is %s, disabling iptables" % platform
             disable_iptables(chef_node)
 
@@ -64,7 +64,7 @@ class chef_helper:
             print run1
             sys.exit(1)
 
-    def build_controller(self, controller_node, ha_num=0, 
+    def build_controller(self, controller_node, ha_num=0,
                          user=None, password=None):
         '''
         @summary: Builds a controller node
@@ -80,7 +80,7 @@ class chef_helper:
 
         # Check for ha
         chef_node = Node(controller_node)
-        if ha_num not 0:
+        if not ha_num == 0:
             print "Making %s the ha-controller%s node" % (controller_node, ha_num)
             chef_node['in_use'] = "ha-controller%s" % ha_num
             chef_node.run_list = ["role[ha-controller%s]" % ha_num]
@@ -95,7 +95,7 @@ class chef_helper:
         update(chef_node)
 
         platform = chef_node['platform']
-        if platform == 'rhel' || platform == 'centos':
+        if platform == 'rhel' or platform == 'centos':
             print "%s platform, disabling iptables" % platform
             disable_iptables()
 
