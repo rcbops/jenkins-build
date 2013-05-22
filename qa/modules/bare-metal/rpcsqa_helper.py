@@ -437,7 +437,7 @@ class rpcsqa_helper:
                            'cd /opt/rcbops; git branch -t %s remotes/origin/%s' % (openstack_release, openstack_release),
                            'cd /opt/rcbops; git checkout %s' % openstack_release,
                            'cd /opt/rcbops; git submodule init; git submodule update']
-        elif chef_server_platform == 'centos' || chef_server_platform == 'redhat':
+        elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
             to_run_list = ['yum install git -y',
                            'mkdir -p /opt/rcbops',
                            'cd /opt/rcbops; git clone --recursive %s' % rcbops_git,
