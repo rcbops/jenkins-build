@@ -731,18 +731,13 @@ class rpcsqa_helper:
         to_run_list = ['chef-validator.pem', 'chef-webui.pem']
 
         for item in to_run_list:
-            get_file_from_server(chef_server_ip, 'root', chef_server_password,
-                                 '/etc/chef-server/%s' % item, chef_file_path)
-            subprocess.check_call('chown jenkins:jenkins %s/%s' % (chef_file_path, item)
+            get_file_from_server(chef_server_ip, 'root', chef_server_password, '/etc/chef-server/%s' % item, chef_file_path)
+            check_call('chown jenkins:jenkins %s/%s' % (chef_file_path, item))
 
         # setup remote chef client using files
-        command = "knife configure --user %s \
-        --server_url https://%s:4443 --validation-client-name %s \
-        --validation-key %s/%s" % ('remote-jenkins', 
-                                chef_server_ip,
-                                'chef-validator',
-                                chef_file_path,
-                                'chef-validator.pem')
+        command = "knife configure --user %s --server_url %s --validation-client-name %s --validation-key %s/%s" % ('remote-jenkins', 'https://%s:4443' % chef_server_ip, 'chef-validator', chef_file_path, 'chef-validator.pem')
+
+        check_call(command, shell=True)
 
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
