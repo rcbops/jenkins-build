@@ -102,9 +102,12 @@ if results.action == "build":
         controller = openstack_list[0]
         computes = openstack_list[1:]
 
+        # Set the node to be chef server
+        rpcsqa.set_node_in_use(controller, 'chef-server')
+
         # Remove Chef from controller Node
         rpcsqa.remove_chef(controller)
-        
+
         # Build Chef Server
         rpcsqa.build_chef_server(controller)
 
