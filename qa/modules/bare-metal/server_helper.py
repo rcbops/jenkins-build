@@ -70,6 +70,17 @@ def get_file_from_server(server_ip, user, password, path_to_file, copy_location)
                "%s@%s:%s %s") % (password, user, server_ip, 
                                  path_to_file, copy_location)
 
+    try:
+        ret = check_call(command, shell=True)
+        return {'success': True,
+                'return': ret,
+                'exception': None}
+    except CalledProcessError, cpe:
+        return {'success': False,
+                'return': None,
+                'exception': cpe,
+                'command': command}
+
 def disable_iptables(self, ip, user, password, logfile="STDOUT"):
         commands = '/etc/init.d/iptables save; \
                     /etc/init.d/iptables stop; \
