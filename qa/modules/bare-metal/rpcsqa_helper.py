@@ -732,9 +732,7 @@ class rpcsqa_helper:
 
         for item in to_run_list:
             get_file_ret = get_file_from_server(chef_server_ip, 'root', chef_server_password, '/etc/chef-server/%s' % item, chef_file_path)
-            if get_file_ret['success']:
-                check_call('chown jenkins:jenkins %s/%s' % (chef_file_path, item))
-            else:
+            if not get_file_ret['success']:
                 print "Failed to copy %s from server @ %s, check stuff" % (item, chef_server_ip)
                 print get_file_ret
                 sys.exit(1)
@@ -742,7 +740,12 @@ class rpcsqa_helper:
         # setup remote chef client using files
         command = "knife configure --user %s --server_url %s --validation-client-name %s --validation-key %s/%s" % ('remote-jenkins', 'https://%s:4443' % chef_server_ip, 'chef-validator', chef_file_path, 'chef-validator.pem')
 
-        check_call(command, shell=True)
+        try:
+            check_call(command, shell=True)
+        except CalledProcessError, cpe:
+            print "Failed to setup knife client for remote chef server %s" % chef_server_ip
+            print cpe
+            sys.exit(1)
 
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
