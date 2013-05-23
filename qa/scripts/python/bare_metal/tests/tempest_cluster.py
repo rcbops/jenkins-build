@@ -38,9 +38,11 @@ qa = rpcsqa_helper()
 env = qa.cluster_environment(results.name, results.os_distro,
                              results.feature_set)
 if not env.exists:
-    print "Error: Environment %s doesn't exist" % env
+    print "Error: Environment %s doesn't exist" % env.name
     sys.exit(1)
 controller = qa.cluster_controller(env)
+if not controller:
+    print "Controller not found for env: %s" % env.name
 ip = controller['ipaddress']
 url = "http://%s:5000/v2.0" % ip
 token_url = "%s/tokens" % url
@@ -114,8 +116,10 @@ if results.xunit:
                       time.gmtime()),
         env.name)
     xunit = ' --with-xunit --xunit-file=%s ' % file
-command = ("export TEMPEST_CONFIG=%s; "
+command = ("cd %s; git pull; "
+           "export TEMPEST_CONFIG=%s; "
            "python -u /usr/local/bin/nosetests%s%s/tempest/tests" % (
+               tempest_dir,
                tempest_config_path,
                xunit,
                tempest_dir))
