@@ -726,18 +726,20 @@ class rpcsqa_helper:
 
         # Log onto server and copy chef-validator.pem and chef-webui.pem
         print "Copying new chef server validation files"
-        to_run_list = ['chef-validator.pem']
+        to_run_list = ['admin.pem']
 
         for item in to_run_list:
-            get_file_ret = get_file_from_server(chef_server_ip, 
-                                                'root', 
-                                                chef_server_password, 
-                                                '/etc/chef-server/%s' % item, chef_file_path)
+            get_file_ret = get_file_from_server(chef_server_ip,
+                                                'root',
+                                                chef_server_password,
+                                                '~/.chef/%s' % item,
+                                                chef_file_path)
             if not get_file_ret['success']:
                 print "Failed to copy %s from server @ %s, check stuff" % (item, chef_server_ip)
                 print get_file_ret
                 sys.exit(1)
 
+        '''
         # setup remote chef client using files
         command = "knife configure --user %s --server-url %s --validation-client-name %s --validation-key %s/%s" % ('remote-jenkins', 'https://%s:4443' % chef_server_ip, 'chef-validator', chef_file_path, 'chef-validator.pem')
 
@@ -747,6 +749,7 @@ class rpcsqa_helper:
             print "Failed to setup knife client for remote chef server %s" % chef_server_ip
             print cpe
             sys.exit(1)
+        '''
 
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
