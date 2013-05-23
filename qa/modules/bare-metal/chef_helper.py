@@ -7,7 +7,7 @@ class chef_helper:
 
     def __init__(self, chef_config=None):
         if chef_config:
-            self.chef = from_config_file(chef_config)
+            self.chef = ChefAPI.from_config_file(chef_config)
         else:
             self.chef = autoconfigure()
         self.chef.set_default()
