@@ -91,7 +91,7 @@ def disable_iptables(ip, user, password, logfile="STDOUT"):
         commands = '/etc/init.d/iptables save; \
                     /etc/init.d/iptables stop; \
                     /etc/init.d/iptables save'
-        return self.run_remote_ssh_cmd(ip, user, password, commands)
+        return run_remote_ssh_cmd(ip, user, password, commands)
 
 
 def update(ip, platform, user, password):
@@ -107,10 +107,10 @@ def update(ip, platform, user, password):
         @type password: String
         '''
         if platform == "ubuntu":
-            self.run_remote_ssh_cmd(ip, user, password,
-                                    'apt-get update -y; apt-get upgrade -y')
+            run_remote_ssh_cmd(ip, user, password,
+                               'apt-get update -y; apt-get upgrade -y')
         elif platform == "rhel" or platform == 'centos':
-            self.run_remote_ssh_cmd(ip, user, password, 'yum update -y')
+            run_remote_ssh_cmd(ip, user, password, 'yum update -y')
         else:
             print "Platform %s is not supported." % platform
             sys.exit(1)
