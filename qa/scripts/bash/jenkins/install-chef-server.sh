@@ -85,6 +85,7 @@ node.override["chef_server"]["nginx"]["url"] = "${CHEF_URL}"
 node.override["chef_server"]["nginx"]["ssl_port"] = ${CHEF_FE_SSL_PORT}
 node.override["chef_server"]["nginx"]["non_ssl_port"] = ${CHEF_FE_PORT}
 node.override["chef_server"]["nginx"]["enable_non_ssl"] = true
+node.override["chef_server"]["bookshelf"]["url"] = ${CHEF_URL}
 if (node['memory']['total'].to_i / 4) > ((node['chef_server']['postgresql']['shmmax'].to_i / 1024) - 2097152)
   # guard against setting shared_buffers > shmmax on hosts with installed RAM > 64GB
   # use 2GB less than shmmax as the default for these large memory machines
