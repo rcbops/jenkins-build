@@ -739,7 +739,7 @@ class rpcsqa_helper:
 
         # Log onto server and copy chef-validator.pem and chef-webui.pem
         print "Copying new chef server validation files"
-        to_run_list = ['admin.pem', 'knife.rb']
+        to_run_list = ['admin.pem', 'chef-validatior.pem']
 
         for item in to_run_list:
             get_file_ret = get_file_from_server(chef_server_ip,
@@ -752,17 +752,30 @@ class rpcsqa_helper:
                 print get_file_ret
                 sys.exit(1)
 
-        '''
-        # setup remote chef client using files
-        command = "knife configure --user %s --server-url %s --validation-client-name %s --validation-key %s/%s" % ('remote-jenkins', 'https://%s:4443' % chef_server_ip, 'chef-validator', chef_file_path, 'chef-validator.pem')
+        # build knife.rb
+        knife_dict = {"log_level": ":info",
+                      "log_location": "STDOUT",
+                      "node_name": "admin",
+                      "client_key": "%s/admin.pem" % chef_file_path,
+                      "validation_client_name": "chef-validator",
+                      "validation_key": "%s/chef-validator.pem" % chef_file_path,
+                      "chef_server_url": "https://%s:4443" % chef_server_ip}
 
         try:
-            check_call(command, shell=True)
-        except CalledProcessError, cpe:
-            print "Failed to setup knife client for remote chef server %s" % chef_server_ip
-            print cpe
-            sys.exit(1)
-        '''
+            # Open the file
+            fo = open("%s/knife.rb" % chef_file_path, "w")
+        except IOError:
+            print "Failed to open file %s/knife.rb" % chef_file_path
+        else:
+            # Write the json string
+            for key, value in knife_dict.iteritems():
+                fo.write("%s\t%s\n" % (key, value))
+
+            #close the file
+            fo.close()
+
+            # print message for debugging
+            print "%s/knife.rb successfully saved" % chef_file_path
 
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
