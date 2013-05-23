@@ -100,7 +100,7 @@ if results.action == "build":
         computes = openstack_list[1:]
 
         # Set the node to be chef server
-        rpcsqa.set_node_in_use(controller, 'chef-server')
+        rpcsqa.set_node_in_use(controller, 'chef-server, controller')
 
         # Remove Chef from controller Node
         rpcsqa.remove_chef(controller)
@@ -113,6 +113,11 @@ if results.action == "build":
 
         # Setup Remote Client
         rpcsqa.setup_remote_chef_client(controller, env)
+
+        #remove chef from computes
+        for compute in computes:
+            rpcsqa.set_node_in_use(compute, 'compute')
+            rpcsqa.remove_chef(compute)
 
         # Bootstrap chef client onto nodes
         for node in openstack_list:
