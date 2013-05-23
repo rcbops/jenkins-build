@@ -62,8 +62,8 @@ class chef_helper:
             print run1
             sys.exit(1)
 
-    def build_controller(self, controller_node, environment, ha_num=0,
-                         user, password):
+    def build_controller(self, controller_node, environment,
+                         user, password, ha_num=0):
         '''
         @summary: Builds a controller node
         @param controller_node: The node to build as a controller
