@@ -1,5 +1,4 @@
 import sys
-import time
 from chef import *
 from server_helper import *
 
@@ -128,3 +127,8 @@ class chef_helper:
         '''
         ip = node['ipaddress']
         return run_remote_ssh_cmd(ip, user, password, 'chef-client')
+
+    def print_nodes(self):
+        # prints all the nodes in the chef server
+        for node in Node.list():
+            print node

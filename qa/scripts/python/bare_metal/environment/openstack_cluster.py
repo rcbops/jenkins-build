@@ -2,6 +2,7 @@
 import sys
 import argparse
 from rpcsqa_helper import *
+from chef_helper import *
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
@@ -112,7 +113,7 @@ if results.action == "build":
         rpcsqa.install_cookbooks(controller, results.branch)
 
         # Setup Remote Client
-        rpcsqa.setup_remote_chef_client(controller, env)
+        config_file = rpcsqa.setup_remote_chef_client(controller, env)
 
         #remove chef from computes
         for compute in computes:
@@ -123,6 +124,10 @@ if results.action == "build":
         for node in openstack_list:
             rpcsqa.bootstrap_chef(node, controller)
 
+        remote_chef_api = chef_helper(config_file)
+
+        remove_chef_api.print_nodes()
+        
         '''
         # Make servers
         rpcsqa.build_controller(controller)

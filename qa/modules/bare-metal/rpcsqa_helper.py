@@ -777,6 +777,9 @@ class rpcsqa_helper:
             # print message for debugging
             print "%s/knife.rb successfully saved" % chef_file_path
 
+        remote_config_file = '%s/knife.rb' % chef_file_path
+        return remote_config_file
+
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
         root_pass = self.razor_password(chef_node)
