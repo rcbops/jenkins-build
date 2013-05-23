@@ -726,12 +726,12 @@ class rpcsqa_helper:
             print "Exception: %s" % cpe
             sys.exit(1)
 
-    def setup_remote_chef_client(self, controller, chef_environment):
+    def setup_remote_chef_client(self, chef_server, chef_environment):
 
         # Gather chef server info
-        chef_server = Node(controller)
-        chef_server_ip = chef_server['ipaddress']
-        chef_server_password = self.razor_password(chef_server)
+        chef_server_node = Node(chef_server)
+        chef_server_ip = chef_server_node['ipaddress']
+        chef_server_password = self.razor_password(chef_server_node)
 
         # Set up file for storing chef validation info locally
         print "Setting up client directory on localhost"
@@ -779,6 +779,45 @@ class rpcsqa_helper:
 
         remote_config_file = '%s/knife.rb' % chef_file_path
         return remote_config_file
+
+    def setup_remote_chef_environment(self, chef_server, chef_environment):
+        """
+        @summary This will copy the environment file and set it on the remote
+        chef server.
+        """
+
+        # Gather chef server info
+        chef_server_node = Node(chef_server)
+        chef_server_ip = chef_server_node['ipaddress']
+        chef_server_password = self.razor_password(chef_server_node)
+
+        environment_file = '/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/%s.json' % chef_environment
+
+        run_scp = run_remote_scp_cmd(chef_server_ip,
+                                     'root',
+                                     chef_server_password,
+                                     environment_file)
+
+        if not run_scp['success']:
+            print "Failed to copy environment file to remote chef server"
+            print run_scp
+            sys.exit(1)
+
+        to_run_list['cp ~/%s.json /opt/rcbops/chef-cookbooks/environments' % chef_environment,
+                    'knife environment from file /opt/rcbops/chef-cookbooks/environments/%s.json' % chef_environment]
+
+        for cmd in to_run_list:
+            run_ssh = run_remote_ssh_cmd(chef_server_ip,
+                                         'root',
+                                         chef_server_password,
+                                         cmd)
+
+            if not run_ssh['success']:
+                print "Failed to run remote ssh command on server %s @ %s" % (chef_server, chef_server_ip)
+                print run_ssh
+                sys.exit(1)
+
+        print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment, chef_server, chef_server_ip)
 
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
