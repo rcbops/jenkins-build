@@ -87,14 +87,14 @@ def get_file_from_server(server_ip, user, password, path_to_file, copy_location)
                 'command': command}
 
 
-def disable_iptables(self, ip, user, password, logfile="STDOUT"):
+def disable_iptables(ip, user, password, logfile="STDOUT"):
         commands = '/etc/init.d/iptables save; \
                     /etc/init.d/iptables stop; \
                     /etc/init.d/iptables save'
         return self.run_remote_ssh_cmd(ip, user, password, commands)
 
 
-def update(self, ip, platform, user, password):
+def update(ip, platform, user, password):
         '''
         @summary: Updates the chef node
         @param ip: ip of the server to update
