@@ -109,7 +109,7 @@ with open(tempest_config_path, 'w') as w:
 # Setup and clean up the cluster
 setup_cmd = ("sysctl -w net.ipv4.ip_forward=1; "
              "source ~/openrc; "
-             "nova-manage floating list | grep eth0 > /dev/null || { nova-manage floating create 33.33.33.0/24; }; "
+             "nova-manage floating list | grep eth0 > /dev/null || { nova-manage floating create 192.168.2.0/24; }; "
              "for i in `keystone tenant-list | grep -i test | awk '{print $2}'`; do keystone tenant-delete $i; done; "
              "for i in `nova volume-list --all-tenants | tail -n +4 | head -n -1 | awk '{print $2}'`; do nova volume-delete $i; done; "
              "for i in `keystone user-list | grep -i test | awk '{print $2}'`; do keystone user-delete $i; done; ")
@@ -121,7 +121,7 @@ file = '%s-%s.xunit' % (
                   time.gmtime()),
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
-command = ("cd %s; git pull; "
+command = ("cd %s; git pull; cd -"
            "export TEMPEST_CONFIG=%s; "
            "python -u /usr/local/bin/nosetests %s %s/tempest/tests; " % (
                tempest_dir,
