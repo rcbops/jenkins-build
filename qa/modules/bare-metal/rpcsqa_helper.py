@@ -122,7 +122,7 @@ class rpcsqa_helper:
                 % dir_version
             sys.exit(1)
 
-    def build_computes(self, computes, remote=False, chef_config_file=None):
+    def build_computes(self, computes, environment, remote=False, chef_config_file=None):
         '''
         @summary: This will build out all the computes for a openstack
         environment, if remote is set it will use a remote chef server, if not
@@ -168,7 +168,7 @@ class rpcsqa_helper:
                     print run1
                     sys.exit(1)
 
-    def build_controller(self, controller_node, ha_num=0,
+    def build_controller(self, controller_node, environment, ha_num=0,
                          remote=False, chef_config_file=None):
         '''
         @summary: This will build out a controller node based on location.
@@ -191,6 +191,7 @@ class rpcsqa_helper:
         if remote:
             remote_chef = chef_helper(chef_config_file)
             remote_chef.build_controller(controller_node,
+                                         environment,
                                          ha_num,
                                          'root',
                                          self.razor_password(chef_node))

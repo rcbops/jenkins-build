@@ -118,24 +118,15 @@ if results.action == "build":
         # Setup Remote Client
         config_file = rpcsqa.setup_remote_chef_client(controller, env)
 
-        #remove chef from computes
-        for compute in computes:
-            rpcsqa.set_node_in_use(compute, 'compute')
-            rpcsqa.remove_chef(compute)
+        # Bootstrap chef client onto controller
+        rpcsqa.bootstrap_chef(controller, controller)
 
-        # Bootstrap chef client onto nodes
-        for node in openstack_list:
-            rpcsqa.bootstrap_chef(node, controller)
-
-        # Set up API connection to remote chef server
-        remote_chef_api = chef_helper(config_file)
-
-        remote_chef_api.print_nodes()
-
-        '''
         # Make servers
-        rpcsqa.build_controller(controller)
-        rpcsqa.build_computes(computes)
+        rpcsqa.build_controller(controller, env,
+                                remote=True, chef_config_file=config_file)
+        '''
+        rpcsqa.build_computes(computes, env,
+                              remote=True, chef_config_file=config_file)
 
         # print all servers info
         print "********************************************************************"
