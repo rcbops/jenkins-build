@@ -192,9 +192,9 @@ class rpcsqa_helper:
             remote_chef = chef_helper(chef_config_file)
             remote_chef.build_controller(controller_node,
                                          environment,
-                                         ha_num,
                                          'root',
-                                         self.razor_password(chef_node))
+                                         self.razor_password(chef_node),
+                                         ha_num)
         else:
             print "Updating server...this may take some time"
             self.update_node(chef_node)
