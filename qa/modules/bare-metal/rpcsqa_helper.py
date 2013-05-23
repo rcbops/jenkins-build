@@ -37,10 +37,10 @@ class rpcsqa_helper:
         chef_client_node = Node(client_node)
 
         chef_server_ip = chef_server_node['ipaddress']
-        chef_server_password = self.razor_password(server_node)
+        chef_server_password = self.razor_password(chef_server_node)
 
         chef_client_ip = chef_client_node['ipaddress']
-        chef_client_password = self.razor_password(client_node)
+        chef_client_password = self.razor_password(chef_client_node)
 
         # install chef client and bootstrap
         cmd = 'knife bootstrap %s -x root -P %s' % (chef_client_ip,
