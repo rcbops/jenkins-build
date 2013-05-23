@@ -739,7 +739,7 @@ class rpcsqa_helper:
 
         # Log onto server and copy chef-validator.pem and chef-webui.pem
         print "Copying new chef server validation files"
-        to_run_list = ['admin.pem', 'chef-validatior.pem']
+        to_run_list = ['admin.pem', 'chef-validator.pem']
 
         for item in to_run_list:
             get_file_ret = get_file_from_server(chef_server_ip,
