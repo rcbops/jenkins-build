@@ -52,8 +52,7 @@ class rpcsqa_helper:
                                      cmd)
 
         if ssh_run['success']:
-            print "Successfully bootstraped chef-client on %s \
-            to chef-server on %s" % (client_node, server_node)
+            print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
 
     def build_dir_server(self, dir_node, dir_version, os):
         chef_node = Node(dir_node)
@@ -457,6 +456,20 @@ class rpcsqa_helper:
                 print run_cmd
                 sys.exit(1)
 
+        # Install the cookbooks on the chef server
+        to_run_list = ['knife cookbook upload --all --cookbook-path /opt/rcbops/chef-cookbooks/cookbooks',
+                       'knife role from file /opt/rcbops/chef-cookbooks/roles/*.rb']
+
+        for cmd in to_run_list:
+            run_cmd = run_remote_ssh_cmd(chef_server_ip,
+                                         'root',
+                                         chef_server_password,
+                                         cmd)
+            if not run_cmd['success']:
+                print "Command: %s failed to run on %s" % (cmd, chef_server)
+                print run_cmd
+                sys.exit(1)
+
     def install_opencenter(self, server, install_script,
                            role, oc_server_ip='0.0.0.0'):
         chef_node = Node(server)
@@ -706,7 +719,7 @@ class rpcsqa_helper:
         chef_file_path = "/var/lib/jenkins/rcbops-qa/remote-chef-clients/%s/.chef" % chef_environment_name
         command = "mkdir -p %s" % chef_file_path
         try:
-            ret = check_call(command, shell=True)
+            check_call(command, shell=True)
             return chef_file_path
         except CalledProcessError, cpe:
             print "Failed to setup directory for %s" % chef_environment_name
