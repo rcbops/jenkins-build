@@ -803,8 +803,8 @@ class rpcsqa_helper:
             print run_scp
             sys.exit(1)
 
-        to_run_list['cp ~/%s.json /opt/rcbops/chef-cookbooks/environments' % chef_environment,
-                    'knife environment from file /opt/rcbops/chef-cookbooks/environments/%s.json' % chef_environment]
+        to_run_list = ['cp ~/%s.json /opt/rcbops/chef-cookbooks/environments' % chef_environment,
+                       'knife environment from file /opt/rcbops/chef-cookbooks/environments/%s.json' % chef_environment]
 
         for cmd in to_run_list:
             run_ssh = run_remote_ssh_cmd(chef_server_ip,
