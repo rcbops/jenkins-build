@@ -116,9 +116,15 @@ if results.xunit:
                       time.gmtime()),
         env.name)
     xunit = ' --with-xunit --xunit-file=%s ' % file
-command = ("cd %s; git pull; "
+command = ("sysctl -w net.ipv4.ip_forward=1; "
+           "source ~/openrc; "
+           "nova-manage floating list | grep eth0 > /dev/null || { nova-manage floating create 33.33.33.0/24; }; "
+           "for i in `keystone tenant-list | grep -i test | awk '{print $2}'`; do keystone tenant-delete $i; done; "
+           "for i in `nova volume-list --all-tenants | tail -n +4 | head -n -1 | awk '{print $2}'`; do nova volume-delete $i; done; "
+           "for i in `keystone user-list | grep -i test | awk '{print $2}'`; do keystone user-delete $i; done; "
+           "cd %s; git pull; "
            "export TEMPEST_CONFIG=%s; "
-           "python -u /usr/local/bin/nosetests%s%s/tempest/tests" % (
+           "python -u /usr/local/bin/nosetests%s%s/tempest/tests; " % (
                tempest_dir,
                tempest_config_path,
                xunit,
