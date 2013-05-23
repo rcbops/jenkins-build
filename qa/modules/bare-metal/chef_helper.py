@@ -77,7 +77,7 @@ class chef_helper:
         '''
 
         # Gather node info
-        chef_node = self.chef.Node(controller_node)
+        chef_node = Node(controller_node, api=self.chef)
 
         ip = chef_node['ipaddress']
         platform = chef_node['platform']
@@ -123,11 +123,11 @@ class chef_helper:
 
     def print_nodes(self):
         # prints all the nodes in the chef server
-        for node in self.chef.Node.list():
+        for node in Node.list(api=self.chef):
             print node
 
     def print_environments(self):
-        for env in self.chef.Environments.list():
+        for env in Environments.list(api=self.chef):
             print env
 
     def set_node_environment(self, node, environment):
