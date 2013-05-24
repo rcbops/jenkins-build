@@ -118,7 +118,7 @@ file = '%s-%s.xunit' % (
                   time.gmtime()),
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
-command = ("cd %s; git pull; cd - "
+command = ("cd %s; git pull; cd -; "
            "export TEMPEST_CONFIG=%s; "
            "python -u /usr/local/bin/nosetests %s %s/tempest/tests; " % (
                tempest_dir,
