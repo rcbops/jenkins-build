@@ -107,9 +107,9 @@ with open(tempest_config_path, 'w') as w:
     w.write(tempest_config)
 
 print "## Setting up and cleaning cluster ##"
-setup_cmd = ("/bin/bash -c sysctl -w net.ipv4.ip_forward=1; "
+setup_cmd = ("sysctl -w net.ipv4.ip_forward=1; "
              "source ~/openrc; "
-             "nova-manage floating list | grep eth0 > /dev/null || { nova-manage floating create 192.168.2.0/24; }; ")
+             "nova-manage floating list | grep eth0 > /dev/null || nova-manage floating create 192.168.2.0/24;")
 qa.run_cmd_on_node(node=controller, cmd=setup_cmd)
 
 # Run tests
@@ -118,7 +118,7 @@ file = '%s-%s.xunit' % (
                   time.gmtime()),
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
-command = ("cd %s; git pull; cd -"
+command = ("cd %s; git pull; cd - "
            "export TEMPEST_CONFIG=%s; "
            "python -u /usr/local/bin/nosetests %s %s/tempest/tests; " % (
                tempest_dir,
