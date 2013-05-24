@@ -101,143 +101,226 @@ if results.action == "build":
 
     if results.remote_chef:
 
-        # Set each servers roles
-        chef_server = openstack_list[0]
-        controller = openstack_list[1]
-        computes = openstack_list[2:]
+        # Build cluster accordingly
+        if results.dir_service and results.ha_enabled:
 
-        # Set the node to be chef server
-        rpcsqa.set_node_in_use(chef_server, 'chef-server')
+            # Set each servers roles
+            dir_server = openstack_list[0]
+            ha_controller_1 = openstack_list[1]
+            ha_controller_2 = openstack_list[2]
+            computes = openstack_list[3:]
 
-        # Remove Chef from chef_server Node
-        rpcsqa.remove_chef(chef_server)
+            # Build directory service server
+            rpcsqa.build_dir_server(dir_server, results.dir_version)
 
-        # Build Chef Server
-        rpcsqa.build_chef_server(chef_server)
+            # Build HA Controllers
+            rpcsqa.build_controller(ha_controller_1, True, 1)
+            rpcsqa.build_controller(ha_controller_2, True, 2)
 
-        # Install the proper cookbooks
-        rpcsqa.install_cookbooks(chef_server, results.branch)
+            # Have to run chef client on controller 1 again
+            ha_controller_1_node = Node(ha_controller_1)
+            rpcsqa.run_chef_client(ha_controller_1_node)
 
-        # setup environment file to remote chef server
-        rpcsqa.setup_remote_chef_environment(chef_server, env)
+            # Build computes
+            rpcsqa.build_computes(computes)
 
-        # Setup Remote Client
-        config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
+            # print all servers info
+            print "********************************************************************"
+            print "Directory Service Server: %s" % rpcsqa.print_server_info(dir_server)
+            print "HA-Controller 1: %s" % rpcsqa.print_server_info(ha_controller_1)
+            print "HA-Controller 2: %s" % rpcsqa.print_server_info(ha_controller_2)
+            rpcsqa.print_computes_info(computes)
+            print "********************************************************************"
 
-        # Make controller
-        rpcsqa.remove_chef(controller)
-        rpcsqa.bootstrap_chef(controller, chef_server)
-        rpcsqa.build_controller(controller, env, remote=results.remote_chef, chef_config_file=config_file)
+        elif results.dir_service:
 
-        # Make computes
-        for compute in computes:
-            rpcsqa.remove_chef(compute)
-            rpcsqa.bootstrap_chef(compute, chef_server)
-            rpcsqa.build_compute(compute, env, remote=results.remote_chef, chef_config_file=config_file)
+            # Set each servers roles
+            dir_server = openstack_list[0]
+            controller = openstack_list[1]
+            computes = openstack_list[2:]
 
-        # print all servers info
-        print "********************************************************************"
-        print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
-        print "Controller: %s" % rpcsqa.print_server_info(controller)
-        rpcsqa.print_computes_info(computes)
-        print "********************************************************************"
-        sys.exit()
+            # Build the dir server
+            rpcsqa.build_dir_server(dir_server, results.dir_version, results.os_distro)
 
-    # Build cluster accordingly
-    if results.dir_service and results.ha_enabled:
+            # Build controller
+            rpcsqa.build_controller(controller)
 
-        # Set each servers roles
-        dir_server = openstack_list[0]
-        ha_controller_1 = openstack_list[1]
-        ha_controller_2 = openstack_list[2]
-        computes = openstack_list[3:]
+            # Build computes
+            rpcsqa.build_computes(computes)
 
-        # Build directory service server
-        rpcsqa.build_dir_server(dir_server, results.dir_version)
+            # print all servers info
+            print "********************************************************************"
+            print "Directory Service Server: %s" % rpcsqa.print_server_info(dir_server)
+            print "Controller: %s" % rpcsqa.print_server_info(controller)
+            rpcsqa.print_computes_info(computes)
+            print "********************************************************************"
 
-        # Build HA Controllers
-        rpcsqa.build_controller(ha_controller_1, True, 1)
-        rpcsqa.build_controller(ha_controller_2, True, 2)
+        elif results.ha_enabled:
 
-        # Have to run chef client on controller 1 again
-        ha_controller_1_node = Node(ha_controller_1)
-        rpcsqa.run_chef_client(ha_controller_1_node)
+            # Set each servers roles
+            ha_controller_1 = openstack_list[0]
+            ha_controller_2 = openstack_list[1]
+            computes = openstack_list[2:]
 
-        # Build computes
-        rpcsqa.build_computes(computes)
+            # Make the controllers
+            rpcsqa.build_controller(ha_controller_1, True, 1)
+            rpcsqa.build_controller(ha_controller_2, True, 2)
 
-        # print all servers info
-        print "********************************************************************"
-        print "Directory Service Server: %s" % rpcsqa.print_server_info(dir_server)
-        print "HA-Controller 1: %s" % rpcsqa.print_server_info(ha_controller_1)
-        print "HA-Controller 2: %s" % rpcsqa.print_server_info(ha_controller_2)
-        rpcsqa.print_computes_info(computes)
-        print "********************************************************************"
+            # Have to run chef client on controller 1 again
+            ha_controller_1_node = Node(ha_controller_1)
+            print "HA Setup...have to run chef client on %s again cause it is ha-controller1..." % ha_controller_1
+            rpcsqa.run_chef_client(ha_controller_1_node)
 
-    elif results.dir_service:
+            # build computes
+            rpcsqa.build_computes(computes)
 
-        # Set each servers roles
-        dir_server = openstack_list[0]
-        controller = openstack_list[1]
-        computes = openstack_list[2:]
+            # print all servers info
+            print "********************************************************************"
+            print "HA-Controller 1: %s" % rpcsqa.print_server_info(ha_controller_1)
+            print "HA-Controller 2: %s" % rpcsqa.print_server_info(ha_controller_2)
+            rpcsqa.print_computes_info(computes)
+            print "********************************************************************"
 
-        # Build the dir server
-        rpcsqa.build_dir_server(dir_server, results.dir_version, results.os_distro)
+        else:
 
-        # Build controller
-        rpcsqa.build_controller(controller)
+            # Set each servers roles
+            chef_server = openstack_list[0]
+            controller = openstack_list[1]
+            computes = openstack_list[2:]
 
-        # Build computes
-        rpcsqa.build_computes(computes)
+            # Set the node to be chef server
+            rpcsqa.set_node_in_use(chef_server, 'chef-server')
 
-        # print all servers info
-        print "********************************************************************"
-        print "Directory Service Server: %s" % rpcsqa.print_server_info(dir_server)
-        print "Controller: %s" % rpcsqa.print_server_info(controller)
-        rpcsqa.print_computes_info(computes)
-        print "********************************************************************"
+            # Remove Chef from chef_server Node
+            rpcsqa.remove_chef(chef_server)
 
-    elif results.ha_enabled:
+            # Build Chef Server
+            rpcsqa.build_chef_server(chef_server)
 
-        # Set each servers roles
-        ha_controller_1 = openstack_list[0]
-        ha_controller_2 = openstack_list[1]
-        computes = openstack_list[2:]
+            # Install the proper cookbooks
+            rpcsqa.install_cookbooks(chef_server, results.branch)
 
-        # Make the controllers
-        rpcsqa.build_controller(ha_controller_1, True, 1)
-        rpcsqa.build_controller(ha_controller_2, True, 2)
+            # setup environment file to remote chef server
+            rpcsqa.setup_remote_chef_environment(chef_server, env)
 
-        # Have to run chef client on controller 1 again
-        ha_controller_1_node = Node(ha_controller_1)
-        print "HA Setup...have to run chef client on %s again cause it is ha-controller1..." % ha_controller_1
-        rpcsqa.run_chef_client(ha_controller_1_node)
+            # Setup Remote Client
+            config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 
-        # build computes
-        rpcsqa.build_computes(computes)
+            # Make controller
+            rpcsqa.remove_chef(controller)
+            rpcsqa.bootstrap_chef(controller, chef_server)
+            rpcsqa.build_controller(controller, env, remote=results.remote_chef, chef_config_file=config_file)
 
-        # print all servers info
-        print "********************************************************************"
-        print "HA-Controller 1: %s" % rpcsqa.print_server_info(ha_controller_1)
-        print "HA-Controller 2: %s" % rpcsqa.print_server_info(ha_controller_2)
-        rpcsqa.print_computes_info(computes)
-        print "********************************************************************"
+            # Make computes
+            for compute in computes:
+                rpcsqa.remove_chef(compute)
+                rpcsqa.bootstrap_chef(compute, chef_server)
+                rpcsqa.build_compute(compute, env, remote=results.remote_chef, chef_config_file=config_file)
 
+            # print all servers info
+            print "********************************************************************"
+            print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
+            print "Controller: %s" % rpcsqa.print_server_info(controller)
+            rpcsqa.print_computes_info(computes)
+            print "********************************************************************"
+
+    # NON REMOTE CHEF SERVER BUILDS
     else:
+        # Build cluster accordingly
+        if results.dir_service and results.ha_enabled:
 
-        # Set each servers roles
-        controller = openstack_list[0]
-        computes = openstack_list[1:]
+            # Set each servers roles
+            dir_server = openstack_list[0]
+            ha_controller_1 = openstack_list[1]
+            ha_controller_2 = openstack_list[2]
+            computes = openstack_list[3:]
 
-        # Make servers
-        rpcsqa.build_controller(controller)
-        rpcsqa.build_computes(computes)
+            # Build directory service server
+            rpcsqa.build_dir_server(dir_server, results.dir_version)
 
-        # print all servers info
-        print "********************************************************************"
-        print "Controller: %s" % rpcsqa.print_server_info(controller)
-        rpcsqa.print_computes_info(computes)
-        print "********************************************************************"
+            # Build HA Controllers
+            rpcsqa.build_controller(ha_controller_1, True, 1)
+            rpcsqa.build_controller(ha_controller_2, True, 2)
+
+            # Have to run chef client on controller 1 again
+            ha_controller_1_node = Node(ha_controller_1)
+            rpcsqa.run_chef_client(ha_controller_1_node)
+
+            # Build computes
+            rpcsqa.build_computes(computes)
+
+            # print all servers info
+            print "********************************************************************"
+            print "Directory Service Server: %s" % rpcsqa.print_server_info(dir_server)
+            print "HA-Controller 1: %s" % rpcsqa.print_server_info(ha_controller_1)
+            print "HA-Controller 2: %s" % rpcsqa.print_server_info(ha_controller_2)
+            rpcsqa.print_computes_info(computes)
+            print "********************************************************************"
+
+        elif results.dir_service:
+
+            # Set each servers roles
+            dir_server = openstack_list[0]
+            controller = openstack_list[1]
+            computes = openstack_list[2:]
+
+            # Build the dir server
+            rpcsqa.build_dir_server(dir_server, results.dir_version, results.os_distro)
+
+            # Build controller
+            rpcsqa.build_controller(controller)
+
+            # Build computes
+            rpcsqa.build_computes(computes)
+
+            # print all servers info
+            print "********************************************************************"
+            print "Directory Service Server: %s" % rpcsqa.print_server_info(dir_server)
+            print "Controller: %s" % rpcsqa.print_server_info(controller)
+            rpcsqa.print_computes_info(computes)
+            print "********************************************************************"
+
+        elif results.ha_enabled:
+
+            # Set each servers roles
+            ha_controller_1 = openstack_list[0]
+            ha_controller_2 = openstack_list[1]
+            computes = openstack_list[2:]
+
+            # Make the controllers
+            rpcsqa.build_controller(ha_controller_1, True, 1)
+            rpcsqa.build_controller(ha_controller_2, True, 2)
+
+            # Have to run chef client on controller 1 again
+            ha_controller_1_node = Node(ha_controller_1)
+            print "HA Setup...have to run chef client on %s again cause it is ha-controller1..." % ha_controller_1
+            rpcsqa.run_chef_client(ha_controller_1_node)
+
+            # build computes
+            rpcsqa.build_computes(computes)
+
+            # print all servers info
+            print "********************************************************************"
+            print "HA-Controller 1: %s" % rpcsqa.print_server_info(ha_controller_1)
+            print "HA-Controller 2: %s" % rpcsqa.print_server_info(ha_controller_2)
+            rpcsqa.print_computes_info(computes)
+            print "********************************************************************"
+
+        else:
+
+            # Set each servers roles
+            controller = openstack_list[0]
+            computes = openstack_list[1:]
+
+            # Make servers
+            rpcsqa.build_controller(controller)
+            rpcsqa.build_computes(computes)
+
+            # print all servers info
+            print "********************************************************************"
+            print "Controller: %s" % rpcsqa.print_server_info(controller)
+            rpcsqa.print_computes_info(computes)
+            print "********************************************************************"
 
 # We want to add more nodes to the environment
 elif results.action == 'add':
