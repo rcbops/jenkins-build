@@ -69,7 +69,7 @@ all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 
 if results.action == "build":
 
-    # Check the cluster size, if <5 and results.dir_service is enabled, set to 4
+    # Check the cluster size, if < 5 and results.dir_service is enabled, set to 4
     if cluster_size < 4 and results.dir_service:
         if results.ha_enabled:
             cluster_size = 5
@@ -82,6 +82,10 @@ if results.action == "build":
         print "HA is enabled, re-setting cluster size to %i." % cluster_size
     else:
         print "Cluster size is %i." % cluster_size
+
+    # If remote_chef is enabled, add one to the cluster size
+    if results.remote_chef:
+        cluster_size += 1
 
     # Collect the amount of servers we need for the openstack install
     rpcsqa.check_cluster_size(all_nodes, cluster_size)
@@ -97,33 +101,34 @@ if results.action == "build":
     if results.remote_chef:
 
         # Set each servers roles
-        controller = openstack_list[0]
-        computes = openstack_list[1:]
+        chef_server = openstack_list[0]
+        controller = openstack_list[1]
+        computes = openstack_list[2:]
 
         # Set the node to be chef server
-        rpcsqa.set_node_in_use(controller, 'chef-server, controller')
+        rpcsqa.set_node_in_use(chef_server, 'chef-server')
 
         # Remove Chef from controller Node
-        rpcsqa.remove_chef(controller)
+        rpcsqa.remove_chef(chef_server)
 
         # Build Chef Server
-        rpcsqa.build_chef_server(controller)
+        rpcsqa.build_chef_server(chef_server)
 
         # Install the proper cookbooks
-        rpcsqa.install_cookbooks(controller, results.branch)
+        rpcsqa.install_cookbooks(chef_server, results.branch)
 
         # setup environment file to remote chef server
-        rpcsqa.setup_remote_chef_environment(controller, env)
+        rpcsqa.setup_remote_chef_environment(chef_server, env)
 
         # Setup Remote Client
-        config_file = rpcsqa.setup_remote_chef_client(controller, env)
+        config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 
         # Bootstrap chef client onto controller
-        rpcsqa.bootstrap_chef(controller, controller)
+        rpcsqa.bootstrap_chef(controller, chef_server)
 
         # Make servers
-        #rpcsqa.build_controller(controller, env,
-        #                       remote=True, chef_config_file=config_file)
+        rpcsqa.build_controller(controller, env, remote=True, chef_config_file=config_file)
+
         '''
         rpcsqa.build_computes(computes, env,
                               remote=True, chef_config_file=config_file)
