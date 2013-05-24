@@ -85,6 +85,7 @@ if results.action == "build":
 
     # If remote_chef is enabled, add one to the cluster size
     if results.remote_chef:
+        print "You wanted a remote chef server, adding 1 to cluster size"
         cluster_size += 1
 
     # Collect the amount of servers we need for the openstack install
@@ -108,7 +109,7 @@ if results.action == "build":
         # Set the node to be chef server
         rpcsqa.set_node_in_use(chef_server, 'chef-server')
 
-        # Remove Chef from controller Node
+        # Remove Chef from chef_server Node
         rpcsqa.remove_chef(chef_server)
 
         # Build Chef Server
@@ -123,7 +124,10 @@ if results.action == "build":
         # Setup Remote Client
         config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 
-        # Bootstrap chef client onto controller
+        # Remove Chef from controller node
+        rpcsqa.remove_chef(controller)
+
+        # Bootstrap chef client onto controller to connect to chef_server
         rpcsqa.bootstrap_chef(controller, chef_server)
 
         # Make servers
