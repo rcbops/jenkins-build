@@ -597,7 +597,7 @@ class rpcsqa_helper:
                     'exception': cpe,
                     'command': command}
 
-    def prepare_environment(self, name, os_distro, feature_set):
+    def prepare_environment(self, name, os_distro, feature_set, branch):
         # Gather the nodes for the requested os_distro
         nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os_distro)
 
@@ -607,7 +607,7 @@ class rpcsqa_helper:
             self.set_network_interface(chef_node)
 
         # If the environment doesnt exist in chef, make it.
-        env = "%s-%s-%s" % (name, os_distro, feature_set)
+        env = "%s-%s-%s-%s" % (name, os_distro, branch, feature_set)
         if not Search("environment", api=self.chef).query("name:%s" % env):
             print "Making environment: %s " % env
             Environment.create(env, api=self.chef)

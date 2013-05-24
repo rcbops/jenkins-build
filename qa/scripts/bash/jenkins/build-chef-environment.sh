@@ -5,7 +5,7 @@ function set_environment_files(){
     
     # set filenames
     TEMPLATE_FILENAME="/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/templates/${OS_DISTRO}-${FEATURE_SET}.json"
-    ENVIRONMENT_FILENAME="/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/${NAME}-${OS_DISTRO}-${FEATURE_SET}.json"
+    ENVIRONMENT_FILENAME="/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}.json"
 
     ## copy the environment file to the proper directory
     echo "Copying template to environment..."
@@ -24,7 +24,7 @@ function build_default() {
 
     ## replace the lines we are looking for
     echo "Replacing template values with real values..."
-    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
 
     # build chef environment
@@ -41,7 +41,7 @@ function build_glance_cf() {
 
     ## replace the lines we are looking for
     echo "Replacing template values with real values..."
-    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<TENANT_ID>/'${TENANT_ID}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<TENANT_NAME>/'${TENANT_NAME}'/g' $ENVIRONMENT_FILENAME`
@@ -63,7 +63,7 @@ function build_keystone_ldap() {
 
     ## replace the lines we are looking for
     echo "Replacing template values with real values..."
-    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<LDAP_IP>/'${LDAP_IP}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<LDAP_ADMIN_PASS>/'${LDAP_ADMIN_PASS}'/g' $ENVIRONMENT_FILENAME`
