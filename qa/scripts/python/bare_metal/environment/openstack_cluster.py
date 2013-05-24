@@ -2,6 +2,7 @@
 import sys
 import argparse
 from rpcsqa_helper import *
+from chef_helper import *
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
@@ -55,7 +56,7 @@ rpcsqa = rpcsqa_helper(results.razor_ip)
 rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
 
 #Prepare environment
-env = rpcsqa.prepare_environment(results.name, results.os_distro, results.feature_set)
+env = rpcsqa.prepare_environment(results.name, results.os_distro, results.feature_set, results.branch)
 
 # Clean up the current running environment
 rpcsqa.cleanup_environment(env)
@@ -68,7 +69,7 @@ all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 
 if results.action == "build":
 
-    # Check the cluster size, if <5 and results.dir_service is enabled, set to 4
+    # Check the cluster size, if < 5 and results.dir_service is enabled, set to 4
     if cluster_size < 4 and results.dir_service:
         if results.ha_enabled:
             cluster_size = 5
@@ -81,6 +82,11 @@ if results.action == "build":
         print "HA is enabled, re-setting cluster size to %i." % cluster_size
     else:
         print "Cluster size is %i." % cluster_size
+
+    # If remote_chef is enabled, add one to the cluster size
+    if results.remote_chef:
+        print "You wanted a remote chef server, adding 1 to cluster size"
+        cluster_size += 1
 
     # Collect the amount of servers we need for the openstack install
     rpcsqa.check_cluster_size(all_nodes, cluster_size)
@@ -96,44 +102,45 @@ if results.action == "build":
     if results.remote_chef:
 
         # Set each servers roles
-        controller = openstack_list[0]
-        computes = openstack_list[1:]
+        chef_server = openstack_list[0]
+        controller = openstack_list[1]
+        computes = openstack_list[2:]
 
         # Set the node to be chef server
-        rpcsqa.set_node_in_use(controller, 'chef-server, controller')
+        rpcsqa.set_node_in_use(chef_server, 'chef-server')
 
-        # Remove Chef from controller Node
-        rpcsqa.remove_chef(controller)
+        # Remove Chef from chef_server Node
+        rpcsqa.remove_chef(chef_server)
 
         # Build Chef Server
-        rpcsqa.build_chef_server(controller)
+        rpcsqa.build_chef_server(chef_server)
 
         # Install the proper cookbooks
-        rpcsqa.install_cookbooks(controller, results.branch)
+        rpcsqa.install_cookbooks(chef_server, results.branch)
+
+        # setup environment file to remote chef server
+        rpcsqa.setup_remote_chef_environment(chef_server, env)
 
         # Setup Remote Client
-        rpcsqa.setup_remote_chef_client(controller, env)
+        config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 
-        #remove chef from computes
+        # Make controller
+        rpcsqa.remove_chef(controller)
+        rpcsqa.bootstrap_chef(controller, chef_server)
+        rpcsqa.build_controller(controller, env, remote=results.remote_chef, chef_config_file=config_file)
+
+        # Make computes
         for compute in computes:
-            rpcsqa.set_node_in_use(compute, 'compute')
             rpcsqa.remove_chef(compute)
-
-        # Bootstrap chef client onto nodes
-        for node in openstack_list:
-            rpcsqa.bootstrap_chef(node, controller)
-
-        '''
-        # Make servers
-        rpcsqa.build_controller(controller)
-        rpcsqa.build_computes(computes)
+            rpcsqa.bootstrap_chef(compute, chef_server)
+            rpcsqa.build_compute(compute, env, remote=results.remote_chef, chef_config_file=config_file)
 
         # print all servers info
         print "********************************************************************"
+        print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
         print "Controller: %s" % rpcsqa.print_server_info(controller)
         rpcsqa.print_computes_info(computes)
         print "********************************************************************"
-        '''
         sys.exit()
 
     # Build cluster accordingly

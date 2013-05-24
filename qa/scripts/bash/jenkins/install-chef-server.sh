@@ -66,6 +66,7 @@ CHEF_UNIX_USER=${CHEF_UNIX_USER:-root}
 # due to http://tickets.opscode.com/browse/CHEF-3849 CHEF_FE_PORT is not used yet
 CHEF_FE_PORT=${CHEF_FE_PORT:-8090}
 CHEF_FE_SSL_PORT=${CHEF_FE_SSL_PORT:-4443}
+CHEF_RBMQ_PORT=${CHEF_RBMQ_PORT:-5674}
 CHEF_URL=${CHEF_URL:-https://${MY_IP}:${CHEF_FE_SSL_PORT}}
 
 if [ ! -e "/etc/chef-server/chef-server.rb" ]; then
@@ -79,6 +80,7 @@ if [ ! -e "/etc/chef-server/chef-server.rb" ]; then
   cat > /etc/chef-server/chef-server.rb <<EOF
 node.override["chef_server"]["chef-server-webui"]["web_ui_admin_default_password"] = "${CHEF_WEBUI_PASSWORD}"
 node.override["chef_server"]["rabbitmq"]["password"] = "${CHEF_AMQP_PASSWORD}"
+node.override["chef_server"]["rabbitmq"]["node_port"] = ${CHEF_RBMQ_PORT}
 node.override["chef_server"]["postgresql"]["sql_password"] = "${CHEF_POSTGRESQL_PASSWORD}"
 node.override["chef_server"]["postgresql"]["sql_ro_password"] = "${CHEF_POSTGRESQL_RO_PASSWORD}"
 node.override["chef_server"]["nginx"]["url"] = "${CHEF_URL}"

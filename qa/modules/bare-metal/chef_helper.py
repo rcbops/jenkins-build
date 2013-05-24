@@ -1,5 +1,4 @@
 import sys
-import time
 from chef import *
 from server_helper import *
 
@@ -8,10 +7,9 @@ class chef_helper:
 
     def __init__(self, chef_config=None):
         if chef_config:
-            self.chef = from_config_file(chef_config)
+            self.chef = ChefAPI.from_config_file(chef_config)
         else:
             self.chef = autoconfigure()
-        self.chef.set_default()
 
     def __repr__(self):
         """ Print out current instance of chef_api"""
@@ -22,7 +20,7 @@ class chef_helper:
 
         return outl
 
-    def build_compute(self, compute_node, user=None, password=None):
+    def build_compute(self, compute_node, environment, user, password):
         '''
         @summary: Builds a controller node
         @param controller_node: The node to build as a controller
@@ -33,18 +31,24 @@ class chef_helper:
         @type password: String
         '''
         # Set node attributes
-        chef_node = Node(compute_node)
+        chef_node = Node(compute_node, api=self.chef)
+
+        ip = chef_node['ipaddress']
+        platform = chef_node['platform']
+
         chef_node['in_use'] = "compute"
         chef_node.run_list = ["role[single-compute]"]
         chef_node.save()
 
-        print "Updating server...this may take some time"
-        update(chef_node)
+        # Set the environment
+        self.set_node_environment(chef_node, environment)
 
-        platform = chef_node['platform']
-        if platform == 'centos' or platform == 'redhat':
-            print "Platform is %s, disabling iptables" % platform
-            disable_iptables(chef_node)
+        print "Updating server...this may take some time"
+        update(ip, platform, user, password)
+
+        if platform == 'rhel' or platform == 'centos':
+            print "%s platform, disabling iptables" % platform
+            disable_iptables(ip, user, password)
 
         # Run chef client twice
         print "Running chef-client on compute node: %s, \
@@ -64,8 +68,8 @@ class chef_helper:
             print run1
             sys.exit(1)
 
-    def build_controller(self, controller_node, ha_num=0,
-                         user=None, password=None):
+    def build_controller(self, controller_node, environment,
+                         user, password, ha_num=0):
         '''
         @summary: Builds a controller node
         @param controller_node: The node to build as a controller
@@ -78,8 +82,12 @@ class chef_helper:
         @type password: String
         '''
 
-        # Check for ha
-        chef_node = Node(controller_node)
+        # Gather node info
+        chef_node = Node(controller_node, api=self.chef)
+
+        ip = chef_node['ipaddress']
+        platform = chef_node['platform']
+
         if not ha_num == 0:
             print "Making %s the ha-controller%s node" % (controller_node, ha_num)
             chef_node['in_use'] = "ha-controller%s" % ha_num
@@ -88,16 +96,19 @@ class chef_helper:
             print "Making %s the controller node" % controller_node
             chef_node['in_use'] = "controller"
             chef_node.run_list = ["role[ha-controller1]"]
-        # save node
+
+        # Save Node
         chef_node.save()
 
-        print "Updating server...this may take some time"
-        update(chef_node)
+        # Set the environment
+        self.set_node_environment(chef_node, environment)
 
-        platform = chef_node['platform']
+        print "Updating server...this may take some time"
+        update(ip, platform, user, password)
+
         if platform == 'rhel' or platform == 'centos':
             print "%s platform, disabling iptables" % platform
-            disable_iptables()
+            disable_iptables(ip, user, password)
 
         # Run chef-client twice
         print "Running chef-client for controller node, this may take some time..."
@@ -115,6 +126,20 @@ class chef_helper:
             print "Error running chef-client for controller %s" % controller_node
             print run1
             sys.exit(1)
+
+    def print_nodes(self):
+        # prints all the nodes in the chef server
+        for node in Node.list(api=self.chef):
+            print node
+
+    def print_environments(self):
+        for env in Environments.list(api=self.chef):
+            print env
+
+    def set_node_environment(self, node, environment):
+        print "Setting node %s chef_environment to %s" % (str(node), environment)
+        node.chef_environment = environment
+        node.save()
 
     def run_chef_client(self, node, user, password):
         '''

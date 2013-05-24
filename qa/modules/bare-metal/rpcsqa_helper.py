@@ -33,8 +33,8 @@ class rpcsqa_helper:
         '''
 
         # Gather the chef info for the nodes
-        chef_server_node = Node(server_node)
-        chef_client_node = Node(client_node)
+        chef_server_node = Node(server_node, api=self.chef)
+        chef_client_node = Node(client_node, api=self.chef)
 
         chef_server_ip = chef_server_node['ipaddress']
         chef_server_password = self.razor_password(chef_server_node)
@@ -55,7 +55,7 @@ class rpcsqa_helper:
             print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
 
     def build_dir_server(self, dir_node, dir_version, os):
-        chef_node = Node(dir_node)
+        chef_node = Node(dir_node, api=self.chef)
 
         # We dont support 389 yet, so exit if it is not ldap
         if dir_version != 'openldap':
@@ -100,8 +100,7 @@ class rpcsqa_helper:
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
             if dir_version == 'openldap':
-                scp_run = run_remote_scp_cmd(ip, 'root', root_pass,
-                    '/var/lib/jenkins/source_files/ldif/*.ldif')
+                scp_run = run_remote_scp_cmd(ip, 'root', root_pass, '/var/lib/jenkins/source_files/ldif/*.ldif')
                 if scp_run['success']:
                     ssh_run = run_remote_ssh_cmd(ip, 'root', root_pass,
                         "ldapadd -x -D \"cn=admin,dc=dev,dc=rcbops,dc=me\" \
@@ -122,7 +121,49 @@ class rpcsqa_helper:
                 % dir_version
             sys.exit(1)
 
-    def build_computes(self, computes, remote=False, chef_config_file=None):
+    def build_compute(self, compute, environment, remote=False, chef_config_file=None):
+        '''
+        @summary: This will build out a single compute server
+        '''
+        compute_node = Node(compute, api=self.chef)
+        compute_node['in_use'] = "compute"
+        compute_node.run_list = ["role[single-compute]"]
+        compute_node.save()
+
+        if remote:
+            remote_chef = chef_helper(chef_config_file)
+            remote_chef.build_compute(compute,
+                                      environment,
+                                      'root',
+                                      self.razor_password(compute_node))
+        else:
+            print "Updating server...this may take some time"
+            self.update_node(compute_node)
+
+            if compute_node['platform_family'] == 'rhel':
+                print "Platform is RHEL family, disabling iptables"
+                self.disable_iptables(compute_node)
+
+            # Run chef client twice
+            print "Running chef-client on compute node: %s, \
+                   this may take some time..." % compute
+            run1 = self.run_chef_client(compute_node)
+            if run1['success']:
+                print "First chef-client run successful, \
+                       starting second run..."
+                run2 = self.run_chef_client(compute_node)
+                if run2['success']:
+                    print "Second chef-client run successful..."
+                else:
+                    print "Error running chef-client for compute %s" % compute
+                    print run2
+                    sys.exit(1)
+            else:
+                print "Error running chef-client for compute %s" % compute
+                print run1
+                sys.exit(1)
+
+    def build_computes(self, computes, environment, remote=False, chef_config_file=None):
         '''
         @summary: This will build out all the computes for a openstack
         environment, if remote is set it will use a remote chef server, if not
@@ -131,7 +172,7 @@ class rpcsqa_helper:
         # Run computes
         print "Making the compute nodes..."
         for compute in computes:
-            compute_node = Node(compute)
+            compute_node = Node(compute, api=self.chef)
             compute_node['in_use'] = "compute"
             compute_node.run_list = ["role[single-compute]"]
             compute_node.save()
@@ -139,6 +180,7 @@ class rpcsqa_helper:
             if remote:
                 remote_chef = chef_helper(chef_config_file)
                 remote_chef.build_compute(compute,
+                                          environment,
                                           'root',
                                           self.razor_password(compute_node))
             else:
@@ -168,14 +210,14 @@ class rpcsqa_helper:
                     print run1
                     sys.exit(1)
 
-    def build_controller(self, controller_node, ha_num=0,
+    def build_controller(self, controller_node, environment, ha_num=0,
                          remote=False, chef_config_file=None):
         '''
         @summary: This will build out a controller node based on location.
         if remote, use a passed config file to build a chef_helper class and
         build with that class, otherwise build with the current chef config
         '''
-        chef_node = Node(controller_node)
+        chef_node = Node(controller_node, api=self.chef)
         if not ha_num == 0:
             print "Making %s the ha-controller%s node" % (controller_node,
                                                           ha_num)
@@ -191,9 +233,10 @@ class rpcsqa_helper:
         if remote:
             remote_chef = chef_helper(chef_config_file)
             remote_chef.build_controller(controller_node,
-                                         ha_num,
+                                         environment,
                                          'root',
-                                         self.razor_password(chef_node))
+                                         self.razor_password(chef_node),
+                                         ha_num)
         else:
             print "Updating server...this may take some time"
             self.update_node(chef_node)
@@ -227,7 +270,7 @@ class rpcsqa_helper:
         '''
 
         # Load controller node
-        chef_node = Node(controller_node)
+        chef_node = Node(controller_node, api=self.chef)
         install_script = '/var/lib/jenkins/jenkins-build/qa/scripts/bash/jenkins/install-chef-server.sh'
         controller_ip = chef_node['ipaddress']
         controller_pass = self.razor_password(chef_node)
@@ -271,10 +314,10 @@ class rpcsqa_helper:
         """
         @param chef_environment
         """
-        nodes = Search('node').query("chef_environment:%s" % chef_environment)
+        nodes = Search('node', api=self.chef).query("chef_environment:%s" % chef_environment)
         for n in nodes:
             name = n['name']
-            node = Node(name)
+            node = Node(name, api=self.chef)
             if node['in_use'] != 0:
                 self.erase_node(node)
             else:
@@ -284,7 +327,7 @@ class rpcsqa_helper:
     def clear_pool(self, chef_nodes, environment):
         for n in chef_nodes:
             name = n['name']
-            node = Node(name)
+            node = Node(name, api=self.chef)
             if node.chef_environment == environment:
                 if node['in_use'] != 0:
                     self.erase_node(node)
@@ -293,7 +336,7 @@ class rpcsqa_helper:
                     node.save()
 
     def clone_git_repo(self, server, github_user, github_pass):
-        chef_node = Node(server)
+        chef_node = Node(server, api=self.chef)
         node_ip = chef_node['ipaddress']
         root_pass = self.razor_password(chef_node)
 
@@ -320,14 +363,14 @@ class rpcsqa_helper:
         controller_name = "ha-controller1"
         q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
                                                        controller_name)
-        search = Search("node").query(q)
+        search = Search("node", api=self.chef).query(q)
         if not search:
             return None
-        return Node(search[0]['name'])
+        return Node(search[0]['name'], api=self.chef)
 
     def cluster_environment(self, name, os, feature_set):
         name = "%s-%s-%s" % (name, os, feature_set)
-        env = Environment(name)
+        env = Environment(name, api=self.chef)
         return env
 
     def disable_iptables(self, chef_node, logfile="STDOUT"):
@@ -340,12 +383,12 @@ class rpcsqa_helper:
 
     def environment_has_controller(self, environment):
         # Load Environment
-        nodes = Search('node').query("chef_environment:%s" % environment)
+        nodes = Search('node', api=self.chef).query("chef_environment:%s" % environment)
         roles = ['role[qa-single-controller]',
                  'role[qa-ha-controller1]',
                  'role[qa-ha-controller2]']
         for node in nodes:
-            chef_node = Node(node['name'])
+            chef_node = Node(node['name'], api=self.chef)
             if any(x in chef_node.run_list for x in roles):
                 return True
             else:
@@ -378,7 +421,7 @@ class rpcsqa_helper:
 
     def gather_all_nodes(self, os):
         # Gather the nodes for the requested OS
-        nodes = Search('node').query("name:qa-%s-pool*" % os)
+        nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os)
         return nodes
 
     def gather_size_nodes(self, os, environment, cluster_size):
@@ -386,13 +429,13 @@ class rpcsqa_helper:
         count = 0
 
         # Gather the nodes for the requested OS
-        nodes = Search('node').query("name:qa-%s-pool*" % os)
+        nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os)
 
         # Take a node from the default environment that
         # has its network interfaces set.
         for n in nodes:
             name = n['name']
-            node = Node(name)
+            node = Node(name, api=self.chef)
             if ((node.chef_environment == "_default" or
                 node.chef_environment == environment) and
                     "recipe[network-interfaces]" in node.run_list):
@@ -421,7 +464,7 @@ class rpcsqa_helper:
         '''
 
         # Gather node info
-        chef_server_node = Node(chef_server)
+        chef_server_node = Node(chef_server, api=self.chef)
         chef_server_ip = chef_server_node['ipaddress']
         chef_server_password = self.razor_password(chef_server_node)
         chef_server_platform = chef_server_node['platform']
@@ -472,7 +515,7 @@ class rpcsqa_helper:
 
     def install_opencenter(self, server, install_script,
                            role, oc_server_ip='0.0.0.0'):
-        chef_node = Node(server)
+        chef_node = Node(server, api=self.chef)
         root_pass = self.razor_password(chef_node)
         print ""
         print ""
@@ -517,7 +560,7 @@ class rpcsqa_helper:
 
     def install_server_vms(self, server, opencenter_server_ip,
                            chef_server_ip, vm_bridge, vm_bridge_device):
-        chef_node = Node(server)
+        chef_node = Node(server, api=self.chef)
         node_ip = chef_node['ipaddress']
         root_pass = self.razor_password(chef_node)
 
@@ -554,25 +597,25 @@ class rpcsqa_helper:
                     'exception': cpe,
                     'command': command}
 
-    def prepare_environment(self, name, os_distro, feature_set):
+    def prepare_environment(self, name, os_distro, feature_set, branch):
         # Gather the nodes for the requested os_distro
-        nodes = Search('node').query("name:qa-%s-pool*" % os_distro)
+        nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os_distro)
 
         #Make sure all networking interfacing is set
         for node in nodes:
-            chef_node = Node(node['name'])
+            chef_node = Node(node['name'], api=self.chef)
             self.set_network_interface(chef_node)
 
         # If the environment doesnt exist in chef, make it.
-        env = "%s-%s-%s" % (name, os_distro, feature_set)
-        if not Search("environment").query("name:%s" % env):
+        env = "%s-%s-%s-%s" % (name, os_distro, branch, feature_set)
+        if not Search("environment", api=self.chef).query("name:%s" % env):
             print "Making environment: %s " % env
-            Environment.create(env)
+            Environment.create(env, api=self.chef)
 
         return env
 
     def prepare_vm_host(self, server):
-        chef_node = Node(server)
+        chef_node = Node(server, api=self.chef)
         controller_ip = chef_node['ipaddress']
         root_pass = self.razor_password(chef_node)
 
@@ -613,7 +656,7 @@ class rpcsqa_helper:
             print "Compute: %s" % self.print_server_info(compute)
 
     def print_server_info(self, server):
-        chef_node = Node(server)
+        chef_node = Node(server, api=self.chef)
         return "%s - %s" % (chef_node, chef_node['ipaddress'])
 
     def razor_password(self, chef_node):
@@ -655,7 +698,7 @@ class rpcsqa_helper:
         """
         @param chef_node
         """
-        chef_node = Node(server)
+        chef_node = Node(server, api=self.chef)
         try:
             root_pass = self.razor_password(chef_node)
             print "removing chef on %s..." % chef_node
@@ -695,7 +738,7 @@ class rpcsqa_helper:
 
     def set_node_in_use(self, node, role):
         # Edit the controller in our chef
-        chef_node = Node(node)
+        chef_node = Node(node, api=self.chef)
         chef_node['in_use'] = '%s' % role
         node_ip = chef_node['ipaddress']
         chef_node.save()
@@ -726,12 +769,12 @@ class rpcsqa_helper:
             print "Exception: %s" % cpe
             sys.exit(1)
 
-    def setup_remote_chef_client(self, controller, chef_environment):
+    def setup_remote_chef_client(self, chef_server, chef_environment):
 
         # Gather chef server info
-        chef_server = Node(controller)
-        chef_server_ip = chef_server['ipaddress']
-        chef_server_password = self.razor_password(chef_server)
+        chef_server_node = Node(chef_server, api=self.chef)
+        chef_server_ip = chef_server_node['ipaddress']
+        chef_server_password = self.razor_password(chef_server_node)
 
         # Set up file for storing chef validation info locally
         print "Setting up client directory on localhost"
@@ -739,7 +782,7 @@ class rpcsqa_helper:
 
         # Log onto server and copy chef-validator.pem and chef-webui.pem
         print "Copying new chef server validation files"
-        to_run_list = ['admin.pem', 'chef-validatior.pem']
+        to_run_list = ['admin.pem', 'chef-validator.pem']
 
         for item in to_run_list:
             get_file_ret = get_file_from_server(chef_server_ip,
@@ -777,6 +820,48 @@ class rpcsqa_helper:
             # print message for debugging
             print "%s/knife.rb successfully saved" % chef_file_path
 
+        remote_config_file = '%s/knife.rb' % chef_file_path
+        return remote_config_file
+
+    def setup_remote_chef_environment(self, chef_server, chef_environment):
+        """
+        @summary This will copy the environment file and set it on the remote
+        chef server.
+        """
+
+        # Gather chef server info
+        chef_server_node = Node(chef_server, api=self.chef)
+        chef_server_ip = chef_server_node['ipaddress']
+        chef_server_password = self.razor_password(chef_server_node)
+
+        environment_file = '/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/%s.json' % chef_environment
+
+        run_scp = run_remote_scp_cmd(chef_server_ip,
+                                     'root',
+                                     chef_server_password,
+                                     environment_file)
+
+        if not run_scp['success']:
+            print "Failed to copy environment file to remote chef server"
+            print run_scp
+            sys.exit(1)
+
+        to_run_list = ['cp ~/%s.json /opt/rcbops/chef-cookbooks/environments' % chef_environment,
+                       'knife environment from file /opt/rcbops/chef-cookbooks/environments/%s.json' % chef_environment]
+
+        for cmd in to_run_list:
+            run_ssh = run_remote_ssh_cmd(chef_server_ip,
+                                         'root',
+                                         chef_server_password,
+                                         cmd)
+
+            if not run_ssh['success']:
+                print "Failed to run remote ssh command on server %s @ %s" % (chef_server, chef_server_ip)
+                print run_ssh
+                sys.exit(1)
+
+        print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment, chef_server, chef_server_ip)
+
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
         root_pass = self.razor_password(chef_node)
@@ -791,8 +876,8 @@ class rpcsqa_helper:
             sys.exit(1)
 
     def node_search(self, query=None):
-        search = Search("node").query(query)
-        return (Node(n['name']) for n in search)
+        search = Search("node", api=self.chef).query(query)
+        return (Node(n['name'], api=self.chef) for n in search)
 
     def run_cmd_on_node(self, node=None, cmd=None):
         user = "root"
@@ -801,6 +886,6 @@ class rpcsqa_helper:
         run_remote_ssh_cmd(ip, user, password, cmd)
 
     def environment_exists(self, env):
-        if not Search("environment").query("name:%s" % env):
+        if not Search("environment", api=self.chef).query("name:%s" % env):
             return False
         return True

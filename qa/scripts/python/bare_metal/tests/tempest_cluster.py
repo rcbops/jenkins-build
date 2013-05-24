@@ -28,9 +28,6 @@ parser.add_argument('--tempest_version', action="store",
 parser.add_argument('--keystone_admin_pass', action="store",
                     dest="keystone_admin_pass", required=False,
                     default="ostackdemo")
-parser.add_argument('-xunit', action="store_true",
-                    dest="xunit", required=False,
-                    default=True)
 results = parser.parse_args()
 
 # Gather information of cluster
@@ -76,26 +73,23 @@ if results.tempest_version == 'grizzly':
     cluster['admin_username'] = admin_username
     cluster['admin_password'] = admin_password
     cluster['admin_tenant'] = admin_tenant
-try:
-    r = requests.post(token_url, data=json.dumps(auth),
-                      headers={'Content-type': 'application/json'})
-    ans = json.loads(r.text)
-    if 'error' in ans.keys():
-        print "##### Error authenticating with Keystone: #####"
-        pprint(ans['error'])
-        sys.exit(1)
-    token = ans['access']['token']['id']
-    images_url = "http://%s:9292/v2/images" % ip
-    images = json.loads(requests.get(images_url,
-                        headers={'X-Auth-Token': token}).text)
-    image_ids = (image['id'] for image in images['images'])
-    cluster['image_id'] = next(image_ids)
-    cluster['alt_image_id'] = next(image_ids, cluster['image_id'])
-    print "##### Image 1: %s #####" % cluster['image_id']
-    print "##### Image 2: %s #####" % cluster['alt_image_id']
-except Exception, e:
-    print "Failed to add keystone info. Exception: %s" % e
+r = requests.post(token_url, data=json.dumps(auth),
+                  headers={'Content-type': 'application/json'})
+ans = json.loads(r.text)
+if 'error' in ans.keys():
+    print "##### Error authenticating with Keystone: #####"
+    pprint(ans['error'])
     sys.exit(1)
+token = ans['access']['token']['id']
+images_url = "http://%s:9292/v2/images" % ip
+images = json.loads(requests.get(images_url,
+                    headers={'X-Auth-Token': token}).text)
+image_ids = (image['id'] for image in images['images']
+             if image['visibility'] == "public")
+cluster['image_id'] = next(image_ids)
+cluster['alt_image_id'] = next(image_ids, cluster['image_id'])
+print "##### Image 1: %s #####" % cluster['image_id']
+print "##### Image 2: %s #####" % cluster['alt_image_id']
 
 # Write the config
 tempest_dir = "%s/%s/tempest" % (results.tempest_root, results.tempest_version)
@@ -109,28 +103,25 @@ with open(tempest_config_path, 'w') as w:
     print tempest_config
     w.write(tempest_config)
 
-xunit = ' '
-if results.xunit:
-    file = '%s-%s.xunit' % (
-        time.strftime("%Y-%m-%d-%H:%M:%S",
-                      time.gmtime()),
-        env.name)
-    xunit = ' --with-xunit --xunit-file=%s ' % file
-command = ("sysctl -w net.ipv4.ip_forward=1; "
-           "source ~/openrc; "
-           "nova-manage floating list | grep eth0 > /dev/null || { nova-manage floating create 33.33.33.0/24; }; "
-           "for i in `keystone tenant-list | grep -i test | awk '{print $2}'`; do keystone tenant-delete $i; done; "
-           "for i in `nova volume-list --all-tenants | tail -n +4 | head -n -1 | awk '{print $2}'`; do nova volume-delete $i; done; "
-           "for i in `keystone user-list | grep -i test | awk '{print $2}'`; do keystone user-delete $i; done; "
-           "cd %s; git pull; "
-           "export TEMPEST_CONFIG=%s; "
-           "python -u /usr/local/bin/nosetests%s%s/tempest/tests; " % (
-               tempest_dir,
-               tempest_config_path,
-               xunit,
-               tempest_dir))
+print "## Setting up and cleaning cluster ##"
+setup_cmd = ("sysctl -w net.ipv4.ip_forward=1; "
+             "source ~/openrc; "
+             "nova-manage floating list | grep eth0 > /dev/null || nova-manage floating create 192.168.2.0/24;")
+qa.run_cmd_on_node(node=controller, cmd=setup_cmd)
 
 # Run tests
+file = '%s-%s.xunit' % (
+    time.strftime("%Y-%m-%d-%H:%M:%S",
+                  time.gmtime()),
+    env.name)
+xunit_flag = '--with-xunit --xunit-file=%s' % file
+command = ("cd %s; git pull; cd -; "
+           "export TEMPEST_CONFIG=%s; "
+           "python -u /usr/local/bin/nosetests %s %s/tempest/tests; " % (
+               tempest_dir,
+               tempest_config_path,
+               xunit_flag,
+               tempest_dir))
 try:
     print "!! ## -- Running tempest -- ## !!"
     print command
