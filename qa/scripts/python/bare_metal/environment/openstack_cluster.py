@@ -83,10 +83,12 @@ if results.action == "build":
     else:
         print "Cluster size is %i." % cluster_size
 
+    '''
     # If remote_chef is enabled, add one to the cluster size
     if results.remote_chef:
         print "You wanted a remote chef server, adding 1 to cluster size"
         cluster_size += 1
+    '''
 
     # Collect the amount of servers we need for the openstack install
     rpcsqa.check_cluster_size(all_nodes, cluster_size)
@@ -101,6 +103,7 @@ if results.action == "build":
 
     if results.remote_chef:
 
+        '''
         # Set each servers roles
         chef_server = openstack_list[0]
         controller = openstack_list[1]
@@ -141,6 +144,49 @@ if results.action == "build":
         print "Controller: %s" % rpcsqa.print_server_info(controller)
         rpcsqa.print_computes_info(computes)
         print "********************************************************************"
+        sys.exit()
+        '''
+
+        controller = openstack_list[0]
+        computes = openstack_list[1:]
+
+        # Set the node to be chef server
+        rpcsqa.set_node_in_use(controller, 'chef-server')
+
+        # Remove Chef from chef_server Node
+        rpcsqa.remove_chef(controller)
+
+        # Build Chef Server
+        rpcsqa.build_chef_server(controller)
+
+        # Install the proper cookbooks
+        rpcsqa.install_cookbooks(controller, results.branch)
+
+        # setup environment file to remote chef server
+        rpcsqa.setup_remote_chef_environment(controller, env)
+
+        # Setup Remote Client
+        config_file = rpcsqa.setup_remote_chef_client(controller, env)
+
+        # Make controller
+        rpcsqa.remove_chef(controller)
+        rpcsqa.bootstrap_chef(controller, controller)
+        rpcsqa.build_controller(controller, env, remote=results.remote_chef, chef_config_file=config_file)
+
+        """
+        # Make computes
+        for compute in computes:
+            rpcsqa.remove_chef(compute)
+            rpcsqa.bootstrap_chef(compute, chef_server)
+            rpcsqa.build_compute(compute, env, remote=results.remote_chef, chef_config_file=config_file)
+
+        # print all servers info
+        print "********************************************************************"
+        print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
+        print "Controller: %s" % rpcsqa.print_server_info(controller)
+        rpcsqa.print_computes_info(computes)
+        print "********************************************************************"
+        """
         sys.exit()
 
     # Build cluster accordingly
