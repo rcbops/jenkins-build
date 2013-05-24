@@ -210,7 +210,7 @@ class rpcsqa_helper:
                     print run1
                     sys.exit(1)
 
-    def build_controller(self, controller_node, environment, ha_num=0,
+    def build_controller(self, controller_node, environment=None, ha_num=0,
                          remote=False, chef_config_file=None):
         '''
         @summary: This will build out a controller node based on location.

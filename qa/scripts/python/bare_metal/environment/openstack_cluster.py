@@ -127,13 +127,13 @@ if results.action == "build":
         # Make controller
         rpcsqa.remove_chef(controller)
         rpcsqa.bootstrap_chef(controller, chef_server)
-        rpcsqa.build_controller(controller, env, remote=results.remote_chef, chef_config_file=config_file)
+        rpcsqa.build_controller(controller, environment=env, remote=results.remote_chef, chef_config_file=config_file)
 
         # Make computes
         for compute in computes:
             rpcsqa.remove_chef(compute)
             rpcsqa.bootstrap_chef(compute, chef_server)
-            rpcsqa.build_compute(compute, env, remote=results.remote_chef, chef_config_file=config_file)
+            rpcsqa.build_compute(compute, environment=env, remote=results.remote_chef, chef_config_file=config_file)
 
         # print all servers info
         print "********************************************************************"
