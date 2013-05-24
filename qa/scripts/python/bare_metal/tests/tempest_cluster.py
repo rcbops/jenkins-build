@@ -73,26 +73,25 @@ if results.tempest_version == 'grizzly':
     cluster['admin_username'] = admin_username
     cluster['admin_password'] = admin_password
     cluster['admin_tenant'] = admin_tenant
-try:
-    r = requests.post(token_url, data=json.dumps(auth),
-                      headers={'Content-type': 'application/json'})
-    ans = json.loads(r.text)
-    if 'error' in ans.keys():
-        print "##### Error authenticating with Keystone: #####"
-        pprint(ans['error'])
-        sys.exit(1)
-    token = ans['access']['token']['id']
-    images_url = "http://%s:9292/v2/images" % ip
-    images = json.loads(requests.get(images_url,
-                        headers={'X-Auth-Token': token}).text)
-    image_ids = (image['id'] for image in images['images'])
-    cluster['image_id'] = next(image_ids)
-    cluster['alt_image_id'] = next(image_ids, cluster['image_id'])
-    print "##### Image 1: %s #####" % cluster['image_id']
-    print "##### Image 2: %s #####" % cluster['alt_image_id']
-except Exception, e:
-    print "Failed to add keystone info. Exception: %s" % e
+r = requests.post(token_url, data=json.dumps(auth),
+                  headers={'Content-type': 'application/json'})
+ans = json.loads(r.text)
+if 'error' in ans.keys():
+    print "##### Error authenticating with Keystone: #####"
+    pprint(ans['error'])
     sys.exit(1)
+token = ans['access']['token']['id']
+images_url = "http://%s:9292/v2/images" % ip
+images = json.loads(requests.get(images_url,
+                    headers={'X-Auth-Token': token}).text)
+from pprint import pprint
+pprint(images)
+image_ids = (image['id'] for image in images['images']
+             if image['visibility'] == "public")
+cluster['image_id'] = next(image_ids)
+cluster['alt_image_id'] = next(image_ids, cluster['image_id'])
+print "##### Image 1: %s #####" % cluster['image_id']
+print "##### Image 2: %s #####" % cluster['alt_image_id']
 
 # Write the config
 tempest_dir = "%s/%s/tempest" % (results.tempest_root, results.tempest_version)
