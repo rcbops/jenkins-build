@@ -32,17 +32,23 @@ class chef_helper:
         '''
         # Set node attributes
         chef_node = Node(compute_node, api=self.chef)
+
+        ip = chef_node['ipaddress']
+        platform = chef_node['platform']
+
         chef_node['in_use'] = "compute"
         chef_node.run_list = ["role[single-compute]"]
         chef_node.save()
 
-        print "Updating server...this may take some time"
-        update(chef_node)
+        # Set the environment
+        self.set_node_environment(chef_node, environment)
 
-        platform = chef_node['platform']
-        if platform == 'centos' or platform == 'redhat':
-            print "Platform is %s, disabling iptables" % platform
-            disable_iptables(chef_node)
+        print "Updating server...this may take some time"
+        update(ip, platform, user, password)
+
+        if platform == 'rhel' or platform == 'centos':
+            print "%s platform, disabling iptables" % platform
+            disable_iptables(ip, user, password)
 
         # Run chef client twice
         print "Running chef-client on compute node: %s, \
