@@ -84,8 +84,6 @@ token = ans['access']['token']['id']
 images_url = "http://%s:9292/v2/images" % ip
 images = json.loads(requests.get(images_url,
                     headers={'X-Auth-Token': token}).text)
-from pprint import pprint
-pprint(images)
 image_ids = (image['id'] for image in images['images']
              if image['visibility'] == "public")
 cluster['image_id'] = next(image_ids)
