@@ -124,25 +124,23 @@ if results.action == "build":
         # Setup Remote Client
         config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 
-        # Remove Chef from controller node
+        # Make controller
         rpcsqa.remove_chef(controller)
-
-        # Bootstrap chef client onto controller to connect to chef_server
         rpcsqa.bootstrap_chef(controller, chef_server)
+        rpcsqa.build_controller(controller, env, remote=results.remote_chef, chef_config_file=config_file)
 
-        # Make servers
-        rpcsqa.build_controller(controller, env, remote=True, chef_config_file=config_file)
-
-        '''
-        rpcsqa.build_computes(computes, env,
-                              remote=True, chef_config_file=config_file)
+        # Make computes
+        for compute in computes:
+            rpcsqa.remove_chef(compute)
+            rpcsqa.bootstrap_chef(compute, chef_server)
+            rpcsqa.build_compute(compute, env, remote=results.remote_chef, chef_config_file=config_file)
 
         # print all servers info
         print "********************************************************************"
+        print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
         print "Controller: %s" % rpcsqa.print_server_info(controller)
         rpcsqa.print_computes_info(computes)
         print "********************************************************************"
-        '''
         sys.exit()
 
     # Build cluster accordingly

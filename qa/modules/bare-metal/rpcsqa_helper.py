@@ -100,8 +100,7 @@ class rpcsqa_helper:
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
             if dir_version == 'openldap':
-                scp_run = run_remote_scp_cmd(ip, 'root', root_pass,
-                    '/var/lib/jenkins/source_files/ldif/*.ldif')
+                scp_run = run_remote_scp_cmd(ip, 'root', root_pass, '/var/lib/jenkins/source_files/ldif/*.ldif')
                 if scp_run['success']:
                     ssh_run = run_remote_ssh_cmd(ip, 'root', root_pass,
                         "ldapadd -x -D \"cn=admin,dc=dev,dc=rcbops,dc=me\" \
@@ -122,6 +121,48 @@ class rpcsqa_helper:
                 % dir_version
             sys.exit(1)
 
+    def build_compute(self, compute, environment, remote=False, chef_config_file=None):
+        '''
+        @summary: This will build out a single compute server
+        '''
+        compute_node = Node(compute, api=self.chef)
+        compute_node['in_use'] = "compute"
+        compute_node.run_list = ["role[single-compute]"]
+        compute_node.save()
+
+        if remote:
+            remote_chef = chef_helper(chef_config_file)
+            remote_chef.build_compute(compute,
+                                      environment,
+                                      'root',
+                                      self.razor_password(compute_node))
+        else:
+            print "Updating server...this may take some time"
+            self.update_node(compute_node)
+
+            if compute_node['platform_family'] == 'rhel':
+                print "Platform is RHEL family, disabling iptables"
+                self.disable_iptables(compute_node)
+
+            # Run chef client twice
+            print "Running chef-client on compute node: %s, \
+                   this may take some time..." % compute
+            run1 = self.run_chef_client(compute_node)
+            if run1['success']:
+                print "First chef-client run successful, \
+                       starting second run..."
+                run2 = self.run_chef_client(compute_node)
+                if run2['success']:
+                    print "Second chef-client run successful..."
+                else:
+                    print "Error running chef-client for compute %s" % compute
+                    print run2
+                    sys.exit(1)
+            else:
+                print "Error running chef-client for compute %s" % compute
+                print run1
+                sys.exit(1)
+
     def build_computes(self, computes, environment, remote=False, chef_config_file=None):
         '''
         @summary: This will build out all the computes for a openstack
@@ -139,6 +180,7 @@ class rpcsqa_helper:
             if remote:
                 remote_chef = chef_helper(chef_config_file)
                 remote_chef.build_compute(compute,
+                                          environment,
                                           'root',
                                           self.razor_password(compute_node))
             else:

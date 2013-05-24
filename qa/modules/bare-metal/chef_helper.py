@@ -31,7 +31,7 @@ class chef_helper:
         @type password: String
         '''
         # Set node attributes
-        chef_node = self.chef.Node(compute_node)
+        chef_node = Node(compute_node, api=self.chef)
         chef_node['in_use'] = "compute"
         chef_node.run_list = ["role[single-compute]"]
         chef_node.save()
