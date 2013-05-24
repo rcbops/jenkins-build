@@ -226,6 +226,7 @@ if results.action == "build":
 
     # NON REMOTE CHEF SERVER BUILDS
     else:
+
         # Build cluster accordingly
         if results.dir_service and results.ha_enabled:
 
