@@ -122,8 +122,8 @@ if results.action == "build":
         rpcsqa.bootstrap_chef(controller, controller)
 
         # Make servers
-        rpcsqa.build_controller(controller, env,
-                                remote=True, chef_config_file=config_file)
+        #rpcsqa.build_controller(controller, env,
+        #                       remote=True, chef_config_file=config_file)
         '''
         rpcsqa.build_computes(computes, env,
                               remote=True, chef_config_file=config_file)
