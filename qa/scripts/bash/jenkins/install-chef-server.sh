@@ -66,7 +66,6 @@ CHEF_UNIX_USER=${CHEF_UNIX_USER:-root}
 # due to http://tickets.opscode.com/browse/CHEF-3849 CHEF_FE_PORT is not used yet
 CHEF_FE_PORT=${CHEF_FE_PORT:-8090}
 CHEF_FE_SSL_PORT=${CHEF_FE_SSL_PORT:-4443}
-CHEF_RBMQ_NODE_NAME=${CHEF_RBMQ_NODE_NAME:-chefrbmq@localhost}
 CHEF_RBMQ_PORT=${CHEF_RBMQ_PORT:-5674}
 CHEF_URL=${CHEF_URL:-https://${MY_IP}:${CHEF_FE_SSL_PORT}}
 
@@ -81,6 +80,7 @@ if [ ! -e "/etc/chef-server/chef-server.rb" ]; then
   cat > /etc/chef-server/chef-server.rb <<EOF
 node.override["chef_server"]["chef-server-webui"]["web_ui_admin_default_password"] = "${CHEF_WEBUI_PASSWORD}"
 node.override["chef_server"]["rabbitmq"]["password"] = "${CHEF_AMQP_PASSWORD}"
+node.override["chef_server"]["rabbitmq"]["node_port"] = ${CHEF_RBMQ_PORT}
 node.override["chef_server"]["postgresql"]["sql_password"] = "${CHEF_POSTGRESQL_PASSWORD}"
 node.override["chef_server"]["postgresql"]["sql_ro_password"] = "${CHEF_POSTGRESQL_RO_PASSWORD}"
 node.override["chef_server"]["nginx"]["url"] = "${CHEF_URL}"
@@ -88,8 +88,6 @@ node.override["chef_server"]["nginx"]["ssl_port"] = ${CHEF_FE_SSL_PORT}
 node.override["chef_server"]["nginx"]["non_ssl_port"] = ${CHEF_FE_PORT}
 node.override["chef_server"]["nginx"]["enable_non_ssl"] = true
 node.override["chef_server"]["bookshelf"]["url"] = "${CHEF_URL}"
-node.override["chef_server"]["rabbitmq"]["node_port"] = ${CHEF_RBMQ_PORT}
-node.override["chef_server"]["rabbitmq"]["nodename"] = "${CHEF_RBMQ_NODE_NAME}"
 if (node['memory']['total'].to_i / 4) > ((node['chef_server']['postgresql']['shmmax'].to_i / 1024) - 2097152)
   # guard against setting shared_buffers > shmmax on hosts with installed RAM > 64GB
   # use 2GB less than shmmax as the default for these large memory machines
