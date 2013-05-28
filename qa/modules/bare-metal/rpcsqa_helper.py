@@ -557,35 +557,6 @@ class rpcsqa_helper:
             print "OpenCenter %s successfully installed on vm with ip %s" \
                 % (role, vm_ip)
 
-    def prepare_server(self, server):
-        '''
-        @sumary: This will prepare the server. If anything else needs to be
-        installed, add it to prep_list
-        '''
-
-        chef_node = Node(server, api=self.chef)
-        node_ip = chef_node['ipaddress']
-        user_pass = self.razor_password(chef_node)
-
-        prep_list = ['openssh-clients']
-
-        if chef_node['platform_family'] == 'rhel':
-            command = "yum -y install"
-        else:
-            command = "apt-get -y install"
-
-        for item in prep_list:
-            install_run = run_remote_ssh_cmd(node_ip,
-                                             'root',
-                                             user_pass,
-                                             '%s %s' % (command, item))
-
-            if not install_run['success']:
-                print "Failed to install package %s on %s, check logs" % (
-                    item, server)
-                print install_run
-                sys.exit(1)
-
     def install_server_vms(self, server, opencenter_server_ip,
                            chef_server_ip, vm_bridge, vm_bridge_device):
         chef_node = Node(server, api=self.chef)
@@ -641,6 +612,35 @@ class rpcsqa_helper:
             Environment.create(env, api=self.chef)
 
         return env
+
+    def prepare_server(self, server):
+        '''
+        @sumary: This will prepare the server. If anything else needs to be
+        installed, add it to prep_list
+        '''
+
+        chef_node = Node(server, api=self.chef)
+        node_ip = chef_node['ipaddress']
+        user_pass = self.razor_password(chef_node)
+
+        prep_list = ['openssh-clients']
+
+        if chef_node['platform_family'] == 'rhel':
+            command = "yum -y install"
+        else:
+            command = "apt-get -y install"
+
+        for item in prep_list:
+            install_run = run_remote_ssh_cmd(node_ip,
+                                             'root',
+                                             user_pass,
+                                             '%s %s' % (command, item))
+
+            if not install_run['success']:
+                print "Failed to install package %s on %s, check logs" % (
+                    item, server)
+                print install_run
+                sys.exit(1)
 
     def prepare_vm_host(self, server):
         chef_node = Node(server, api=self.chef)
