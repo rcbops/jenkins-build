@@ -39,7 +39,7 @@ function id_OS {
 }
 
 function install_chef_client {
-    curl -L http://www.opscode.com/chef/install.sh | sudo bash
+    curl -L http://www.opscode.com/chef/install.sh | bash
 }
 
 OS_TYPE="undef"
