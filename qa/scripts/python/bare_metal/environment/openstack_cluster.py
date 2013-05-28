@@ -110,6 +110,11 @@ if results.action == "build":
         print "No nodes available..."
         sys.exit(1)
 
+    # Need to prep centos boxes
+    if results.os_distro == 'centos':
+        for server in openstack_list:
+            rpcsqa_helper.prepare_server(server)
+
     # Remote Chef Server Builds
     if results.remote_chef:
 
