@@ -115,12 +115,8 @@ if results.action == "build":
 
         # Build cluster accordingly
         if results.dir_service and results.ha_enabled:
-
-            # JOHN
-            # REMOVE THIS WHEN YOU GET THIS WORKING
-            print "Not Implemented....Talk to John Curran"
+            print "not supported yet"
             sys.exit(1)
-
             # Set each servers roles
             dir_server = openstack_list[0]
             ha_controller_1 = openstack_list[1]
@@ -154,26 +150,11 @@ if results.action == "build":
 
         elif results.dir_service:
 
-            # JOHN
-            # REMOVE THIS WHEN YOU GET THIS WORKING
-            print "Not Implemented....Talk to John Curran"
-            sys.exit(1)
-
             # Set each servers roles
-            dir_server = openstack_list[0]
-            controller = openstack_list[1]
-            computes = openstack_list[2:]
-
-            # Build the dir server
-            rpcsqa.build_dir_server(dir_server,
-                                    results.dir_version,
-                                    results.os_distro)
-
-            # Build controller
-            rpcsqa.build_controller(controller)
-
-            # Build computes
-            rpcsqa.build_computes(computes)
+            chef_server = openstack_list[0]
+            dir_server = openstack_list[1]
+            controller = openstack_list[2]
+            computes = openstack_list[3:]
 
             # print all servers info
             print "***********************************************************"
@@ -183,6 +164,69 @@ if results.action == "build":
                 rpcsqa.print_server_info(controller))
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
+
+            ###################################################################
+            # Set up Chef Server
+            ###################################################################
+
+            # Set the node to be chef server
+            rpcsqa.set_node_in_use(chef_server, 'chef-server')
+            # Need to prep centos boxes
+            if results.os_distro == 'centos':
+                rpcsqa.prepare_server(chef_server)
+            # Remove Chef from chef_server Node
+            rpcsqa.remove_chef(chef_server)
+            # Build Chef Server
+            rpcsqa.build_chef_server(chef_server)
+            # Install the proper cookbooks
+            rpcsqa.install_cookbooks(chef_server, results.branch)
+            # setup environment file to remote chef server
+            rpcsqa.setup_remote_chef_environment(chef_server, env)
+            # Setup Remote Client
+            config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
+
+            ###################################################################
+            # Build Openstack Environment
+            ###################################################################
+
+            # Build the dir server
+            rpcsqa.set_node_in_use(dir_server, 'dir_server')
+            rpcsqa.build_dir_server(dir_server,
+                                    results.dir_version,
+                                    results.os_distro)            
+            # Make controller
+            rpcsqa.set_node_in_use(controller, 'controller')
+            # Need to prep centos boxes
+            if results.os_distro == 'centos':
+                rpcsqa.prepare_server(controller)
+            rpcsqa.remove_chef(controller)
+            rpcsqa.bootstrap_chef(controller, chef_server)
+            rpcsqa.build_controller(controller,
+                                    env,
+                                    remote=results.remote_chef,
+                                    chef_config_file=config_file)
+            # Make computes
+            for compute in computes:
+                rpcsqa.set_node_in_use(compute, 'compute')
+                # Need to prep centos boxes
+                if results.os_distro == 'centos':
+                    rpcsqa.prepare_server(compute)
+                rpcsqa.remove_chef(compute)
+                rpcsqa.bootstrap_chef(compute, chef_server)
+                rpcsqa.build_compute(compute,
+                                     env,
+                                     remote=results.remote_chef,
+                                     chef_config_file=config_file)
+
+            # print all servers info
+            print "***********************************************************"
+            print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
+            print "Controller: %s" % rpcsqa.print_server_info(controller)
+            rpcsqa.print_computes_info(computes)
+            print "***********************************************************"
+
+
+            
 
         elif results.ha_enabled:
 
