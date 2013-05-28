@@ -47,7 +47,7 @@ parser.add_argument('--remote_chef', action="store_true", dest="remote_chef",
                     help="Build a new chef server for this deploy")
 
 #Defaulted arguments
-parser.add_argument('--razor_ip', action="store", dest="razor_ip", 
+parser.add_argument('--razor_ip', action="store", dest="razor_ip",
                     default="198.101.133.3",
                     help="IP for the Razor server")
 
@@ -77,7 +77,7 @@ all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 
 if results.action == "build":
 
-    # Check the cluster size, if < 5 and 
+    # Check the cluster size, if < 5 and
     # results.dir_service is enabled, set to 4
     if cluster_size < 4 and results.dir_service:
         if results.ha_enabled:
