@@ -699,20 +699,25 @@ class rpcsqa_helper:
         @param chef_node
         """
         chef_node = Node(server, api=self.chef)
-        try:
-            root_pass = self.razor_password(chef_node)
-            print "removing chef on %s..." % chef_node
-            command = ""
-            if chef_node['platform_family'] == "debian":
-                command = "apt-get remove --purge -y chef; rm -rf /etc/chef"
-            elif chef_node['platform_family'] == "rhel":
-                command = 'yum remove -y chef; rm -rf /etc/chef /var/chef'
-            run = run_remote_ssh_cmd(chef_node['ipaddress'],
-                                     'root',
-                                     root_pass,
-                                     command)
-        except:
-            raise Exception("Error removing chef")
+        root_pass = self.razor_password(chef_node)
+
+        print "removing chef on %s..." % chef_node
+        if chef_node['platform_family'] == "debian":
+            command = "apt-get remove --purge -y chef; rm -rf /etc/chef"
+        elif chef_node['platform_family'] == "rhel":
+            command = 'yum remove -y chef; rm -rf /etc/chef /var/chef'
+        else:
+            print "OS Distro not supported"
+            sys.exit(1)
+        run = run_remote_ssh_cmd(chef_node['ipaddress'],
+                                 'root',
+                                 root_pass,
+                                 command)
+        if run['success']:
+            print "Removed Chef on %s" % server
+        else:
+            print "Failed to remove chef on server %s" % server
+            sys.exit(1)
 
     def set_network_interface(self, chef_node):
         if "role[qa-base]" in chef_node.run_list:
