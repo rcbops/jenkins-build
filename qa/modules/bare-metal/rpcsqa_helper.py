@@ -654,6 +654,8 @@ class rpcsqa_helper:
                 print install_run
                 sys.exit(1)
 
+        self.disable_iptables(chef_node)
+
     def prepare_vm_host(self, server):
         chef_node = Node(server, api=self.chef)
         controller_ip = chef_node['ipaddress']

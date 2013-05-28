@@ -288,6 +288,12 @@ if results.action == "build":
             ###################################################################
 
             # Make controller
+            rpcsqa.set_node_in_use(controller, 'controller')
+
+            # Need to prep centos boxes
+            if results.os_distro == 'centos':
+                rpcsqa.prepare_server(controller)
+
             rpcsqa.remove_chef(controller)
             rpcsqa.bootstrap_chef(controller, chef_server)
             rpcsqa.build_controller(controller,
@@ -297,6 +303,12 @@ if results.action == "build":
 
             # Make computes
             for compute in computes:
+                rpcsqa.set_node_in_use(compute, 'compute')
+
+                # Need to prep centos boxes
+                if results.os_distro == 'centos':
+                    rpcsqa.prepare_server(compute)
+
                 rpcsqa.remove_chef(compute)
                 rpcsqa.bootstrap_chef(compute, chef_server)
                 rpcsqa.build_compute(compute,
