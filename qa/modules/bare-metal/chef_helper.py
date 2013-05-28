@@ -82,7 +82,7 @@ class chef_helper:
         else:
             print "Making %s the controller node" % controller_node
             chef_node['in_use'] = "controller"
-            chef_node.run_list = ["role[ha-controller1]"]
+            chef_node.run_list = ["role[single-controller]"]
 
         # Save Node
         chef_node.save()
