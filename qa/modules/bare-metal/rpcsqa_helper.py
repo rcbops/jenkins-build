@@ -65,7 +65,7 @@ class rpcsqa_helper:
 
         # Build directory service node
         ip = chef_node['ipaddress']
-        root_pass = self.razor_password(chef_node)
+        user_pass = self.razor_password(chef_node)
         chef_node['in_use'] = 'directory-server'
         chef_node.run_list = ["role[qa-%s-%s]" % (dir_version, os)]
         chef_node.save()
@@ -100,9 +100,9 @@ class rpcsqa_helper:
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
             if dir_version == 'openldap':
-                scp_run = run_remote_scp_cmd(ip, 'root', root_pass, '/var/lib/jenkins/source_files/ldif/*.ldif')
+                scp_run = run_remote_scp_cmd(ip, 'root', user_pass, '/var/lib/jenkins/source_files/ldif/*.ldif')
                 if scp_run['success']:
-                    ssh_run = run_remote_ssh_cmd(ip, 'root', root_pass,
+                    ssh_run = run_remote_ssh_cmd(ip, 'root', user_pass,
                         "ldapadd -x -D \"cn=admin,dc=dev,dc=rcbops,dc=me\" \
                         -f base.ldif -w@privatecloud")
             elif dir_version == '389':
@@ -210,8 +210,7 @@ class rpcsqa_helper:
                     print run1
                     sys.exit(1)
 
-    def build_controller(self, controller_node, environment=None, ha_num=0,
-                         remote=False, chef_config_file=None):
+    def build_controller(self, controller_node, environment=None, ha_num=0, remote=False, chef_config_file=None):
         '''
         @summary: This will build out a controller node based on location.
         if remote, use a passed config file to build a chef_helper class and
@@ -338,7 +337,7 @@ class rpcsqa_helper:
     def clone_git_repo(self, server, github_user, github_pass):
         chef_node = Node(server, api=self.chef)
         node_ip = chef_node['ipaddress']
-        root_pass = self.razor_password(chef_node)
+        user_pass = self.razor_password(chef_node)
 
         # Download vm setup script on controller node.
         print "Cloning repo with setup script..."
@@ -348,7 +347,7 @@ class rpcsqa_helper:
         command = "mkdir -p /opt/rpcs; git clone %s %s" % (repo, rcps_dir)
         download_run = run_remote_ssh_cmd(node_ip,
                                           'root',
-                                          root_pass,
+                                          user_pass,
                                           command)
         if not download_run['success']:
             print "Failed to clone script repo on server %s@%s" \
@@ -375,11 +374,11 @@ class rpcsqa_helper:
 
     def disable_iptables(self, chef_node, logfile="STDOUT"):
         ip = chef_node['ipaddress']
-        root_pass = self.razor_password(chef_node)
+        user_pass = self.razor_password(chef_node)
         commands = '/etc/init.d/iptables save; \
                     /etc/init.d/iptables stop; \
                     /etc/init.d/iptables save'
-        return run_remote_ssh_cmd(ip, 'root', root_pass, commands)
+        return run_remote_ssh_cmd(ip, 'root', user_pass, commands)
 
     def environment_has_controller(self, environment):
         # Load Environment
@@ -516,7 +515,7 @@ class rpcsqa_helper:
     def install_opencenter(self, server, install_script,
                            role, oc_server_ip='0.0.0.0'):
         chef_node = Node(server, api=self.chef)
-        root_pass = self.razor_password(chef_node)
+        user_pass = self.razor_password(chef_node)
         print ""
         print ""
         print "*****************************************************"
@@ -528,9 +527,9 @@ class rpcsqa_helper:
         print ""
         if chef_node['platform_family'] == "debian":
             run_remote_ssh_cmd(chef_node['ipaddress'], 'root',
-                               root_pass, 'apt-get update -y -qq')
+                               user_pass, 'apt-get update -y -qq')
         elif chef_node['platform_family'] == "rhel":
-            run_remote_ssh_cmd(chef_node['ipaddress'], 'root', root_pass,
+            run_remote_ssh_cmd(chef_node['ipaddress'], 'root', user_pass,
                                ('yum update -y -q;'
                                 '/etc/init.d/iptables save;'
                                 '/etc/init.d/iptables stop'))
@@ -539,7 +538,7 @@ class rpcsqa_helper:
         print command
         ret = run_remote_ssh_cmd(chef_node['ipaddress'],
                                  'root',
-                                 root_pass,
+                                 user_pass,
                                  command)
         if not ret['success']:
             print "Failed to install opencenter %s" % type
@@ -558,11 +557,20 @@ class rpcsqa_helper:
             print "OpenCenter %s successfully installed on vm with ip %s" \
                 % (role, vm_ip)
 
+    def install_openssh(self, server):
+        '''
+        @sumary: This will isntall the openssh-client package
+        '''
+
+        chef_node = Node(server, api=self.chef)
+        node_ip = chef_node['ipaddress']
+
+
     def install_server_vms(self, server, opencenter_server_ip,
                            chef_server_ip, vm_bridge, vm_bridge_device):
         chef_node = Node(server, api=self.chef)
         node_ip = chef_node['ipaddress']
-        root_pass = self.razor_password(chef_node)
+        user_pass = self.razor_password(chef_node)
 
         # Run vm setup script on controller node
         print "Running VM setup script..."
@@ -573,7 +581,7 @@ class rpcsqa_helper:
                                            vm_bridge,
                                            vm_bridge_device)
         print "Prepare command to run: %s" % command
-        install_run = run_remote_ssh_cmd(node_ip, 'root', root_pass, command)
+        install_run = run_remote_ssh_cmd(node_ip, 'root', user_pass, command)
         if not install_run['success']:
             print "Failed VM setup script on server %s@%s" % (
                 chef_node, node_ip)
@@ -617,7 +625,7 @@ class rpcsqa_helper:
     def prepare_vm_host(self, server):
         chef_node = Node(server, api=self.chef)
         controller_ip = chef_node['ipaddress']
-        root_pass = self.razor_password(chef_node)
+        user_pass = self.razor_password(chef_node)
 
         if chef_node['platform_family'] == 'debian':
             commands = [("aptitude install -y curl dsh screen vim"
@@ -640,7 +648,7 @@ class rpcsqa_helper:
             print "************************************"
             prepare_run = run_remote_ssh_cmd(controller_ip,
                                              'root',
-                                             root_pass,
+                                             user_pass,
                                              command)
 
             if not prepare_run['success']:
@@ -670,10 +678,10 @@ class rpcsqa_helper:
             data = active_models[active]
             if 'broker_fail' in data['current_state']:
                 print "!!## -- Removing active model  (broker_fail) -- ##!!"
-                root_pass = self.razor.get_active_model_pass(
+                user_pass = self.razor.get_active_model_pass(
                     data['am_uuid'])['password']
                 ip = data['eth1_ip']
-                run = run_remote_ssh_cmd(ip, 'root', root_pass, 'reboot 0')
+                run = run_remote_ssh_cmd(ip, 'root', user_pass, 'reboot 0')
                 if run['success']:
                     self.razor.remove_active_model(data['am_uuid'])
                     time.sleep(15)
@@ -688,10 +696,10 @@ class rpcsqa_helper:
         @return run_remote_ssh_cmd of chef-client
         """
         ip = chef_node['ipaddress']
-        root_pass = self.razor_password(chef_node)
+        user_pass = self.razor_password(chef_node)
         return run_remote_ssh_cmd(ip,
                                   'root',
-                                  root_pass,
+                                  user_pass,
                                   'chef-client')
 
     def remove_chef(self, server):
@@ -699,7 +707,7 @@ class rpcsqa_helper:
         @param chef_node
         """
         chef_node = Node(server, api=self.chef)
-        root_pass = self.razor_password(chef_node)
+        user_pass = self.razor_password(chef_node)
 
         print "removing chef on %s..." % chef_node
         if chef_node['platform_family'] == "debian":
@@ -711,7 +719,7 @@ class rpcsqa_helper:
             sys.exit(1)
         run = run_remote_ssh_cmd(chef_node['ipaddress'],
                                  'root',
-                                 root_pass,
+                                 user_pass,
                                  command)
         if run['success']:
             print "Removed Chef on %s" % server
@@ -869,12 +877,12 @@ class rpcsqa_helper:
 
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
-        root_pass = self.razor_password(chef_node)
+        user_pass = self.razor_password(chef_node)
         if chef_node['platform_family'] == "debian":
-            run_remote_ssh_cmd(ip, 'root', root_pass,
+            run_remote_ssh_cmd(ip, 'root', user_pass,
                                'apt-get update -y; apt-get upgrade -y')
         elif chef_node['platform_family'] == "rhel":
-            run_remote_ssh_cmd(ip, 'root', root_pass, 'yum update -y')
+            run_remote_ssh_cmd(ip, 'root', user_pass, 'yum update -y')
         else:
             print "Platform Family %s is not supported." \
                 % chef_node['platform_family']
