@@ -632,9 +632,10 @@ class rpcsqa_helper:
                                          user_pass,
                                          'rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm')
             if not run_cmd['success']:
-                print "Failed to add EPEL repo, check logs"
-                print run_cmd
-                sys.exit(1)
+                print "Failed to add EPEL repo."
+                print "Failed with return code {0}".format(
+                    run_cmd['exception'].returncode)
+
             # Set command to be RHEL based
             command = "yum -y install"
         else:
