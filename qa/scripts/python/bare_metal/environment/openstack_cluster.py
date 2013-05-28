@@ -315,7 +315,7 @@ if results.action == "build":
 
             # Make servers
             rpcsqa.build_controller(controller)
-            rpcsqa.build_computes(computes)
+            rpcsqa.build_computes(computes, env)
 
             # print all servers info
             print "********************************************************************"
