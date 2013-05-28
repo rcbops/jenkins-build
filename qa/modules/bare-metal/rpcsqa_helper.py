@@ -626,8 +626,19 @@ class rpcsqa_helper:
         prep_list = ['openssh-clients']
 
         if chef_node['platform_family'] == 'rhel':
+            # Add EPEL to the repo list
+            run_cmd = run_remote_ssh_cmd(node_ip,
+                                         'root',
+                                         user_pass,
+                                         'rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm')
+            if not run_cmd['success']:
+                print "Failed to add EPEL repo, check logs"
+                print run_cmd
+                sys.exit(1)
+            # Set command to be RHEL based
             command = "yum -y install"
         else:
+            # Set command to be debian based
             command = "apt-get -y install"
 
         for item in prep_list:
