@@ -1,5 +1,6 @@
 import argparse
 import sys
+from pprint import pprint
 from rpcsqa_helper import *
 
 # Parse arguments from the cmd line
@@ -25,6 +26,8 @@ if not rpcsqa.environment_exists(env):
     sys.exit(1)
 chef_config = "/var/lib/jenkins/rcbops-qa/remote-chef-clients/%s/.chef/knife.rb" % env
 remote_chef = ChefAPI.from_config_file(chef_config)
+pprint(vars(remote_chef))
+
 print "##### Updating %s to Grizzly #####" % env
 
 print "Uploading grizzly cookbooks and roles to chef server"
@@ -42,6 +45,7 @@ environment = Environment(env, api=remote_chef)
 environment.override_attributes['osops']['do_package_upgrades'] = True
 environment.override_attributes['glance']['image_upload'] = False
 environment.save()
+pprint(vars(Environment(env, api=remote_chef)))
 
 print "Running chef client on all controller nodes"
 query = "chef_environment:%s AND run_list:*controller*" % env
