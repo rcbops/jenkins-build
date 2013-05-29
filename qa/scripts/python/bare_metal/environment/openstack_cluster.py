@@ -158,7 +158,7 @@ if results.action == "build":
             rpcsqa.set_node_in_use(dir_server, 'dir_server')
             rpcsqa.build_dir_server(dir_server,
                                     results.dir_version,
-                                    results.os_distro)            
+                                    results.os_distro)
             # Make controller
             rpcsqa.set_node_in_use(controller, 'controller')
             # Need to prep centos boxes
