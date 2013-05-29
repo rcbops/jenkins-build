@@ -113,8 +113,8 @@ if results.action == "build":
         if results.dir_service:
 
             # Set each servers roles
-            chef_server = openstack_list[0]
-            dir_server = openstack_list[1]
+            dir_server = openstack_list[0]
+            chef_server = openstack_list[1]
             controller = openstack_list[2]
             computes = openstack_list[3:]
 
@@ -126,6 +126,15 @@ if results.action == "build":
                 rpcsqa.print_server_info(controller))
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
+
+            ###################################################################
+            # Set up LDAP Server
+            ###################################################################
+            # Build the dir server
+            rpcsqa.set_node_in_use(dir_server, 'dir_server')
+            rpcsqa.build_dir_server(dir_server,
+                                    results.dir_version,
+                                    results.os_distro)
 
             ###################################################################
             # Set up Chef Server
@@ -151,11 +160,6 @@ if results.action == "build":
             # Build Openstack Environment
             ###################################################################
 
-            # Build the dir server
-            rpcsqa.set_node_in_use(dir_server, 'dir_server')
-            rpcsqa.build_dir_server(dir_server,
-                                    results.dir_version,
-                                    results.os_distro)
             # Make controller
             rpcsqa.set_node_in_use(controller, 'controller')
             # Need to prep centos boxes
