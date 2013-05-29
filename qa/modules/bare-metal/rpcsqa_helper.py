@@ -97,6 +97,10 @@ class rpcsqa_helper:
             print run1
             sys.exit(1)
 
+        #Save the ip address of the ldap server into the environment
+        env = Environment(chef_node.chef_environment)
+        env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" %  chef_node['ipaddress']
+
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
             if dir_version == 'openldap':
