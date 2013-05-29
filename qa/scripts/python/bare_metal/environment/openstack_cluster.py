@@ -113,42 +113,7 @@ if results.action == "build":
     # Remote Chef Server Builds
     if results.remote_chef:
 
-        # Build cluster accordingly
-        if results.dir_service and results.ha_enabled:
-            print "not supported yet"
-            sys.exit(1)
-            # Set each servers roles
-            dir_server = openstack_list[0]
-            ha_controller_1 = openstack_list[1]
-            ha_controller_2 = openstack_list[2]
-            computes = openstack_list[3:]
-
-            # Build directory service server
-            rpcsqa.build_dir_server(dir_server, results.dir_version)
-
-            # Build HA Controllers
-            rpcsqa.build_controller(ha_controller_1, True, 1)
-            rpcsqa.build_controller(ha_controller_2, True, 2)
-
-            # Have to run chef client on controller 1 again
-            ha_controller_1_node = Node(ha_controller_1)
-            rpcsqa.run_chef_client(ha_controller_1_node)
-
-            # Build computes
-            rpcsqa.build_computes(computes)
-
-            # print all servers info
-            print "***********************************************************"
-            print "Directory Service Server: %s" % (
-                rpcsqa.print_server_info(dir_server))
-            print "HA-Controller 1: %s" % (
-                rpcsqa.print_server_info(ha_controller_1))
-            print "HA-Controller 2: %s" % (
-                rpcsqa.print_server_info(ha_controller_2))
-            rpcsqa.print_computes_info(computes)
-            print "***********************************************************"
-
-        elif results.dir_service:
+        if results.dir_service:
 
             # Set each servers roles
             chef_server = openstack_list[0]
@@ -224,9 +189,6 @@ if results.action == "build":
             print "Controller: %s" % rpcsqa.print_server_info(controller)
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
-
-
-            
 
         elif results.ha_enabled:
 
@@ -370,41 +332,7 @@ if results.action == "build":
     # NON REMOTE CHEF SERVER BUILDS
     else:
 
-        # Build cluster accordingly
-        if results.dir_service and results.ha_enabled:
-
-            # Set each servers roles
-            dir_server = openstack_list[0]
-            ha_controller_1 = openstack_list[1]
-            ha_controller_2 = openstack_list[2]
-            computes = openstack_list[3:]
-
-            # Build directory service server
-            rpcsqa.build_dir_server(dir_server, results.dir_version)
-
-            # Build HA Controllers
-            rpcsqa.build_controller(ha_controller_1, True, 1)
-            rpcsqa.build_controller(ha_controller_2, True, 2)
-
-            # Have to run chef client on controller 1 again
-            ha_controller_1_node = Node(ha_controller_1)
-            rpcsqa.run_chef_client(ha_controller_1_node)
-
-            # Build computes
-            rpcsqa.build_computes(computes)
-
-            # print all servers info
-            print "***********************************************************"
-            print "Directory Service Server: %s" % (
-                rpcsqa.print_server_info(dir_server))
-            print "HA-Controller 1: %s" % (
-                rpcsqa.print_server_info(ha_controller_1))
-            print "HA-Controller 2: %s" % (
-                rpcsqa.print_server_info(ha_controller_2))
-            rpcsqa.print_computes_info(computes)
-            print "***********************************************************"
-
-        elif results.dir_service:
+        if results.dir_service:
 
             # Set each servers roles
             dir_server = openstack_list[0]
