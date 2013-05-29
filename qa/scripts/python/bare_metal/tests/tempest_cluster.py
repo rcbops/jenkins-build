@@ -32,8 +32,9 @@ results = parser.parse_args()
 
 # Gather information of cluster
 qa = rpcsqa_helper()
-env = qa.cluster_environment(results.name, results.os_distro,
-                             results.feature_set)
+env = qa.cluster_environment(name=results.name, os_distro=results.os_distro,
+                             feature_set=results.feature_set,
+                             branch=results.tempest_version)
 if not env.exists:
     print "Error: Environment %s doesn't exist" % env.name
     sys.exit(1)
