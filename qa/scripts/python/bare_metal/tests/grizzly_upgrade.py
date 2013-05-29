@@ -43,8 +43,14 @@ environment.override_attributes['osops']['do_package_upgrades'] = True
 environment.override_attributes['glance']['image_upload'] = False
 environment.save()
 
+print "Running chef client on all controller nodes"
+query = "chef_environment:%s AND run_list:*controller*" % env
+controllers = (Node(i) for i in Node.list(api=remote_chef).names)
+for node in controllers:
+        rpcsqa.run_chef_client(node)
+
 print "Running chef client on all compute nodes"
-query = "chef_environment:%s AND NOT run_list:*network-interfaces*" % env
-nodes = rpcsqa.node_search(query=query, api=remote_chef)
-for node in nodes:
+query = "chef_environment:%s AND NOT run_list:*controller*" % env
+computes = (Node(i) for i in Node.list(api=remote_chef).names)
+for node in computes:
         rpcsqa.run_chef_client(node)
