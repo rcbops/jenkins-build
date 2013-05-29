@@ -19,7 +19,7 @@ results = parser.parse_args()
 rpcsqa = rpcsqa_helper()
 branch = "folsom"
 
-env = cluster_environment(name=results.name, os_distro=results.os_distro,
+env = qa.cluster_environment(name=results.name, os_distro=results.os_distro,
                           branch=branch, feature_set=results.feature_set)
 if not env.exists:
     print "Error: Environment %s doesn't exist" % env.name
