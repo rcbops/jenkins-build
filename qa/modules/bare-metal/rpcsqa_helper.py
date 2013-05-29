@@ -16,10 +16,10 @@ class rpcsqa_helper:
 
     def __repr__(self):
         """ Print out current instance of razor_api"""
-        outl = 'class :'+self.__class__.__name__
+        outl = 'class :' + self.__class__.__name__
 
         for attr in self.__dict__:
-            outl += '\n\t'+attr+' : '+str(getattr(self, attr))
+            outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
 
         return outl
 
@@ -99,7 +99,7 @@ class rpcsqa_helper:
 
         #Save the ip address of the ldap server into the environment
         env = Environment(chef_node.chef_environment)
-        env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" %  chef_node['ipaddress']
+        env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % chef_node['ipaddress']
 
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
@@ -107,8 +107,8 @@ class rpcsqa_helper:
                 scp_run = run_remote_scp_cmd(ip, 'root', user_pass, '/var/lib/jenkins/source_files/ldif/*.ldif')
                 if scp_run['success']:
                     ssh_run = run_remote_ssh_cmd(ip, 'root', user_pass,
-                        "ldapadd -x -D \"cn=admin,dc=dev,dc=rcbops,dc=me\" \
-                        -f base.ldif -w@privatecloud")
+                                                 "ldapadd -x -D \"cn=admin,dc=dev,dc=rcbops,dc=me\" \
+                                                 -f base.ldif -w@privatecloud")
             elif dir_version == '389':
                 # Once we support 389, code here to import needed config files
                 print "389 is not yet supported..."
@@ -843,11 +843,11 @@ class rpcsqa_helper:
         # build knife.rb
         knife_dict = {"log_level": ":info",
                       "log_location": "STDOUT",
-                      "node_name": "admin",
-                      "client_key": "%s/admin.pem" % chef_file_path,
-                      "validation_client_name": "chef-validator",
-                      "validation_key": "%s/chef-validator.pem" % chef_file_path,
-                      "chef_server_url": "https://%s:4443" % chef_server_ip}
+                      "node_name": "'admin'",
+                      "client_key": "'%s/admin.pem'" % chef_file_path,
+                      "validation_client_name": "'chef-validator'",
+                      "validation_key": "'%s/chef-validator.pem'" % chef_file_path,
+                      "chef_server_url": "'https://%s:4443'" % chef_server_ip}
 
         try:
             # Open the file
