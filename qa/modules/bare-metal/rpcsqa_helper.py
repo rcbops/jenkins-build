@@ -920,9 +920,10 @@ class rpcsqa_helper:
                 % chef_node['platform_family']
             sys.exit(1)
 
-    def node_search(self, query=None):
-        search = Search("node", api=self.chef).query(query)
-        return (Node(n['name'], api=self.chef) for n in search)
+    def node_search(self, query=None, api=None):
+        api = api or self.chef
+        search = Search("node", api=api).query(query)
+        return (Node(n['name'], api=api) for n in search)
 
     def run_cmd_on_node(self, node=None, cmd=None):
         user = "root"
