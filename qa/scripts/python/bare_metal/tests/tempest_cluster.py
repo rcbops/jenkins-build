@@ -86,8 +86,9 @@ if 'error' in ans.keys():
     sys.exit(1)
 token = ans['access']['token']['id']
 images_url = "http://%s:9292/v2/images" % ip
-images = json.loads(requests.get(images_url,
-                    headers={'X-Auth-Token': token}).text)
+response = requests.get(images_url, headers={'X-Auth-Token': token}).text
+print response
+images = json.loads(response)
 image_ids = (image['id'] for image in images['images']
              if image['visibility'] == "public")
 cluster['image_id'] = next(image_ids)
