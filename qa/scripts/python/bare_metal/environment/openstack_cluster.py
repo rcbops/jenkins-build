@@ -110,6 +110,10 @@ if results.action == "build":
         print "No nodes available..."
         sys.exit(1)
 
+    if results.ha_enabled and results.dir_service:
+        print "No support currently enabled for ha and dir service in the same build. Sorry :("
+        sys.exit(1)
+
     # Remote Chef Server Builds
     if results.remote_chef:
 
