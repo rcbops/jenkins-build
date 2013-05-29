@@ -19,19 +19,20 @@ results = parser.parse_args()
 rpcsqa = rpcsqa_helper()
 branch = "folsom"
 
-env = qa.cluster_environment(name=results.name, os_distro=results.os_distro,
-                          branch=branch, feature_set=results.feature_set)
+env = rpcsqa.cluster_environment(name=results.name, os_distro=results.os_distro,
+                                 branch=branch, feature_set=results.feature_set)
 if not env.exists:
     print "Error: Environment %s doesn't exist" % env.name
     sys.exit(1)
-chef_config = "/var/lib/jenkins/rcbops-qa/remote-chef-clients/%s/.chef/knife.rb" % env
+chef_config = "/var/lib/jenkins/rcbops-qa/remote-chef-clients/%s/.chef/knife.rb" % env.name
+print chef_config
 remote_chef = ChefAPI.from_config_file(chef_config)
 pprint(vars(remote_chef))
 
-print "##### Updating %s to Grizzly #####" % env
+print "##### Updating %s to Grizzly #####" % env.name
 
 print "Uploading grizzly cookbooks and roles to chef server"
-query = "chef_environment:%s AND run_list:*network-interfaces*" % env
+query = "chef_environment:%s AND run_list:*network-interfaces*" % env.name
 search = rpcsqa.node_search(query=query)
 chef_server = next(search)
 commands = ["git clone https://github.com/rcbops/chef-cookbooks -b grizzly --recursive",
@@ -41,20 +42,20 @@ for command in commands:
     rpcsqa.run_cmd_on_node(node=chef_server, cmd=command)
 
 print "Editing environment to run package upgrades"
-environment = Environment(env, api=remote_chef)
+environment = Environment(env.name, api=remote_chef)
 environment.override_attributes['osops']['do_package_upgrades'] = True
 environment.override_attributes['glance']['image_upload'] = False
 environment.save()
-pprint(vars(Environment(env, api=remote_chef)))
+pprint(vars(Environment(env.name, api=remote_chef)))
 
 print "Running chef client on all controller nodes"
-query = "chef_environment:%s AND run_list:*controller*" % env
+query = "chef_environment:%s AND run_list:*controller*" % env.name
 controllers = (Node(i) for i in Node.list(api=remote_chef).names)
 for node in controllers:
         rpcsqa.run_chef_client(node)
 
 print "Running chef client on all compute nodes"
-query = "chef_environment:%s AND NOT run_list:*controller*" % env
+query = "chef_environment:%s AND NOT run_list:*controller*" % env.name
 computes = (Node(i) for i in Node.list(api=remote_chef).names)
 for node in computes:
         rpcsqa.run_chef_client(node)
