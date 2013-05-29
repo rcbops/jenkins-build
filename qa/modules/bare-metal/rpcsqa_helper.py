@@ -363,12 +363,16 @@ class rpcsqa_helper:
             print "Successfully cloned repo with setup script..."
 
     def cluster_controller(self, environment):
-        controller_name = "ha-controller1"
+        controller_name = "single-controller"
         q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
                                                        controller_name)
         search = Search("node", api=self.chef).query(q)
         if not search:
-            return None
+            q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
+                                                           controller_name)
+            search = Search("node", api=self.chef).query(q)
+            if not search:
+                return None
         return Node(search[0]['name'], api=self.chef)
 
     def cluster_environment(self, name=None, os_distro=None, feature_set=None, branch=None):
