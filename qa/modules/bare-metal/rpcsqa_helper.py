@@ -371,8 +371,8 @@ class rpcsqa_helper:
             return None
         return Node(search[0]['name'], api=self.chef)
 
-    def cluster_environment(self, name, os, feature_set):
-        name = "%s-%s-%s" % (name, os, feature_set)
+    def cluster_environment(self, name=None, os_distro=None, feature_set=None, branch=None):
+        name = "%s-%s-%s-%s" % (name, os, branch, feature_set)
         env = Environment(name, api=self.chef)
         return env
 
