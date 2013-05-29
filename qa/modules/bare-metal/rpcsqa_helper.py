@@ -473,17 +473,11 @@ class rpcsqa_helper:
         if chef_server_platform == 'ubuntu':
             to_run_list = ['apt-get install git -y',
                            'mkdir -p /opt/rcbops',
-                           'cd /opt/rcbops; git clone %s' % rcbops_git,
-                           'cd /opt/rcbops/chef-cookbooks; git branch -t %s remotes/origin/%s' % (openstack_release, openstack_release),
-                           'cd /opt/rcbops/chef-cookbooks; git checkout %s' % openstack_release,
-                           'cd /opt/rcbops/chef-cookbooks; git submodule init; git submodule update']
+                           'cd /opt/rcbops; git clone %s -b %s --recursive' % (rcbops_git, openstack_release)]
         elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
             to_run_list = ['yum install git -y',
                            'mkdir -p /opt/rcbops',
-                           'cd /opt/rcbops; git clone %s' % rcbops_git,
-                           'cd /opt/rcbops/chef-cookbooks; git branch -t %s remotes/origin/%s' % (openstack_release, openstack_release),
-                           'cd /opt/rcbops/chef-cookbooks; git checkout %s' % openstack_release,
-                           'cd /opt/rcbops/chef-cookbooks; git submodule init; git submodule update']
+                           'cd /opt/rcbops; git clone %s -b %s --recursive' % (rcbops_git, openstack_release)]
         else:
             print "Platform %s not supported" % chef_server_platform
             sys.exit(1)
