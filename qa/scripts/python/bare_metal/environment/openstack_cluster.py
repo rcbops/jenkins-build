@@ -77,11 +77,11 @@ if results.action == "build":
     # Clean up the current running environment
     rpcsqa.cleanup_environment(env)
 
-    # Check the cluster size, if < 5 and
-    # results.dir_service is enabled, set to 4
-    if (results.dir_service or results.ha_enabled) and cluster_size < 4:
+    # If either HA is enabled or Dir Service is enabled and the cluster
+    # size is < 3, set the cluster size to 3
+    if (results.dir_service or results.ha_enabled) and cluster_size < 3:
         print "Either HA or Directory Service was requested, resizing cluster to 4."
-        cluster_size = 4
+        cluster_size = 3
     else:
         print "Cluster size is %i." % cluster_size
 
