@@ -600,7 +600,7 @@ class rpcsqa_helper:
         # Gather the nodes for the requested os_distro
         nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os_distro)
 
-        #Make sure all networking interfacing is set
+        #Make sure all network interfacing is set
         for node in nodes:
             chef_node = Node(node['name'], api=self.chef)
             self.set_network_interface(chef_node)

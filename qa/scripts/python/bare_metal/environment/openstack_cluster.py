@@ -66,16 +66,16 @@ env = rpcsqa.prepare_environment(results.name,
                                  results.feature_set,
                                  results.branch)
 
-# Clean up the current running environment
-rpcsqa.cleanup_environment(env)
+# Gather all the nodes for the os_distro
+all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 
 # Set the cluster size
 cluster_size = int(results.cluster_size)
 
-# Gather all the nodes for the os_distro
-all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
-
 if results.action == "build":
+
+    # Clean up the current running environment
+    rpcsqa.cleanup_environment(env)
 
     # Check the cluster size, if < 5 and
     # results.dir_service is enabled, set to 4
