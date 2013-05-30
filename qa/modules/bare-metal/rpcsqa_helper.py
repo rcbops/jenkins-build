@@ -323,17 +323,6 @@ class rpcsqa_helper:
                 node.chef_environment = "_default"
                 node.save()
 
-    def clear_pool(self, chef_nodes, environment):
-        for n in chef_nodes:
-            name = n['name']
-            node = Node(name, api=self.chef)
-            if node.chef_environment == environment:
-                if node['in_use'] != 0:
-                    self.erase_node(node)
-                else:
-                    node.chef_environment = "_default"
-                    node.save()
-
     def clone_git_repo(self, server, github_user, github_pass):
         chef_node = Node(server, api=self.chef)
         node_ip = chef_node['ipaddress']
