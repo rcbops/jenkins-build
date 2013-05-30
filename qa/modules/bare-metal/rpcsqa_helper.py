@@ -760,7 +760,7 @@ class rpcsqa_helper:
             print "Failed to remove chef on server %s" % server
             sys.exit(1)
 
-    def remove_empty_environments():
+    def remove_empty_environments(self):
         search = Search("environment").query("NOT name:_default")
         for e in search:
             if not Search("node").query("chef_environment:%s" % e['name']):
