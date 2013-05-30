@@ -764,7 +764,7 @@ class rpcsqa_helper:
         api = api or self.chef
         search = Search("environment", api=api).query("NOT name:_default")
         for e in search:
-            if not Search("node").query("chef_environment:%s" % e['name']):
+            if not Search("node", api=api).query("chef_environment:%s" % e['name']):
                 print "Deleting empty environment: %s" % e['name']
                 env = Environment(e['name'], api=api)
                 env.delete(api=api)
