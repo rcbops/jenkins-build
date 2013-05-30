@@ -51,8 +51,10 @@ pprint(vars(Environment(env.name, api=remote_chef)))
 print "Running chef client on all controller nodes"
 query = "chef_environment:%s AND run_list:*controller*" % env.name
 controllers = (Node(i) for i in Node.list(api=remote_chef).names)
+command = "glance-manage db_sync"
 for node in controllers:
         rpcsqa.run_chef_client(node)
+        rpcsqa.run_cmd_on_node(node=node, cmd=command)
 
 print "Running chef client on all compute nodes"
 query = "chef_environment:%s AND NOT run_list:*controller*" % env.name

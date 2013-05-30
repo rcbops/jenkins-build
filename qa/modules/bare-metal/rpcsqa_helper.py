@@ -380,6 +380,11 @@ class rpcsqa_helper:
         env = Environment(name, api=self.chef)
         return env
 
+    def cluster_nodes(self, environment=None, api=None):
+        """Returns all the nodes of an environment"""
+        query = "chef_environment:%s" % environment
+        self.node_search(query=query, api=api)
+
     def disable_iptables(self, chef_node, logfile="STDOUT"):
         ip = chef_node['ipaddress']
         user_pass = self.razor_password(chef_node)
