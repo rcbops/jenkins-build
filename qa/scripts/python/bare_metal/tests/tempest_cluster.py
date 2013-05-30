@@ -111,7 +111,8 @@ with open(tempest_config_path, 'w') as w:
 print "## Setting up and cleaning cluster ##"
 setup_cmd = ("sysctl -w net.ipv4.ip_forward=1; "
              "source ~/openrc; "
-             "nova-manage floating list | grep eth0 > /dev/null || nova-manage floating create 192.168.2.0/24;")
+             "nova-manage floating list | grep eth0 > /dev/null || nova-manage floating create 192.168.2.0/24; "
+             "nova-manage floating list;")
 qa.run_cmd_on_node(node=controller, cmd=setup_cmd)
 
 # Run tests
