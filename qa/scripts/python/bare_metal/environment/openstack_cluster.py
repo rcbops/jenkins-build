@@ -260,7 +260,8 @@ if results.action == "build":
             ha_controller_1_node = Node(ha_controller_1,
                                         api=remote_chef_api.chef)
             print "HA Setup...run chef client on %s again " % ha_controller_1
-            remote_chef_api.run_chef_client(ha_controller_1_node)
+            password = rpcsqa.razor_password(ha_controller_1)
+            remote_chef_api.run_chef_client(ha_controller_1_node, "root", password)
 
             # build computes
             for compute in computes:
