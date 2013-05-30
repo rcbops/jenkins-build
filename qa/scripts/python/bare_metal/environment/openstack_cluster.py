@@ -206,6 +206,10 @@ if results.action == "build":
             # Set the node to be chef server
             rpcsqa.set_node_in_use(chef_server, 'chef-server')
 
+            # Need to prep centos boxes
+            if results.os_distro == 'centos':
+                rpcsqa.prepare_server(chef_server)
+
             # Remove Chef from chef_server Node
             rpcsqa.remove_chef(chef_server)
 
@@ -226,12 +230,24 @@ if results.action == "build":
             ###################################################################
 
             # Make the controllers
+            # Need to prep centos boxes
+            if results.os_distro == 'centos':
+                rpcsqa.prepare_server(ha_controller_1)
+            rpcsqa.set_node_in_use(ha_controller_1, 'controller')
+            rpcsqa.remove_chef(ha_controller_1)
+            rpcsqa.bootstrap_chef(ha_controller_1, chef_server)
             rpcsqa.build_controller(ha_controller_1,
                                     environment=env,
                                     ha_num=1,
                                     remote=True,
                                     chef_config_file=config_file)
-            rpcsqa.build_controller(ha_controller_1,
+            # Need to prep centos boxes
+            if results.os_distro == 'centos':
+                rpcsqa.prepare_server(ha_controller_2)
+            rpcsqa.set_node_in_use(ha_controller_2, 'controller')
+            rpcsqa.remove_chef(ha_controller_2)
+            rpcsqa.bootstrap_chef(ha_controller_2, chef_server)
+            rpcsqa.build_controller(ha_controller_2,
                                     environment=env,
                                     ha_num=2,
                                     remote=True,
@@ -246,7 +262,19 @@ if results.action == "build":
             remote_chef_api.run_chef_client(ha_controller_1_node)
 
             # build computes
-            rpcsqa.build_computes(computes)
+            for compute in computes:
+                rpcsqa.set_node_in_use(compute, 'compute')
+
+                # Need to prep centos boxes
+                if results.os_distro == 'centos':
+                    rpcsqa.prepare_server(compute)
+
+                rpcsqa.remove_chef(compute)
+                rpcsqa.bootstrap_chef(compute, chef_server)
+                rpcsqa.build_compute(compute,
+                                     env,
+                                     remote=results.remote_chef,
+                                     chef_config_file=config_file)
 
             # print all servers info
             print "***********************************************************"
