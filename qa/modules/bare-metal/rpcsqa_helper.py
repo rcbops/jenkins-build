@@ -318,14 +318,17 @@ class rpcsqa_helper:
         @param chef_environment
         """
         nodes = Search('node', api=self.chef).query("chef_environment:%s" % chef_environment)
-        for n in nodes:
-            name = n['name']
-            node = Node(name, api=self.chef)
-            if node['in_use'] != 0:
-                self.erase_node(node)
-            else:
-                node.chef_environment = "_default"
-                node.save()
+        if nodes:
+            for n in nodes:
+                name = n['name']
+                node = Node(name, api=self.chef)
+                if node['in_use'] != 0:
+                    self.erase_node(node)
+                else:
+                    node.chef_environment = "_default"
+                    node.save()
+        else:
+            print "Environment: %s has no nodes" % chef_environment
 
     def clone_git_repo(self, server, github_user, github_pass):
         chef_node = Node(server, api=self.chef)
