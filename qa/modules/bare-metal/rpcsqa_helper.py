@@ -16,10 +16,10 @@ class rpcsqa_helper:
 
     def __repr__(self):
         """ Print out current instance of razor_api"""
-        outl = 'class :'+self.__class__.__name__
+        outl = 'class :' + self.__class__.__name__
 
         for attr in self.__dict__:
-            outl += '\n\t'+attr+' : '+str(getattr(self, attr))
+            outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
 
         return outl
 
@@ -99,7 +99,7 @@ class rpcsqa_helper:
 
         #Save the ip address of the ldap server into the environment
         env = Environment(chef_node.chef_environment)
-        env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" %  chef_node['ipaddress']
+        env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % chef_node['ipaddress']
 
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
@@ -363,18 +363,27 @@ class rpcsqa_helper:
             print "Successfully cloned repo with setup script..."
 
     def cluster_controller(self, environment):
-        controller_name = "ha-controller1"
+        controller_name = "single-controller"
         q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
                                                        controller_name)
         search = Search("node", api=self.chef).query(q)
         if not search:
-            return None
+            q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
+                                                           controller_name)
+            search = Search("node", api=self.chef).query(q)
+            if not search:
+                return None
         return Node(search[0]['name'], api=self.chef)
 
-    def cluster_environment(self, name, os, feature_set):
-        name = "%s-%s-%s" % (name, os, feature_set)
+    def cluster_environment(self, name=None, os_distro=None, feature_set=None, branch=None):
+        name = "%s-%s-%s-%s" % (name, os_distro, branch, feature_set)
         env = Environment(name, api=self.chef)
         return env
+
+    def cluster_nodes(self, environment=None, api=None):
+        """Returns all the nodes of an environment"""
+        query = "chef_environment:%s" % environment
+        self.node_search(query=query, api=api)
 
     def disable_iptables(self, chef_node, logfile="STDOUT"):
         ip = chef_node['ipaddress']
@@ -843,11 +852,11 @@ class rpcsqa_helper:
         # build knife.rb
         knife_dict = {"log_level": ":info",
                       "log_location": "STDOUT",
-                      "node_name": "admin",
-                      "client_key": "%s/admin.pem" % chef_file_path,
-                      "validation_client_name": "chef-validator",
-                      "validation_key": "%s/chef-validator.pem" % chef_file_path,
-                      "chef_server_url": "https://%s:4443" % chef_server_ip}
+                      "node_name": "'admin'",
+                      "client_key": "'%s/admin.pem'" % chef_file_path,
+                      "validation_client_name": "'chef-validator'",
+                      "validation_key": "'%s/chef-validator.pem'" % chef_file_path,
+                      "chef_server_url": "'https://%s:4443'" % chef_server_ip}
 
         try:
             # Open the file
@@ -920,9 +929,10 @@ class rpcsqa_helper:
                 % chef_node['platform_family']
             sys.exit(1)
 
-    def node_search(self, query=None):
-        search = Search("node", api=self.chef).query(query)
-        return (Node(n['name'], api=self.chef) for n in search)
+    def node_search(self, query=None, api=None):
+        api = api or self.chef
+        search = Search("node", api=api).query(query)
+        return (Node(n['name'], api=api) for n in search)
 
     def run_cmd_on_node(self, node=None, cmd=None):
         user = "root"
