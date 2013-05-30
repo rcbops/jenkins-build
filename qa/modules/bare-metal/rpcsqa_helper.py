@@ -761,7 +761,7 @@ class rpcsqa_helper:
             sys.exit(1)
 
     def remove_empty_environments(api=None):
-        api = api or self.chef
+        api = api if api else self.chef
         search = Search("environment", api=api).query("NOT name:_default")
         for e in search:
             print "Deleting empty environment: %s" % e['name']
