@@ -68,7 +68,7 @@ env = rpcsqa.prepare_environment(results.name,
 
 # Gather all the nodes for the os_distro
 all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
-current_nodes = rpcsqa.cluster_nodes(env=env)
+current_nodes = rpcsqa.cluster_nodes(environment=env)
 
 # Set the cluster size
 cluster_size = int(results.cluster_size)
