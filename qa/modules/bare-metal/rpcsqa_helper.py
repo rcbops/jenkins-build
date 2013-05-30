@@ -108,7 +108,7 @@ class rpcsqa_helper:
                 if scp_run['success']:
                     ssh_run = run_remote_ssh_cmd(ip, 'root', user_pass,
                         "ldapadd -x -D \"cn=admin,dc=dev,dc=rcbops,dc=me\" \
-                        -f base.ldif -w@privatecloud")
+                        -f base.ldif -wprivatecloud")
             elif dir_version == '389':
                 # Once we support 389, code here to import needed config files
                 print "389 is not yet supported..."
