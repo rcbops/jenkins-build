@@ -760,14 +760,13 @@ class rpcsqa_helper:
             print "Failed to remove chef on server %s" % server
             sys.exit(1)
 
-    def remove_empty_environments(chef_api=None):
-        chef_api = chef_api or self.chef
-        search = Search("environment", api=chef_api).query("NOT name:_default")
+    def remove_empty_environments():
+        search = Search("environment").query("NOT name:_default")
         for e in search:
-            if not Search("node", api=chef_api).query("chef_environment:%s" % e['name']):
+            if not Search("node").query("chef_environment:%s" % e['name']):
                 print "Deleting empty environment: %s" % e['name']
-                env = Environment(e['name'], api=chef_api)
-                env.delete(api=chef_api)
+                env = Environment(e['name'])
+                env.delete()
 
     def set_network_interface(self, chef_node):
         if "role[qa-base]" in chef_node.run_list:
