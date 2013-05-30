@@ -59,6 +59,7 @@ rpcsqa = rpcsqa_helper(results.razor_ip)
 
 # Remove broker fails for qa-%os_distro-pool
 rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
+rpcsqa.remove_empty_environments()
 
 #Prepare environment
 env = rpcsqa.prepare_environment(results.name,
