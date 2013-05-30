@@ -81,7 +81,7 @@ if results.action == "build":
     # If either HA is enabled or Dir Service is enabled and the cluster
     # size is < 3, set the cluster size to 3
     if (results.dir_service or results.ha_enabled) and cluster_size < 3:
-        print "Either HA or Directory Service was requested, resizing cluster to 4."
+        print "Either HA or Directory Service was requested, resizing cluster to 3."
         cluster_size = 3
     else:
         print "Cluster size is %i." % cluster_size
