@@ -68,7 +68,6 @@ env = rpcsqa.prepare_environment(results.name,
 
 # Gather all the nodes for the os_distro
 all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
-current_nodes = rpcsqa.cluster_nodes(environment=env)
 
 # Set the cluster size
 cluster_size = int(results.cluster_size)
@@ -430,7 +429,8 @@ elif results.action == 'add':
         sys.exit(1)
 
 elif results.action == 'destroy':
-    rpcsqa.clear_pool(current_nodes, env)
+    print "Destroying environment: %s" % env
+    rpcsqa.clear_pool(all_nodes, env)
 
 else:
     print "Action %s is not supported..." % results.action
