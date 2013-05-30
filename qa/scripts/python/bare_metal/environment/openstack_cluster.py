@@ -257,10 +257,9 @@ if results.action == "build":
             remote_chef_api = chef_helper(config_file)
 
             # Have to run chef client on controller 1 again
-            ha_controller_1_node = Node(ha_controller_1,
-                                        api=remote_chef_api.chef)
+            ha_controller_1_node = Node(ha_controller_1, api=rpcsqa.chef)
             print "HA Setup...run chef client on %s again " % ha_controller_1
-            remote_chef_api.run_chef_client(ha_controller_1_node)
+            rpcsqa.run_chef_client(ha_controller_1_node)
 
             # build computes
             for compute in computes:
