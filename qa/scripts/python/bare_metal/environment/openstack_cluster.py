@@ -429,7 +429,7 @@ elif results.action == 'add':
         sys.exit(1)
 
 elif results.action == 'destroy':
-    rpcsqa.clear_pool(all_nodes, env)
+    rpcsqa.cleanup_environment(env)
 
 else:
     print "Action %s is not supported..." % results.action
