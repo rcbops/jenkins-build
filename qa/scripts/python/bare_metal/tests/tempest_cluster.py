@@ -22,6 +22,9 @@ parser.add_argument('--feature_set', action="store", dest="feature_set",
 parser.add_argument('--tempest_root', action="store", dest="tempest_root",
                     required=False,
                     default="/var/lib/jenkins/tempest")
+parser.add_argument('--environment_branch', action="store", dest="environment_branch",
+                    required=False,
+                    default="folsom")
 parser.add_argument('--tempest_version', action="store",
                     dest="tempest_version", required=False,
                     default="grizzly")
@@ -32,8 +35,9 @@ results = parser.parse_args()
 
 # Gather information of cluster
 qa = rpcsqa_helper()
-env = qa.cluster_environment(results.name, results.os_distro,
-                             results.feature_set)
+env = qa.cluster_environment(name=results.name, os_distro=results.os_distro,
+                             feature_set=results.feature_set,
+                             branch=results.environment_branch)
 if not env.exists:
     print "Error: Environment %s doesn't exist" % env.name
     sys.exit(1)
@@ -82,8 +86,9 @@ if 'error' in ans.keys():
     sys.exit(1)
 token = ans['access']['token']['id']
 images_url = "http://%s:9292/v2/images" % ip
-images = json.loads(requests.get(images_url,
-                    headers={'X-Auth-Token': token}).text)
+response = requests.get(images_url, headers={'X-Auth-Token': token}).text
+print response
+images = json.loads(response)
 image_ids = (image['id'] for image in images['images']
              if image['visibility'] == "public")
 cluster['image_id'] = next(image_ids)
@@ -106,7 +111,8 @@ with open(tempest_config_path, 'w') as w:
 print "## Setting up and cleaning cluster ##"
 setup_cmd = ("sysctl -w net.ipv4.ip_forward=1; "
              "source ~/openrc; "
-             "nova-manage floating list | grep eth0 > /dev/null || nova-manage floating create 192.168.2.0/24;")
+             "nova-manage floating list | grep eth0 > /dev/null || nova-manage floating create 192.168.2.0/24; "
+             "nova-manage floating list;")
 qa.run_cmd_on_node(node=controller, cmd=setup_cmd)
 
 # Run tests

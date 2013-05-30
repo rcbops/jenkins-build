@@ -429,6 +429,7 @@ elif results.action == 'add':
         sys.exit(1)
 
 elif results.action == 'destroy':
+    print "Destroying environment: %s" % env
     rpcsqa.cleanup_environment(env)
 
 else:

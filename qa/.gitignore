@@ -8,3 +8,5 @@
 .project
 .pydevproject
 *~
+tox.ini
+.ropeproject/
