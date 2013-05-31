@@ -31,6 +31,20 @@ function build_default() {
     build_chef_environment
 }
 
+function build_ha() {
+
+    # build environment files from templates
+    set_environment_files
+
+    ## replace the lines we are looking for
+    echo "Replacing template values with real values..."
+    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
+
+    # build chef environment
+    build_chef_environment
+}
+
 function build_glance_cf() {
 
     # build environment files from templates
@@ -117,6 +131,7 @@ done
 
 case $FEATURE_SET in
     'default')          build_default;;
+    'ha')               build_ha;;
     'glance-cf')        build_glance_cf;;
     'keystone-ldap')    build_keystone_ldap;;
     'nova-quantum')     build_nova_quantum;;
