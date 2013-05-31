@@ -278,6 +278,7 @@ if results.action == "build":
 
             # print all servers info
             print "***********************************************************"
+            print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
             print "HA-Controller 1: %s" % (
                 rpcsqa.print_server_info(ha_controller_1))
             print "HA-Controller 2: %s" % (
