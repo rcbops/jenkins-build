@@ -875,7 +875,7 @@ class rpcsqa_helper:
             print "%s/knife.rb successfully saved" % chef_file_path
 
         env = Environment(chef_environment)
-        pem_file_name = "'%s/admin.pem'" % chef_file_path
+        pem_file_name = "%s/admin.pem" % chef_file_path
         try:
             pem_file = open(pem_file_name)
             env.override_attributes['chef-client-pem'] = read(pem_file)
