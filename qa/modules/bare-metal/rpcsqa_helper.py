@@ -877,8 +877,8 @@ class rpcsqa_helper:
         env = Environment(chef_environment)
         pem_file_name = "%s/admin.pem" % chef_file_path
         try:
-            pem_file = open(pem_file_name).read()
-            env.override_attributes['chef-client-pem'] = pem_file
+            pem_file = open(pem_file_name)
+            env.override_attributes['chef-client-pem'] = pem_file.read()
         except IOError:
             print "Error: can\'t find file or read data"
         else:
