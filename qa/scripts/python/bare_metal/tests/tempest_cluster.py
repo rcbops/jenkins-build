@@ -59,7 +59,6 @@ auth = {
 }
 
 # Gather cluster information from the cluster
-# Gather cluster information from the cluster
 username = 'demo'
 password = results.keystone_admin_pass
 tenant = 'demo'

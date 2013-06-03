@@ -883,6 +883,7 @@ class rpcsqa_helper:
             print "Error: can\'t find file or read data"
         else:
             print "Wrote pem file successfully"
+            env.save()
             pem_file.close()
             
         remote_config_file = '%s/knife.rb' % chef_file_path
