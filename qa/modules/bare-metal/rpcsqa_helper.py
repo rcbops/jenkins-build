@@ -885,7 +885,9 @@ class rpcsqa_helper:
             print "Wrote pem file successfully"
             env.save()
             pem_file.close()
-            
+        env.override_attributes['chef-client-name'] = "admin"
+        env.override_attributes['chef-client-uri'] = "https://%s:4443" % chef_server_ip
+
         remote_config_file = '%s/knife.rb' % chef_file_path
         return remote_config_file
 
