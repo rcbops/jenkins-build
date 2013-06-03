@@ -874,6 +874,17 @@ class rpcsqa_helper:
             # print message for debugging
             print "%s/knife.rb successfully saved" % chef_file_path
 
+        env = Environment(chef_environment)
+        pem_file_name = "'%s/admin.pem'" % chef_file_path
+        try:
+            pem_file = open(pem_file_name)
+            env.override_attributes['chef-client-pem'] = read(pem_file)
+        except IOError:
+            print "Error: can\'t find file or read data"
+        else:
+            print "Wrote pem file successfully"
+            pem_file.close()
+            
         remote_config_file = '%s/knife.rb' % chef_file_path
         return remote_config_file
 
