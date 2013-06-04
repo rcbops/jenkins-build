@@ -958,3 +958,10 @@ class rpcsqa_helper:
         if not Search("environment", api=self.chef).query("name:%s" % env):
             return False
         return True
+
+    def remote_chef_api(self, env):
+        pem = StringIO.StringIO(env.override_attributes['chef-client-pem'])
+        rsa_key = rsa.Key(pem)
+        name = env.override_attributes['chef-client-name']
+        uri = env.override_attributes['chef-client-uri']
+        return ChefAPI(uri, rsa_key, name)

@@ -21,12 +21,7 @@ branch = "folsom"
 
 env = rpcsqa.cluster_environment(name=results.name, os_distro=results.os_distro,
                                  branch=branch, feature_set=results.feature_set)
-if not env.exists:
-    print "Error: Environment %s doesn't exist" % env.name
-    sys.exit(1)
-chef_config = "/var/lib/jenkins/rcbops-qa/remote-chef-clients/%s/.chef/knife.rb" % env.name
-print chef_config
-remote_chef = ChefAPI.from_config_file(chef_config)
+remote_chef = remote_chef_api(self, env)
 pprint(vars(remote_chef))
 
 print "##### Updating %s to Grizzly #####" % env.name
