@@ -200,6 +200,16 @@ if results.action == "build":
             ha_controller_2 = openstack_list[2]
             computes = openstack_list[3:]
 
+            # print all servers info
+            print "***********************************************************"
+            print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
+            print "HA-Controller 1: %s" % (
+                rpcsqa.print_server_info(ha_controller_1))
+            print "HA-Controller 2: %s" % (
+                rpcsqa.print_server_info(ha_controller_2))
+            rpcsqa.print_computes_info(computes)
+            print "***********************************************************"
+
             ###################################################################
             # Set up Chef Server
             ###################################################################
@@ -292,6 +302,13 @@ if results.action == "build":
             chef_server = openstack_list[0]
             controller = openstack_list[1]
             computes = openstack_list[2:]
+
+            # print all servers info
+            print "***********************************************************"
+            print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
+            print "Controller: %s" % rpcsqa.print_server_info(controller)
+            rpcsqa.print_computes_info(computes)
+            print "***********************************************************"
 
             ###################################################################
             # Set up Chef Server
@@ -395,6 +412,15 @@ if results.action == "build":
             ha_controller_2 = openstack_list[1]
             computes = openstack_list[2:]
 
+            # print all servers info
+            print "***********************************************************"
+            print "HA-Controller 1: %s" % (
+                rpcsqa.print_server_info(ha_controller_1))
+            print "HA-Controller 2: %s" % (
+                rpcsqa.print_server_info(ha_controller_2))
+            rpcsqa.print_computes_info(computes)
+            print "***********************************************************"
+
             # Make the controllers
             rpcsqa.build_controller(ha_controller_1, True, 1)
             rpcsqa.build_controller(ha_controller_2, True, 2)
@@ -421,6 +447,12 @@ if results.action == "build":
             # Set each servers roles
             controller = openstack_list[0]
             computes = openstack_list[1:]
+
+            # print all servers info
+            print "***********************************************************"
+            print "Controller: %s" % rpcsqa.print_server_info(controller)
+            rpcsqa.print_computes_info(computes)
+            print "***********************************************************"
 
             # Make servers
             rpcsqa.build_controller(controller)
