@@ -878,14 +878,14 @@ class rpcsqa_helper:
         pem_file_name = "%s/admin.pem" % chef_file_path
         try:
             pem_file = open(pem_file_name)
-            env.override_attributes['chef-client-pem'] = pem_file.read()
+            admin_pem = pem_file.read()
         except IOError:
             print "Error: can\'t find file or read data"
         else:
             print "Wrote pem file successfully"
             pem_file.close()
-        env.override_attributes['chef-client-name'] = "admin"
-        env.override_attributes['chef-client-uri'] = "https://%s:4443" % chef_server_ip
+        remote_dict = {"client": "admin", "key": admin_pem, "url": "https://%s:4443" % chef_server_ip}
+        env.override_attributes['remote_chef'] = remote_dict
         env.save()
 
         remote_config_file = '%s/knife.rb' % chef_file_path
@@ -960,8 +960,8 @@ class rpcsqa_helper:
         return True
 
     def remote_chef_api(self, env):
-        pem = StringIO.StringIO(env.override_attributes['chef-client-pem'])
-        rsa_key = rsa.Key(pem)
-        name = env.override_attributes['chef-client-name']
-        uri = env.override_attributes['chef-client-uri']
-        return ChefAPI(uri, rsa_key, name)
+        # RSAifying key
+        remote_dict = env.override_attributes['remote_chef']
+        pem = StringIO.StringIO(remote_dict['key'])
+        remote_dict['key'] = rsa.Key(pem)
+        return ChefAPI(**remote_dict)
