@@ -326,7 +326,7 @@ class rpcsqa_helper:
                 if node['in_use'] != 0:
                     self.erase_node(node)
                 else:
-                    print "Setting node {0} to chef environment _default"
+                    print "Setting node {0} to chef environment _default".format(name)
                     node.chef_environment = "_default"
                     node.save()
         else:
