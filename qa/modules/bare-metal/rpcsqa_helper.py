@@ -606,10 +606,10 @@ class rpcsqa_helper:
 
         # If the environment doesnt exist in chef, make it.
         env = "%s-%s-%s-%s" % (name, os_distro, branch, feature_set)
-        if not Search("environment", api=self.chef).query("name:%s" % env):
+        chef_env = Environment(env, api=self.chef)
+        if not chef_env.exists:
             print "Making environment: %s " % env
-            Environment.create(env, api=self.chef)
-
+            chef_env.create(env, api=self.chef)
         return env
 
     def prepare_server(self, server):
