@@ -789,8 +789,6 @@ class rpcsqa_helper:
                 print "First run: %s" % run1
                 print "Second run: %s" % run2
                 print "Final run: %s" % run3
-                raise Exception("Failed to set network interface for %s"
-                                % chef_node)
 
     def set_node_in_use(self, node, role):
         # Edit the controller in our chef
