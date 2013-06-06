@@ -50,25 +50,30 @@ if 'vips' in environment.override_attributes:
                      "nova-novncproxy,nova-scheduler,glance-api,"
                      "glance-registry,cinder-api,cinder-scheduler,keepalived,"
                      "haproxy}; do service $i stop; done")
-    query = "run_list:*ha-controller1*"
-    controller1 = next(Node(c) for c in rpcsqa.node_search(query=query,
-                                                           api=remote_chef))
     query = "run_list:*ha-controller2*"
-    controller2 = next(Node(c) for c in rpcsqa.node_search(query=query,
-                                                           api=remote_chef))
+    controller2 = next(rpcsqa.node_search(query=query, api=remote_chef))
     rpcsqa.run_cmd_on_node(node=controller2, cmd=ctrl2_command)
+
+    query = "run_list:*ha-controller1*"
+    controller1 = next(rpcsqa.node_search(query=query, api=remote_chef))
+    
     print "HA Environment: Running chef client on controller1"
     rpcsqa.run_chef_client(controller1)
     print "HA Environment: Running chef client on controller2"
     rpcsqa.run_chef_client(controller2)
+    
+    print "HA Environment: starting controller2 services"
+    rpcsqa.run_cmd_on_node(node=controller2,
+                           cmd=ctrl2_command.replace("stop", "start"))
+    
 else:
     print "Running chef client on controller node"
     query = "chef_environment:%s AND run_list:*controller*" % env.name
-    controller = next(Node(i) for i in Node.list(api=remote_chef).names)
-    rpcsqa.run_chef_client(node)
+    controller = next(rpcsqa.node_search(query=query, api=remote_chef))
+    rpcsqa.run_chef_client(controller)
 
 print "Running chef client on all compute nodes"
 query = "chef_environment:%s AND NOT run_list:*controller*" % env.name
-computes = (Node(i) for i in Node.list(api=remote_chef).names)
-for node in computes:
-        rpcsqa.run_chef_client(node)
+computes = rpcsqa.node_search(query=query, api=remote_chef)
+for compute in computes:
+        rpcsqa.run_chef_client(compute)
