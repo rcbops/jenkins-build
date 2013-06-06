@@ -1,5 +1,6 @@
 import sys
 import time
+import StringIO
 from chef import *
 from chef_helper import *
 from server_helper import *
