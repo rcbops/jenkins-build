@@ -108,7 +108,7 @@ class rpcsqa_helper:
                 scp_run = run_remote_scp_cmd(ip, 'root', user_pass, '/var/lib/jenkins/source_files/ldif/*.ldif')
                 if scp_run['success']:
                     ssh_run = run_remote_ssh_cmd(ip, 'root', user_pass,
-                        "ldapadd -x -D \"cn=admin,dc=dev,dc=rcbops,dc=me\" \
+                        "ldapadd -x -D \"cn=admin,dc=rcb,dc=me\" \
                         -f base.ldif -wostackdemo")
             elif dir_version == '389':
                 # Once we support 389, code here to import needed config files
