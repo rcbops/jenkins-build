@@ -1,5 +1,4 @@
 import argparse
-import sys
 from pprint import pprint
 from rpcsqa_helper import *
 
@@ -24,6 +23,7 @@ env = rpcsqa.cluster_environment(name=results.name, os_distro=results.os_distro,
 remote_chef = remote_chef_api(self, env)
 pprint(vars(remote_chef))
 
+# Upgrade Process: https://github.com/rcbops/support-tools/blob/master/grizzly-upgrade/README.md
 print "##### Updating %s to Grizzly #####" % env.name
 
 print "Uploading grizzly cookbooks and roles to chef server"
@@ -43,13 +43,29 @@ environment.override_attributes['glance']['image_upload'] = False
 environment.save()
 pprint(vars(Environment(env.name, api=remote_chef)))
 
-print "Running chef client on all controller nodes"
-query = "chef_environment:%s AND run_list:*controller*" % env.name
-controllers = (Node(i) for i in Node.list(api=remote_chef).names)
-# command = "glance-manage db_sync"
-for node in controllers:
-        rpcsqa.run_chef_client(node)
-        # rpcsqa.run_cmd_on_node(node=node, cmd=command)
+if 'vips' in environment.override_attributes:
+    print "HA Environment: stopping controller2 services"
+    ctrl2_command = ("for i in {monit,keystone,nova-api-ec2,"
+                     "nova-api-os-compute,nova-cert,nova-consoleauth,"
+                     "nova-novncproxy,nova-scheduler,glance-api,"
+                     "glance-registry,cinder-api,cinder-scheduler,keepalived,"
+                     "haproxy}; do service $i stop; done")
+    query = "run_list:*ha-controller1*"
+    controller1 = next(Node(c) for c in rpcsqa.node_search(query=query,
+                                                           api=remote_chef))
+    query = "run_list:*ha-controller2*"
+    controller2 = next(Node(c) for c in rpcsqa.node_search(query=query,
+                                                           api=remote_chef))
+    rpcsqa.run_cmd_on_node(node=controller2, cmd=ctrl2_command)
+    print "HA Environment: Running chef client on controller1"
+    rpcsqa.run_chef_client(controller1)
+    print "HA Environment: Running chef client on controller2"
+    rpcsqa.run_chef_client(controller2)
+else:
+    print "Running chef client on controller node"
+    query = "chef_environment:%s AND run_list:*controller*" % env.name
+    controller = next(Node(i) for i in Node.list(api=remote_chef).names)
+    rpcsqa.run_chef_client(node)
 
 print "Running chef client on all compute nodes"
 query = "chef_environment:%s AND NOT run_list:*controller*" % env.name
