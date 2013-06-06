@@ -90,9 +90,6 @@ function build_nova_quantum() {
 
     # build environment files from templates
     set_environment_files
-    
-    # source our secret file with hidden info
-    source ~/source_files/CLOUD_FILES_AUTH.sh
 
     ## replace the lines we are looking for
     echo "Replacing template values with real values..."

@@ -1,5 +1,6 @@
 import sys
 import time
+import StringIO
 from chef import *
 from chef_helper import *
 from server_helper import *
@@ -305,6 +306,51 @@ class rpcsqa_helper:
             if ssh_run['success']:
                 print "command: %s ran successfully on %s" % (cmd,
                                                               controller_node)
+
+    def build_quantum_network_node(self, quantum_node, environment=None, remote=False, chef_config_file=None):
+        """
+        @summary: This method will attempt to build a quantum network node for a
+        OpenStack Cluster on the given node for the given environment
+        """
+
+        chef_node = Node(quantum_node, api=self.chef)
+
+        # IF the in_use is not set, set it
+        chef_node['in_use'] = 'quantum'
+        chef_node.run_list = ["role[single-network-node]"]
+        chef_node.save()
+
+        # If remote is set, then we are building with a remote chef server
+        if remote:
+            remote_chef = chef_helper(chef_config_file)
+            remote_chef.build_quantum(quantum_node,
+                                      environment,
+                                      'root',
+                                      self.razor_password(chef_node))
+        else:
+            print "Updating server...this may take some time"
+            self.update_node(chef_node)
+
+            if chef_node['platform_family'] == 'rhel':
+                print "Platform is RHEL family, disabling iptables"
+                self.disable_iptables(chef_node)
+
+            # Run chef-client twice
+            print "Running chef-client for controller node, this may take some time..."
+            run1 = self.run_chef_client(chef_node)
+            if run1['success']:
+                print "First chef-client run successful, starting second run..."
+                run2 = self.run_chef_client(chef_node)
+                if run2['success']:
+                    print "Second chef-client run successful..."
+                else:
+                    print "Error running chef-client for controller %s" % controller_node
+                    print run2
+                    sys.exit(1)
+            else:
+                print "Error running chef-client for controller %s" % controller_node
+                print run1
+                sys.exit(1)
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:
@@ -709,6 +755,7 @@ class rpcsqa_helper:
         return "%s - %s" % (chef_node, chef_node['ipaddress'])
 
     def razor_password(self, chef_node):
+        chef_node = Node(chef_node.name, api=self.chef)
         metadata = chef_node.attributes['razor_metadata'].to_dict()
         uuid = metadata['razor_active_model_uuid']
         return self.razor.get_active_model_pass(uuid)['password']

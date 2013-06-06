@@ -107,6 +107,46 @@ class chef_helper:
             print run1
             sys.exit(1)
 
+    def build_quantum(self, quantum_node, environment, user, password):
+        '''
+        @summary Builds a Quantum Network Node
+        @param quantum_node: The node to build as a controller
+        @type quantum_node: String
+        @param ha_num: If not 0, enabled ha
+        @type ha_num: integer
+        @param user: user name on controller node
+        @type user: String
+        @param password: password for the user
+        @type password: String
+        '''
+
+        # Gather node info
+        chef_node = Node(quantum_node, api=self.chef)
+        print "Making {0} the quantum network node".format(quantum_node)
+        chef_node['in_use'] = 'quantum'
+        chef_node.run_list = ["role[single-network-node]"]
+        chef_node.save()
+
+         # Set the environment
+        self.set_node_environment(chef_node, environment)
+
+        # Run chef-client twice
+        print "Running chef-client for controller node, this may take some time..."
+        run1 = self.run_chef_client(chef_node, user, password)
+        if run1['success']:
+            print "First chef-client run successful, starting second run..."
+            run2 = self.run_chef_client(chef_node, user, password)
+            if run2['success']:
+                print "Second chef-client run successful..."
+            else:
+                print "Error running chef-client for controller %s" % quantum_node
+                print run2
+                sys.exit(1)
+        else:
+            print "Error running chef-client for controller %s" % quantum_node
+            print run1
+            sys.exit(1)
+
     def print_nodes(self):
         # prints all the nodes in the chef server
         for node in Node.list(api=self.chef):
