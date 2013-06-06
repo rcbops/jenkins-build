@@ -26,6 +26,10 @@ parser.add_argument('--ha_enabled', action='store_true', dest='ha_enabled',
                     required=False, default=False,
                     help="Do you want to HA this environment?")
 
+parser.add_argument('--quantum', action='store_true', dest='quantum',
+                    required=False, default=False,
+                    help="Do you want quantum networking")
+
 parser.add_argument('--dir_service', action='store_true', dest='dir_service',
                     required=False, default=False,
                     help="Use a directory management?")
@@ -80,8 +84,8 @@ if results.action == "build":
 
     # If either HA is enabled or Dir Service is enabled and the cluster
     # size is < 3, set the cluster size to 3
-    if (results.dir_service or results.ha_enabled) and cluster_size < 3:
-        print "Either HA or Directory Service was requested, resizing cluster to 3."
+    if (results.dir_service or results.ha_enabled or results.quantum) and cluster_size < 3:
+        print "Either HA / Directory Service / Quantum was requested, resizing cluster to 3."
         cluster_size = 3
     else:
         print "Cluster size is %i." % cluster_size
@@ -293,6 +297,101 @@ if results.action == "build":
                 rpcsqa.print_server_info(ha_controller_1))
             print "HA-Controller 2: %s" % (
                 rpcsqa.print_server_info(ha_controller_2))
+            rpcsqa.print_computes_info(computes)
+            print "***********************************************************"
+
+        elif results.quantum:
+            chef_server = openstack_list[0]
+            controller = openstack_list[1]
+            quantum = openstack_list[2]
+            computes = openstack_list[3:]
+
+            # print all servers info
+            print "***********************************************************"
+            print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
+            print "Controller %s" % rpcsqa.print_server_info(controller)
+            print "Quantum %s" % rpcsqa.print_server_info(quantum)
+            rpcsqa.print_computes_info(computes)
+            print "***********************************************************"
+
+            ###################################################################
+            # Set up Chef Server
+            ###################################################################
+
+            # Set the node to be chef server
+            rpcsqa.set_node_in_use(chef_server, 'chef-server')
+
+            # Need to prep centos boxes
+            if results.os_distro == 'centos':
+                rpcsqa.prepare_server(chef_server)
+
+            # Remove Chef from chef_server Node
+            rpcsqa.remove_chef(chef_server)
+
+            # Build Chef Server
+            rpcsqa.build_chef_server(chef_server)
+
+            # Install the proper cookbooks
+            rpcsqa.install_cookbooks(chef_server, results.branch)
+
+            # setup environment file to remote chef server
+            rpcsqa.setup_remote_chef_environment(chef_server, env)
+
+            # Setup Remote Client
+            config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
+
+            ###################################################################
+            # Build Openstack Environment
+            ###################################################################
+
+            # Make controller
+            rpcsqa.set_node_in_use(controller, 'controller')
+
+            # Need to prep centos boxes
+            if results.os_distro == 'centos':
+                rpcsqa.prepare_server(controller)
+
+            rpcsqa.remove_chef(controller)
+            rpcsqa.bootstrap_chef(controller, chef_server)
+            rpcsqa.build_controller(controller,
+                                    env,
+                                    remote=results.remote_chef,
+                                    chef_config_file=config_file)
+
+            # Make Quantum Node
+            rpcsqa.set_node_in_use(quantum, 'quantum')
+
+            # Need to prep centos boxes
+            if results.os_distro == 'centos':
+                rpcsqa.prepare_server(quantum)
+
+            rpcsqa.remove_chef(quantum)
+            rpcsqa.bootstrap_chef(quantum, chef_server)
+            rpcsqa.build_quantum_network_node(quantum,
+                                              env,
+                                              remote=results.remote_chef,
+                                              chef_config_file=config_file)
+
+            # Make computes
+            for compute in computes:
+                rpcsqa.set_node_in_use(compute, 'compute')
+
+                # Need to prep centos boxes
+                if results.os_distro == 'centos':
+                    rpcsqa.prepare_server(compute)
+
+                rpcsqa.remove_chef(compute)
+                rpcsqa.bootstrap_chef(compute, chef_server)
+                rpcsqa.build_compute(compute,
+                                     env,
+                                     remote=results.remote_chef,
+                                     chef_config_file=config_file)
+
+            # print all servers info
+            print "***********************************************************"
+            print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
+            print "Controller %s" % rpcsqa.print_server_info(controller)
+            print "Quantum %s" % rpcsqa.print_server_info(quantum)
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
 
