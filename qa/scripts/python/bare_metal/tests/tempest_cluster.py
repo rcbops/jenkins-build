@@ -48,7 +48,6 @@ if not controller:
     print "Controller not found for env: %s" % env.name
     sys.exit(1)
 
-ip = controller['ipaddress']
 url = "http://%s:5000/v2.0" % ip
 token_url = "%s/tokens" % url
 print "##### URL: %s #####" % url
