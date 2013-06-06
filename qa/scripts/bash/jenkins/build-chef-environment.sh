@@ -88,7 +88,19 @@ function build_keystone_ldap() {
 
 function build_nova_quantum() {
 
-    echo "NOT IMPLEMENTED"
+    # build environment files from templates
+    set_environment_files
+    
+    # source our secret file with hidden info
+    source ~/source_files/CLOUD_FILES_AUTH.sh
+
+    ## replace the lines we are looking for
+    echo "Replacing template values with real values..."
+    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
+
+    # build chef environment
+    build_chef_environment
 }
 
 function build_opencenter() {
