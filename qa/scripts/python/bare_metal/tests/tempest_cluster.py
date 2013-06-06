@@ -41,9 +41,13 @@ env = qa.cluster_environment(name=results.name, os_distro=results.os_distro,
 if not env.exists:
     print "Error: Environment %s doesn't exist" % env.name
     sys.exit(1)
-controller = qa.cluster_controller(env)
+
+controller, ip = qa.cluster_controller(env)
+
 if not controller:
     print "Controller not found for env: %s" % env.name
+    sys.exit(1)
+
 ip = controller['ipaddress']
 url = "http://%s:5000/v2.0" % ip
 token_url = "%s/tokens" % url

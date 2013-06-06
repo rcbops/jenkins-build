@@ -357,17 +357,21 @@ class rpcsqa_helper:
             print "Successfully cloned repo with setup script..."
 
     def cluster_controller(self, environment):
-        controller_name = "single-controller"
+        # Have to check for HA, if HA return the VIP for keystone
+        if env.override_attributes['vips']:
+            ks_ip = env.override_attributes['vips']['keystone-service-api']
+            controller_name = "ha-controller1"
+        else:
+            controller_name = "single-controller"
+
         q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
                                                        controller_name)
         search = Search("node", api=self.chef).query(q)
-        if not search:
-            q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
-                                                           controller_name)
-            search = Search("node", api=self.chef).query(q)
-            if not search:
-                return None
-        return Node(search[0]['name'], api=self.chef)
+        controller = Node(search[0]['name'], api=self.chef)
+
+        ks_ip = ks_ip or controller['ipaddress']
+
+        return controller, ks_ip
 
     def cluster_environment(self, name=None, os_distro=None, feature_set=None, branch=None):
         name = "%s-%s-%s-%s" % (name, os_distro, branch, feature_set)
