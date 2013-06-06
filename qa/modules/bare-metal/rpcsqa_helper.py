@@ -364,6 +364,7 @@ class rpcsqa_helper:
         else:
             controller_name = "single-controller"
 
+        # Queue the chef environment and get the controller node
         q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
                                                        controller_name)
         search = Search("node", api=self.chef).query(q)

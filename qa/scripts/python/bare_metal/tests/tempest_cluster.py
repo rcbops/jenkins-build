@@ -35,7 +35,8 @@ results = parser.parse_args()
 
 # Gather information of cluster
 qa = rpcsqa_helper()
-env = qa.cluster_environment(name=results.name, os_distro=results.os_distro,
+env = qa.cluster_environment(name=results.name, 
+                             os_distro=results.os_distro,
                              feature_set=results.feature_set,
                              branch=results.environment_branch)
 if not env.exists:
@@ -51,6 +52,7 @@ if not controller:
 url = "http://%s:5000/v2.0" % ip
 token_url = "%s/tokens" % url
 print "##### URL: %s #####" % url
+
 auth = {
     'auth': {
         'tenantName': 'admin',
@@ -75,21 +77,26 @@ cluster = {'host': ip,
            'alt_username': username,
            'alt_password': password,
            'alt_tenant': tenant}
+
 if results.tempest_version == 'grizzly':
     cluster['admin_username'] = admin_username
     cluster['admin_password'] = admin_password
     cluster['admin_tenant'] = admin_tenant
+
 r = requests.post(token_url, data=json.dumps(auth),
                   headers={'Content-type': 'application/json'})
+
 ans = json.loads(r.text)
 if 'error' in ans.keys():
     print "##### Error authenticating with Keystone: #####"
     pprint(ans['error'])
     sys.exit(1)
+
 token = ans['access']['token']['id']
 images_url = "http://%s:9292/v2/images" % ip
 response = requests.get(images_url, headers={'X-Auth-Token': token}).text
 print response
+
 images = json.loads(response)
 image_ids = (image['id'] for image in images['images']
              if image['visibility'] == "public")
