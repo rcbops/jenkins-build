@@ -20,7 +20,7 @@ branch = "folsom"
 
 env = rpcsqa.cluster_environment(name=results.name, os_distro=results.os_distro,
                                  branch=branch, feature_set=results.feature_set)
-remote_chef = remote_chef_api(self, env)
+remote_chef = rpcsqa.remote_chef_api(env)
 pprint(vars(remote_chef))
 
 # Upgrade Process: https://github.com/rcbops/support-tools/blob/master/grizzly-upgrade/README.md
