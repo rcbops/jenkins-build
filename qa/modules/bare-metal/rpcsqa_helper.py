@@ -104,7 +104,7 @@ class rpcsqa_helper:
         env.save()
 
         #this is how you hard code :)
-        with f as open('/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/', "w"):
+        with open('/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/', "w") as f:
             f.write(env.to_dict())
 
         # Directory service is set up, need to import config
