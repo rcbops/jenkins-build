@@ -103,6 +103,10 @@ class rpcsqa_helper:
         env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % chef_node['ipaddress']
         env.save()
 
+        #this is how you hard code :)
+        with f as open('/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/', "w"):
+            f.write(env.to_dict())
+
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
             if dir_version == 'openldap':
