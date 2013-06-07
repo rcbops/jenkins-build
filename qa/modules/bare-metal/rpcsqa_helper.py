@@ -1,6 +1,7 @@
 import sys
 import time
 import StringIO
+import json
 from chef import *
 from chef_helper import *
 from server_helper import *
@@ -106,7 +107,7 @@ class rpcsqa_helper:
         #this is how you hard code :)
         with open('/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/%s.json'
                     % chef_node.chef_environment, "w") as f:
-            f.write(env.to_dict())
+            f.write(json.dumps(env.to_dict()))
 
         # Directory service is set up, need to import config
         if run1['success'] and run2['success']:
