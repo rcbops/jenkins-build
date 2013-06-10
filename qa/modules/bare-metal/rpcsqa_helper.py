@@ -409,7 +409,9 @@ class rpcsqa_helper:
         else:
             print "Successfully cloned repo with setup script..."
 
-    def cluster_controller(self, environment):
+    def cluster_controller(self, environment, chef_api):
+        chef_api = chef_api or self.chef
+        ks_ip = None
         # Have to check for HA, if HA return the VIP for keystone
         ks_ip = None
         if 'vips' in environment.override_attributes:
@@ -428,7 +430,8 @@ class rpcsqa_helper:
 
         return controller, ks_ip
 
-    def cluster_environment(self, name=None, os_distro=None, feature_set=None, branch=None):
+    def cluster_environment(self, name=None, os_distro=None, feature_set=None, branch=None, chef_api=None):
+        chef_api = chef_api or self.chef
         name = "%s-%s-%s-%s" % (name, os_distro, branch, feature_set)
         env = Environment(name, api=self.chef)
         return env
