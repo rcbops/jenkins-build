@@ -411,6 +411,7 @@ class rpcsqa_helper:
 
     def cluster_controller(self, environment):
         # Have to check for HA, if HA return the VIP for keystone
+        ks_ip = None
         if 'vips' in environment.override_attributes:
             ks_ip = environment.override_attributes['vips']['keystone-service-api']
             controller_name = "ha-controller1"
