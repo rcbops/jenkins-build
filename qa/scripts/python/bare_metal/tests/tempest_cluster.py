@@ -39,15 +39,15 @@ env_dict = {"name": results.name,
             "os_distro": results.os_distro,
             "feature_set": results.feature_set,
             "branch": results.environment_branch}
-env = qa.cluster_environment(**env_dict)
-if not env.exists:
-    print "Error: Environment %s doesn't exist" % env.name
+local_env = qa.cluster_environment(**env_dict)
+if not local_env.exists:
+    print "Error: Environment %s doesn't exist" % local_env.name
     sys.exit(1)
-remote_chef = qa.remote_chef_api(env)
+remote_chef_server = qa.remote_chef_server(local_env)
+remote_chef = qa.remote_chef_api(local_env)
 env = qa.cluster_environment(chef_api=remote_chef, **env_dict)
 
-
-# Gather cluster information from the cluster
+# Gather information from the cluster
 controller, ip = qa.cluster_controller(env, remote_chef)
 if not controller:
     print "Controller not found for env: %s" % env.name
@@ -55,19 +55,19 @@ if not controller:
 username = 'demo'
 password = results.keystone_admin_pass
 tenant = 'demo'
-cluster = {'host': ip,
-           'username': username,
-           'password': password,
-           'tenant': tenant,
-           'alt_username': username,
-           'alt_password': password,
-           'alt_tenant': tenant}
-
+cluster = {
+    'host': ip,
+    'username': username,
+    'password': password,
+    'tenant': tenant,
+    'alt_username': username,
+    'alt_password': password,
+    'alt_tenant': tenant,
+    'admin_username': "admin",
+    'admin_password': password,
+    'admin_tenant': "admin"
+}
 if results.tempest_version == 'grizzly':
-    cluster['admin_username'] = "admin"
-    cluster['admin_password'] = password
-    cluster['admin_tenant'] = "admin"
-
     # quantum is enabled, test it.
     if 'nova-quantum' in results.feature_set:
         cluster['tenant_network_cidr'] = '10.0.0.128/25'
@@ -79,6 +79,11 @@ if results.tempest_version == 'grizzly':
         cluster['tenant_network_mask_bits'] = '29'
         cluster['tenant_networks_reachable'] = 'false'
         cluster['quantum_available'] = 'false'
+
+if results.feature_set == "glance-cf":
+    cluster["image_enabled"] = "true"
+else:
+    cluster["image_enabled"] = "false"
 
 # Getting precise image id
 url = "http://%s:5000/v2.0" % ip
@@ -95,17 +100,28 @@ cluster['alt_image_id'] = cluster['image_id']
 pprint(cluster)
 
 # Write the config
-tempest_dir = "%s/%s/tempest" % (results.tempest_root, results.tempest_version)
-sample_path = "%s/etc/base_%s.conf" % (tempest_dir, results.tempest_version)
+tempest_dir = "/var/lib/jenkins/jenkins-build/qa/metadata/tempest/config"
+sample_path = "%s/base_%s.conf" % (tempest_dir, results.tempest_version)
 with open(sample_path) as f:
     tempest_config = Template(f.read()).substitute(cluster)
-tempest_config_path = "%s/etc/%s.conf" % (tempest_dir, env.name)
+tempest_config_path = "/tmp/%s.conf" % (tempest_dir, env.name)
 with open(tempest_config_path, 'w') as w:
     print "####### Tempest Config #######"
     print tempest_config_path
     print tempest_config
     w.write(tempest_config)
 
+# Setup tempest on chef server
+print "## Setting up tempest on chef server ##"
+commands = ["git clone https://github.com/openstack/tempest.git -b %s --recursive" % results.branch,
+            "apt-get install python-pip",
+            "pip install -r tempest/tools/pip-requires",
+            "pip install -r tempest/tools/test-requires"]
+for command in commands:
+    qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
+qa.scp_to_node(node=remote_chef_server, path=tempest_config_path)
+
+# Setup controller
 print "## Setting up and cleaning cluster ##"
 setup_cmd = ("sysctl -w net.ipv4.ip_forward=1; "
              "source ~/openrc; "
@@ -114,24 +130,17 @@ setup_cmd = ("sysctl -w net.ipv4.ip_forward=1; "
 qa.run_cmd_on_node(node=controller, cmd=setup_cmd)
 
 # Run tests
+print "## Running Tests ##"
 file = '%s-%s.xunit' % (
     time.strftime("%Y-%m-%d-%H:%M:%S",
                   time.gmtime()),
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
-command = ("cd %s; git pull; cd -; "
-           "export TEMPEST_CONFIG=%s; "
-           "python -u /usr/local/bin/nosetests %s %s/tempest/tests; " % (
-               tempest_dir,
-               tempest_config_path,
-               xunit_flag,
-               tempest_dir))
-try:
-    print "!! ## -- Running tempest -- ## !!"
-    print command
-    check_call_return = check_call(command, shell=True)
-    print "!!## -- Tempest tests ran successfully  -- ##!!"
-except CalledProcessError, cpe:
-    print "!!## -- Tempest tests failed -- ##!!"
-    print "!!## -- Return Code: %s -- ##!!" % cpe.returncode
-    print "!!## -- Output: %s -- ##!!" % cpe.output
+command = ("export TEMPEST_CONFIG=%s.conf; "
+           "python -u /usr/local/bin/nosetests %s tempest/tempest/tests; " % (
+               env.name, xunit_flag))
+qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
+
+# Transfer xunit file to jenkins workspace
+print "## Transfering xunit file ##"
+qa.scp_from_node(node=remote_chef_server, path=file)
