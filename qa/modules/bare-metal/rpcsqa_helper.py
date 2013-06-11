@@ -106,7 +106,7 @@ class rpcsqa_helper:
 
         #this is how you hard code :)
         with open('/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/%s.json'
-                    % chef_node.chef_environment, "w") as f:
+                  % chef_node.chef_environment, "w") as f:
             f.write(json.dumps(env.to_dict()))
 
         # Directory service is set up, need to import config
@@ -115,7 +115,7 @@ class rpcsqa_helper:
                 scp_run = run_remote_scp_cmd(ip, 'root', user_pass, '/var/lib/jenkins/source_files/ldif/*.ldif')
                 if scp_run['success']:
                     ssh_run = run_remote_ssh_cmd(ip, 'root', user_pass,
-                        "ldapadd -x -D \"cn=admin,dc=rcb,dc=me\" \
+                                                 "ldapadd -x -D \"cn=admin,dc=rcb,dc=me\" \
                         -f base.ldif -wostackdemo")
             elif dir_version == '389':
                 # Once we support 389, code here to import needed config files
@@ -787,6 +787,10 @@ class rpcsqa_helper:
         remote_dict['key'] = rsa.Key(pem)
         return ChefAPI(**remote_dict)
 
+    def remote_chef_server(self, env):
+        query = "chef_environment:%s AND in_use:chef_server" % env.name
+        return next(node_search(query=query))
+
     def remove_broker_fail(self, policy):
         active_models = self.razor.simple_active_models(policy)
         for active in active_models:
@@ -855,6 +859,18 @@ class rpcsqa_helper:
                 print "Deleting empty environment: %s" % e['name']
                 env = Environment(e['name'])
                 env.delete()
+
+    def scp_from_node(self, node=None, path=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        get_file_from_server(ip, user, password, path)
+
+    def scp_to_node(self, node=None, path=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        run_remote_scp_cmd(ip, user, password, path)
 
     def set_network_interface(self, chef_node):
         if "role[qa-base]" in chef_node.run_list:
@@ -1103,42 +1119,3 @@ class rpcsqa_helper:
             print "Platform Family %s is not supported." \
                 % chef_node['platform_family']
             sys.exit(1)
-
-    def node_search(self, query=None, api=None):
-        api = api or self.chef
-        search = Search("node", api=api).query(query)
-        return (Node(n['name'], api=api) for n in search)
-
-    def run_cmd_on_node(self, node=None, cmd=None):
-        user = "root"
-        password = self.razor_password(node)
-        ip = node['ipaddress']
-        run_remote_ssh_cmd(ip, user, password, cmd)
-
-    def environment_exists(self, env):
-        if not Search("environment", api=self.chef).query("name:%s" % env):
-            return False
-        return True
-
-    def remote_chef_api(self, env):
-        # RSAifying key
-        remote_dict = env.override_attributes['remote_chef']
-        pem = StringIO.StringIO(remote_dict['key'])
-        remote_dict['key'] = rsa.Key(pem)
-        return ChefAPI(**remote_dict)
-
-    def remote_chef_server(self, env):
-        query = "chef_environment:%s AND in_use:chef_server" % env.name
-        return next(node_search(query=query))
-        
-    def scp_to_node(self, node=None, path=None):
-        user = "root"
-        password = self.razor_password(node)
-        ip = node['ipaddress']
-        run_remote_scp_cmd(ip, user, password, path)
-
-    def scp_from_node(self, node=None, path=None):
-        user = "root"
-        password = self.razor_password(node)
-        ip = node['ipaddress']
-        get_file_from_server(ip, user, password, path)
