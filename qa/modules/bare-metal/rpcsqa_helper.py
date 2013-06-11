@@ -788,7 +788,7 @@ class rpcsqa_helper:
         return ChefAPI(**remote_dict)
 
     def remote_chef_server(self, env):
-        query = "chef_environment:%s AND in_use:chef_server" % env.name
+        query = "chef_environment:%s AND in_use:chef-server" % env.name
         return next(self.node_search(query=query))
 
     def remove_broker_fail(self, policy):
