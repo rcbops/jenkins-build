@@ -110,7 +110,7 @@ with open(tempest_config_path, 'w') as w:
 
 # Setup tempest on chef server
 print "## Setting up tempest on chef server ##"
-commands = ["git clone https://github.com/openstack/tempest.git -b %s --recursive" % results.branch,
+commands = ["git clone https://github.com/openstack/tempest.git -b %s --recursive" % results.tempest_version,
             "apt-get install python-pip",
             "pip install -r tempest/tools/pip-requires",
             "pip install -r tempest/tools/test-requires"]
