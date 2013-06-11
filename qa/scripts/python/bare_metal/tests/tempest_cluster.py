@@ -140,7 +140,7 @@ file = '%s-%s.xunit' % (
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
 command = ("export TEMPEST_CONFIG=%s.conf; "
-           "python -u /usr/local/bin/nosetests %s tempest/tempest/tests; " % (
+           "python -u /usr/local/bin/nosetests %s tempest; " % (
                env.name, xunit_flag))
 qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
 
