@@ -369,7 +369,6 @@ if results.action == "build":
                                               env,
                                               remote=results.remote_chef,
                                               chef_config_file=config_file)
-            rpcsqa.setup_quantum_network(env)
 
             # Make computes
             for compute in computes:
@@ -385,6 +384,9 @@ if results.action == "build":
                                      env,
                                      remote=results.remote_chef,
                                      chef_config_file=config_file)
+
+            # Setup the Quantum Network
+            rpcsqa.setup_quantum_network(env) 
 
             # print all servers info
             print "***********************************************************"
