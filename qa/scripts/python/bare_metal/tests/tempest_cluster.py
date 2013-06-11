@@ -21,7 +21,8 @@ parser.add_argument('--feature_set', action="store", dest="feature_set",
 parser.add_argument('--tempest_root', action="store", dest="tempest_root",
                     required=False,
                     default="/var/lib/jenkins/tempest")
-parser.add_argument('--environment_branch', action="store", dest="environment_branch",
+parser.add_argument('--environment_branch', action="store",
+                    dest="environment_branch",
                     required=False,
                     default="folsom")
 parser.add_argument('--tempest_version', action="store",
@@ -70,7 +71,11 @@ if results.tempest_version == 'grizzly':
 # Getting precise image id
 url = "http://%s:5000/v2.0" % ip
 print "##### URL: %s #####" % url
-compute = client.Client(username, password, tenant, url, service_type="compute")
+compute = client.Client(username,
+                        password,
+                        tenant,
+                        url,
+                        service_type="compute")
 precise_id = (i.id for i in compute.images.list() if i.name == "precise-image")
 cluster['image_id'] = next(precise_id)
 cluster['alt_image_id'] = cluster['image_id']
