@@ -69,9 +69,19 @@ if results.tempest_version == 'grizzly':
     cluster['admin_tenant'] = "admin"
 
     # quantum is enabled, test it.
-    if 'quantum' in results.feature_set:
+    if 'nova-quantum' in results.feature_set:
+        cluster['api_version'] = 'v2.0'
+        cluster['catalog_type'] = 'networks'
+        cluster['tenant_network_cidr'] = '10.0.0.128/25'
+        cluster['tenant_network_mask_bits'] = '25'
+        cluster['tenant_networks_reachable'] = 'true'
         cluster['quantum_available'] = 'true'
     else:
+        cluster['api_version'] = 'v1.1'
+        cluster['catalog_type'] = 'network'
+        cluster['tenant_network_cidr'] = '10.100.0.0/16'
+        cluster['tenant_network_mask_bits'] = '29'
+        cluster['tenant_networks_reachable'] = 'false'
         cluster['quantum_available'] = 'false'
 
 # Getting precise image id
