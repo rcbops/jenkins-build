@@ -1028,3 +1028,19 @@ class rpcsqa_helper:
         pem = StringIO.StringIO(remote_dict['key'])
         remote_dict['key'] = rsa.Key(pem)
         return ChefAPI(**remote_dict)
+
+    def remote_chef_server(self, env):
+        query = "chef_environment:%s AND in_use:chef_server" % env.name
+        return next(node_search(query=query))
+        
+    def scp_to_node(self, node=None, path=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        run_remote_scp_cmd(ip, user, password, path)
+
+    def scp_from_node(self, node=None, path=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        get_file_from_server(ip, user, password, path)
