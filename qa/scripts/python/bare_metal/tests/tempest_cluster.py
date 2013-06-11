@@ -18,9 +18,6 @@ parser.add_argument('--os_distro', action="store", dest="os_distro",
 parser.add_argument('--feature_set', action="store", dest="feature_set",
                     required=False, default='default',
                     help="Openstack feature set to use")
-parser.add_argument('--tempest_root', action="store", dest="tempest_root",
-                    required=False,
-                    default="/var/lib/jenkins/tempest")
 parser.add_argument('--environment_branch', action="store",
                     dest="environment_branch",
                     required=False,
@@ -106,22 +103,28 @@ tempest_dir = "/var/lib/jenkins/jenkins-build/qa/metadata/tempest/config"
 sample_path = "%s/base_%s.conf" % (tempest_dir, results.tempest_version)
 with open(sample_path) as f:
     tempest_config = Template(f.read()).substitute(cluster)
-tempest_config_path = "/tmp/%s.conf" % (tempest_dir, env.name)
+tempest_config_path = "/tmp/%s.conf" % env.name
 with open(tempest_config_path, 'w') as w:
     print "####### Tempest Config #######"
     print tempest_config_path
     print tempest_config
     w.write(tempest_config)
+qa.scp_to_node(node=remote_chef_server, path=tempest_config_path)
 
 # Setup tempest on chef server
 print "## Setting up tempest on chef server ##"
-commands = ["git clone https://github.com/openstack/tempest.git -b %s --recursive" % results.branch,
-            "apt-get install python-pip",
-            "pip install -r tempest/tools/pip-requires",
-            "pip install -r tempest/tools/test-requires"]
+commands = ["git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % results.tempest_version,
+            "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y",
+            "easy_install -U distribute"]
+
+if results.tempest_version == "grizzly":
+    commands.extend(["pip install -r tempest/requirements.txt",
+                     "pip install -r tempest/test-requirements.txt"])
+if results.tempest_version == "folsom":
+    commands.extend(["pip install -r tempest/tools/pip-requires",
+                     "pip install -r tempest/tools/test-requires"])
 for command in commands:
     qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
-qa.scp_to_node(node=remote_chef_server, path=tempest_config_path)
 
 # Setup controller
 print "## Setting up and cleaning cluster ##"
@@ -139,10 +142,10 @@ file = '%s-%s.xunit' % (
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
 command = ("export TEMPEST_CONFIG=%s.conf; "
-           "python -u /usr/local/bin/nosetests %s tempest/tempest/tests; " % (
+           "python -u /usr/local/bin/nosetests %s tempest; " % (
                env.name, xunit_flag))
 qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
 
 # Transfer xunit file to jenkins workspace
 print "## Transfering xunit file ##"
-qa.scp_from_node(node=remote_chef_server, path=file)
+qa.scp_from_node(node=remote_chef_server, path=file, destination=".")

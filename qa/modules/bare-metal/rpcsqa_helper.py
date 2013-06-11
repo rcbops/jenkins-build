@@ -788,8 +788,8 @@ class rpcsqa_helper:
         return ChefAPI(**remote_dict)
 
     def remote_chef_server(self, env):
-        query = "chef_environment:%s AND in_use:chef_server" % env.name
-        return next(node_search(query=query))
+        query = "chef_environment:%s AND in_use:chef-server" % env.name
+        return next(self.node_search(query=query))
 
     def remove_broker_fail(self, policy):
         active_models = self.razor.simple_active_models(policy)
@@ -860,11 +860,11 @@ class rpcsqa_helper:
                 env = Environment(e['name'])
                 env.delete()
 
-    def scp_from_node(self, node=None, path=None):
+    def scp_from_node(self, node=None, path=None, destination=None):
         user = "root"
         password = self.razor_password(node)
         ip = node['ipaddress']
-        get_file_from_server(ip, user, password, path)
+        get_file_from_server(ip, user, password, path, destination)
 
     def scp_to_node(self, node=None, path=None):
         user = "root"
