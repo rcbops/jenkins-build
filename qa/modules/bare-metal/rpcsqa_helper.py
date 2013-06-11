@@ -860,11 +860,11 @@ class rpcsqa_helper:
                 env = Environment(e['name'])
                 env.delete()
 
-    def scp_from_node(self, node=None, path=None):
+    def scp_from_node(self, node=None, path=None, destination=None):
         user = "root"
         password = self.razor_password(node)
         ip = node['ipaddress']
-        get_file_from_server(ip, user, password, path)
+        get_file_from_server(ip, user, password, path, destination)
 
     def scp_to_node(self, node=None, path=None):
         user = "root"

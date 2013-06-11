@@ -145,4 +145,4 @@ qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
 
 # Transfer xunit file to jenkins workspace
 print "## Transfering xunit file ##"
-qa.scp_from_node(node=remote_chef_server, path=file)
+qa.scp_from_node(node=remote_chef_server, path=file, destination=".")
