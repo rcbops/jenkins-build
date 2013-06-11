@@ -68,6 +68,12 @@ if results.tempest_version == 'grizzly':
     cluster['admin_password'] = password
     cluster['admin_tenant'] = "admin"
 
+    # quantum is enabled, test it.
+    if 'quantum' in results.feature_set:
+        cluster['quantum_available'] = 'true'
+    else:
+        cluster['quantum_available'] = 'false'
+
 # Getting precise image id
 url = "http://%s:5000/v2.0" % ip
 print "##### URL: %s #####" % url
