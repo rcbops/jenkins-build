@@ -449,6 +449,11 @@ class rpcsqa_helper:
                     /etc/init.d/iptables save'
         return run_remote_ssh_cmd(ip, 'root', user_pass, commands)
 
+    def environment_exists(self, env):
+        if not Search("environment", api=self.chef).query("name:%s" % env):
+            return False
+        return True
+
     def environment_has_controller(self, environment):
         # Load Environment
         nodes = Search('node', api=self.chef).query("chef_environment:%s" % environment)
@@ -646,6 +651,11 @@ class rpcsqa_helper:
         else:
             print "VM's successfully setup on server %s..." % chef_node
 
+    def node_search(self, query=None, api=None):
+        api = api or self.chef
+        search = Search("node", api=api).query(query)
+        return (Node(n['name'], api=api) for n in search)
+
     def ping_check_vm(self, ip_address):
         command = "ping -c 5 %s" % ip_address
         try:
@@ -770,6 +780,13 @@ class rpcsqa_helper:
         uuid = metadata['razor_active_model_uuid']
         return self.razor.get_active_model_pass(uuid)['password']
 
+    def remote_chef_api(self, env):
+        # RSAifying key
+        remote_dict = env.override_attributes['remote_chef']
+        pem = StringIO.StringIO(remote_dict['key'])
+        remote_dict['key'] = rsa.Key(pem)
+        return ChefAPI(**remote_dict)
+
     def remove_broker_fail(self, policy):
         active_models = self.razor.simple_active_models(policy)
         for active in active_models:
@@ -786,6 +803,12 @@ class rpcsqa_helper:
                 else:
                     print "!!## -- Trouble removing broker fail -- ##!!"
                     print run
+
+    def run_cmd_on_node(self, node=None, cmd=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        run_remote_ssh_cmd(ip, user, password, cmd)
 
     def run_chef_client(self, chef_node):
         """
@@ -1061,26 +1084,3 @@ class rpcsqa_helper:
             print "Platform Family %s is not supported." \
                 % chef_node['platform_family']
             sys.exit(1)
-
-    def node_search(self, query=None, api=None):
-        api = api or self.chef
-        search = Search("node", api=api).query(query)
-        return (Node(n['name'], api=api) for n in search)
-
-    def run_cmd_on_node(self, node=None, cmd=None):
-        user = "root"
-        password = self.razor_password(node)
-        ip = node['ipaddress']
-        run_remote_ssh_cmd(ip, user, password, cmd)
-
-    def environment_exists(self, env):
-        if not Search("environment", api=self.chef).query("name:%s" % env):
-            return False
-        return True
-
-    def remote_chef_api(self, env):
-        # RSAifying key
-        remote_dict = env.override_attributes['remote_chef']
-        pem = StringIO.StringIO(remote_dict['key'])
-        remote_dict['key'] = rsa.Key(pem)
-        return ChefAPI(**remote_dict)
