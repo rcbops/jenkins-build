@@ -449,6 +449,11 @@ class rpcsqa_helper:
                     /etc/init.d/iptables save'
         return run_remote_ssh_cmd(ip, 'root', user_pass, commands)
 
+    def environment_exists(self, env):
+        if not Search("environment", api=self.chef).query("name:%s" % env):
+            return False
+        return True
+
     def environment_has_controller(self, environment):
         # Load Environment
         nodes = Search('node', api=self.chef).query("chef_environment:%s" % environment)
@@ -646,6 +651,11 @@ class rpcsqa_helper:
         else:
             print "VM's successfully setup on server %s..." % chef_node
 
+    def node_search(self, query=None, api=None):
+        api = api or self.chef
+        search = Search("node", api=api).query(query)
+        return (Node(n['name'], api=api) for n in search)
+
     def ping_check_vm(self, ip_address):
         command = "ping -c 5 %s" % ip_address
         try:
@@ -770,6 +780,13 @@ class rpcsqa_helper:
         uuid = metadata['razor_active_model_uuid']
         return self.razor.get_active_model_pass(uuid)['password']
 
+    def remote_chef_api(self, env):
+        # RSAifying key
+        remote_dict = env.override_attributes['remote_chef']
+        pem = StringIO.StringIO(remote_dict['key'])
+        remote_dict['key'] = rsa.Key(pem)
+        return ChefAPI(**remote_dict)
+
     def remove_broker_fail(self, policy):
         active_models = self.razor.simple_active_models(policy)
         for active in active_models:
@@ -786,6 +803,12 @@ class rpcsqa_helper:
                 else:
                     print "!!## -- Trouble removing broker fail -- ##!!"
                     print run
+
+    def run_cmd_on_node(self, node=None, cmd=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        run_remote_ssh_cmd(ip, user, password, cmd)
 
     def run_chef_client(self, chef_node):
         """
@@ -992,6 +1015,81 @@ class rpcsqa_helper:
                 sys.exit(1)
 
         print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment, chef_server, chef_server_ip)
+
+    def setup_quantum_network(self, environment):
+        '''
+        This function will build the quantum network on the cluseter
+        with the name of the parameter
+        @param environment: The clusters environment name
+        @type environment: String
+        '''
+
+        # Find the Controller node info
+        controller_query = 'chef_environment:%s AND in_use:controller' % environment
+        controller_node = next(self.node_search(controller_query, self.chef))
+        controller_node_ip = controller_node['ipaddress']
+        controller_node_password = self.razor_password(controller_node)
+
+        # Find the Quantum node info
+        quantum_query = 'chef_environment:%s AND in_use:quantum' % environment
+        quantum_node = next(self.node_search(quantum_query, self.chef))
+        quantum_node_ip = quantum_node['ipaddress']
+        quantum_node_password = self.razor_password(quantum_node)
+
+        # Find the Compute node info
+        compute_query = 'chef_environment:%s AND in_use:compute' % environment
+        compute_node = next(self.node_search(compute_query, self.chef))
+        compute_node_ip = compute_node['ipaddress']
+        compute_node_password = self.razor_password(compute_node)
+
+        # Setup OVS bridge on network and compute node
+        print "Setting up OVS bridge and ports on Quantum / Compute Node(s)."
+        to_run_list = ['ip a f eth1',
+                       'ovs-vsctl add-br br-eth1',
+                       'ovs-vsctl add-port br-eth1 eth1']
+
+        for command in to_run_list:
+            # Run command on quantum node
+            quantum_ssh_run = run_remote_ssh_cmd(quantum_node_ip,
+                                                 'root',
+                                                 quantum_node_password,
+                                                 command)
+
+            if not quantum_ssh_run['success']:
+                print "Failed to run command %s on server @ %s." % (
+                    command, quantum_node_ip)
+                print quantum_ssh_run
+                sys.exit(1)
+
+            # Run command on compute node
+            compute_ssh_run = run_remote_ssh_cmd(compute_node,
+                                                 'root',
+                                                 compute_node_password,
+                                                 command)
+
+            if not compute_ssh_run['success']:
+                print "Failed to run command %s on server @ %s." % (
+                    command, compute_node_ip)
+                print compute_ssh_run
+                sys.exit(1)
+
+        print "Adding Quantum Network to Quantum Server."
+        to_run_list = ["quantum net-create --provider:physical_network=ph-eth1 --provider:network_type=flat flattest",
+                       "quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.128,end=10.0.0.254 flattest 10.0.0.128/25"]
+
+        for command in to_run_list:
+            ssh_run = run_remote_ssh_cmd(controller_node_ip,
+                                         'root',
+                                         controller_node_password,
+                                         command)
+
+            if not ssh_run['success']:
+                print "Failed to run command %s on server @ %s." % (
+                    command, controller_node_ip)
+                print ssh_run
+                sys.exit(1)
+
+        print "Quantum Network setup on cluster %s." % environment
 
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']

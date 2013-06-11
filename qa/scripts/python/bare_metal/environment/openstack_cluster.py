@@ -268,8 +268,6 @@ if results.action == "build":
                                     remote=True,
                                     chef_config_file=config_file)
 
-            remote_chef_api = chef_helper(config_file)
-
             # Have to run chef client on controller 1 again
             ha_controller_1_node = Node(ha_controller_1, api=rpcsqa.chef)
             print "HA Setup...run chef client on %s again " % ha_controller_1
@@ -386,6 +384,9 @@ if results.action == "build":
                                      env,
                                      remote=results.remote_chef,
                                      chef_config_file=config_file)
+
+            # Setup the Quantum Network
+            rpcsqa.setup_quantum_network(env) 
 
             # print all servers info
             print "***********************************************************"
