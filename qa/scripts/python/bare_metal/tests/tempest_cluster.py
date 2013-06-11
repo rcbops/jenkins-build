@@ -111,9 +111,14 @@ with open(tempest_config_path, 'w') as w:
 # Setup tempest on chef server
 print "## Setting up tempest on chef server ##"
 commands = ["git clone https://github.com/openstack/tempest.git -b %s --recursive" % results.tempest_version,
-            "apt-get install python-pip -y",
-            "pip install -r tempest/tools/pip-requires",
-            "pip install -r tempest/tools/test-requires"]
+            "apt-get install python-pip -y"]
+
+if results.tempest_version == "grizzly":
+    commands.extend(["pip install -r tempest/requirements.txt",
+                     "pip install -r tempest/test-requirements.txt"])
+if results.tempest_version == "folsom":
+    commands.extend(["pip install -r tempest/tools/pip-requires",
+                     "pip install -r tempest/tools/test-requires"])
 for command in commands:
     qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
 qa.scp_to_node(node=remote_chef_server, path=tempest_config_path)
