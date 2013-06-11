@@ -18,9 +18,6 @@ parser.add_argument('--os_distro', action="store", dest="os_distro",
 parser.add_argument('--feature_set', action="store", dest="feature_set",
                     required=False, default='default',
                     help="Openstack feature set to use")
-parser.add_argument('--tempest_root', action="store", dest="tempest_root",
-                    required=False,
-                    default="/var/lib/jenkins/tempest")
 parser.add_argument('--environment_branch', action="store",
                     dest="environment_branch",
                     required=False,
