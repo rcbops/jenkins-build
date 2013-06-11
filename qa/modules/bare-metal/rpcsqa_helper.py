@@ -993,6 +993,62 @@ class rpcsqa_helper:
 
         print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment, chef_server, chef_server_ip)
 
+    def setup_quantum_network(self, environment):
+        '''
+        This function will build the quantum network on the cluseter
+        with the name of the parameter
+        @param environment: The clusters environment name
+        @type environment: String
+        '''
+
+        # Find the Controller node info
+        controller_query = 'chef_environment:%s AND in_use:*controller*' % environment
+        controller_node = self.node_search(controller_query, self.chef)
+        controller_node_ip = controller_node['ipaddress']
+        controller_node_password = self.razor_password(controller_node)
+
+        # Find the Quantum node info
+        quantum_query = 'chef_environment:%s AND in_use:quantum' % environment
+        quantum_node = self.node_search(quantum_query, self.chef)
+        quantum_node_ip = quantum_node['ipaddress']
+        quantum_node_password = self.razor_password(quantum_node)
+
+        # Log onto server and copy chef-validator.pem and chef-webui.pem
+        print "Setting up OVS bridge and ports on Quantum Node."
+        to_run_list = ['ip a f eth1',
+                       'ovs-vsctl add-br br-eth1',
+                       'ovs-vsctl add-port br-eth1 eth1']
+
+        for command in to_run_list:
+            ssh_run = run_remote_ssh_cmd(quantum_node_ip,
+                                         'root',
+                                         quantum_node_password,
+                                         command)
+
+            if not ssh_run['success']:
+                print "Failed to run command %s on server @ %s." % (
+                    command, quantum_node_ip)
+                print ssh_run
+                sys.exit(1)
+
+        print "Adding Quantum Network to Quantum Server."
+        to_run_list = ['quantum net-create --provider:physical_network=ph-eth1 --provider:network_type=flat flattest',
+                       'quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.128,end=10.0.0.254 flattest 10.0.0.0/24']
+
+        for command in to_run_list:
+            ssh_run = run_remote_ssh_cmd(controller_node_ip,
+                                         'root',
+                                         controller_node_password,
+                                         command)
+
+            if not ssh_run['success']:
+                print "Failed to run command %s on server @ %s." % (
+                    command, controller_node_ip)
+                print ssh_run
+                sys.exit(1)
+
+        print "Quantum Network setup on cluster %s." % environment
+
     def update_node(self, chef_node):
         ip = chef_node['ipaddress']
         user_pass = self.razor_password(chef_node)
