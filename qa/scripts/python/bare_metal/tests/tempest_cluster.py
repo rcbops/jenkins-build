@@ -101,7 +101,7 @@ tempest_dir = "/var/lib/jenkins/jenkins-build/qa/metadata/tempest/config"
 sample_path = "%s/base_%s.conf" % (tempest_dir, results.tempest_version)
 with open(sample_path) as f:
     tempest_config = Template(f.read()).substitute(cluster)
-tempest_config_path = "/tmp/%s.conf" % (tempest_dir, env.name)
+tempest_config_path = "/tmp/%s.conf" % env.name
 with open(tempest_config_path, 'w') as w:
     print "####### Tempest Config #######"
     print tempest_config_path
