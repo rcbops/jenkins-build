@@ -107,10 +107,11 @@ with open(tempest_config_path, 'w') as w:
     print tempest_config_path
     print tempest_config
     w.write(tempest_config)
+qa.scp_to_node(node=remote_chef_server, path=tempest_config_path)
 
 # Setup tempest on chef server
 print "## Setting up tempest on chef server ##"
-commands = ["git clone https://github.com/openstack/tempest.git -b %s --recursive" % results.tempest_version,
+commands = ["git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % results.tempest_version,
             "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y",
             "easy_install -U distribute"]
 
@@ -122,7 +123,6 @@ if results.tempest_version == "folsom":
                      "pip install -r tempest/tools/test-requires"])
 for command in commands:
     qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
-qa.scp_to_node(node=remote_chef_server, path=tempest_config_path)
 
 # Setup controller
 print "## Setting up and cleaning cluster ##"
