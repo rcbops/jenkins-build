@@ -386,7 +386,7 @@ if results.action == "build":
                                      chef_config_file=config_file)
 
             # Setup the Quantum Network
-            rpcsqa.setup_quantum_network(env) 
+            rpcsqa.setup_quantum_network(env)
 
             # print all servers info
             print "***********************************************************"
