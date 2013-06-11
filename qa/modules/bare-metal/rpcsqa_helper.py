@@ -1026,19 +1026,19 @@ class rpcsqa_helper:
 
         # Find the Controller node info
         controller_query = 'chef_environment:%s AND in_use:controller' % environment
-        controller_node = self.node_search(controller_query, self.chef)
+        controller_node = next(self.node_search(controller_query, self.chef))
         controller_node_ip = controller_node['ipaddress']
         controller_node_password = self.razor_password(controller_node)
 
         # Find the Quantum node info
         quantum_query = 'chef_environment:%s AND in_use:quantum' % environment
-        quantum_node = self.node_search(quantum_query, self.chef)
+        quantum_node = next(self.node_search(quantum_query, self.chef))
         quantum_node_ip = quantum_node['ipaddress']
         quantum_node_password = self.razor_password(quantum_node)
 
         # Find the Compute node info
         compute_query = 'chef_environment:%s AND in_use:compute' % environment
-        compute_node = self.node_search(compute_query, self.chef)
+        compute_node = next(self.node_search(compute_query, self.chef))
         compute_node_ip = compute_node['ipaddress']
         compute_node_password = self.razor_password(compute_node)
 
