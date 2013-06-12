@@ -4,7 +4,6 @@ import argparse
 from pprint import pprint
 from string import Template
 from novaclient.v1_1 import client
-from subprocess import check_call, CalledProcessError
 from rpcsqa_helper import rpcsqa_helper
 
 # Parse arguments from the cmd line
@@ -113,8 +112,13 @@ qa.scp_to_node(node=remote_chef_server, path=tempest_config_path)
 
 # Setup tempest on chef server
 print "## Setting up tempest on chef server ##"
-commands = ["git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % results.tempest_version,
-            "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y",
+if results.os_distro == "precise":
+    packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y"
+else:
+    packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel -y; easy_install pip;"
+commands = ["rm -rf tempest",
+            "git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % (results.tempest_version),
+            packages,
             "easy_install -U distribute",
             "pip install -r tempest/tools/pip-requires",
             "pip install -r tempest/tools/test-requires"]
@@ -138,7 +142,7 @@ file = '%s-%s.xunit' % (
 xunit_flag = '--with-xunit --xunit-file=%s' % file
 command = ("export TEMPEST_CONFIG_DIR=/root; "
            "export TEMPEST_CONFIG=%s.conf; "
-           "python -u /usr/local/bin/nosetests %s tempest; " % (
+           "python -u `which nosetests` %s tempest; " % (
                env.name, xunit_flag))
 qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
 
