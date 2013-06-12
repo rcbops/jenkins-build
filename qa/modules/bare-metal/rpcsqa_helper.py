@@ -1078,7 +1078,7 @@ class rpcsqa_helper:
                 sys.exit(1)
 
             # Run command on compute node
-            compute_ssh_run = run_remote_ssh_cmd(compute_node,
+            compute_ssh_run = run_remote_ssh_cmd(compute_node_ip,
                                                  'root',
                                                  compute_node_password,
                                                  command)
