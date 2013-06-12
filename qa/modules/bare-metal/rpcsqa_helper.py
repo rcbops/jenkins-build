@@ -1092,7 +1092,7 @@ class rpcsqa_helper:
 
         print "Adding Quantum Network to Quantum Server."
         to_run_list = ["source openrc admin; quantum net-create --provider:physical_network=ph-eth1 --provider:network_type=flat flattest",
-                       "source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.128,end=10.0.0.254 flattest 10.0.0.128/25"]
+                       "source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.129,end=10.0.0.254 flattest 10.0.0.128/25"]
 
         for command in to_run_list:
             ssh_run = run_remote_ssh_cmd(controller_node_ip,
