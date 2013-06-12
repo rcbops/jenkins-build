@@ -4,7 +4,6 @@ import argparse
 from pprint import pprint
 from string import Template
 from novaclient.v1_1 import client
-from subprocess import check_call, CalledProcessError
 from rpcsqa_helper import rpcsqa_helper
 
 # Parse arguments from the cmd line
@@ -113,8 +112,12 @@ qa.scp_to_node(node=remote_chef_server, path=tempest_config_path)
 
 # Setup tempest on chef server
 print "## Setting up tempest on chef server ##"
-commands = ["git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % results.tempest_version,
-            "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y",
+if results.os_distro == "precise":
+    packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y"
+else:
+    packages = "easy_install pip"
+commands = ["git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % (results.tempest_version),
+            packages,
             "easy_install -U distribute",
             "pip install -r tempest/tools/pip-requires",
             "pip install -r tempest/tools/test-requires"]
