@@ -382,6 +382,7 @@ class rpcsqa_helper:
                     print "Setting node {0} to chef environment _default".format(name)
                     node.chef_environment = "_default"
                     node.save()
+            Environment(chef_environment).delete()
         else:
             print "Environment: %s has no nodes" % chef_environment
 
