@@ -124,6 +124,7 @@ if results.action == "build":
 
             # print all servers info
             print "***********************************************************"
+            print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
             print "Directory Service Server: %s" % (
                 rpcsqa.print_server_info(dir_server))
             print "Controller: %s" % (
@@ -192,10 +193,12 @@ if results.action == "build":
                                      remote=results.remote_chef,
                                      chef_config_file=config_file)
 
-            # print all servers info
             print "***********************************************************"
             print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
-            print "Controller: %s" % rpcsqa.print_server_info(controller)
+            print "Directory Service Server: %s" % (
+                rpcsqa.print_server_info(dir_server))
+            print "Controller: %s" % (
+                rpcsqa.print_server_info(controller))
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
 
