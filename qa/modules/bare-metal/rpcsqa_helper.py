@@ -521,6 +521,10 @@ class rpcsqa_helper:
 
         if count < cluster_size:
             print "Not enough available nodes for requested cluster size of %s, try again later..." % cluster_size
+            # Sleep for 10 seconds, this time doesnt matter as the build isnt going to happen
+            # This will give chef time to do its thing
+            time.sleep(10)
+            self.cleanup_environment(environment)
             sys.exit(1)
 
         return ret_nodes
