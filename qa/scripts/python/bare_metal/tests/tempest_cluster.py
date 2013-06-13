@@ -70,12 +70,16 @@ if results.tempest_version == 'grizzly':
         cluster['tenant_network_cidr'] = '10.0.0.128/25'
         cluster['tenant_network_mask_bits'] = '25'
         cluster['tenant_networks_reachable'] = 'true'
+        cluster['public_router_id'] = ''
+        cluster['public_network_id'] = ''
         cluster['quantum_available'] = 'true'
     else:
         cluster['api_version'] = 'v1.1'
         cluster['tenant_network_cidr'] = '10.100.0.0/16'
         cluster['tenant_network_mask_bits'] = '29'
         cluster['tenant_networks_reachable'] = 'false'
+        cluster['public_router_id'] = ''
+        cluster['public_network_id'] = ''
         cluster['quantum_available'] = 'false'
 
 if results.feature_set == "glance-cf":
