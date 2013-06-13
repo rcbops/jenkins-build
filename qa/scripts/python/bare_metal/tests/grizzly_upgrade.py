@@ -57,11 +57,11 @@ if 'vips' in environment.override_attributes:
     query = "run_list:*ha-controller1*"
     controller1 = next(rpcsqa.node_search(query=query, api=remote_chef))
 
-    print "Fix for vrrp increments"
-    vrrp_command = ("vrrp=`vrrps=(/etc/keepalived/conf.d/vrrp*); echo ${vrrps[-1]}`; "
-                    "echo Before Fix:; cat $vrrp; "
-                    "cat $vrrp | awk '/virtual_router_id/ {$2++} {print}' > $vrrp; "
-                    "cat After Fix:; cat $vrrp")
+    # print "Fix for vrrp increments"
+    # vrrp_command = ("vrrp=`vrrps=(/etc/keepalived/conf.d/vrrp*); echo ${vrrps[-1]}`; "
+    #                 "echo Before Fix:; cat $vrrp; "
+    #                 "cat $vrrp | awk '/virtual_router_id/ {$2++} {print}' > $vrrp; "
+    #                 "cat After Fix:; cat $vrrp")
     
     print "HA Environment: Running chef client on controller1"
     rpcsqa.run_chef_client(controller1)
