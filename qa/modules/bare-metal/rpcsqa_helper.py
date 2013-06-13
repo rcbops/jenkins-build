@@ -579,7 +579,7 @@ class rpcsqa_helper:
                 print run_cmd
                 sys.exit(1)
 
-    def install_cookbook(self, chef_server, openstack_release, giturl):
+    def install_cookbook(self, chef_server, giturl, branch):
         # Gather node info
         chef_server_node = Node(chef_server, api=self.chef)
         chef_server_ip = chef_server_node['ipaddress']
@@ -590,11 +590,11 @@ class rpcsqa_helper:
         if chef_server_platform == 'ubuntu':
             to_run_list = ['apt-get install git -y',
                            'mkdir -p /opt/test_cookbooks',
-                           'cd /opt/test_cookbooks; git clone %s -b %s --recursive' % (giturl, openstack_release)]
+                           'cd /opt/test_cookbooks; git clone %s -b %s --recursive' % (giturl, branch)]
         elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
             to_run_list = ['yum install git -y',
                            'mkdir -p /opt/test_cookbooks',
-                           'cd /opt/test_cookbooks; git clone %s -b %s --recursive' % (giturl, openstack_release)]
+                           'cd /opt/test_cookbooks; git clone %s -b %s --recursive' % (giturl, branch)]
         else:
             print "Platform %s not supported" % chef_server_platform
             sys.exit(1)
