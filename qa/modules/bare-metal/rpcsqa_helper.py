@@ -482,8 +482,6 @@ class rpcsqa_helper:
         if not run['success']:
             print "Error rebooting server %s@%s " % (
                 chef_node, chef_node['ipaddress'])
-            # TODO: return failure
-            sys.exit(1)
 
         #Knife node remove; knife client remove
         Client(str(chef_node)).delete()
