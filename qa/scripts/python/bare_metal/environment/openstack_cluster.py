@@ -595,6 +595,7 @@ elif results.action == 'add':
 elif results.action == 'destroy':
     print "Destroying environment: %s" % env
     rpcsqa.cleanup_environment(env)
+    Environment(env, api=rpcsqa.chef).delete()
 
 else:
     print "Action %s is not supported..." % results.action
