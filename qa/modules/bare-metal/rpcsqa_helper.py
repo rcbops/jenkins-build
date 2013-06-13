@@ -522,8 +522,8 @@ class rpcsqa_helper:
             print "Not enough available nodes for requested cluster size of %s, try again later..." % cluster_size
             # Sleep for 10 seconds, this time doesnt matter as the build isnt going to happen
             # This will give chef time to do its thing
-            time.sleep(10)
             self.cleanup_environment(environment)
+            time.sleep(10)
             Environment(environment, api=self.chef).delete()
             sys.exit(1)
 
