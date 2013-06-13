@@ -63,7 +63,6 @@ rpcsqa = rpcsqa_helper(results.razor_ip)
 
 # Remove broker fails for qa-%os_distro-pool
 rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
-rpcsqa.remove_empty_environments()
 
 #Prepare environment
 env = rpcsqa.prepare_environment(results.name,
@@ -596,7 +595,6 @@ elif results.action == 'add':
 elif results.action == 'destroy':
     print "Destroying environment: %s" % env
     rpcsqa.cleanup_environment(env)
-    rpcsqa.remove_empty_environments()
 
 else:
     print "Action %s is not supported..." % results.action
