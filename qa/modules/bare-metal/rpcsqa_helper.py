@@ -581,6 +581,48 @@ class rpcsqa_helper:
                 print run_cmd
                 sys.exit(1)
 
+    def install_cookbook(self, chef_server, openstack_release, giturl):
+        # Gather node info
+        chef_server_node = Node(chef_server, api=self.chef)
+        chef_server_ip = chef_server_node['ipaddress']
+        chef_server_password = self.razor_password(chef_server_node)
+        chef_server_platform = chef_server_node['platform']
+
+        # Install git and clone the other cookbook
+        if chef_server_platform == 'ubuntu':
+            to_run_list = ['apt-get install git -y',
+                           'mkdir -p /opt/test_cookbooks',
+                           'cd /opt/test_cookbooks; git clone %s -b %s --recursive' % (giturl, openstack_release)]
+        elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
+            to_run_list = ['yum install git -y',
+                           'mkdir -p /opt/test_cookbooks',
+                           'cd /opt/test_cookbooks; git clone %s -b %s --recursive' % (giturl, openstack_release)]
+        else:
+            print "Platform %s not supported" % chef_server_platform
+            sys.exit(1)
+
+        for cmd in to_run_list:
+            run_cmd = run_remote_ssh_cmd(chef_server_ip,
+                                         'root',
+                                         chef_server_password,
+                                         cmd)
+            if not run_cmd['success']:
+                print "Command: %s failed to run on %s" % (cmd, chef_server)
+                print run_cmd
+                sys.exit(1)
+
+        # Install the cookbooks on the chef server
+        to_run_list = ['knife cookbook upload --all --cookbook-path /opt/test_cookbooks']
+        for cmd in to_run_list:
+            run_cmd = run_remote_ssh_cmd(chef_server_ip,
+                                         'root',
+                                         chef_server_password,
+                                         cmd)
+            if not run_cmd['success']:
+                print "Command: %s failed to run on %s" % (cmd, chef_server)
+                print run_cmd
+                sys.exit(1)
+
     def install_opencenter(self, server, install_script,
                            role, oc_server_ip='0.0.0.0'):
         chef_node = Node(server, api=self.chef)
