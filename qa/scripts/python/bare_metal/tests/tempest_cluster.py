@@ -39,7 +39,6 @@ local_env = qa.cluster_environment(**env_dict)
 if not local_env.exists:
     print "Error: Environment %s doesn't exist" % local_env.name
     sys.exit(1)
-remote_chef_server = qa.remote_chef_server(local_env)
 remote_chef = qa.remote_chef_api(local_env)
 env = qa.cluster_environment(chef_api=remote_chef, **env_dict)
 
@@ -114,7 +113,7 @@ with open(tempest_config_path, 'w') as w:
     print tempest_config_path
     print tempest_config
     w.write(tempest_config)
-qa.scp_to_node(node=remote_chef_server, path=tempest_config_path)
+qa.scp_to_node(node=controller, path=tempest_config_path)
 
 # Setup tempest on chef server
 print "## Setting up tempest on chef server ##"
@@ -129,7 +128,7 @@ commands = ["rm -rf tempest",
             "pip install -r tempest/tools/pip-requires",
             "pip install -r tempest/tools/test-requires"]
 for command in commands:
-    qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
+    qa.run_cmd_on_node(node=controller, cmd=command)
 
 # Setup controller
 print "## Setting up and cleaning cluster ##"
@@ -151,8 +150,8 @@ command = ("export TEMPEST_CONFIG_DIR=/root; "
            "export TEMPEST_CONFIG=%s.conf; "
            "python -u `which nosetests` %s %s tempest; " % (
                env.name, xunit_flag, exclude_flag))
-qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
+qa.run_cmd_on_node(node=controller, cmd=command)
 
 # Transfer xunit file to jenkins workspace
 print "## Transfering xunit file ##"
-qa.scp_from_node(node=remote_chef_server, path=file, destination=".")
+qa.scp_from_node(node=controller, path=file, destination=".")
