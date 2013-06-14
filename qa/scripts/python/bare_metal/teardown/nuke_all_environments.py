@@ -17,8 +17,11 @@ rpcsqa = rpcsqa_helper(results.razor_ip)
 # gather all current environments
 environments = Environment.list(api=rpcsqa.chef)
 
+# remove _default from environments
+print "Removing _default environment to protect it from the destroy"
+environments.names.remove('_default')
+
 # destroy them all
 for environment in environments.names:
-    if not '_default' in environment:
-        print "Cleaning up environment {0}".format(environment)
-        rpcsqa.cleanup_environment(environment)
+    print "Cleaning up environment {0}".format(environment)
+    #rpcsqa.cleanup_environment(environment)
