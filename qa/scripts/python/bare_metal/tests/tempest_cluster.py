@@ -146,11 +146,11 @@ file = '%s-%s.xunit' % (
                   time.gmtime()),
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
-exclude_flag="-e volume"
+exclude_flag = "-e volume"
 command = ("export TEMPEST_CONFIG_DIR=/root; "
            "export TEMPEST_CONFIG=%s.conf; "
-           "python -u `which nosetests` %s tempest; " % (
-               env.name, xunit_flag))
+           "python -u `which nosetests` %s %s tempest; " % (
+               env.name, xunit_flag, exclude_flag))
 qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
 
 # Transfer xunit file to jenkins workspace
