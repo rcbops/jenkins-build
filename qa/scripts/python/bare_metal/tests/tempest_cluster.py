@@ -51,6 +51,7 @@ if not controller:
 username = 'demo'
 password = results.keystone_admin_pass
 tenant = 'demo'
+
 cluster = {
     'host': ip,
     'username': username,
@@ -61,7 +62,8 @@ cluster = {
     'alt_tenant': tenant,
     'admin_username': "admin",
     'admin_password': password,
-    'admin_tenant': "admin"
+    'admin_tenant': "admin",
+    'nova_password': controller.attributes['nova']['db']['password']
 }
 if results.tempest_version == 'grizzly':
     # quantum is enabled, test it.
@@ -69,23 +71,23 @@ if results.tempest_version == 'grizzly':
         cluster['api_version'] = 'v2.0'
         cluster['tenant_network_cidr'] = '10.0.0.128/25'
         cluster['tenant_network_mask_bits'] = '25'
-        cluster['tenant_networks_reachable'] = 'true'
+        cluster['tenant_networks_reachable'] = True
         cluster['public_router_id'] = ''
         cluster['public_network_id'] = ''
-        cluster['quantum_available'] = 'true'
+        cluster['quantum_available'] = True
     else:
         cluster['api_version'] = 'v1.1'
         cluster['tenant_network_cidr'] = '10.100.0.0/16'
         cluster['tenant_network_mask_bits'] = '29'
-        cluster['tenant_networks_reachable'] = 'false'
+        cluster['tenant_networks_reachable'] = False
         cluster['public_router_id'] = ''
         cluster['public_network_id'] = ''
-        cluster['quantum_available'] = 'false'
+        cluster['quantum_available'] = False
 
 if results.feature_set == "glance-cf":
-    cluster["image_enabled"] = "true"
+    cluster["image_enabled"] = True
 else:
-    cluster["image_enabled"] = "false"
+    cluster["image_enabled"] = False
 
 # Getting precise image id
 url = "http://%s:5000/v2.0" % ip
@@ -119,7 +121,7 @@ print "## Setting up tempest on chef server ##"
 if results.os_distro == "precise":
     packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y"
 else:
-    packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel -y; easy_install pip;"
+    packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel git -y; easy_install pip;"
 commands = ["rm -rf tempest",
             "git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % (results.tempest_version),
             packages,
@@ -144,10 +146,11 @@ file = '%s-%s.xunit' % (
                   time.gmtime()),
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
+exclude_flag = "-e volume"
 command = ("export TEMPEST_CONFIG_DIR=/root; "
            "export TEMPEST_CONFIG=%s.conf; "
-           "python -u `which nosetests` %s tempest; " % (
-               env.name, xunit_flag))
+           "python -u `which nosetests` %s %s tempest; " % (
+               env.name, xunit_flag, exclude_flag))
 qa.run_cmd_on_node(node=remote_chef_server, cmd=command)
 
 # Transfer xunit file to jenkins workspace

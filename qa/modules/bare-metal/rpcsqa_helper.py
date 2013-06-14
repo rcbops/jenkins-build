@@ -423,8 +423,8 @@ class rpcsqa_helper:
         # Queue the chef environment and get the controller node
         q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
                                                        controller_name)
-        search = Search("node", api=self.chef).query(q)
-        controller = Node(search[0]['name'], api=self.chef)
+        search = Search("node", api=chef_api).query(q)
+        controller = Node(search[0]['name'], api=chef_api)
 
         ks_ip = ks_ip or controller['ipaddress']
 
