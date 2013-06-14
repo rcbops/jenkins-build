@@ -25,4 +25,4 @@ environments.names.remove('_default')
 # destroy them all
 for environment in environments.names:
     print "Cleaning up environment {0}".format(environment)
-    #rpcsqa.cleanup_environment(environment)
+    rpcsqa.cleanup_environment(environment)
