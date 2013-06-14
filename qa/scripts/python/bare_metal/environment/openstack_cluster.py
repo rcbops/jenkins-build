@@ -158,7 +158,7 @@ if results.action == "build":
             rpcsqa.install_cookbooks(chef_server, results.branch)
 
             #Testing keystone patch
-            rpcsqa.install_cookbook(chef_server, "https://github.com/jcannava/keystone", "b465a76adac4f1ab99b5ea403df21d4b2b59e3f5")
+            rpcsqa.install_cookbook(chef_server, "https://github.com/jcannava/keystone", "DE172")
 
             # setup environment file to remote chef server
             rpcsqa.setup_remote_chef_environment(chef_server, env)
