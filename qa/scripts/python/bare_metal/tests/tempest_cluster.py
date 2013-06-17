@@ -121,9 +121,9 @@ if results.os_distro == "precise":
     packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y"
 else:
     packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel git -y; easy_install pip;"
-commands = ["rm -rf tempest",
+commands = [packages,
+            "rm -rf tempest",
             "git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % (results.tempest_version),
-            packages,
             "easy_install -U distribute",
             "pip install -r tempest/tools/pip-requires",
             "pip install -r tempest/tools/test-requires"]
