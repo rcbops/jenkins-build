@@ -128,8 +128,8 @@ commands = [packages,
             "pip install -r tempest/tools/pip-requires",
             "pip install -r tempest/tools/test-requires"]
 for command in commands:
-    "Running: %s" % command
-    "On: %s - %s" % (controller.name, controller['ipaddress'])
+    print "Running: %s" % command
+    print "On: %s - %s" % (controller.name, controller['ipaddress'])
     qa.run_cmd_on_node(node=controller, cmd=command)
 
 # Setup controller
