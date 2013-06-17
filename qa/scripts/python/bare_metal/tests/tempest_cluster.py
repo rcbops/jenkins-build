@@ -120,7 +120,7 @@ print "## Setting up tempest on chef server ##"
 if results.os_distro == "precise":
     packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y"
 else:
-    packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel git -y; easy_install pip;"
+    packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel git -y; easy_install pip"
 commands = [packages,
             "rm -rf tempest",
             "git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % (results.tempest_version),
@@ -128,6 +128,8 @@ commands = [packages,
             "pip install -r tempest/tools/pip-requires",
             "pip install -r tempest/tools/test-requires"]
 for command in commands:
+    "Running: %s" % command
+    "On: %s - %s" % (controller.name, controller['ipaddress'])
     qa.run_cmd_on_node(node=controller, cmd=command)
 
 # Setup controller
