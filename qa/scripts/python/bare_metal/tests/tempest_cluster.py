@@ -118,7 +118,7 @@ qa.scp_to_node(node=controller, path=tempest_config_path)
 # Setup tempest on chef server
 print "## Setting up tempest on chef server ##"
 if results.os_distro == "precise":
-    packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y"
+    packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev git -y"
 else:
     packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel git -y; easy_install pip"
 commands = [packages,
