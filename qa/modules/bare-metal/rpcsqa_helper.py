@@ -1106,7 +1106,6 @@ class rpcsqa_helper:
         # Setup OVS bridge on network and compute node
         print "Setting up OVS bridge and ports on Quantum / Compute Node(s)."
         to_run_list = ['ip a f eth1',
-                       'ovs-vsctl add-br br-eth1',
                        'ovs-vsctl add-port br-eth1 eth1']
 
         for command in to_run_list:
