@@ -2,7 +2,7 @@ import sys
 from subprocess import check_call, CalledProcessError
 
 
-def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
+def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
     """
     @param server_ip
     @param user
@@ -20,7 +20,11 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
                                    server_ip,
                                    remote_cmd)
     try:
-        ret = check_call(command, shell=True)
+        if quiet is True:
+            with open(os.devnull, 'w') as shutup:
+                ret = check_call(command, shell=Tru, stdout=shutup)
+        else:
+            ret = check_call(command, shell=True)
         return {'success': True, 'return': ret, 'exception': None}
     except CalledProcessError, cpe:
         return {'success': False,
