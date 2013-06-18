@@ -22,7 +22,7 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
     try:
         if quiet is True:
             with open(os.devnull, 'w') as shutup:
-                ret = check_call(command, shell=Tru, stdout=shutup)
+                ret = check_call(command, shell=True, stdout=shutup)
         else:
             ret = check_call(command, shell=True)
         return {'success': True, 'return': ret, 'exception': None}
