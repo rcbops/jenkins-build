@@ -5,7 +5,8 @@ import json
 from chef import *
 from server_helper import *
 from razor_api import razor_api
-from subprocess import check_call, CalledProcessError, DEVNULL, STDOUT
+from subprocess import check_call, CalledProcessError, STDOUT
+DEVNULL = open(os.devnull, 'wb')
 import environments
 
 
