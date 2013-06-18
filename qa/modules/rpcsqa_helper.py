@@ -5,7 +5,7 @@ import json
 from chef import *
 from server_helper import *
 from razor_api import razor_api
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, CalledProcessError, devnull, stdout
 import environments
 
 
@@ -59,16 +59,13 @@ class rpcsqa_helper:
                     node.save()
             #Environment(chef_environment).delete()
 
-    def run_chef_client(self, chef_node, num_times=1, stdout=None):
+    def run_chef_client(self, chef_node, num_times=1, stdout=stdout):
         runs = []
         success = True
         for i in range(0, num_times):
             ip = chef_node['ipaddress']
             user_pass = self.razor_password(chef_node)
-            if stdout is not None:
-                run = run_remote_ssh_cmd(ip, 'root', user_pass, 'chef-client', stdout=stdout)
-            else:
-                run = run_remote_ssh_cmd(ip, 'root', user_pass, 'chef-client')
+            run = run_remote_ssh_cmd(ip, 'root', user_pass, 'chef-client', stdout=stdout)
             if run['success'] is False:
                 success = False
             runs.append(run)
@@ -84,7 +81,7 @@ class rpcsqa_helper:
                 chef_node.save()
                 print "Running network interfaces for %s" % chef_node
                 #Run chef client thrice
-                run_chef_client = self.run_chef_client(chef_node, num_times=3, stdout='/dev/null')
+                run_chef_client = self.run_chef_client(chef_node, num_times=3, stdout=devnull)
                 if run_chef_client['success']:
                     print "Done running chef-client"
                 else:
