@@ -857,6 +857,8 @@ class rpcsqa_helper:
         user = "root"
         password = self.razor_password(node)
         ip = node['ipaddress']
+        print "### Running: %s ###" % cmd
+        print "### On: %s - %s ###" % (node.name, ip)
         run_remote_ssh_cmd(ip, user, password, cmd)
 
     def run_chef_client(self, chef_node):
