@@ -118,12 +118,12 @@ qa.scp_to_node(node=controller, path=tempest_config_path)
 # Setup tempest on chef server
 print "## Setting up tempest on chef server ##"
 if results.os_distro == "precise":
-    packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev -y"
+    packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev git -y"
 else:
-    packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel git -y; easy_install pip;"
-commands = ["rm -rf tempest",
+    packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel git -y; easy_install pip"
+commands = [packages,
+            "rm -rf tempest",
             "git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % (results.tempest_version),
-            packages,
             "easy_install -U distribute",
             "pip install -r tempest/tools/pip-requires",
             "pip install -r tempest/tools/test-requires"]
@@ -140,12 +140,18 @@ qa.run_cmd_on_node(node=controller, cmd=setup_cmd)
 
 # Run tests
 print "## Running Tests ##"
+
 file = '%s-%s.xunit' % (
     time.strftime("%Y-%m-%d-%H:%M:%S",
                   time.gmtime()),
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
-exclude_flag = "-e volume"
+
+exclude_flags = ["volume", "rescue"]  # Volumes
+if results.feature_set != "glance-cf":
+    exclude_flags.append("image")
+exclude_flag = ' '.join('-e {0}'.format(x) for x in exclude_flags)
+
 command = ("export TEMPEST_CONFIG_DIR=/root; "
            "export TEMPEST_CONFIG=%s.conf; "
            "python -u `which nosetests` %s %s tempest; " % (

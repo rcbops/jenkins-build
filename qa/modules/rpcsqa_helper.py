@@ -3,27 +3,164 @@ import time
 import StringIO
 import json
 from chef import *
-from chef_helper import *
 from server_helper import *
 from razor_api import razor_api
 from subprocess import check_call, CalledProcessError
+import environments
 
 
 class rpcsqa_helper:
 
-    def __init__(self, razor_ip='198.101.133.3'):
+    def __init__(self, razor_ip=''):
         self.razor = razor_api(razor_ip)
         self.chef = autoconfigure()
         self.chef.set_default()
 
+    def enable_razor(self, razor_ip=''):
+        if razor_ip != '':
+            self.razor = razor_api(razor_ip)
+
     def __repr__(self):
         """ Print out current instance of razor_api"""
         outl = 'class :' + self.__class__.__name__
-
         for attr in self.__dict__:
             outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
-
         return outl
+
+    def prepare_environment(self, name, os_distro, branch, features):
+        # If the environment doesnt exist in chef, make it.
+        env = "%s-%s-%s-%s" % (name, os_distro, branch, "-".join(features))
+        chef_env = Environment(env, api=self.chef)
+        if not chef_env.exists:
+            print "Making environment: %s " % env
+            chef_env.create(env, api=self.chef)
+        env_json = chef_env.to_dict()
+        env_json['override_attributes'].update(environments.base_env['override_attributes'])
+        for feature in features:
+            if feature in environments.__dict__:
+                env_json['override_attributes'].update(environments.__dict__[feature])
+        chef_env.override_attributes.update(env_json['override_attributes'])
+        chef_env.save()
+        return env
+
+    def delete_environment(self, chef_environment):
+        Environment(chef_environment, api=self.chef).delete()
+
+    def cleanup_environment(self, chef_environment):
+        nodes = Search('node', api=self.chef).query("chef_environment:%s" % chef_environment)
+        if nodes:
+            for n in nodes:
+                name = n['name']
+                node = Node(name, api=self.chef)
+                if node['in_use'] != 0:
+                    self.erase_node(node)
+                else:
+                    node.chef_environment = "_default"
+                    node.save()
+            #Environment(chef_environment).delete()
+
+    def run_chef_client(self, chef_node, num_times=1, quiet=False):
+        runs = []
+        success = True
+        for i in range(0, num_times):
+            ip = chef_node['ipaddress']
+            user_pass = self.razor_password(chef_node)
+            run = run_remote_ssh_cmd(ip, 'root', user_pass, 'chef-client', quiet)
+            if run['success'] is False:
+                success = False
+            runs.append(run)
+        return {'success': success, 'runs': runs}
+
+    def interface_physical_nodes(self, os):
+        #Make sure all network interfacing is set
+        for node in Search('node', api=self.chef).query("name:*%s*" % os):
+            chef_node = Node(node['name'], api=self.chef)
+            if "role[qa-base]" in chef_node.run_list:
+                chef_node.run_list = ["recipe[network-interfaces]"]
+                chef_node['in_use'] = 0
+                chef_node.save()
+                print "Running network interfaces for %s" % chef_node
+                #Run chef client thrice
+                run_chef_client = self.run_chef_client(chef_node, num_times=3, quiet=True)
+                if run_chef_client['success']:
+                    print "Done running chef-client"
+                else:
+                    for index, run in enumerate(run_chef_client['runs']):
+                        print "Run %s: %s" % (index+1, run)
+
+    def gather_razor_nodes(self, os, environment, cluster_size):
+        ret_nodes = []
+        count = 0
+        nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os)
+        # Take a node from the default environment that has its network interfaces set.
+        for n in nodes:
+            name = n['name']
+            node = Node(name, api=self.chef)
+            if ((node.chef_environment == "_default" or node.chef_environment == environment)
+                    and "recipe[network-interfaces]" in node.run_list):
+                if node.chef_environment != environment:
+                    node.chef_environment = environment
+                    node.save()
+                ret_nodes.append(name)
+                print "Taking node: %s" % name
+                count += 1
+                if count >= cluster_size:
+                    break
+        if count < cluster_size:
+            print "Not enough available nodes for requested cluster size of %s, try again later..." % cluster_size
+            sys.exit(1)
+        return ret_nodes
+
+    def remove_broker_fail(self, policy):
+        active_models = self.razor.simple_active_models(policy)
+        for active in active_models:
+            data = active_models[active]
+            if 'broker_fail' in data['current_state']:
+                print "!!## -- Removing active model  (broker_fail) -- ##!!"
+                user_pass = self.razor.get_active_model_pass(
+                    data['am_uuid'])['password']
+                ip = data['eth1_ip']
+                run = run_remote_ssh_cmd(ip, 'root', user_pass, 'reboot 0')
+                if run['success']:
+                    self.razor.remove_active_model(data['am_uuid'])
+                    time.sleep(15)
+                else:
+                    print "!!## -- Trouble removing broker fail -- ##!!"
+                    print run
+
+    def erase_node(self, chef_node):
+        print "Deleting: %s" % str(chef_node)
+        am_uuid = chef_node['razor_metadata'].to_dict()['razor_active_model_uuid']
+        run = run_remote_ssh_cmd(chef_node['ipaddress'], 'root', self.razor_password(chef_node), "reboot 0")
+        if not run['success']:
+            print "Error rebooting server %s@%s " % (chef_node, chef_node['ipaddress'])
+        #Knife node remove; knife client remove
+        Client(str(chef_node)).delete()
+        chef_node.delete()
+        #Remove active model
+        self.razor.remove_active_model(am_uuid)
+        time.sleep(15)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def bootstrap_chef(self, client_node, server_node):
         '''
@@ -366,24 +503,6 @@ class rpcsqa_helper:
             print "*****************************************************"
             sys.exit(1)
 
-    def cleanup_environment(self, chef_environment):
-        """
-        @param chef_environment
-        """
-        nodes = Search('node', api=self.chef).query("chef_environment:%s" % chef_environment)
-        if nodes:
-            for n in nodes:
-                name = n['name']
-                print "Node {0} belongs to chef enviornment {1}".format(name, chef_environment)
-                node = Node(name, api=self.chef)
-                if node['in_use'] != 0:
-                    self.erase_node(node)
-                else:
-                    print "Setting node {0} to chef environment _default".format(name)
-                    node.chef_environment = "_default"
-                    node.save()
-        else:
-            print "Environment: %s has no nodes" % chef_environment
 
     def clone_git_repo(self, server, github_user, github_pass):
         chef_node = Node(server, api=self.chef)
@@ -423,8 +542,8 @@ class rpcsqa_helper:
         # Queue the chef environment and get the controller node
         q = "chef_environment:%s AND run_list:*%s*" % (environment.name,
                                                        controller_name)
-        search = Search("node", api=chef_api).query(q)
-        controller = Node(search[0]['name'], api=chef_api)
+        search = Search("node", api=self.chef).query(q)
+        controller = Node(search[0]['name'], api=self.chef)
 
         ks_ip = ks_ip or controller['ipaddress']
 
@@ -467,67 +586,12 @@ class rpcsqa_helper:
             else:
                 return False
 
-    def erase_node(self, chef_node):
-        """
-        @param chef_node
-        """
-        print "Deleting: %s" % str(chef_node)
-        am_uuid = \
-            chef_node['razor_metadata'].to_dict()['razor_active_model_uuid']
-        run = run_remote_ssh_cmd(chef_node['ipaddress'],
-                                 'root',
-                                 self.razor_password(chef_node),
-                                 "reboot 0")
-        if not run['success']:
-            print "Error rebooting server %s@%s " % (
-                chef_node, chef_node['ipaddress'])
-
-        #Knife node remove; knife client remove
-        Client(str(chef_node)).delete()
-        chef_node.delete()
-
-        #Remove active model
-        self.razor.remove_active_model(am_uuid)
-        time.sleep(15)
-
     def gather_all_nodes(self, os):
         # Gather the nodes for the requested OS
         nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os)
         return nodes
 
-    def gather_size_nodes(self, os, environment, cluster_size):
-        ret_nodes = []
-        count = 0
-
-        # Gather the nodes for the requested OS
-        nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os)
-
-        # Take a node from the default environment that
-        # has its network interfaces set.
-        for n in nodes:
-            name = n['name']
-            node = Node(name, api=self.chef)
-            if ((node.chef_environment == "_default" or
-                node.chef_environment == environment) and
-                    "recipe[network-interfaces]" in node.run_list):
-                self.set_nodes_environment(node, environment)
-                ret_nodes.append(name)
-                print "Taking node: %s" % name
-                count += 1
-
-                if count >= cluster_size:
-                    break
-
-        if count < cluster_size:
-            print "Not enough available nodes for requested cluster size of %s, try again later..." % cluster_size
-            # Sleep for 10 seconds, this time doesnt matter as the build isnt going to happen
-            # This will give chef time to do its thing
-            self.cleanup_environment(environment)
-            time.sleep(10)
-            Environment(environment, api=self.chef).delete()
-            sys.exit(1)
-
-        return ret_nodes
+ 
 
     def install_cookbooks(self, chef_server, openstack_release):
         '''
@@ -714,22 +778,6 @@ class rpcsqa_helper:
                     'exception': cpe,
                     'command': command}
 
-    def prepare_environment(self, name, os_distro, feature_set, branch):
-        # Gather the nodes for the requested os_distro
-        nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os_distro)
-
-        #Make sure all network interfacing is set
-        for node in nodes:
-            chef_node = Node(node['name'], api=self.chef)
-            self.set_network_interface(chef_node)
-
-        # If the environment doesnt exist in chef, make it.
-        env = "%s-%s-%s-%s" % (name, os_distro, branch, feature_set)
-        chef_env = Environment(env, api=self.chef)
-        if not chef_env.exists:
-            print "Making environment: %s " % env
-            chef_env.create(env, api=self.chef)
-        return env
 
     def prepare_server(self, server):
         '''
@@ -836,43 +884,13 @@ class rpcsqa_helper:
         query = "chef_environment:%s AND in_use:chef-server" % env.name
         return next(self.node_search(query=query))
 
-    def remove_broker_fail(self, policy):
-        active_models = self.razor.simple_active_models(policy)
-        for active in active_models:
-            data = active_models[active]
-            if 'broker_fail' in data['current_state']:
-                print "!!## -- Removing active model  (broker_fail) -- ##!!"
-                user_pass = self.razor.get_active_model_pass(
-                    data['am_uuid'])['password']
-                ip = data['eth1_ip']
-                run = run_remote_ssh_cmd(ip, 'root', user_pass, 'reboot 0')
-                if run['success']:
-                    self.razor.remove_active_model(data['am_uuid'])
-                    time.sleep(15)
-                else:
-                    print "!!## -- Trouble removing broker fail -- ##!!"
-                    print run
-
+    
     def run_cmd_on_node(self, node=None, cmd=None):
         user = "root"
         password = self.razor_password(node)
         ip = node['ipaddress']
-        print "### Running: %s ###" % cmd
-        print "### On: %s - %s ###" % (node.name, ip)
         run_remote_ssh_cmd(ip, user, password, cmd)
 
-    def run_chef_client(self, chef_node):
-        """
-        @param chef_node
-        @param  logfile
-        @return run_remote_ssh_cmd of chef-client
-        """
-        ip = chef_node['ipaddress']
-        user_pass = self.razor_password(chef_node)
-        return run_remote_ssh_cmd(ip,
-                                  'root',
-                                  user_pass,
-                                  'chef-client')
 
     def remove_chef(self, server):
         """
@@ -919,25 +937,6 @@ class rpcsqa_helper:
         ip = node['ipaddress']
         run_remote_scp_cmd(ip, user, password, path)
 
-    def set_network_interface(self, chef_node):
-        if "role[qa-base]" in chef_node.run_list:
-            chef_node.run_list = ["recipe[network-interfaces]"]
-            chef_node['in_use'] = 0
-            chef_node.save()
-            print "Running network interfaces for %s" % chef_node
-
-            #Run chef client thrice
-            run1 = self.run_chef_client(chef_node)
-            run2 = self.run_chef_client(chef_node)
-            run3 = self.run_chef_client(chef_node)
-
-            if run1['success'] and run2['success'] and run3['success']:
-                print "Done running chef-client"
-            else:
-                print "Error running chef client to set network interfaces"
-                print "First run: %s" % run1
-                print "Second run: %s" % run2
-                print "Final run: %s" % run3
 
     def set_node_in_use(self, node, role):
         # Edit the controller in our chef
@@ -1108,6 +1107,7 @@ class rpcsqa_helper:
         # Setup OVS bridge on network and compute node
         print "Setting up OVS bridge and ports on Quantum / Compute Node(s)."
         to_run_list = ['ip a f eth1',
+                       'ovs-vsctl add-br br-eth1',
                        'ovs-vsctl add-port br-eth1 eth1']
 
         for command in to_run_list:
@@ -1135,19 +1135,19 @@ class rpcsqa_helper:
                 print compute_ssh_run
                 sys.exit(1)
 
-        print "Adding Quantum Network."
+        print "Adding Quantum Network to Quantum Server."
         to_run_list = ["source openrc admin; quantum net-create --provider:physical_network=ph-eth1 --provider:network_type=flat flattest",
                        "source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.129,end=10.0.0.254 flattest 10.0.0.128/25"]
 
         for command in to_run_list:
-            ssh_run = run_remote_ssh_cmd(compute_node_ip,
+            ssh_run = run_remote_ssh_cmd(controller_node_ip,
                                          'root',
-                                         compute_node_password,
+                                         controller_node_password,
                                          command)
 
             if not ssh_run['success']:
                 print "Failed to run command %s on server @ %s." % (
-                    command, compute_node_ip)
+                    command, controller_node_ip)
                 print ssh_run
                 sys.exit(1)
 
