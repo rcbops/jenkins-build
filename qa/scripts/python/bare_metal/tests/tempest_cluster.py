@@ -128,8 +128,6 @@ commands = [packages,
             "pip install -r tempest/tools/pip-requires",
             "pip install -r tempest/tools/test-requires"]
 for command in commands:
-    print "Running: %s" % command
-    print "On: %s - %s" % (controller.name, controller['ipaddress'])
     qa.run_cmd_on_node(node=controller, cmd=command)
 
 # Setup controller
@@ -142,12 +140,18 @@ qa.run_cmd_on_node(node=controller, cmd=setup_cmd)
 
 # Run tests
 print "## Running Tests ##"
+
 file = '%s-%s.xunit' % (
     time.strftime("%Y-%m-%d-%H:%M:%S",
                   time.gmtime()),
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
-exclude_flag = "-e volume"
+
+exclude_flags = ["volume", "rescue"]  # Volumes
+if results.feature_set != "glance-cf":
+    exclude_flags.append("image")
+exclude_flag = ' '.join('-e {0}'.format(x) for x in exclude_flags)
+
 command = ("export TEMPEST_CONFIG_DIR=/root; "
            "export TEMPEST_CONFIG=%s.conf; "
            "python -u `which nosetests` %s %s tempest; " % (
