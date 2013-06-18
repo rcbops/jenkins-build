@@ -1140,14 +1140,14 @@ class rpcsqa_helper:
                        "source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.129,end=10.0.0.254 flattest 10.0.0.128/25"]
 
         for command in to_run_list:
-            ssh_run = run_remote_ssh_cmd(compute_node_ip,
+            ssh_run = run_remote_ssh_cmd(controller_node_ip,
                                          'root',
-                                         compute_node_password,
+                                         controller_node_password,
                                          command)
 
             if not ssh_run['success']:
                 print "Failed to run command %s on server @ %s." % (
-                    command, compute_node_ip)
+                    command, controller_node_ip)
                 print ssh_run
                 sys.exit(1)
 
