@@ -857,6 +857,8 @@ class rpcsqa_helper:
         user = "root"
         password = self.razor_password(node)
         ip = node['ipaddress']
+        print "### Running: %s ###" % cmd
+        print "### On: %s - %s ###" % (node.name, ip)
         run_remote_ssh_cmd(ip, user, password, cmd)
 
     def run_chef_client(self, chef_node):
@@ -1106,7 +1108,6 @@ class rpcsqa_helper:
         # Setup OVS bridge on network and compute node
         print "Setting up OVS bridge and ports on Quantum / Compute Node(s)."
         to_run_list = ['ip a f eth1',
-                       'ovs-vsctl add-br br-eth1',
                        'ovs-vsctl add-port br-eth1 eth1']
 
         for command in to_run_list:
