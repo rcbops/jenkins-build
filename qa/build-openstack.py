@@ -67,7 +67,7 @@ if features == []:
     features = ['default']
 
 # Setup the helper class ( Chef / Razor )
-rpcsqa = rpcsqa_helper(args.razor_ip)
+rpcsqa = rpcsqa_helper()
 #Prepare environment
 env = rpcsqa.prepare_environment(args.name,
                                  args.os_distro,
@@ -90,6 +90,7 @@ if args.public_cloud:
     sys.exit(1)
 
 if args.baremetal:
+    rpcsqa.enable_razor(args.razor_ip)
     print "Starting baremetal...."
     print "Removing broker fails and interfacing nodes that need it....(razor api is slow)"
     rpcsqa.remove_broker_fail("qa-%s-pool" % args.os_distro)

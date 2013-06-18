@@ -1,8 +1,8 @@
 import sys
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, CalledProcessError, STDOUT
 
 
-def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
+def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, stdout=STDOUT):
     """
     @param server_ip
     @param user
@@ -11,7 +11,7 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
     @return A map based on pass / fail run info
     """
     command = ("sshpass -p %s ssh "
-               "-o UserKnownHostsFile=/dev/null "
+               "-o ConnectTimeout=3 "
                "-o UserKnownHostsFile=/dev/null "
                "-o StrictHostKeyChecking=no "
                "-o LogLevel=quiet "
@@ -20,7 +20,7 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
                                    server_ip,
                                    remote_cmd)
     try:
-        ret = check_call(command, shell=True)
+        ret = check_call(command, shell=True, stdout=stdout)
         return {'success': True, 'return': ret, 'exception': None}
     except CalledProcessError, cpe:
         return {'success': False,

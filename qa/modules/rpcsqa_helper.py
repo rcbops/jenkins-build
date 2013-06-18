@@ -11,10 +11,14 @@ import environments
 
 class rpcsqa_helper:
 
-    def __init__(self, razor_ip='198.101.133.3'):
+    def __init__(self, razor_ip=''):
         self.razor = razor_api(razor_ip)
         self.chef = autoconfigure()
         self.chef.set_default()
+
+    def enable_razor(self, razor_ip=''):
+        if razor_ip != '':
+            self.razor = razor_api(razor_ip)
 
     def __repr__(self):
         """ Print out current instance of razor_api"""
@@ -55,13 +59,16 @@ class rpcsqa_helper:
                     node.save()
             #Environment(chef_environment).delete()
 
-    def run_chef_client(self, chef_node, num_times=1):
+    def run_chef_client(self, chef_node, num_times=1, stdout=None):
         runs = []
         success = True
         for i in range(0, num_times):
             ip = chef_node['ipaddress']
             user_pass = self.razor_password(chef_node)
-            run = run_remote_ssh_cmd(ip, 'root', user_pass, 'chef-client')
+            if stdout is not None:
+                run = run_remote_ssh_cmd(ip, 'root', user_pass, 'chef-client', stdout=stdout)
+            else:
+                run = run_remote_ssh_cmd(ip, 'root', user_pass, 'chef-client')
             if run['success'] is False:
                 success = False
             runs.append(run)
@@ -77,7 +84,7 @@ class rpcsqa_helper:
                 chef_node.save()
                 print "Running network interfaces for %s" % chef_node
                 #Run chef client thrice
-                run_chef_client = self.run_chef_client(chef_node, num_times=3)
+                run_chef_client = self.run_chef_client(chef_node, num_times=3, stdout='/dev/null')
                 if run_chef_client['success']:
                     print "Done running chef-client"
                 else:
