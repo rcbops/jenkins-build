@@ -87,7 +87,7 @@ for node in nodes:
     qa.run_cmd_on_node(node, cmd)
 
     # transfer artifacts
-    run_cmd("mkdir -p %s" % log_path)
+    run_cmd("rm -rf %s; mkdir -p %s" % (log_path, log_path))
     qa.scp_from_node(node, path="%s.tar" % node_name, destination="./%s/" % log_path)
 
     # extract artifacts
