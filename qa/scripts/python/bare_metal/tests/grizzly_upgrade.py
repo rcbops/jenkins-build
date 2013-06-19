@@ -11,7 +11,7 @@ parser.add_argument('--feature_set', action="store", dest="feature_set",
                     required=False,
                     help="Name of the feature set")
 parser.add_argument('--os_distro', action="store", dest="os_distro",
-                    required=False, default='ubuntu',
+                    required=False, default='precise',
                     help="Operating System to use")
 results = parser.parse_args()
 
