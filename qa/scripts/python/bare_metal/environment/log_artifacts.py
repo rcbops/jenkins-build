@@ -38,6 +38,7 @@ nodes = qa.node_search(query)
 # Files to archive
 var_path = "var/log/"
 etc_path = "etc/"
+misc_path = "misc/"
 
 archive = ((("apache2", "apt", "cinder", "daemon.log", "dist_upgrade", "dmesg",
              "glance", "keystone", "monit.log", "mysql", "mysql.err",
@@ -51,6 +52,10 @@ archive = ((("apache2", "apt", "cinder", "daemon.log", "dist_upgrade", "dmesg",
              "sysctl.conf", "sysctl.d", "quantum", "ufw"),
             etc_path))
 
+misc = {}
+misc["networking"] = ("iptables-save", "ip a", "netstat -nt", "route",
+                      "brctl show", "ovs-vsctl show")
+
 # Run commands to acquire artifacts
 roles = {}
 log_path = "logs"
@@ -63,20 +68,23 @@ for node in nodes:
     node_name = "%s%s" % (role, roles[role])
 
     prepare_cmd = "; ".join("rm -rf {0}/{1}; mkdir -p {0}/{1}".format(node_name, path)
-                            for path in (var_path, etc_path))
+                            for path in (var_path, etc_path, misc_path))
 
     cp_format = "[ -e /{1}{0} ] && cp -r /{1}{0} %s/{1}{0}" % node_name
     archive_cmd = '; '.join(cp_format.format(f, path)
                             for x, path in archive
                             for f in x)
 
-    cmds = (prepare_cmd, archive_cmd)
+    misc_cmd = "; ".join("%s >> %s/%s%s.txt" % (c, node_name, misc_path, k)
+                         for k in misc.keys()
+                         for c in misc[k])
 
-    for cmd in cmds:
-        qa.run_cmd_on_node(node, cmd)
+    tar_cmd = "tar -czf %s.tar %s" % (node_name, node_name)
 
-    # tar artifacts
-    qa.run_cmd_on_node(node, "tar -czf %s.tar %s" % (node_name, node_name))
+    # Run all the commands at once.  SSH takes eternities
+    cmd = '; '.join((prepare_cmd, archive_cmd, misc_cmd, tar_cmd))
+
+    qa.run_cmd_on_node(node, cmd)
 
     # transfer artifacts
     run_cmd("mkdir -p %s" % log_path)
@@ -84,12 +92,4 @@ for node in nodes:
 
     # extract artifacts
     print "tar -xf {1}/{0}.tar {1}/{0}; rm {1}/{0}.tar".format(node_name, log_path)
-    # run_cmd("tar -xf {1}/{0}.tar {1}/{0}; rm {1}/{0}.tar".format(node_name, log_path))
-    run_cmd("cd {1}; tar -xf {0}.tar".format(node_name, log_path))
-
-    networking = ("iptables-save",
-                  "ip a",
-                  "netstat -nt",
-                  "routes",
-                  "brctl show",
-                  "ovs-vsctl show")
+    run_cmd("cd {1}; tar -xf {0}.tar; rm {0}.tar".format(node_name, log_path))
