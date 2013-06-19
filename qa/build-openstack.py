@@ -105,6 +105,7 @@ if args.baremetal:
 
     except Exception, e:
         print e
+        rpcsqa.cleanup_environment(env)
         sys.exit(1)
 
 
