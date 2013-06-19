@@ -151,7 +151,8 @@ class rpcsqa_helper:
         ldap_ip = [n['automatic']['ipaddress'] for n in Search('node').query(ldap_query)][0]
         chef_env.override_attributes['keystone']['ldap']['url'] = ldap_ip
         chef_env.save()
-
+        def toJSON(self):
+            return {'update_openldap_environment':''}
 
 
 

@@ -165,9 +165,9 @@ else:
         rpcsqa.delete_environment(env)
         sys.exit(1)
 
-
+    print build
     #Build out cluster
-    print "Going to build.....%s" % json.dumps(build, indent=4)
+    print "Going to build.....%s" % json.dumps(build, indent=4,  default=lambda o: o.__dict__)
     print "#" * 70
     success = True
 
