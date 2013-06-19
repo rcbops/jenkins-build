@@ -146,13 +146,11 @@ class rpcsqa_helper:
 
 
     def update_openldap_environment(env):
-        chef_env = Environment(env)
+        chef_env = Environment(env, api=self.chef)
         ldap_query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
         ldap_ip = [n['automatic']['ipaddress'] for n in Search('node').query(ldap_query)][0]
         chef_env.override_attributes['keystone']['ldap']['url'] = ldap_ip
         chef_env.save()
-        def toJSON(self):
-            return {'update_openldap_environment':''}
 
 
 
