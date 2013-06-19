@@ -151,7 +151,7 @@ class rpcsqa_helper:
         ldap_name = [n['name'] for n in Search('node', api=self.chef).query(ldap_query)]
         while num_try <= 10 and not ldap_name:
             num_try = num_try + 1
-            print "Couldn't find openldap server....waiting 5 seconds retry (%s / 10) "
+            print "Couldn't find openldap server....waiting 5 seconds retry (%s / 10) " % num_try
             time.sleep(5)
             ldap_name = [n['name'] for n in Search('node', api=self.chef).query(ldap_query)]
         if ldap_name:
