@@ -23,7 +23,7 @@ parser.add_argument('--baremetal', action="store_true", dest="baremetal",
 
 parser.add_argument('--destroy', action="store_true", dest="destroy",
                     required=False, default=False,
-                    help="Destroy openstack after install?")
+                    help="Destroy and only destroy the openstack build?")
 
 parser.add_argument('--os_distro', action="store", dest="os_distro",
                     required=False, default='precise',
@@ -68,11 +68,14 @@ if features == []:
 
 # Setup the helper class ( Chef / Razor )
 rpcsqa = rpcsqa_helper()
+
 #Prepare environment
 env = rpcsqa.prepare_environment(args.name,
                                  args.os_distro,
                                  args.branch,
                                  features)
+
+
 # Set the cluster size
 cluster_size = int(args.cluster_size)
 
@@ -129,7 +132,7 @@ else:
                           'in_use': 'directory_server',
                           'run_list': ['role[qa-openldap-%s]' % args.os_distro],
                           'post_commands': ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /etc/openldap/base.ldif',
-                                            rpcsqa.update_openldap_environment]
+                                            {'function': rpcsqa.update_openldap_environment, 'kwargs': {'env': env}}]
                           })
 
         if args.remote_chef:
@@ -191,6 +194,9 @@ else:
                 #If its a string run on remote server
                 if isinstance(command, str):
                     rpcsqa.run_command_on_node(node, command)
+                if isinstance(command, dict):
+                    func = command['function']
+                    func(**command['kwargs'])
                 #elif function run the function
                 elif hasattr(command, '__call__'):
                     command()
