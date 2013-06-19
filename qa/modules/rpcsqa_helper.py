@@ -111,8 +111,7 @@ class rpcsqa_helper:
                 if count >= cluster_size:
                     break
         if count < cluster_size:
-            print "Not enough available nodes for requested cluster size of %s, try again later..." % cluster_size
-            sys.exit(1)
+            raise Exception("Not enough available nodes for requested cluster size of %s, try again later..." % cluster_size)
         return ret_nodes
 
     def remove_broker_fail(self, policy):
@@ -137,13 +136,22 @@ class rpcsqa_helper:
         am_uuid = chef_node['razor_metadata'].to_dict()['razor_active_model_uuid']
         run = run_remote_ssh_cmd(chef_node['ipaddress'], 'root', self.razor_password(chef_node), "reboot 0")
         if not run['success']:
-            print "Error rebooting server %s@%s " % (chef_node, chef_node['ipaddress'])
+            raise Exception("Error rebooting server %s@%s " % (chef_node, chef_node['ipaddress']))
         #Knife node remove; knife client remove
         Client(str(chef_node)).delete()
         chef_node.delete()
         #Remove active model
         self.razor.remove_active_model(am_uuid)
         time.sleep(15)
+
+
+    def update_openldap_environment(env):
+        chef_env = Environment(env)
+        ldap_query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
+        ldap_ip = [n['automatic']['ipaddress'] for n in Search('node').query(ldap_query)][0]
+        chef_env.override_attributes['keystone']['ldap']['url'] = ldap_ip
+        chef_env.save()
+
 
 
 

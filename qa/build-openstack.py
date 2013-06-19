@@ -95,11 +95,17 @@ if args.baremetal:
     print "Removing broker fails and interfacing nodes that need it....(razor api is slow)"
     rpcsqa.remove_broker_fail("qa-%s-pool" % args.os_distro)
     rpcsqa.interface_physical_nodes(args.os_distro)
-    print "Cleaning up old enviroment (deleting nodes) "
-     # Clean up the current running environment (delete old servers)
-    rpcsqa.cleanup_environment(env)
-    print "Gather nodes..."
-    nodes = rpcsqa.gather_razor_nodes(args.os_distro, env, cluster_size)
+    try:
+        print "Cleaning up old enviroment (deleting nodes) "
+        # Clean up the current running environment (delete old servers)
+        rpcsqa.cleanup_environment(env)
+
+        print "Gather nodes..."
+        nodes = rpcsqa.gather_razor_nodes(args.os_distro, env, cluster_size)
+
+    except Exception, e:
+        print e
+        sys.exit(1)
 
 
 #####################
@@ -121,7 +127,8 @@ else:
             build.append({'name': nodes.pop(),
                           'in_use': 'directory_server',
                           'run_list': ['role[qa-openldap-%s]' % args.os_distro],
-                          'post_commands': ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /etc/openldap/base.ldif']
+                          'post_commands': ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /etc/openldap/base.ldif',
+                                            rpcsqa.update_openldap_environment]
                           })
 
         if args.remote_chef:
@@ -159,13 +166,11 @@ else:
         sys.exit(1)
 
 
-
-
+    #Build out cluster
     print "Going to build.....%s" % json.dumps(build, indent=4)
     print "#" * 70
     success = True
 
-    #Build out cluster
     for b in build:
         node = Node(b['name'])
         node['in_use'] = b['in_use']
@@ -182,11 +187,20 @@ else:
             print "Running post chef-client commands...."
             for command in b['post_commands']:
                 print "Running:  %s" % command
-                rpcsqa.run_command_on_node(node, command)
+                #If its a string run on remote server
+                if isinstance(command, str):
+                    rpcsqa.run_command_on_node(node, command)
+                #elif function run the function
+                elif hasattr(command, '__call__'):
+                    command()
+            print "#" * 70
 
 
 if success:
     print "Welcome to the cloud..."
+else:
+    print "Sorry....no cloud for you...."
+
 
 if args.destroy:
     print "Destroying your cloud now!!!"
