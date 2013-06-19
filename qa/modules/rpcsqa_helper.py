@@ -144,7 +144,6 @@ class rpcsqa_helper:
         self.razor.remove_active_model(am_uuid)
         time.sleep(15)
 
-
     def update_openldap_environment(self, env):
         chef_env = Environment(env, api=self.chef)
         ldap_query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
