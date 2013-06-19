@@ -92,4 +92,4 @@ for node in nodes:
 
     # extract artifacts
     print "tar -xf {1}/{0}.tar {1}/{0}; rm {1}/{0}.tar".format(node_name, log_path)
-    run_cmd("cd {1}; tar -xf {0}.tar; rm {0}.txt".format(node_name, log_path))
+    run_cmd("cd {1}; tar -xf {0}.tar; rm {0}.tar".format(node_name, log_path))
