@@ -168,7 +168,7 @@ else:
         node.save()
         chef_client = rpcsqa.run_chef_client(node, num_times=1)
         if not chef_client['success']:
-            print "chef-client run failed: %s" % json.dumps(chef_client['runs'])
+            print "chef-client run failed"
             break
 
 
