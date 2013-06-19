@@ -154,7 +154,7 @@ class rpcsqa_helper:
             chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ldap_ip
             chef_env.save()
         else:
-            print "Couldn't find ldap server: %s" % ldap_name
+            raise Exception("Couldn't find ldap server: %s" % ldap_name)
 
 
 
