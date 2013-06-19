@@ -177,9 +177,9 @@ else:
             success = False
             break
 
-        print "#" * 70
-        print "Running post chef-client commands...."
         if 'post_commands' in b:
+            print "#" * 70
+            print "Running post chef-client commands...."
             for command in b['post_commands']:
                 print "Running:  %s" % command
                 rpcsqa.run_command_on_node(node, command)
