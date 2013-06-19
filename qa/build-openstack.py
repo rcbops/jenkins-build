@@ -168,8 +168,6 @@ else:
         node.save()
         rpcsqa.run_chef_client(node, num_times=1)
 
-        sys.exit(1)
-
 
 
 print "Welcome to the cloud..."
