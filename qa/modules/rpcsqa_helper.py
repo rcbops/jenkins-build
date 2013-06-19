@@ -151,7 +151,7 @@ class rpcsqa_helper:
         ldap_name = [n['name'] for n in Search('node', api=self.chef).query(ldap_query)]
         if ldap_name:
             ldap_ip = Node(ldap_name[0], api=self.chef)['ipaddress']
-            chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ip
+            chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ldap_ip
             chef_env.save()
         else:
             print "Couldn't find ldap server: %s" % ldap_name
