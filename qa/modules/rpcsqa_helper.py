@@ -145,7 +145,7 @@ class rpcsqa_helper:
         time.sleep(15)
 
 
-    def update_openldap_environment(env):
+    def update_openldap_environment(self, env):
         chef_env = Environment(env, api=self.chef)
         ldap_query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
         ldap_ip = [n['automatic']['ipaddress'] for n in Search('node').query(ldap_query)][0]
