@@ -166,7 +166,10 @@ else:
         node['in_use'] = b['in_use']
         node.run_list = b['run_list']
         node.save()
-        rpcsqa.run_chef_client(node, num_times=1)
+        chef_client = rpcsqa.run_chef_client(node, num_times=1)
+        if not chef_client['success']:
+            print "chef-client run failed: %s" % json.dumps(chef_client['runs'])
+            break
 
 
 
