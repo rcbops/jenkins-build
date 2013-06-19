@@ -32,7 +32,7 @@ openldap = {"keystone": {
                 "user_mail_attribute": "mail",
                 "user_enabled_emulation": "True",
                 "user_tree_dn": "ou=Users,dc=rcb,dc=me",
-                "user_attribute_ignore": "tenantId,email",
+                "user_attribute_ignore": "tenantId",
                 "tenant_enabled_emulation": "True",
                 "url": "ldap://<LDAP_IP>",
                 "user": "cn=admin,dc=rcb,dc=me",
@@ -55,3 +55,4 @@ openldap = {"keystone": {
             "tenants": ["admin", "service", "demo"]
         }
     }
+    

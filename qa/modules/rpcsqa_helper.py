@@ -152,6 +152,7 @@ class rpcsqa_helper:
         if ldap_name:
             ldap_ip = Node(ldap_name[0], api=self.chef)['ipaddress']
             chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ldap_ip
+            chef_env.override_attributes['keystone']['ldap']['password'] = 'ostackdemo'
             chef_env.save()
         else:
             raise Exception("Couldn't find ldap server: %s" % ldap_name)
