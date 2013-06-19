@@ -147,10 +147,14 @@ class rpcsqa_helper:
     def update_openldap_environment(self, env):
         chef_env = Environment(env, api=self.chef)
         ldap_query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
+        print ldap_query
         ldap_name = [n['name'] for n in Search('node', api=self.chef).query(ldap_query)]
         if ldap_name:
-            chef_env.override_attributes['keystone']['ldap']['url'] = Node(ldap_name[0], api=self.chef)['ipaddress']
+            ldap_ip = Node(ldap_name[0], api=self.chef)['ipaddress']
+            chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ip
             chef_env.save()
+        else:
+            print "Couldn't find ldap server: %s" % ldap_name
 
 
 
