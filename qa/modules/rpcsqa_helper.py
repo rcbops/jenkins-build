@@ -59,17 +59,21 @@ class rpcsqa_helper:
                     node.save()
             #Environment(chef_environment).delete()
 
-    def run_chef_client(self, chef_node, num_times=1, quiet=False):
+    def run_command_on_node(self, chef_node, command='', num_times=1, quiet=False):
         runs = []
         success = True
         for i in range(0, num_times):
             ip = chef_node['ipaddress']
             user_pass = self.razor_password(chef_node)
-            run = run_remote_ssh_cmd(ip, 'root', user_pass, 'chef-client', quiet)
+            run = run_remote_ssh_cmd(ip, 'root', user_pass, command, quiet)
             if run['success'] is False:
                 success = False
             runs.append(run)
         return {'success': success, 'runs': runs}
+
+    def run_chef_client(self, chef_node, num_times=1, quiet=False):
+        return self.run_command_on_node(chef_node, 'chef-client', num_times, quiet)
+
 
     def interface_physical_nodes(self, os):
         #Make sure all network interfacing is set

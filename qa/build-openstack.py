@@ -120,7 +120,9 @@ else:
         if args.openldap:
             build.append({'name': nodes.pop(),
                           'in_use': 'directory_server',
-                          'run_list': ['role[qa-openldap-%s]' % args.os_distro]})
+                          'run_list': ['role[qa-openldap-%s]' % args.os_distro],
+                          'post_commands': ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /etc/openldap/base.ldif']
+                          })
 
         if args.remote_chef:
             build.append({'name': nodes.pop(),
@@ -156,9 +158,12 @@ else:
         rpcsqa.delete_environment(env)
         sys.exit(1)
 
+
+
+
     print "Going to build.....%s" % json.dumps(build, indent=4)
     print "#" * 70
-
+    success = True
 
     #Build out cluster
     for b in build:
@@ -169,11 +174,19 @@ else:
         chef_client = rpcsqa.run_chef_client(node, num_times=1)
         if not chef_client['success']:
             print "chef-client run failed"
+            success = False
             break
 
+        print "#" * 70
+        print "Running post chef-client commands...."
+        if 'post-commands' in b:
+            for command in b['post_commands']:
+                print "Running:  %s" % command
+                rpcsqa.run_command_on_node(node, command)
 
 
-print "Welcome to the cloud..."
+if success:
+    print "Welcome to the cloud..."
 
 if args.destroy:
     print "Destroying your cloud now!!!"
