@@ -175,32 +175,36 @@ else:
     print "#" * 70
     success = True
 
-    for b in build:
-        node = Node(b['name'])
-        node['in_use'] = b['in_use']
-        node.run_list = b['run_list']
-        node.save()
-        chef_client = rpcsqa.run_chef_client(node, num_times=1)
-        if not chef_client['success']:
-            print "chef-client run failed"
-            success = False
-            break
+    try:
+        for b in build:
+            node = Node(b['name'])
+            node['in_use'] = b['in_use']
+            node.run_list = b['run_list']
+            node.save()
+            chef_client = rpcsqa.run_chef_client(node, num_times=1)
+            if not chef_client['success']:
+                print "chef-client run failed"
+                success = False
+                break
 
-        if 'post_commands' in b:
-            print "#" * 70
-            print "Running post chef-client commands...."
-            for command in b['post_commands']:
-                print "Running:  %s" % command
-                #If its a string run on remote server
-                if isinstance(command, str):
-                    rpcsqa.run_command_on_node(node, command)
-                if isinstance(command, dict):
-                    func = command['function']
-                    func(**command['kwargs'])
-                #elif function run the function
-                elif hasattr(command, '__call__'):
-                    command()
-            print "#" * 70
+            if 'post_commands' in b:
+                print "#" * 70
+                print "Running post chef-client commands...."
+                for command in b['post_commands']:
+                    print "Running:  %s" % command
+                    #If its a string run on remote server
+                    if isinstance(command, str):
+                        rpcsqa.run_command_on_node(node, command)
+                    if isinstance(command, dict):
+                        func = command['function']
+                        func(**command['kwargs'])
+                    #elif function run the function
+                    elif hasattr(command, '__call__'):
+                        command()
+                print "#" * 70
+    except Exception, e:
+        print e
+        sys.exit(1)
 
 
 if success:
