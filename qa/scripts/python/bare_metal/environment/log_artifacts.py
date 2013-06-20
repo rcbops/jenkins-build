@@ -59,7 +59,8 @@ misc["networking"] = ("iptables-save", "ip a", "netstat -nt", "route",
 # Run commands to acquire artifacts
 roles = {}
 log_path = "logs"
-run_cmd("rm -rf %s; mkdir -p %s" % (log_path, log_path))
+# run_cmd("rm -rf %s; mkdir -p %s" % (log_path, log_path))
+run_cmd("rm *.tar")
 for node in nodes:
     role = node.attributes['in_use']
     if role in roles:
@@ -87,8 +88,10 @@ for node in nodes:
 
     qa.run_cmd_on_node(node, cmd)
 
-    # transfer artifacts
-    qa.scp_from_node(node, path="%s.tar" % node_name, destination="./%s/" % log_path)
+    qa.scp_from_node(node, path="%s.tar" % node_name, destination=".")
+
+    # # transfer artifacts
+    # qa.scp_from_node(node, path="%s.tar" % node_name, destination="./%s/" % log_path)
 
     # # extract artifacts
     # run_cmd("cd {1}; tar -xf {0}.tar; rm {0}.tar".format(node_name, log_path))
