@@ -11,7 +11,7 @@ parser.add_argument('--feature_set', action="store", dest="feature_set",
                     required=False,
                     help="Name of the feature set")
 parser.add_argument('--os_distro', action="store", dest="os_distro",
-                    required=False, default='ubuntu',
+                    required=False, default='precise',
                     help="Operating System to use")
 results = parser.parse_args()
 
@@ -45,11 +45,18 @@ pprint(vars(Environment(env.name, api=remote_chef)))
 
 if 'vips' in environment.override_attributes:
     print "HA Environment: stopping controller2 services"
-    ctrl2_command = ("for i in {monit,keystone,nova-api-ec2,"
-                     "nova-api-os-compute,nova-cert,nova-consoleauth,"
-                     "nova-novncproxy,nova-scheduler,glance-api,"
-                     "glance-registry,cinder-api,cinder-scheduler,keepalived,"
-                     "haproxy}; do service $i stop; done")
+    if results.os_distro == 'precise':
+        ctrl2_command = ("for i in {monit,keystone,nova-api-ec2,"
+                         "nova-api-os-compute,nova-cert,nova-consoleauth,"
+                         "nova-novncproxy,nova-scheduler,glance-api,"
+                         "glance-registry,cinder-api,cinder-scheduler,keepalived,"
+                         "haproxy}; do service $i stop; done")
+    if results.os_distro == 'centos':
+        ctrl2_command = ("for i in {monit,openstack-keystone,openstack-nova-api-ec2,"
+                         "openstack-nova-api-os-compute,openstack-nova-cert,openstack-nova-consoleauth,"
+                         "openstack-nova-novncproxy,openstack-nova-scheduler,openstack-glance-api,"
+                         "openstack-glance-registry,openstack-cinder-api,openstack-cinder-scheduler,keepalived,"
+                         "haproxy}; do service $i stop; done")
     query = "run_list:*ha-controller2*"
     controller2 = next(rpcsqa.node_search(query=query, api=remote_chef))
     rpcsqa.run_cmd_on_node(node=controller2, cmd=ctrl2_command)
