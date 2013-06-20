@@ -90,5 +90,5 @@ for node in nodes:
     # transfer artifacts
     qa.scp_from_node(node, path="%s.tar" % node_name, destination="./%s/" % log_path)
 
-    # extract artifacts
-    run_cmd("cd {1}; tar -xf {0}.tar; rm {0}.tar".format(node_name, log_path))
+    # # extract artifacts
+    # run_cmd("cd {1}; tar -xf {0}.tar; rm {0}.tar".format(node_name, log_path))
