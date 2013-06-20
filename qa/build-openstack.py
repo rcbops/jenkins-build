@@ -131,7 +131,7 @@ else:
             build.append({'name': nodes.pop(),
                           'in_use': 'directory_server',
                           'run_list': ['role[qa-openldap-%s]' % args.os_distro],
-                          'post_commands': ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /etc/openldap/base.ldif',
+                          'post_commands': ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
                                             {'function': rpcsqa.update_openldap_environment, 'kwargs': {'env': env}}]
                           })
 

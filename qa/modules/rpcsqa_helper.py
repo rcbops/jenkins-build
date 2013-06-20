@@ -159,6 +159,7 @@ class rpcsqa_helper:
             chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ldap_ip
             chef_env.override_attributes['keystone']['ldap']['password'] = 'ostackdemo'
             chef_env.save()
+            print "Successfully updated openldap into environment!"
         else:
             raise Exception("Couldn't find ldap server: %s" % ldap_name)
 
