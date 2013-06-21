@@ -171,7 +171,7 @@ else:
 
     print build
     #Build out cluster
-    print "Going to build.....%s" % json.dumps(build, indent=4,  default=lambda o: o.__dict__)
+    print "Going to build.....%s" % json.dumps(build, indent=4,  default=lambda o: o.__name__)
     print "#" * 70
     success = True
 
