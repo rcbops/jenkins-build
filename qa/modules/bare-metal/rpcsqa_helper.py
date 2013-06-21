@@ -575,7 +575,7 @@ class rpcsqa_helper:
 
         # Checkout the cookbook taf if it was passed
         if cookbook_tag is not None:
-                to_run_list.append('git checkout v%s' % cookbook_tag)
+                to_run_list.append('cd /opt/rcbops; git checkout v%s' % cookbook_tag)
 
         for cmd in to_run_list:
             run_cmd = run_remote_ssh_cmd(chef_server_ip,
