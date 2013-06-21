@@ -14,8 +14,8 @@ parser.add_argument('--branch', action="store", dest="branch", required=False,
                     default="folsom",
                     help="The OpenStack Distribution (i.e. folsom, grizzly")
 
-parser.add_argument('--repo_tag', action="store", dest="repo_tag", required=False,
-                    default=None,
+parser.add_argument('--repo_tag', action="store", dest="repo_tag",
+                    required=False, default=None,
                     help="The tag for the version of cookbooks (i.e. 4.0.0")
 
 parser.add_argument('--feature_set', action="store", dest="feature_set",
@@ -64,6 +64,11 @@ results = parser.parse_args()
 
 # Setup the helper class ( Chef / Razor )
 rpcsqa = rpcsqa_helper(results.razor_ip)
+
+# Have to add check for empty string due to Jenkins parameters
+if results.repo_tag is not None:
+    if results.repo_tag == "None":
+        results.repo_tag = None
 
 # Remove broker fails for qa-%os_distro-pool
 rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
