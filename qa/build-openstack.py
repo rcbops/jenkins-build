@@ -144,10 +144,10 @@ else:
         if args.ha:
             build.append({'name': nodes.pop(),
                           'in_use': 'ha_controller1',
-                          'run_list': ['role[ha_controller1]']})
+                          'run_list': ['role[ha-controller1]']})
             build.append({'name': nodes.pop(),
                           'in_use': 'ha_controller2',
-                          'run_list': ['role[ha_controller2]']})
+                          'run_list': ['role[ha-controller2]']})
         else:
             build.append({'name': nodes.pop(),
                           'in_use': 'single-controller',
