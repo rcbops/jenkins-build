@@ -564,18 +564,23 @@ class rpcsqa_helper:
         if chef_server_platform == 'ubuntu':
             to_run_list = ['apt-get install git -y',
                            'mkdir -p /opt/rcbops',
-                           'cd /opt/rcbops; git clone %s -b %s --recursive' % (rcbops_git, openstack_release)]
+                           'cd /opt/rcbops; git clone %s' % rcbops_git]
         elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
             to_run_list = ['yum install git -y',
                            'mkdir -p /opt/rcbops',
-                           'cd /opt/rcbops; git clone %s -b %s --recursive' % (rcbops_git, openstack_release)]
+                           'cd /opt/rcbops; git clone %s' % rcbops_git]
         else:
             print "Platform %s not supported" % chef_server_platform
             sys.exit(1)
 
         # Checkout the cookbook taf if it was passed
         if cookbook_tag is not None:
-                to_run_list.append('cd /opt/rcbops; git checkout v%s' % cookbook_tag)
+            to_run_list.append('cd /opt/rcbops; git checkout v%s' % cookbook_tag)
+        else:
+            to_run_list.append('cd /opt/rcbops; git checkout -b %s' % openstack_release)
+
+        # add submodule stuff to list
+        to_run_list.append('cd /opt/rcbops; git submodule init; git submodule sync; git submodule update')
 
         for cmd in to_run_list:
             run_cmd = run_remote_ssh_cmd(chef_server_ip,
