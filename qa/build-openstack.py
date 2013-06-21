@@ -123,10 +123,6 @@ else:
     build = []
     try:
 
-        if args.ha and args.openldap:
-            print "No HA and DIR Service allowed...yet"
-            rpcsqa.cleanup_environment(env)
-
         if args.openldap:
             build.append({'name': nodes.pop(),
                           'in_use': 'directory_server',
