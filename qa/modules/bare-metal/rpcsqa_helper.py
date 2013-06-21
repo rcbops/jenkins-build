@@ -366,6 +366,18 @@ class rpcsqa_helper:
             print "*****************************************************"
             sys.exit(1)
 
+    def checkout_repo_tag(self, chef_server, tag):
+        '''
+        This will checkout a repo tag on a given chef server
+        '''
+
+        chef_node = Node(chef_server, api=self.chef)
+        node_ip = chef_node['ipaddress']
+        user_pass = self.razor_password(chef_node)
+
+        # change into chef dir and checkout tag
+
+
     def cleanup_environment(self, chef_environment):
         """
         @param chef_environment
@@ -529,7 +541,7 @@ class rpcsqa_helper:
 
         return ret_nodes
 
-    def install_cookbooks(self, chef_server, openstack_release):
+    def install_cookbooks(self, chef_server, openstack_release, cookbook_tag=None):
         '''
         @summary: This will install git and then pull the proper
         cookbooks into chef.
@@ -537,6 +549,8 @@ class rpcsqa_helper:
         @type chef_server: String
         @param openstack_release: grizzly, folsom, diablo
         @type oepnstack_release: String
+        @param cookbook_tag : The tag of the cookbooks (i.e. 4.0.0)
+        @type cookbook_tag: string
         '''
 
         # Gather node info
@@ -558,6 +572,10 @@ class rpcsqa_helper:
         else:
             print "Platform %s not supported" % chef_server_platform
             sys.exit(1)
+
+        # Checkout the cookbook taf if it was passed
+        if cookbook_tag is not None:
+                to_run_list.append('git checkout v%s' % cookbook_tag)
 
         for cmd in to_run_list:
             run_cmd = run_remote_ssh_cmd(chef_server_ip,

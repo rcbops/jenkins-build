@@ -14,6 +14,10 @@ parser.add_argument('--branch', action="store", dest="branch", required=False,
                     default="folsom",
                     help="The OpenStack Distribution (i.e. folsom, grizzly")
 
+parser.add_argument('--repo_tag', action="store", dest="repo_tag", required=False,
+                    default=None,
+                    help="The tag for the version of cookbooks (i.e. 4.0.0")
+
 parser.add_argument('--feature_set', action="store", dest="feature_set",
                     required=False, default="glance-cf",
                     help="Feature_set for the Open Stack chef environment")
@@ -150,12 +154,17 @@ if results.action == "build":
             # Need to prep centos boxes
             if results.os_distro == 'centos':
                 rpcsqa.prepare_server(chef_server)
+
             # Remove Chef from chef_server Node
             rpcsqa.remove_chef(chef_server)
+
             # Build Chef Server
             rpcsqa.build_chef_server(chef_server)
+
             # Install the proper cookbooks
-            rpcsqa.install_cookbooks(chef_server, results.branch)
+            rpcsqa.install_cookbooks(chef_server,
+                                     results.branch,
+                                     results.repo_tag)
 
             #Testing keystone patch
             rpcsqa.install_cookbook(chef_server, "https://github.com/jcannava/keystone", "DE172")
@@ -238,7 +247,9 @@ if results.action == "build":
             rpcsqa.build_chef_server(chef_server)
 
             # Install the proper cookbooks
-            rpcsqa.install_cookbooks(chef_server, results.branch)
+            rpcsqa.install_cookbooks(chef_server,
+                                     results.branch,
+                                     results.repo_tag)
 
             # setup environment file to remote chef server
             rpcsqa.setup_remote_chef_environment(chef_server, env)
@@ -336,7 +347,9 @@ if results.action == "build":
             rpcsqa.build_chef_server(chef_server)
 
             # Install the proper cookbooks
-            rpcsqa.install_cookbooks(chef_server, results.branch)
+            rpcsqa.install_cookbooks(chef_server,
+                                     results.branch,
+                                     results.repo_tag)
 
             # setup environment file to remote chef server
             rpcsqa.setup_remote_chef_environment(chef_server, env)
@@ -434,7 +447,9 @@ if results.action == "build":
             rpcsqa.build_chef_server(chef_server)
 
             # Install the proper cookbooks
-            rpcsqa.install_cookbooks(chef_server, results.branch)
+            rpcsqa.install_cookbooks(chef_server,
+                                     results.branch,
+                                     results.repo_tag)
 
             # setup environment file to remote chef server
             rpcsqa.setup_remote_chef_environment(chef_server, env)
