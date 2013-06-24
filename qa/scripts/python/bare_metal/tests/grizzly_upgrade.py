@@ -33,7 +33,7 @@ search = rpcsqa.node_search(query=query)
 chef_server = next(search)
 
 upgrades = "/opt/chef-upgrades"
-cookbooks = "%s/chef-cookbooks" % directory
+cookbooks = "%s/chef-cookbooks" % upgrades
 commands = ["mkdir -p %s" % upgrades,
             "git clone https://github.com/rcbops/chef-cookbooks %s " % cookbooks,
             "cd %s; git checkout %s" % cookbooks,
