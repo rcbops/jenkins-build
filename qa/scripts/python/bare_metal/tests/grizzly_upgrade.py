@@ -13,10 +13,13 @@ parser.add_argument('--feature_set', action="store", dest="feature_set",
 parser.add_argument('--os_distro', action="store", dest="os_distro",
                     required=False, default='precise',
                     help="Operating System to use")
+parser.add_argument('--grizzly_branch', action="store",
+                    dest="grizzly_branch", required=False,
+                    default='grizzly',
+                    help="Use this to clone a specific version tag.")
 results = parser.parse_args()
 
 rpcsqa = rpcsqa_helper()
-branch = "folsom"
 
 env = rpcsqa.cluster_environment(name=results.name, os_distro=results.os_distro,
                                  branch=branch, feature_set=results.feature_set)
@@ -30,7 +33,7 @@ print "Uploading grizzly cookbooks and roles to chef server"
 query = "chef_environment:%s AND run_list:*network-interfaces*" % env.name
 search = rpcsqa.node_search(query=query)
 chef_server = next(search)
-commands = ["git clone https://github.com/rcbops/chef-cookbooks -b grizzly --recursive",
+commands = ["git clone https://github.com/rcbops/chef-cookbooks -b grizzly --recursive" % results.grizzly_branch,
             "knife cookbook upload --all -o chef-cookbooks/cookbooks; knife cookbook upload --all -o chef-cookbooks/cookbooks",
             "knife role from file chef-cookbooks/roles/*rb"]
 for command in commands:
