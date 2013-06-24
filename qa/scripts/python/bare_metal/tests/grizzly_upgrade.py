@@ -36,11 +36,11 @@ upgrades = "/opt/chef-upgrades"
 cookbooks = "%s/chef-cookbooks" % upgrades
 commands = ["mkdir -p %s" % upgrades,
             "git clone https://github.com/rcbops/chef-cookbooks %s " % cookbooks,
-            "cd %s; git checkout %s" % cookbooks,
+            "cd %s; git checkout %s" % (cookbooks, results.upgrade_branch)
             "cd %s; git submodule init" % cookbooks,
             "cd %s; git submodule sync" % cookbooks,
             "cd %s; git submodule update" % cookbooks,
-            "knife cookbook upload -a -o %s/cookbooks" % (cookbooks, results.upgrade_branch),
+            "knife cookbook upload -a -o %s/cookbooks" % cookbooks,
             # "knife cookbook upload -a -o %s/cookbooks; knife cookbook upload --a -o %s/cookbooks" % cookbooks,
             "knife role from file %s/roles/*rb" % cookbooks]
 for command in commands:
