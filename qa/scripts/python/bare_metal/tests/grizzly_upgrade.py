@@ -22,7 +22,7 @@ results = parser.parse_args()
 rpcsqa = rpcsqa_helper()
 
 env = rpcsqa.cluster_environment(name=results.name, os_distro=results.os_distro,
-                                 branch=branch, feature_set=results.feature_set)
+                                 branch="folsom", feature_set=results.feature_set)
 remote_chef = rpcsqa.remote_chef_api(env)
 pprint(vars(remote_chef))
 
