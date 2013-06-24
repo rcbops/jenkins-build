@@ -13,10 +13,10 @@ parser.add_argument('--feature_set', action="store", dest="feature_set",
 parser.add_argument('--os_distro', action="store", dest="os_distro",
                     required=False, default='precise',
                     help="Operating System to use")
-parser.add_argument('--grizzly_branch', action="store",
-                    dest="grizzly_branch", required=False,
+parser.add_argument('--upgrade_tag', action="store",
+                    dest="upgrade_tag", required=False,
                     default='grizzly',
-                    help="Use this to clone a specific version tag.")
+                    help="Use this to upgrade to a specific version tag.")
 results = parser.parse_args()
 
 rpcsqa = rpcsqa_helper()
@@ -33,7 +33,7 @@ print "Uploading grizzly cookbooks and roles to chef server"
 query = "chef_environment:%s AND run_list:*network-interfaces*" % env.name
 search = rpcsqa.node_search(query=query)
 chef_server = next(search)
-commands = ["git clone https://github.com/rcbops/chef-cookbooks -b grizzly --recursive" % results.grizzly_branch,
+commands = ["git clone https://github.com/rcbops/chef-cookbooks -b grizzly --recursive" % results.upgrade_tag,
             "knife cookbook upload --all -o chef-cookbooks/cookbooks; knife cookbook upload --all -o chef-cookbooks/cookbooks",
             "knife role from file chef-cookbooks/roles/*rb"]
 for command in commands:
@@ -67,12 +67,6 @@ if 'vips' in environment.override_attributes:
     query = "run_list:*ha-controller1*"
     controller1 = next(rpcsqa.node_search(query=query, api=remote_chef))
 
-    # print "Fix for vrrp increments"
-    # vrrp_command = ("vrrp=`vrrps=(/etc/keepalived/conf.d/vrrp*); echo ${vrrps[-1]}`; "
-    #                 "echo Before Fix:; cat $vrrp; "
-    #                 "cat $vrrp | awk '/virtual_router_id/ {$2++} {print}' > $vrrp; "
-    #                 "cat After Fix:; cat $vrrp")
-    
     print "HA Environment: Running chef client on controller1"
     rpcsqa.run_chef_client(controller1)
     print "HA Environment: Running chef client on controller2"
