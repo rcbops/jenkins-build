@@ -13,14 +13,12 @@ parser.add_argument('--feature_set', action="store", dest="feature_set",
 parser.add_argument('--os_distro', action="store", dest="os_distro",
                     required=False, default='precise',
                     help="Operating System to use")
-parser.add_argument('--upgrade_tag', action="store",
-                    dest="upgrade_tag", required=False,
-                    default='grizzly',
-                    help="Use this to upgrade to a specific version tag.")
+parser.add_argument('--upgrade_branch', action="store",
+                    dest="upgrade_branch", required=False, default="v4.0.0",
+                    help="Use this to upgrade to a specific branch.")
 results = parser.parse_args()
 
 rpcsqa = rpcsqa_helper()
-
 env = rpcsqa.cluster_environment(name=results.name, os_distro=results.os_distro,
                                  branch="folsom", feature_set=results.feature_set)
 remote_chef = rpcsqa.remote_chef_api(env)
@@ -33,9 +31,18 @@ print "Uploading grizzly cookbooks and roles to chef server"
 query = "chef_environment:%s AND run_list:*network-interfaces*" % env.name
 search = rpcsqa.node_search(query=query)
 chef_server = next(search)
-commands = ["git clone https://github.com/rcbops/chef-cookbooks -b grizzly --recursive" % results.upgrade_tag,
-            "knife cookbook upload --all -o chef-cookbooks/cookbooks; knife cookbook upload --all -o chef-cookbooks/cookbooks",
-            "knife role from file chef-cookbooks/roles/*rb"]
+
+upgrades = "/opt/chef-upgrades"
+cookbooks = "%s/chef-cookbooks" % directory
+commands = ["mkdir -p %s" % upgrades,
+            "git clone https://github.com/rcbops/chef-cookbooks %s " % cookbooks,
+            "cd %s; git checkout %s" % cookbooks,
+            "cd %s; git submodule init" % cookbooks,
+            "cd %s; git submodule sync" % cookbooks,
+            "cd %s; git submodule update" % cookbooks,
+            "knife cookbook upload -a -o %s/cookbooks" % (cookbooks, results.upgrade_branch),
+            # "knife cookbook upload -a -o %s/cookbooks; knife cookbook upload --a -o %s/cookbooks" % cookbooks,
+            "knife role from file %s/roles/*rb" % cookbooks]
 for command in commands:
     rpcsqa.run_cmd_on_node(node=chef_server, cmd=command)
 
