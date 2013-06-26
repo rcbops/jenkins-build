@@ -23,6 +23,7 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
   else
     echo "syntax check succeeded"
     RETVAL=0
+  fi
 
   curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule syntax\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
   exit ${RETVAL}
