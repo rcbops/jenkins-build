@@ -4,7 +4,7 @@ set -x
 set -e
 set -u
 
-if [[ -e chef-cookbookts.tgz ]]; then
+if [[ -e chef-cookbooks.tgz ]]; then
   tar zfxv chef-cookbooks.tgz
 else
   echo "failed to grab the chef-cookbooks tarball from the upstream job"
