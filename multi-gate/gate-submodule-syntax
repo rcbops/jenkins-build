@@ -22,7 +22,7 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
     RETVAL=0
   fi
 
-  if [[ ! -z ${GIT_COMMENT_URL} ]]; then
+  if [[ ${GIT_COMMENT_URL} != "noop" ]]; then
     curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule syntax\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
   fi
   exit ${RETVAL}
