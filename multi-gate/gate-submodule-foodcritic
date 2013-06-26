@@ -36,7 +36,7 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
   fi
 
   if [[ ${GIT_COMMENT_URL} != "noop" ]]; then
-    curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule Foodcritic\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+    curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule Foodcritic: SUCCESS\n * '${BUILD_URL}'consoleFull"}'
   fi
   exit ${RETVAL}
 else
