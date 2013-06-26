@@ -22,7 +22,9 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
     RETVAL=0
   fi
 
-  curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule syntax\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+  if [[ ! -z ${GIT_COMMENT_URL} ]]; then
+    curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule syntax\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+  fi
   exit ${RETVAL}
 else
   echo "skipping foodcritic checks as this is not a pull request"
