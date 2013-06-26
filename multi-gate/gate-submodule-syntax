@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -x
+set -e
+set -u
+
+if [[ -e chef-cookbookts.tgz ]]; then
+  tar zfxv chef-cookbooks.tgz
+else
+  echo "failed to grab the chef-cookbooks tarball from the upstream job"
+  exit 1
+fi
+
+if [[ ${GIT_REPO != "dontbuild" ]]; then
+
+  # Apply the proposed diff
+  pushd chef-cookbooks
+
+  # Run knife cookbook test against the submodule
+  if ! ( knife cookbook test -o chef-cookbooks/cookbooks/ ${GIT_REPO} ); then
+    echo "Syntax check failed"
+    exit 1
+  else
+    echo "syntax check succeeded"
+    RETVAL=0
+
+  curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule syntax\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+  exit ${RETVAL}
+else
+  echo "skipping foodcritic checks as this is not a pull request"
+  exit 0
+fi

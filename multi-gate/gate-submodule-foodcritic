@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -x
+set -e
+set -u
+
+if [[ -e chef-cookbookts.tgz ]]; then
+  tar zfxv chef-cookbooks.tgz
+else
+  echo "failed to grab the chef-cookbooks tarball from the upstream job"
+  exit 1
+fi
+
+pushd chef-cookbooks/cookbooks
+
+# RVM is throwing an unbound variable error
+set +x
+set +u
+# Tell RVM to use Ruby-1.9.3
+source /usr/local/rvm/scripts/rvm
+rvm use 1.9.3
+
+if [[ ${GIT_REPO} != "dontbuild" ]]; then
+  # Run FoodCritic validations
+  echo "Running FoodCritic against ./${GIT_REPO}"
+  # if ! ( foodcritic -f any -f ~FC005 -f ~FC014 -f ~FC015 -f ~FC020 -f ~FC023 -f ~FC024 -f ~FC033 -f ~FC034 ${GIT_REPO} ); then
+  # FC015: Consider converting definition to a LWRP (useless effort)
+  # FC023: Prefer conditional attributes ( scope issues with node attributes/resource redefs )
+  # FC034: Unused template variables (Broken in partial templates)
+  if ! ( foodcritic -f any -f ~FC015 -f ~FC023 -f ~FC034 ${GIT_REPO} ); then
+    echo "Pull request does not conform to FoodCritic"
+    exit 1
+  else
+    echo "Pull request conforms to necessary foodcritic tests"
+    RETVAL=0
+  fi
+
+  curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule Foodcritic\n * '${BUILD_URL}'consoleFull : SUCCESS"}'
+  exit ${RETVAL}
+else
+  echo "skipping foodcritic checks as this is not a pull request"
+  exit 0
+fi
