@@ -77,7 +77,7 @@ if results.repo_tag is not None:
 # Remove broker fails for qa-%os_distro-pool
 rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
 
-#Prepare environment
+# Prepare environment
 env = rpcsqa.prepare_environment(results.name,
                                  results.os_distro,
                                  results.feature_set,
@@ -182,9 +182,6 @@ if results.action == "build":
             rpcsqa.install_cookbooks(chef_server,
                                      results.branch,
                                      results.repo_tag)
-
-            #Testing keystone patch
-            rpcsqa.install_cookbook(chef_server, "https://github.com/jcannava/keystone", "DE172")
 
             # setup environment file to remote chef server
             rpcsqa.setup_remote_chef_environment(chef_server, env)
