@@ -377,7 +377,6 @@ class rpcsqa_helper:
 
         # change into chef dir and checkout tag
 
-
     def cleanup_environment(self, chef_environment):
         """
         @param chef_environment
