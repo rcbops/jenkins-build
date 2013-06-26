@@ -13,9 +13,6 @@ fi
 
 if [[ ${GIT_REPO} != "dontbuild" ]]; then
 
-  # Apply the proposed diff
-  pushd chef-cookbooks
-
   # Run knife cookbook test against the submodule
   if ! ( knife cookbook test -o chef-cookbooks/cookbooks/ ${GIT_REPO} ); then
     echo "Syntax check failed"
