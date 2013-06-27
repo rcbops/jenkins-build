@@ -1,0 +1,50 @@
+#!/bin/bash
+set -x
+set -e
+set -u
+curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Running GATE test(s): '${BUILD_URL}'console"}' || :
+
+GIT_DIFF_URL=${GIT_DIFF_URL:-noop}
+TARGET_DIR=$(echo ${GIT_MASTER_URL} | sed 's/https:\/\/github.com\///g')
+
+# cleanup the old chef-cookbooks tarball from the last run
+rm -f chef-cookbooks.tgz
+
+if [[ ! -d ${TARGET_DIR} ]]; then
+  git clone ${GIT_MASTER_URL} ${TARGET_DIR}
+fi
+
+# setup the git repo
+pushd ${TARGET_DIR}
+git checkout ${GIT_BRANCH}
+git clean -ffdx
+git pull origin ${GIT_BRANCH}
+git submodule init
+git submodule sync
+git submodule update
+popd
+
+# if we have a DIFF, apply it
+if [[ ${GIT_DIFF_URL} != "noop" ]]; then
+  pushd ${TARGET_DIR}/cookbooks/${GIT_REPO}
+  if ! ( curl -s ${GIT_DIFF_URL} | git apply ); then
+    echo "Unable to merge proposed patch: ${GIT_DIFF_URL}"
+    curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST'  -d '{"body": "Gate Failed - The patch '${GIT_DIFF_URL}' could not be applied to '${GIT_BRANCH}' of '${GIT_MASTER_URL}'."}'
+    exit 1
+  fi
+  popd
+fi
+
+# tar everything up
+pushd ${TARGET_DIR}
+tar zcf ../../chef-cookbooks.tgz -C .. --exclude=.git --exclude=.gitignore chef-cookbooks
+git clean -ffdx
+git submodule foreach "git clean -ffdx"
+popd
+
+# clean up the submodule that we applied the DIFF to
+if [[ ${GIT_DIFF_URL} != "noop" ]]; then
+  pushd ${TARGET_DIR}/cookbooks/${GIT_REPO}
+  git reset --hard HEAD
+  popd
+fi
