@@ -366,17 +366,6 @@ class rpcsqa_helper:
             print "*****************************************************"
             sys.exit(1)
 
-    def checkout_repo_tag(self, chef_server, tag):
-        '''
-        This will checkout a repo tag on a given chef server
-        '''
-
-        chef_node = Node(chef_server, api=self.chef)
-        node_ip = chef_node['ipaddress']
-        user_pass = self.razor_password(chef_node)
-
-        # change into chef dir and checkout tag
-
     def cleanup_environment(self, chef_environment):
         """
         @param chef_environment
@@ -736,7 +725,7 @@ class rpcsqa_helper:
                     'exception': cpe,
                     'command': command}
 
-    def prepare_environment(self, name, os_distro, feature_set, branch):
+    def prepare_environment(self, name, os_distro, feature_set, branch=None):
         # Gather the nodes for the requested os_distro
         nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os_distro)
 
@@ -744,6 +733,10 @@ class rpcsqa_helper:
         for node in nodes:
             chef_node = Node(node['name'], api=self.chef)
             self.set_network_interface(chef_node)
+
+        # If the branch isnt set, set it to the feature (for opencenter)
+        if branch is None:
+            branch = feature_set
 
         # If the environment doesnt exist in chef, make it.
         env = "%s-%s-%s-%s" % (name, os_distro, branch, feature_set)

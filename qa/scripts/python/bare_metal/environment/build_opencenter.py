@@ -5,7 +5,7 @@ import json
 import requests
 import argparse
 from rpcsqa_helper import *
-from chef import Search, Environment, Node
+from chef import Node
 
 """
 This script will automatically build a OpenCenter cluster
@@ -29,13 +29,17 @@ parser.add_argument('--cluster_size', action="store", dest="cluster_size",
                     required=False, default=1,
                     help="Size of the OpenCenter cluster to build")
 
+parser.add_argument('--feature_set', action="store", dest="feature_set",
+                    required=False, default='opencenter',
+                    help="Size of the OpenCenter cluster to build")
+
 parser.add_argument('--server_vms', action="store_true", dest="server_vms",
                     required=False, default=False,
                     help=("Whether or not to install opencenter server and"
                           "chef server on vms on the controller"))
 
-parser.add_argument('--os', action="store", dest="os", required=False,
-                    default='ubuntu',
+parser.add_argument('--os_distro', action="store", dest="os_distro", required=False,
+                    default='precise',
                     help="Operating System to use for opencenter")
 
 parser.add_argument('--repo_url', action="store", dest="repo", required=False,
@@ -65,12 +69,12 @@ results = parser.parse_args()
 
 if results.server_vms:
     vm_bridge = 'ocbr0'
-    if results.os == 'ubuntu':
+    if results.os_distro == 'ubuntu':
         oc_server_ip = '198.101.133.150'
         chef_server_ip = '198.101.133.151'
         vm_bridge_device = 'eth0'
     else:
-        print "%s isn't supported for vm deploy, try Ubuntu" % results.os
+        print "%s isn't supported for vm deploy, try Ubuntu" % results.os_distro
         sys.exit(1)
         # !!!When CentOS gets support, turn these on!!!
         # oc_server_ip = '198.101.133.152'
@@ -79,9 +83,9 @@ if results.server_vms:
 
 """
 Steps
-1. Make an environment for {{name}}-{{os}}-opencenter
+1. Make an environment for {{name}}-{{os_distro}}-opencenter
 2. Grab (cluster_size) amount of active models and change their env to
-   {{name}}-{{os}}
+   {{name}}-{{os_distro}}
 3. Remove chef from all boxes
 4. Pick one for server and install opencenter-server
 5. Install opencenter-agent on the rest of the boxes.
@@ -92,15 +96,16 @@ rpcsqa = rpcsqa_helper(results.razor_ip)
 # Set the cluster size
 cluster_size = int(results.cluster_size)
 
-# Remove broker fails for qa-%os-pool
-rpcsqa.remove_broker_fail("qa-%s-pool" % results.os)
+# Remove broker fails for qa-%os_distro-pool
+rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
 
 # Prepare environment
-name = '%s-opencenter' % results.name
-env = rpcsqa.prepare_environment(results.os, name)
+env = rpcsqa.prepare_environment(results.name,
+                                 results.os_distro,
+                                 results.feature_set)
 
-# Gather all the nodes for the os
-all_nodes = rpcsqa.gather_all_nodes(results.os)
+# Gather all the nodes for the os_distro
+all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 
 # Clean up the current running environment
 rpcsqa.cleanup_environment(env)
@@ -109,7 +114,7 @@ rpcsqa.cleanup_environment(env)
 if results.action == "build":
 
     count = 0
-    opencenter_list = rpcsqa.gather_size_nodes(results.os, env, cluster_size)
+    opencenter_list = rpcsqa.gather_size_nodes(results.os_distro, env, cluster_size)
     #Collect the amount of servers we need for the opencenter install
 
     if not opencenter_list:
@@ -152,7 +157,6 @@ if results.action == "build":
             # print message for debugging
             vminfo = "/var/lib/jenkins/source_files/vminfo.json"
             print "%s successfully open, read, and closed." % vminfo
-
 
         controller_ip = rpscqa.set_node_in_use(controller, "controller")
 
@@ -208,7 +212,7 @@ if results.action == "build":
         rpcsqa.install_opencenter_vm(oc_server_ip, oc_server_ip, results.repo, 'dashboard', vm_user, vm_user_pass)
 
         # Install OpenCenter Client on Chef VM
-        rpcsqa.install_opencenter_vm(chef_server_ip, oc_server_ip, results.repo, 'agent', vm_user,vm_user_pass)
+        rpcsqa.install_opencenter_vm(chef_server_ip, oc_server_ip, results.repo, 'agent', vm_user, vm_user_pass)
 
         # Install OpenCenter Client on Controller
         rpcsqa.install_opencenter(controller, results.repo, 'agent', oc_server_ip)
