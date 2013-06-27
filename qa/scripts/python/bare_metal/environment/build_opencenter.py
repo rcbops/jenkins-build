@@ -17,7 +17,7 @@ This script will automatically build a OpenCenter cluster
 @param repo_url     The URL of the OpenCenter install script
 @param action       What to do with the cluster (build, destroy)
 """
-script = ("https://raw.github.com/rcbops/opencenter-install-scripts/"
+script = ("https://github.com/rcbops/opencenter-install-scripts/blob/master/install.sh"
           "sprint/install-dev.sh")
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
@@ -173,7 +173,7 @@ if results.action == "build":
 
         # Clone Repo onto controller
         print "Cloning setup script repo onto %s" % controller
-        rpcsqa.clone_git_repo(controller, github_user, github_user_pass)
+        rpcsqa.clone_rso_git_repo(controller, github_user, github_user_pass)
 
         # install the server vms and ping check them
         print "Setting up VMs on the host server"

@@ -385,7 +385,7 @@ class rpcsqa_helper:
         else:
             print "Environment: %s has no nodes" % chef_environment
 
-    def clone_git_repo(self, server, github_user, github_pass):
+    def clone_rso_git_repo(self, server, github_user, github_pass):
         chef_node = Node(server, api=self.chef)
         node_ip = chef_node['ipaddress']
         user_pass = self.razor_password(chef_node)
@@ -393,9 +393,8 @@ class rpcsqa_helper:
         # Download vm setup script on controller node.
         print "Cloning repo with setup script..."
         rcps_dir = "/opt/rpcs"
-        repo = "https://%s:%s@github.com/rsoprivatecloud/scripts" \
-               % (github_user, github_pass)
-        command = "mkdir -p /opt/rpcs; git clone %s %s" % (repo, rcps_dir)
+        repo = "https://%s:%s@github.com/rsoprivatecloud/scripts" % (github_user, github_pass)
+        command = "mkdir -p {0}; cd {0}; git clone {1}".format(repo, rcps_dir)
         download_run = run_remote_ssh_cmd(node_ip,
                                           'root',
                                           user_pass,
@@ -798,16 +797,16 @@ class rpcsqa_helper:
             commands = [("aptitude install -y curl dsh screen vim"
                          "iptables-persistent libvirt-bin python-libvirt"
                          "qemu-kvm guestfish git"),
-                        "aptitude update -y",
-                        "update-guestfs-appliance",
-                        "ssh-keygen -f /root/.ssh/id_rsa -N \"\""]
+                         "aptitude update -y",
+                         "update-guestfs-appliance",
+                         "ssh-keygen -f /root/.ssh/id_rsa -N \"\""]
         else:
             commands = [("yum install -y curl dsh screen vim"
                          "iptables-persistent"
                          "libvirt-bin python-libvirt qemu-kvm guestfish git"),
-                        "yum update -y",
-                        "update-guestfs-appliance",
-                        "ssh-keygen -f /root/.ssh/id_rsa -N \"\""]
+                         "yum update -y",
+                         "update-guestfs-appliance",
+                         "ssh-keygen -f /root/.ssh/id_rsa -N \"\""]
 
         for command in commands:
             print "************************************"
