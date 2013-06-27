@@ -260,11 +260,6 @@ if results.action == "build":
             rpcsqa.remove_chef(agent)
             rpcsqa.install_opencenter(agent, results.repo, 'agent', server_ip)
 
-        print ""
-        print ""
-        print ""
-        print ""
-
         dashboard_url = ""
         try:
             r = requests.get("https://%s" % dashboard_ip,
@@ -280,7 +275,3 @@ if results.action == "build":
         print "Dashboard: %s - %s " % (dashboard, dashboard_url)
         rpcsqa.print_computes_info(agents)
         print "***************************************************************"
-        print ""
-        print ""
-        print ""
-        print ""
