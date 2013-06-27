@@ -34,6 +34,10 @@ parser.add_argument('--quantum', action='store_true', dest='quantum',
                     required=False, default=False,
                     help="Do you want quantum networking")
 
+parser.add_argument('--swift', action='store_true', dest='swift',
+                    required=False, default=False,
+                    help="Do you want swift?")
+
 parser.add_argument('--dir_service', action='store_true', dest='dir_service',
                     required=False, default=False,
                     help="Use a directory management?")
@@ -73,7 +77,7 @@ if results.repo_tag is not None:
 # Remove broker fails for qa-%os_distro-pool
 rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
 
-#Prepare environment
+# Prepare environment
 env = rpcsqa.prepare_environment(results.name,
                                  results.os_distro,
                                  results.feature_set,
@@ -85,6 +89,7 @@ all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 # Set the cluster size
 cluster_size = int(results.cluster_size)
 
+# Build a new cluster
 if results.action == "build":
 
     # Clean up the current running environment
@@ -95,13 +100,18 @@ if results.action == "build":
     if (results.dir_service or results.ha_enabled or results.quantum) and cluster_size < 3:
         print "Either HA / Directory Service / Quantum was requested, resizing cluster to 3."
         cluster_size = 3
-    else:
-        print "Cluster size is %i." % cluster_size
+
+    # If we are testing swift, we need 1 controller and 3 swift nodes
+    if results.swift:
+        print "Swift Selected, adding 3 nodes to the cluster"
+        cluster_size += 3
 
     # If remote_chef is enabled, add one to the cluster size
     if results.remote_chef:
         print "You wanted a remote chef server, adding 1 to cluster size"
         cluster_size += 1
+
+    print "Cluster size is %i." % cluster_size
 
     # Collect the amount of servers we need for the openstack install
     rpcsqa.check_cluster_size(all_nodes, cluster_size)
@@ -116,6 +126,7 @@ if results.action == "build":
         print "No nodes available..."
         sys.exit(1)
 
+    # If ha and dir are selected, exit (not supported)
     if results.ha_enabled and results.dir_service:
         print "No support currently enabled for ha and dir service in the same build. Sorry :("
         sys.exit(1)
@@ -123,6 +134,7 @@ if results.action == "build":
     # Remote Chef Server Builds
     if results.remote_chef:
 
+        # Build OpenStack cluster with LDAP keystone service
         if results.dir_service:
 
             # Set each servers roles
@@ -171,9 +183,6 @@ if results.action == "build":
                                      results.branch,
                                      results.repo_tag)
 
-            #Testing keystone patch
-            rpcsqa.install_cookbook(chef_server, "https://github.com/jcannava/keystone", "DE172")
-
             # setup environment file to remote chef server
             rpcsqa.setup_remote_chef_environment(chef_server, env)
             # Setup Remote Client
@@ -216,6 +225,7 @@ if results.action == "build":
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
 
+        # Build OpenStack HA cluster
         elif results.ha_enabled:
 
             # Set each servers roles
@@ -320,6 +330,7 @@ if results.action == "build":
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
 
+        # Build OpenStack cluster with quantum networking
         elif results.quantum:
             chef_server = openstack_list[0]
             controller = openstack_list[1]
@@ -420,6 +431,7 @@ if results.action == "build":
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
 
+        # Build base OpenStack cluster
         else:
 
             # Set each servers roles
@@ -615,11 +627,13 @@ elif results.action == 'add':
         print "Chef Environment %s doesnt have a controller, cant take action %s" % (env, results.action)
         sys.exit(1)
 
+# Destroy the enviornment (teardown cluster, free up nodes)
 elif results.action == 'destroy':
     print "Destroying environment: %s" % env
     rpcsqa.cleanup_environment(env)
     Environment(env, api=rpcsqa.chef).delete()
 
+# Bad action, try again
 else:
     print "Action %s is not supported..." % results.action
     sys.exit(1)
