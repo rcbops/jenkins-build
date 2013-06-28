@@ -29,7 +29,7 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
     if ! ( tailor -c test-tailor -o output.yaml ); then
       STATUS="WARNING"
       echo "Pull request does not conform to optional tailor tests"
-      cat output.yaml | ~/multi-gate/tailor-output-parser.py
+      cat output.yaml | ~/jenkins-build/multi-gate/tailor-output-parser.py
       rm -f output.yaml
       RETVAL=1
     else
