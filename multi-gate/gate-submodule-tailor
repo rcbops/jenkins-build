@@ -27,9 +27,10 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
   if [[ -f .tailor ]]; then
     sed 's/config.formatters.*\"text\"/config.formatters \"yaml\"/g' .tailor > test-tailor
     if ! ( tailor -c test-tailor -o output.yaml ); then
-      STATUS="FAILURE"
+      STATUS="WARNING"
       echo "Pull request does not conform to optional tailor tests"
       cat output.yaml | ~/multi-gate/tailor-output-parser.py
+      rm -f output.yaml
       RETVAL=1
     else
       STATUS="SUCCESS"
