@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -x
+set -e
+set -u
+
+if [[ -e chef-cookbooks.tgz ]]; then
+  tar zfx chef-cookbooks.tgz
+else
+  echo "failed to grab the chef-cookbooks tarball from the upstream job"
+  exit 1
+fi
+
+pushd chef-cookbooks/cookbooks
+
+# RVM is throwing an unbound variable error
+set +x
+set +u
+# Tell RVM to use Ruby-1.9.3
+source /usr/local/rvm/scripts/rvm
+rvm use 1.9.3
+
+STATUS="SUCCESS"
+if [[ ${GIT_REPO} != "dontbuild" ]]; then
+  echo "Running Tailor against ./${GIT_REPO}"
+  pushd ${GIT_REPO}
+  if [[ -f .tailor ]]; then
+    if ! ( tailor ); then
+      STATUS="FAILURE"
+      echo "Pull request does not conform to optional tailor tests"
+      RETVAL=1
+    else
+      STATUS="SUCCESS"
+      echo "Pull request conforms to optional tailor tests"
+      RETVAL=0
+    fi
+  else
+    echo "Skipping tailor tests.  No tailor config file found."
+    STATUS="SKIPPED - no tests file found"
+  fi
+
+  if [[ ${GIT_COMMENT_URL} != "noop" ]]; then
+    curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule Tailor (non-voting): '${STATUS}'\n * '${BUILD_URL}'consoleFull"}'
+  fi
+
+  # since this is non-voting, we always need to exit 0
+  RETVAL=0
+
+  exit ${RETVAL}
+else
+  echo "skipping tailor checks as this is not a pull request"
+  exit 0
+fi
