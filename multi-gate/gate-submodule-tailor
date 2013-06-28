@@ -25,9 +25,10 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
   echo "Running Tailor against ./${GIT_REPO}"
   pushd ${GIT_REPO}
   if [[ -f .tailor ]]; then
-    if ! ( tailor ); then
+    if ! ( tailor -o output.yaml ); then
       STATUS="FAILURE"
       echo "Pull request does not conform to optional tailor tests"
+      cat output.yaml ~/multi-gate/tailor-output-parser.py
       RETVAL=1
     else
       STATUS="SUCCESS"
