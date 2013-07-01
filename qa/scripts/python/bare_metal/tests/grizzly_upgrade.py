@@ -41,6 +41,7 @@ commands = ["mkdir -p %s" % upgrades,
             "cd %s; git submodule sync" % cookbooks,
             "cd %s; git submodule update" % cookbooks,
             "knife cookbook upload -a -o %s/cookbooks" % cookbooks,
+            "knife cookbook upload -a -o %s/cookbooks" % cookbooks,
             # "knife cookbook upload -a -o %s/cookbooks; knife cookbook upload --a -o %s/cookbooks" % cookbooks,
             "knife role from file %s/roles/*rb" % cookbooks]
 for command in commands:
