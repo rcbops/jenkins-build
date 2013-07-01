@@ -20,14 +20,14 @@ set +u
 source /usr/local/rvm/scripts/rvm
 rvm use 1.9.3
 
-set -x
-
 STATUS="SUCCESS"
 if [[ ${GIT_REPO} != "dontbuild" ]]; then
   echo "Running Tailor against ./${GIT_REPO}"
   pushd ${GIT_REPO}
   if [[ -f .tailor ]]; then
+    echo "changing the output formatter to yaml"
     sed 's/config.formatters.*\"text\"/config.formatters \"yaml\"/g' .tailor > test-tailor
+    echo "running tailor"
     if ! ( tailor -c test-tailor -o output.yaml ); then
       STATUS="WARNING"
       echo "Pull request does not conform to optional tailor tests"
@@ -39,12 +39,14 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
       echo "Pull request conforms to optional tailor tests"
       RETVAL=0
     fi
+    echo "Tailor test finished"
     rm -f test-tailor
   else
     echo "Skipping tailor tests.  No tailor config file found."
     STATUS="SKIPPED"
   fi
 
+  echo "sending comment to github"
   if [[ ${GIT_COMMENT_URL} != "noop" ]]; then
     curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule Tailor (non-voting): '${STATUS}'\n * '${BUILD_URL}'consoleFull"}'
   fi
