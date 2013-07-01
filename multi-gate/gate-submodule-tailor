@@ -40,7 +40,7 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
     rm -f test-tailor
   else
     echo "Skipping tailor tests.  No tailor config file found."
-    STATUS="SKIPPED - no tests file found"
+    STATUS="SKIPPED"
   fi
 
   if [[ ${GIT_COMMENT_URL} != "noop" ]]; then
