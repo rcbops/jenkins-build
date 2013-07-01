@@ -43,10 +43,9 @@ if [[ ${GIT_REPO} != "dontbuild" ]]; then
     STATUS="SKIPPED - no tests file found"
   fi
 
-  # for now, no notifications
-  #if [[ ${GIT_COMMENT_URL} != "noop" ]]; then
-  #  curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule Tailor (non-voting): '${STATUS}'\n * '${BUILD_URL}'consoleFull"}'
-  #fi
+  if [[ ${GIT_COMMENT_URL} != "noop" ]]; then
+    curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gate: Submodule Tailor (non-voting): '${STATUS}'\n * '${BUILD_URL}'consoleFull"}'
+  fi
 
   # since this is non-voting, we always need to exit 0
   RETVAL=0
