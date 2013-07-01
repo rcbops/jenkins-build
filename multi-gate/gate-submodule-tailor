@@ -20,6 +20,8 @@ set +u
 source /usr/local/rvm/scripts/rvm
 rvm use 1.9.3
 
+set -x
+
 STATUS="SUCCESS"
 if [[ ${GIT_REPO} != "dontbuild" ]]; then
   echo "Running Tailor against ./${GIT_REPO}"
