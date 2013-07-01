@@ -16,6 +16,7 @@ pushd chef-cookbooks/cookbooks
 # RVM is throwing an unbound variable error
 set +x
 set +u
+set +e
 # Tell RVM to use Ruby-1.9.3
 source /usr/local/rvm/scripts/rvm
 rvm use 1.9.3
