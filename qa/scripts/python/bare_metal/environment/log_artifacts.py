@@ -81,10 +81,16 @@ for node in nodes:
                          for k in misc.keys()
                          for c in misc[k])
 
+    chef_cmd = ''
+    if 'chef' in role:
+        chef_cmd = ('for i in `knife node list`;'
+                    'do knife node show $i -l >> {0}/$i.knife;'
+                    'done'.format(misc_path))
+
     tar_cmd = "tar -czf %s.tar %s" % (node_name, node_name)
 
     # Run all the commands at once.  SSH takes eternities
-    cmd = '; '.join((prepare_cmd, archive_cmd, misc_cmd, tar_cmd))
+    cmd = '; '.join((prepare_cmd, archive_cmd, misc_cmd, chef_cmd, tar_cmd))
 
     qa.run_cmd_on_node(node, cmd)
 
