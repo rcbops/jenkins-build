@@ -567,7 +567,11 @@ class rpcsqa_helper:
             to_run_list.append('cd /opt/rcbops/chef-cookbooks; git checkout -b %s' % openstack_release)
 
         # add submodule stuff to list
-        to_run_list.append('cd /opt/rcbops/chef-cookbooks; git pull; git submodule init; git submodule sync; git submodule update')
+        to_run_list.append('cd /opt/rcbops/chef-cookbooks;'
+                           'git pull origin {0};'
+                           'git submodule init;'
+                           'git submodule sync;'
+                           'git submodule update'.format(openstack_release))
 
         for cmd in to_run_list:
             run_cmd = run_remote_ssh_cmd(chef_server_ip,
