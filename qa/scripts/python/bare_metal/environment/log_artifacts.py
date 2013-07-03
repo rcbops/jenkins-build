@@ -81,7 +81,7 @@ for node in nodes:
                          for k in misc.keys()
                          for c in misc[k])
 
-    chef_cmd = "echo 'Not a Chef Server';"
+    chef_cmd = "echo 'Not a Chef Server'"
     if 'chef' in role:
         chef_cmd = ('for i in `knife node list`;'
                     'do knife node show $i -l >> {0}/{1}/$i.knife;'
