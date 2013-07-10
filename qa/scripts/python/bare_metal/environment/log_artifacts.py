@@ -56,7 +56,7 @@ archive = ((("apache2", "apt", "cinder", "daemon.log", "dist_upgrade", "dmesg",
 misc = {}
 misc["networking"] = ("iptables-save", "ip a", "netstat -nt", "route",
                       "brctl show", "ovs-vsctl show")
-misc["processes"] = ("ps aux")
+misc["processes"] = ("ps auxwww")
 
 if results.os_distro == 'precise':
     misc["packages"] = ("dpkg -l")
