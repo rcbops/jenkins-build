@@ -60,10 +60,8 @@ misc["processes"] = ("ps aux")
 
 if results.os_distro == 'precise':
     misc["packages"] = ("dpkg -l")
-elif results.os_distro == 'centos':
-    misc["packages"] = ("rpm -qa")
 else:
-    misc["packages"] = None
+    misc["packages"] = ("rpm -qa")
 
 # Run commands to acquire artifacts
 roles = {}
