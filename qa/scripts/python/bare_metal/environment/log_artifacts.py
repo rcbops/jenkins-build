@@ -53,15 +53,15 @@ archive = ((("apache2", "apt", "cinder", "daemon.log", "dist_upgrade", "dmesg",
             etc_path))
 
 # Create misc folder and save platform stuff
-misc = {}
-misc["networking"] = ("iptables-save", "ip a", "netstat -nt", "route",
-                      "brctl show", "ovs-vsctl show")
-misc["processes"] = ("ps auxwww")
+
+networking = ["iptables-save", "ip a", "netstat -nt", "route",
+              "brctl show", "ovs-vsctl show"]
+processes = ["ps auxwww"]
 
 if results.os_distro == 'precise':
-    misc["packages"] = ("dpkg -l")
+    packages = ["dpkg -l"]
 else:
-    misc["packages"] = ("rpm -qa")
+    packages = ["rpm -qa"]
 
 # Run commands to acquire artifacts
 roles = {}
@@ -84,9 +84,17 @@ for node in nodes:
                             for x, path in archive
                             for f in x)
 
-    misc_cmd = "; ".join("%s >> %s/%s%s.txt" % (c, node_name, misc_path, k)
-                         for k in misc.keys()
-                         for c in misc[k])
+    network_cmd = "; ".join("%s >> %s/%s%s.txt" % (
+        command, node_name, misc_path, 'networking')
+        for command in networking)
+
+    processes_cmd = "; ".join("%s >> %s/%s%s.txt" % (
+        command, node_name, misc_path, 'processes')
+        for command in processes)
+
+    packages_cmd = "; ".join("%s >> %s/%s%s.txt" % (
+        command, node_name, misc_path, 'packages')
+        for command in packages)
 
     chef_cmd = "echo 'Not a Chef Server'"
     if 'chef' in role:
@@ -97,7 +105,9 @@ for node in nodes:
     tar_cmd = "tar -czf %s.tar %s" % (node_name, node_name)
 
     # Run all the commands at once.  SSH takes eternities
-    cmd = '; '.join((prepare_cmd, archive_cmd, misc_cmd, chef_cmd, tar_cmd))
+    cmd = '; '.join((prepare_cmd, archive_cmd, network_cmd,
+                     processes_cmd, packages_cmd, chef_cmd,
+                     tar_cmd))
 
     qa.run_cmd_on_node(node, cmd)
 
