@@ -52,9 +52,18 @@ archive = ((("apache2", "apt", "cinder", "daemon.log", "dist_upgrade", "dmesg",
              "sysctl.conf", "sysctl.d", "quantum", "ufw"),
             etc_path))
 
+# Create misc folder and save platform stuff
 misc = {}
 misc["networking"] = ("iptables-save", "ip a", "netstat -nt", "route",
                       "brctl show", "ovs-vsctl show")
+misc["processes"] = ("ps aux")
+
+if results.os_distro == 'precise':
+    misc["packages"] = ("dpkg -l")
+elif results.os_distro == 'centos':
+    misc["packages"] = ("rpm -qa")
+else:
+    misc["packages"] = None
 
 # Run commands to acquire artifacts
 roles = {}
