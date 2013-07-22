@@ -322,6 +322,8 @@ class Monitoring(object):
         self.metric_provider=metric_provider
         self.procmon_provider=procmon_provider
 
+
+class 
 base_env = {
     "name": "<NAME>", "description": "",
     "cookbook_versions": {}, "json_class": "Chef::Environment",
