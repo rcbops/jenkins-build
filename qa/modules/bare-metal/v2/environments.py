@@ -2,7 +2,18 @@
 This class will build a environment based of of features that are enabled
 """
 
+
 class Environment(object):
+    """
+    Represents a RCBOPS Chef Environment
+    @param name The name of the chef environment
+    @type name String
+    @param description A description of what the environment is (LDAP, HA, etc.)
+    @type description String
+    @param cookbook_versions The version of cookbooks that are being used
+    @type cookbook_versions dict
+    @type json_class
+    """
     def __init__(self, name=None, description=None, cookbook_versions=None,
                  json_class="Chef::Environment", chef_type="environment",
                  default_attributes=None, override_attributes=None):
@@ -22,28 +33,8 @@ class DefaultAttributes(object):
 
 class OverrideAttributes(object):
     """
-    "override_attributes": {
-        "package_component": "<PACKAGE_COMPONENT>",
-        "keystone": {
-            "admin_user": "admin",
-            "users": {"demo": {"roles": {"Member": ["demo"]}, "default_tenant": "demo", "password": "ostackdemo"},
-                      "admin": {"roles": {"admin": ["admin", "demo"]}, "password": "ostackdemo"}},
-            "tenants": ["admin", "service", "demo"]
-        },
-        "monitoring": {"metric_provider": "collectd", "procmon_provider": "monit"},
-        "mysql": {"root_network_acl": "%", "allow_remote_root": True},
-        "nova": {
-            "apply_patches": True,
-            "networks": [{"num_networks": "1", "bridge": "br0", "label": "public", "dns1": "8.8.8.8",
-                          "dns2": "8.8.4.4", "bridge_dev": "eth1", "network_size": "254", "ipv4_cidr": "172.31.0.0/24"}]
-        },
-        "osops": {"apply_patches": True},
-        "horizon": {"theme": "Rackspace"},
-        "developer_mode": False,
-        "osops_networks": {"management": "198.101.133.0/24", "nova": "198.101.133.0/24", "public": "198.101.133.0/24"},
-        "glance": {"image_upload": True, "images": ["cirros", "precise"]}
-    }
     """
+
     def __init__(self, package_component=None, keystone=None, monitoring=None,
                  mysql=None, nova=None, osops=None, horizon=None,
                  developer_mode=False, osops_networks=None, glance=None):
@@ -61,26 +52,8 @@ class OverrideAttributes(object):
 
 class NovaAttributes(object):
     """
-    "nova": {
-      "apply_patches": true,
-      "network": {
-        "dmz_cidr": "10.128.0.0/24",
-        "fixed_range": "172.31.0.0/24"
-      },
-      "networks": [
-        {
-          "num_networks": "1",
-          "bridge": "br0",
-          "label": "public",
-          "dns1": "8.8.8.8",
-          "dns2": "8.8.4.4",
-          "bridge_dev": "em1",
-          "network_size": "254",
-          "ipv4_cidr": "172.31.0.0/24"
-        }
-      ]
-    }
     """
+
     def __init__(self, apply_patches=False, network=None, networks=None):
         self.apply_patches = apply_patches
         self.network = network
@@ -89,11 +62,8 @@ class NovaAttributes(object):
 
 class NovaNetworkAttributes(object):
     """
-    "network": {
-        "dmz_cidr": "10.128.0.0/24",
-        "fixed_range": "172.31.0.0/24"
-      }
     """
+
     def __init__(self, dmz_cidr=None, fixed_range=None):
         self.dmz_cidr = dmz_cidr
         self.fixed_range = fixed_range
@@ -101,19 +71,8 @@ class NovaNetworkAttributes(object):
 
 class NovaNetworksAttributes(list):
     """
-    "networks": [
-        {
-          "num_networks": "1",
-          "bridge": "br0",
-          "label": "public",
-          "dns1": "8.8.8.8",
-          "dns2": "8.8.4.4",
-          "bridge_dev": "em1",
-          "network_size": "254",
-          "ipv4_cidr": "172.31.0.0/24"
-        }
-      ]
-      """
+    """
+
     def __init__(self, networks=None):
         super(NovaNetworksAttributes, self).__init__()
         self.extend(networks)
@@ -237,14 +196,14 @@ class Roles(object):
         self.extend(roles)
 
 
-class Role(list):
+class Role(object):
     """
      "admin": ["admin", "demo"]
     """
 
-    def __init__(self, name=None, roles=None):
-        self.name = name
-        self.roles = roles
+    def __init__(self, role=None):
+        super(Role, self).__init__()
+        self.extend(role)
 
 
 class Ldap(object):
@@ -313,6 +272,7 @@ class Ldap(object):
         self.use_dumb_member = use_dumb_member
         self.role_tree_dn = role_tree_dn
 
+
 class Monitoring(object):
     """
     "monitoring": {"metric_provider": "collectd", "procmon_provider": "monit"}
@@ -323,7 +283,89 @@ class Monitoring(object):
         self.procmon_provider=procmon_provider
 
 
-class 
+class Mysql(object):
+    """
+    "mysql": {"root_network_acl": "%", "allow_remote_root": True}
+    """
+
+    def __init__(self, root_network_acl=None, allow_remote_root=None):
+        self.root_network_acl = root_network_acl
+        self.allow_remote_root = allow_remote_root
+
+
+class Osops(object):
+    """
+    "osops": {"apply_patches": True}
+    """
+
+    def __init__(self, apply_patches=None):
+        self.apply_patches = apply_patches
+
+
+class Horizon(object):
+    """
+    "horizon": {"theme": "Rackspace"}
+    """
+
+    def __init__(self, theme=None):
+        self.theme = theme
+
+
+class Glance(object):
+    """
+    "glance": {
+      "api": {
+            "default_store": "swift",
+            "swift_store_user": "<TENANT_ID>:<TENANT_NAME>",
+            "swift_store_key": "<TENANT_PASSWORD>",
+            "swift_store_auth_version": "2",
+              "swift_store_auth_address": "https://identity.api.rackspacecloud.com/v2.0"
+        },
+      "image_upload": true,
+      "images": [
+        "cirros",
+        "precise"
+      ]
+    }
+    """
+
+    def __init__(self, api=None, image_upload=None, images=None):
+        self.api = api
+        self.image_upload = image_upload
+        self.images = images
+
+
+class GlanceApi(object):
+    """
+    "api": {
+            "default_store": "swift",
+            "swift_store_user": "<TENANT_ID>:<TENANT_NAME>",
+            "swift_store_key": "<TENANT_PASSWORD>",
+            "swift_store_auth_version": "2",
+              "swift_store_auth_address": "https://identity.api.rackspacecloud.com/v2.0"
+        }
+    """
+
+    def __init__(self, default_store=None, swift_store_user=None,
+                 swift_store_key=None, swift_store_auth_version=None,
+                 swift_store_auth_address=None):
+        self.default_store = default_store
+        self.swift_store_user = swift_store_user
+        self.swift_store_key = swift_store_key
+        self.swift_store_auth_version = swift_store_auth_version
+        self.swift_store_auth_address = swift_store_auth_address
+
+
+class Images(list):
+    """
+    "images": ["cirros","precise"]
+    """
+
+    def __init__(self, image=None):
+        super(Images, self).__init__()
+        self.extend(image)
+
+"""
 base_env = {
     "name": "<NAME>", "description": "",
     "cookbook_versions": {}, "json_class": "Chef::Environment",
@@ -382,3 +424,4 @@ openldap = {
         "tenants": ["admin", "service", "demo"]
     }
 }
+"""
