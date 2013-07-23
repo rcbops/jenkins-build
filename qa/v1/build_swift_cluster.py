@@ -100,11 +100,13 @@ cookbooks = [
     },
     {
         "url": "https://github.com/rcbops-cookbooks/swift-lite.git",
-        "branch": "master"
+        "branch": "master",
+        "tag": None
     },
     {
         "url": "https://github.com/rcbops-cookbooks/swift-private-cloud.git",
-        "branch": "master"
+        "branch": "master",
+        "tag": None
     }
 ]
 

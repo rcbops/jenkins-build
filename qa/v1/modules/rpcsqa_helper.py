@@ -280,7 +280,7 @@ class rpcsqa_helper:
 
         # Load controller node
         chef_node = Node(chef_server_node, api=self.chef)
-        install_script = '/var/lib/jenkins/jenkins-build/qa/scripts/bash/jenkins/install-chef-server.sh'
+        install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
         chef_server_ip = chef_node['ipaddress']
         chef_server_pass = self.razor_password(chef_node)
 
