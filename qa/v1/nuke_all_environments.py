@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import argparse
-from rpcsqa_helper import *
+from modules.rpcsqa_helper import *
 
 parser = argparse.ArgumentParser()
 
