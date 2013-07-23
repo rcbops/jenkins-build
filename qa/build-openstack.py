@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import argparse
-from modules.baremetal.v2.rpcsqa_helper import *
+from modules.rpcsqa_helper import *
 
 print "Starting up..."
 # Parse arguments from the cmd line
