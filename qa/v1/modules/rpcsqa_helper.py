@@ -578,7 +578,7 @@ class rpcsqa_helper:
         to_run_list = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], cookbook['branch'])]
 
         # if a tag was sent in, use the tagged cookbooks
-        if cookbook_tag is not None:
+        if cookbook['tag'] is not None:
             to_run_list.append('cd /opt/rcbops/chef-cookbooks; git checkout v%s' % cookbook['tag'])
         else:
             to_run_list.append('cd /opt/rcbops/chef-cookbooks; git checkout %s' % cookbook['branch'])
