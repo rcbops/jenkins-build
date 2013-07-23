@@ -7,11 +7,11 @@ from chef_helper import *
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', action="store", dest="name", required=False,
-                    default="test",
+                    default="autotest",
                     help="Name for the Open Stack chef environment")
 
 parser.add_argument('--branch', action="store", dest="branch", required=False,
-                    default="folsom",
+                    default="grizzly",
                     help="The OpenStack Distribution (i.e. folsom, grizzly")
 
 parser.add_argument('--repo_tag', action="store", dest="repo_tag",
@@ -33,10 +33,6 @@ parser.add_argument('--ha_enabled', action='store_true', dest='ha_enabled',
 parser.add_argument('--quantum', action='store_true', dest='quantum',
                     required=False, default=False,
                     help="Do you want quantum networking")
-
-parser.add_argument('--swift', action='store_true', dest='swift',
-                    required=False, default=False,
-                    help="Do you want swift?")
 
 parser.add_argument('--dir_service', action='store_true', dest='dir_service',
                     required=False, default=False,
@@ -62,6 +58,10 @@ parser.add_argument('--remote_chef', action="store_true", dest="remote_chef",
 parser.add_argument('--razor_ip', action="store", dest="razor_ip",
                     default="198.101.133.3",
                     help="IP for the Razor server")
+
+parser.add_argument('--cookbook_url', action="store", dest="cookbook_url",
+                    default='https://github.com/rcbops/chef-cookbooks.git',
+                    help="The URL of the cookbooks to clone")
 
 # Save the parsed arguments
 results = parser.parse_args()
@@ -89,6 +89,15 @@ all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 # Set the cluster size
 cluster_size = int(results.cluster_size)
 
+cookbooks = {
+    rcbops_cookbooks:
+    {
+        url: 'https://github.com/rcbops/chef-cookbooks.git',
+        branch: '{0}'.format(results.branch),
+        tag: "{0}".format(results.repo_tag)
+    }
+}
+
 # Build a new cluster
 if results.action == "build":
 
@@ -100,11 +109,6 @@ if results.action == "build":
     if (results.dir_service or results.ha_enabled or results.quantum) and cluster_size < 3:
         print "Either HA / Directory Service / Quantum was requested, resizing cluster to 3."
         cluster_size = 3
-
-    # If we are testing swift, we need 1 controller and 3 swift nodes
-    if results.swift:
-        print "Swift Selected, adding 3 nodes to the cluster"
-        cluster_size += 3
 
     # If remote_chef is enabled, add one to the cluster size
     if results.remote_chef:

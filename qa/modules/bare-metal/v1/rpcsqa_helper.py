@@ -273,31 +273,29 @@ class rpcsqa_helper:
                 print run1
                 sys.exit(1)
 
-    def build_chef_server(self, controller_node):
+    def build_chef_server(self, chef_server_node):
         '''
-        @summary: This method will build a chef server VM on the controller_node with IP chef_server_ip.
-        @param controller_node: Chef node name that will be the controller_node
-        @type controller_node: String
+        This will build a chef server using the rcbops script and install git
         '''
 
         # Load controller node
-        chef_node = Node(controller_node, api=self.chef)
+        chef_node = Node(chef_server_node, api=self.chef)
         install_script = '/var/lib/jenkins/jenkins-build/qa/scripts/bash/jenkins/install-chef-server.sh'
-        controller_ip = chef_node['ipaddress']
-        controller_pass = self.razor_password(chef_node)
+        chef_server_ip = chef_node['ipaddress']
+        chef_server_pass = self.razor_password(chef_node)
 
         #update node
         self.update_node(chef_node)
 
-        # SCP install script to controller node
-        scp_run = run_remote_scp_cmd(controller_ip,
+        # SCP install script to chef_server node
+        scp_run = run_remote_scp_cmd(chef_server_ip,
                                      'root',
-                                     controller_pass,
+                                     chef_server_pass,
                                      install_script)
         if scp_run['success']:
-            print "Successfully copied chef server install script to controller node %s" % controller_node
+            print "Successfully copied chef server install script to chef_server node %s" % chef_server_node
         else:
-            print "Failed to copy chef server install script to controller node %s" % controller_node
+            print "Failed to copy chef server install script to chef_server node %s" % chef_server_node
             print scp_run
             sys.exit(1)
 
@@ -305,13 +303,15 @@ class rpcsqa_helper:
         to_run_list = ['chmod u+x ~/install-chef-server.sh',
                        './install-chef-server.sh']
         for cmd in to_run_list:
-            ssh_run = run_remote_ssh_cmd(controller_ip,
+            ssh_run = run_remote_ssh_cmd(chef_server_ip,
                                          'root',
-                                         controller_pass,
+                                         chef_server_pass,
                                          cmd)
             if ssh_run['success']:
                 print "command: %s ran successfully on %s" % (cmd,
-                                                              controller_node)
+                                                              chef_server_node)
+
+        self.install_git(chef_server_node)
 
     def build_quantum_network_node(self, quantum_node, environment=None, remote=False, chef_config_file=None):
         """
@@ -357,6 +357,15 @@ class rpcsqa_helper:
                 print "Error running chef-client for controller %s" % controller_node
                 print run1
                 sys.exit(1)
+
+    def build_swift_node(self, swift_node, swift_role, environment=None, remote=False, chef_config_file=None):
+        """
+        @summary: This will build one of 3 swift nodes (keystone, proxy, storage).
+        """
+        # Set the node in use on Razor/Chef server
+        chef_node = Node(swift_node, api=self.chef)
+        chef_node['in_use'] = 'swift-{0}'.format(swift_role)
+        chef_node.run_list = ['role[swift-{0}'.format(swift_role)]
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:
@@ -528,49 +537,71 @@ class rpcsqa_helper:
 
         return ret_nodes
 
-    def install_cookbooks(self, chef_server, openstack_release, cookbook_tag=None):
+    def install_cookbooks(self, chef_server, cookbooks, local_repo='/opt/rcbops'):
         '''
-        @summary: This will install git and then pull the proper
-        cookbooks into chef.
+        @summary: This will pull the cookbooks down for git that you pass in cookbooks
         @param chef_server: The node that the chef server is installed on
         @type chef_server: String
-        @param openstack_release: grizzly, folsom, diablo
-        @type oepnstack_release: String
-        @param cookbook_tag : The tag of the cookbooks (i.e. 4.0.0)
-        @type cookbook_tag: string
+        @param cookbooks A List of cookbook repos in dict form {url: 'asdf', branch: 'asdf'}
+        @type cookbooks dict
+        @param local_repo The location to place the cookbooks i.e. '/opt/rcbops'
+        @type String
         '''
 
         # Gather node info
         chef_server_node = Node(chef_server, api=self.chef)
         chef_server_ip = chef_server_node['ipaddress']
         chef_server_password = self.razor_password(chef_server_node)
-        chef_server_platform = chef_server_node['platform']
 
-        # Install git and clone rcbops repo
-        rcbops_git = 'https://github.com/rcbops/chef-cookbooks.git'
-        if chef_server_platform == 'ubuntu':
-            to_run_list = ['apt-get install git -y',
-                           'mkdir -p /opt/rcbops',
-                           'cd /opt/rcbops; git clone %s' % rcbops_git]
-        elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
-            to_run_list = ['yum install git -y',
-                           'mkdir -p /opt/rcbops',
-                           'cd /opt/rcbops; git clone %s' % rcbops_git]
-        else:
-            print "Platform %s not supported" % chef_server_platform
+        # Make directory that the cookbooks will live in
+        command = 'mkdir -p {0}'.format(local_repo)
+        run_cmd = run_remote_ssh_cmd(chef_server_ip,
+                                     'root',
+                                     chef_server_password,
+                                     command)
+        if not run_cmd['success']:
+            print "Command: %s failed to run on %s" % (cmd, chef_server)
+            print run_cmd
             sys.exit(1)
 
-        # Checkout the cookbook taf if it was passed
+        for cookbook in cookbooks:
+            self.install_cookbook(chef_server, cookbook, local_repo)
+
+    def install_cookbook(self, chef_server, cookbook, local_repo):
+
+        # Gather node info
+        chef_server_node = Node(chef_server, api=self.chef)
+        chef_server_ip = chef_server_node['ipaddress']
+        chef_server_password = self.razor_password(chef_server_node)
+
+        # clone to cookbook
+        to_run_list = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], cookbook['branch'])]
+
+        # if a tag was sent in, use the tagged cookbooks
         if cookbook_tag is not None:
-            to_run_list.append('cd /opt/rcbops/chef-cookbooks; git checkout v%s' % cookbook_tag)
+            to_run_list.append('cd /opt/rcbops/chef-cookbooks; git checkout v%s' % cookbook['tag'])
         else:
-            to_run_list.append('cd /opt/rcbops/chef-cookbooks; git checkout %s' % openstack_release)
+            to_run_list.append('cd /opt/rcbops/chef-cookbooks; git checkout %s' % cookbook['branch'])
 
-        # add submodule stuff to list
-        to_run_list.append('cd /opt/rcbops/chef-cookbooks;'
-                           'git submodule init;'
-                           'git submodule sync;'
-                           'git submodule update')
+        # Since we are installing from git, the urls are pretty much constant
+        # Pulling the url apart to get the name of the cookbooks
+        cookbook_name = cookbook['url'].split("/")[-1].split(".")[0]
+
+        # Stupid logic to see if the repo name contains "cookbooks", if it does then
+        # we need to load from cookbooks repo, not the repo itself.
+        # I think this is stupid logic, there has to be a better way (jacob)
+        if 'cookbooks' in cookbook_name:
+             # add submodule stuff to list
+            to_run_list.append('cd /opt/rcbops/chef-cookbooks;'
+                               'git submodule init;'
+                               'git submodule sync;'
+                               'git submodule update')
+            to_run_list.append('knife cookbook upload --all --cookbook-path {0}/{1}/cookbooks'.format(local_repo, cookbook_name))
+        else:
+            to_run_list = ['knife cookbook upload --all --cookbook-path {0}/{1}'.format(local_repo, cookbook_name)]
+
+        # Append role load to run list
+        to_run_list.append('knife role from file {0}/{1}/roles/*.rb'.format(local_repo, cookbook_name))
 
         for cmd in to_run_list:
             run_cmd = run_remote_ssh_cmd(chef_server_ip,
@@ -582,21 +613,7 @@ class rpcsqa_helper:
                 print run_cmd
                 sys.exit(1)
 
-        # Install the cookbooks on the chef server
-        to_run_list = ['knife cookbook upload --all --cookbook-path /opt/rcbops/chef-cookbooks/cookbooks',
-                       'knife role from file /opt/rcbops/chef-cookbooks/roles/*.rb']
-
-        for cmd in to_run_list:
-            run_cmd = run_remote_ssh_cmd(chef_server_ip,
-                                         'root',
-                                         chef_server_password,
-                                         cmd)
-            if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, chef_server)
-                print run_cmd
-                sys.exit(1)
-
-    def install_cookbook(self, chef_server, giturl, branch):
+    def install_git(self, chef_server):
         # Gather node info
         chef_server_node = Node(chef_server, api=self.chef)
         chef_server_ip = chef_server_node['ipaddress']
@@ -605,29 +622,13 @@ class rpcsqa_helper:
 
         # Install git and clone the other cookbook
         if chef_server_platform == 'ubuntu':
-            to_run_list = ['apt-get install git -y',
-                           'mkdir -p /opt/test_cookbooks',
-                           'cd /opt/test_cookbooks; git clone %s -b %s --recursive' % (giturl, branch)]
+            to_run_list = ['apt-get install git -y']
         elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
-            to_run_list = ['yum install git -y',
-                           'mkdir -p /opt/test_cookbooks',
-                           'cd /opt/test_cookbooks; git clone %s -b %s --recursive' % (giturl, branch)]
+            to_run_list = ['yum install git -y']
         else:
             print "Platform %s not supported" % chef_server_platform
             sys.exit(1)
 
-        for cmd in to_run_list:
-            run_cmd = run_remote_ssh_cmd(chef_server_ip,
-                                         'root',
-                                         chef_server_password,
-                                         cmd)
-            if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, chef_server)
-                print run_cmd
-                sys.exit(1)
-
-        # Install the cookbooks on the chef server
-        to_run_list = ['knife cookbook upload --all --cookbook-path /opt/test_cookbooks']
         for cmd in to_run_list:
             run_cmd = run_remote_ssh_cmd(chef_server_ip,
                                          'root',
