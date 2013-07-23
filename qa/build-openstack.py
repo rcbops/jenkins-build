@@ -156,8 +156,8 @@ else:
         #Compute with whatever is left
         for n in nodes:
             build.append({'name': n,
-                          'in_use': 'single-controller',
-                          'run_list': ['role[single-controller]']})
+                          'in_use': 'single-compute',
+                          'run_list': ['role[single-compute]']})
 
     except IndexError, e:
         print "*** Not enough nodes for your setup (%s) ....try increasing cluster_size" % cluster_size
