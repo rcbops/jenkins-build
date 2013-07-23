@@ -59,10 +59,6 @@ parser.add_argument('--razor_ip', action="store", dest="razor_ip",
                     default="198.101.133.3",
                     help="IP for the Razor server")
 
-parser.add_argument('--cookbook_url', action="store", dest="cookbook_url",
-                    default='https://github.com/rcbops/chef-cookbooks.git',
-                    help="The URL of the cookbooks to clone")
-
 # Save the parsed arguments
 results = parser.parse_args()
 
