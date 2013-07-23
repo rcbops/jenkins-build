@@ -85,14 +85,13 @@ all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 # Set the cluster size
 cluster_size = int(results.cluster_size)
 
-cookbooks = {
-    rcbops_cookbooks:
+cookbooks = [
     {
-        'url': 'https://github.com/rcbops/chef-cookbooks.git',
-        'branch': '{0}'.format(results.branch),
-        'tag': '{0}'.format(results.repo_tag)
+        "url": "https://github.com/rcbops/chef-cookbooks.git",
+        "branch": "{0}".format(results.branch),
+        "tag": "{0}".format(results.repo_tag)
     }
-}
+]
 
 # Build a new cluster
 if results.action == "build":

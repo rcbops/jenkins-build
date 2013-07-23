@@ -92,23 +92,21 @@ print "***********************************************************"
 # Set up Chef Server
 ###################################################################
 
-cookbooks = {
-    rcbops_cookbooks:
+cookbooks = [
     {
-        'url': 'https://github.com/rcbops/chef-cookbooks.git',
-        'branch': 'grizzly'
+        "url": "https://github.com/rcbops/chef-cookbooks.git",
+        "branch": "{0}".format(results.branch),
+        "tag": "{0}".format(results.repo_tag)
     },
-    swift_lite_cookbooks:
     {
-        'url': 'https://github.com/rcbops-cookbooks/swift-lite.git',
-        'branch': 'master'
+        "url": "https://github.com/rcbops-cookbooks/swift-lite.git",
+        "branch": "master"
     },
-    swift_private_cloud_cookbooks:
     {
-        'url': 'https://github.com/rcbops-cookbooks/swift-private-cloud.git',
-        'branch': 'master'
+        "url": "https://github.com/rcbops-cookbooks/swift-private-cloud.git",
+        "branch": "master"
     }
-}
+]
 
 # Set the node to be chef server
 rpcsqa.set_node_in_use(chef_server, 'chef-server')
