@@ -205,9 +205,9 @@ else:
 
 if success:
     print "Welcome to the cloud..."
-     print "Your cloud:   %s" % json.dumps(build, indent=4,  default=lambda o: o.__name__)
+    print "Your cloud:   %s" % json.dumps(build, indent=4,  default=lambda o: o.__name__)
     print "#" * 70
-    
+
 else:
     print "Sorry....no cloud for you...."
 
