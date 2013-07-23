@@ -1,8 +1,8 @@
 #!/usr/bin/python
 import sys
 import argparse
-from rpcsqa_helper import *
-from chef_helper import *
+from modules.rpcsqa_helper import *
+from modules.chef_helper import *
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
