@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import argparse
-from modules.rpcsqa_helper import *
+from modules.baremetal.v2.rpcsqa_helper import *
 
 print "Starting up..."
 # Parse arguments from the cmd line
@@ -156,8 +156,8 @@ else:
         #Compute with whatever is left
         for n in nodes:
             build.append({'name': n,
-                          'in_use': 'single-controller',
-                          'run_list': ['role[single-controller]']})
+                          'in_use': 'single-compute',
+                          'run_list': ['role[single-compute]']})
 
     except IndexError, e:
         print "*** Not enough nodes for your setup (%s) ....try increasing cluster_size" % cluster_size
@@ -205,6 +205,9 @@ else:
 
 if success:
     print "Welcome to the cloud..."
+    print "Your cloud:   %s" % json.dumps(build, indent=4,  default=lambda o: o.__name__)
+    print "#" * 70
+
 else:
     print "Sorry....no cloud for you...."
 

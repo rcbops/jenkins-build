@@ -365,7 +365,7 @@ class Images(list):
         super(Images, self).__init__()
         self.extend(image)
 
-"""
+
 base_env = {
     "name": "<NAME>", "description": "",
     "cookbook_versions": {}, "json_class": "Chef::Environment",
@@ -424,4 +424,3 @@ openldap = {
         "tenants": ["admin", "service", "demo"]
     }
 }
-"""
