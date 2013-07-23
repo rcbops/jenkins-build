@@ -639,8 +639,7 @@ class rpcsqa_helper:
                 print run_cmd
                 sys.exit(1)
 
-    def install_opencenter(self, server, install_script,
-                           role, oc_server_ip='0.0.0.0'):
+    def install_opencenter(self, server, install_script, role, oc_server_ip='0.0.0.0'):
         chef_node = Node(server, api=self.chef)
         user_pass = self.razor_password(chef_node)
         print ""

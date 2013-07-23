@@ -262,9 +262,7 @@ if results.action == "build":
             rpcsqa.build_chef_server(chef_server)
 
             # Install the proper cookbooks
-            rpcsqa.install_cookbooks(chef_server,
-                                     results.branch,
-                                     results.repo_tag)
+            rpcsqa.install_cookbooks(chef_server, cookbooks)
 
             # setup environment file to remote chef server
             rpcsqa.setup_remote_chef_environment(chef_server, env)
@@ -363,9 +361,7 @@ if results.action == "build":
             rpcsqa.build_chef_server(chef_server)
 
             # Install the proper cookbooks
-            rpcsqa.install_cookbooks(chef_server,
-                                     results.branch,
-                                     results.repo_tag)
+            rpcsqa.install_cookbooks(chef_server, cookbooks)
 
             # setup environment file to remote chef server
             rpcsqa.setup_remote_chef_environment(chef_server, env)
@@ -464,9 +460,7 @@ if results.action == "build":
             rpcsqa.build_chef_server(chef_server)
 
             # Install the proper cookbooks
-            rpcsqa.install_cookbooks(chef_server,
-                                     results.branch,
-                                     results.repo_tag)
+            rpcsqa.install_cookbooks(chef_server, cookbooks)
 
             # setup environment file to remote chef server
             rpcsqa.setup_remote_chef_environment(chef_server, env)
