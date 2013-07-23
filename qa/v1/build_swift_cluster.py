@@ -95,18 +95,18 @@ print "***********************************************************"
 cookbooks = {
     rcbops_cookbooks:
     {
-        url: 'https://github.com/rcbops/chef-cookbooks.git',
-        branch: 'grizzly'
+        'url': 'https://github.com/rcbops/chef-cookbooks.git',
+        'branch': 'grizzly'
     },
     swift_lite_cookbooks:
     {
-        url: 'https://github.com/rcbops-cookbooks/swift-lite.git',
-        branch: 'master'
+        'url': 'https://github.com/rcbops-cookbooks/swift-lite.git',
+        'branch': 'master'
     },
     swift_private_cloud_cookbooks:
     {
-        url: 'https://github.com/rcbops-cookbooks/swift-private-cloud.git',
-        branch: 'master'
+        'url': 'https://github.com/rcbops-cookbooks/swift-private-cloud.git',
+        'branch': 'master'
     }
 }
 
