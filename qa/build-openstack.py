@@ -55,7 +55,7 @@ parser.add_argument('--remote_chef', action="store_true", dest="remote_chef",
 
 
 #Testing
-parser.add_argument('--tempest', action="store_true", dest="temptest",
+parser.add_argument('--tempest', action="store_true", dest="tempest",
                     required=False, default=False,
                     help="Run tempest after installing openstack?")
 
