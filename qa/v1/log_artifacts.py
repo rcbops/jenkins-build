@@ -1,7 +1,7 @@
 import sys
 import argparse
-from rpcsqa_helper import rpcsqa_helper
-from server_helper import *
+from modules.rpcsqa_helper import rpcsqa_helper
+from modules.server_helper import *
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()

@@ -4,7 +4,7 @@ import argparse
 from pprint import pprint
 from string import Template
 from novaclient.v1_1 import client
-from rpcsqa_helper import rpcsqa_helper
+from modules.rpcsqa_helper import rpcsqa_helper
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
