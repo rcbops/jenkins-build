@@ -58,6 +58,8 @@ networking = ["iptables-save", "ip a", "netstat -nt", "route",
               "brctl show", "ovs-vsctl show"]
 processes = ["ps auxwww"]
 
+openrc = ["cat ~/openrc"]
+
 if results.os_distro == 'precise':
     packages = ["dpkg -l"]
 else:
@@ -84,6 +86,7 @@ for node in nodes:
                             for x, path in archive
                             for f in x)
 
+    # So much common code
     network_cmd = "; ".join("%s >> %s/%s%s.txt" % (
         command, node_name, misc_path, 'networking')
         for command in networking)
@@ -96,6 +99,10 @@ for node in nodes:
         command, node_name, misc_path, 'packages')
         for command in packages)
 
+    openrc_cmd = "; ".join("%s >> %s/%s%s.txt" % (
+        command, node_name, misc_path, 'openrc')
+        for command in openrc)
+
     chef_cmd = "echo 'Not a Chef Server'"
     if 'chef' in role:
         chef_cmd = ('for i in `knife node list`;'
@@ -107,6 +114,7 @@ for node in nodes:
     # Run all the commands at once.  SSH takes eternities
     cmd = '; '.join((prepare_cmd, archive_cmd, network_cmd,
                      processes_cmd, packages_cmd, chef_cmd,
+                     openrc_cmd
                      tar_cmd))
 
     qa.run_cmd_on_node(node, cmd)
