@@ -114,7 +114,7 @@ for node in nodes:
     # Run all the commands at once.  SSH takes eternities
     cmd = '; '.join((prepare_cmd, archive_cmd, network_cmd,
                      processes_cmd, packages_cmd, chef_cmd,
-                     openrc_cmd
+                     openrc_cmd,
                      tar_cmd))
 
     qa.run_cmd_on_node(node, cmd)
