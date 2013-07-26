@@ -164,9 +164,14 @@ class rpcsqa_helper:
             raise Exception("Couldn't find ldap server: %s" % ldap_name)
 
 
-
-
-
+    def get_environment_nodes(self, environment='', api=None):
+        """Returns all the nodes of an environment"""
+        api = api or self.chef
+        search = Search("node", api=api).query("chef_environment:%s" % environment)
+        return (Node(n['name'], api=api) for n in search)
+        
+    def find_controller(self, environment):
+        pass
 
 
 
@@ -578,10 +583,7 @@ class rpcsqa_helper:
         env = Environment(name, api=self.chef)
         return env
 
-    def cluster_nodes(self, environment=None, api=None):
-        """Returns all the nodes of an environment"""
-        query = "chef_environment:%s" % environment
-        self.node_search(query=query, api=api)
+
 
     def disable_iptables(self, chef_node, logfile="STDOUT"):
         ip = chef_node['ipaddress']

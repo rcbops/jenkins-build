@@ -219,11 +219,6 @@ else:
     print "Sorry....no cloud for you...."
 
 
-if args.tempest:
-    print "Running tempest on your cloud now."
-
-
-
 
 if args.destroy:
     print "Destroying your cloud now!!!"
