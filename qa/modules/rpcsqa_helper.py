@@ -71,8 +71,8 @@ class rpcsqa_helper:
             runs.append(run)
         return {'success': success, 'runs': runs}
 
-    def run_chef_client(self, chef_node, num_times=1, quiet=False):
-        return self.run_command_on_node(chef_node, 'chef-client', num_times, quiet)
+    def run_chef_client(self, chef_node, num_times=1, log_level='error', quiet=False):
+        return self.run_command_on_node(chef_node, 'chef-client -l %s' % log_level, num_times, quiet)
 
 
     def interface_physical_nodes(self, os):
