@@ -96,7 +96,7 @@ cookbooks = [
     {
         "url": "https://github.com/rcbops/chef-cookbooks.git",
         "branch": "{0}".format(results.branch),
-        "tag": "{0}".format(results.repo_tag)
+        "tag": results.repo_tag
     },
     {
         "url": "https://github.com/rcbops-cookbooks/swift-lite.git",
