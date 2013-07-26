@@ -53,6 +53,14 @@ parser.add_argument('--remote_chef', action="store_true", dest="remote_chef",
                     required=False, default=False,
                     help="Build a new chef server for this deploy")
 
+
+#Testing
+parser.add_argument('--tempest', action="store_true", dest="tempest",
+                    required=False, default=False,
+                    help="Run tempest after installing openstack?")
+
+
+
 #Defaulted arguments
 parser.add_argument('--razor_ip', action="store", dest="razor_ip",
                     default="198.101.133.3",
@@ -177,7 +185,7 @@ else:
             node['in_use'] = b['in_use']
             node.run_list = b['run_list']
             node.save()
-            chef_client = rpcsqa.run_chef_client(node, num_times=1)
+            chef_client = rpcsqa.run_chef_client(node, num_times=2)
             if not chef_client['success']:
                 print "chef-client run failed"
                 success = False
@@ -207,9 +215,14 @@ if success:
     print "Welcome to the cloud..."
     print "Your cloud:   %s" % json.dumps(build, indent=4,  default=lambda o: o.__name__)
     print "#" * 70
-
 else:
     print "Sorry....no cloud for you...."
+
+
+if args.tempest:
+    print "Running tempest on your cloud now."
+
+
 
 
 if args.destroy:
