@@ -1,6 +1,7 @@
 import argparse, json
 from modules.rpcsqa_helper import rpcsqa_helper
 from chef import Search, Node
+import sys
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
@@ -18,14 +19,14 @@ qa = rpcsqa_helper(razor_ip=args.razor_ip)
 search = Search("node", api=qa.chef).query("chef_environment:%s AND (roles:single-controller OR roles:ha-controller1)" % args.environment)
 
 if len(search) < 1: print "Could not find controller"
-if len(search) > 1: print "Found too many controllers (what?!) "
+elif len(search) > 1: print "Found too many controllers (what?!) "
+else:        
+    controller = Node(search[0]['name'],api=qa.chef)
 
-controller = Node(search[0]['name'],api=qa.chef)
+    print "Adding tempest to controller run_list"
+    if 'recipe[tempest]' not in controller.run_list:
+        controller.run_list.append(['recipe[tempest]'])
+    controller.save()
 
-print "Adding tempest to controller run_list"
-if 'recipe[tempest]' not in controller.run_list:
-    controller.run_list = controller.run_list + ['recipe[tempest]']
-controller.save()
-
-print "Running chef-client"
-chef_client = qa.run_chef_client(controller, num_times=2)
+    print "Running chef-client"
+    chef_client = qa.run_chef_client(controller, num_times=2)
