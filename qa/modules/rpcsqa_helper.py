@@ -174,6 +174,27 @@ class rpcsqa_helper:
         pass
 
 
+    def razor_password(self, chef_node):
+        chef_node = Node(chef_node.name, api=self.chef)
+        metadata = chef_node.attributes['razor_metadata'].to_dict()
+        uuid = metadata['razor_active_model_uuid']
+        return self.razor.get_active_model_pass(uuid)['password']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def bootstrap_chef(self, client_node, server_node):
         '''
         @summary: installes chef client on a node and bootstraps it to chef_server
@@ -204,5 +225,3 @@ class rpcsqa_helper:
 
         if ssh_run['success']:
             print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
-
-   
