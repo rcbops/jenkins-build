@@ -1,6 +1,6 @@
 import argparse
 from pprint import pprint
-from rpcsqa_helper import *
+from modules.rpcsqa_helper import *
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()

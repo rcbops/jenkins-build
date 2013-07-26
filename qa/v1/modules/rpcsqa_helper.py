@@ -323,7 +323,8 @@ class rpcsqa_helper:
 
         # IF the in_use is not set, set it
         chef_node['in_use'] = 'quantum'
-        chef_node.run_list = ["role[single-network-node]"]
+        # add openrc to network_node https://github.com/rcbops/chef-cookbooks/issues/454
+        chef_node.run_list = ["role[single-network-node]", "recipe[osops-utils::openrc]"]
         chef_node.save()
 
         # If remote is set, then we are building with a remote chef server

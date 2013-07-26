@@ -1,7 +1,7 @@
 import sys
 import argparse
 from modules.rpcsqa_helper import rpcsqa_helper
-from modules.server_helper import *
+from modules.server_helper import run_cmd
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
@@ -53,15 +53,17 @@ archive = ((("apache2", "apt", "cinder", "daemon.log", "dist_upgrade", "dmesg",
             etc_path))
 
 # Create misc folder and save platform stuff
-
-networking = ["iptables-save", "ip a", "netstat -nt", "route",
-              "brctl show", "ovs-vsctl show"]
-processes = ["ps auxwww"]
-
 if results.os_distro == 'precise':
     packages = ["dpkg -l"]
 else:
     packages = ["rpm -qa"]
+
+misc_cmds = [["networking", ["iptables-save", "ip a", "netstat -nt",
+                             "route", "brctl show",
+                             "ovs-vsctl show"]],
+             ["processes", ["ps auxwww"]],
+             ["openrc", ["cat ~/openrc"]],
+             ["packages", packages]]
 
 # Run commands to acquire artifacts
 roles = {}
@@ -84,17 +86,12 @@ for node in nodes:
                             for x, path in archive
                             for f in x)
 
-    network_cmd = "; ".join("%s >> %s/%s%s.txt" % (
-        command, node_name, misc_path, 'networking')
-        for command in networking)
-
-    processes_cmd = "; ".join("%s >> %s/%s%s.txt" % (
-        command, node_name, misc_path, 'processes')
-        for command in processes)
-
-    packages_cmd = "; ".join("%s >> %s/%s%s.txt" % (
-        command, node_name, misc_path, 'packages')
-        for command in packages)
+    # Misc commands
+    misc_format = "%s >> %s/%s%s.txt"
+    format_misc = lambda x: "; ".join(misc_format % (cmd, node_name,
+                                                     misc_path, x[0])
+                                      for cmd in x[1])
+    misc_cmd = "; ".join(map(format_misc, misc_cmds))
 
     chef_cmd = "echo 'Not a Chef Server'"
     if 'chef' in role:
@@ -105,8 +102,8 @@ for node in nodes:
     tar_cmd = "tar -czf %s.tar %s" % (node_name, node_name)
 
     # Run all the commands at once.  SSH takes eternities
-    cmd = '; '.join((prepare_cmd, archive_cmd, network_cmd,
-                     processes_cmd, packages_cmd, chef_cmd,
+    cmd = '; '.join((prepare_cmd, archive_cmd, chef_cmd,
+                     misc_cmd,
                      tar_cmd))
 
     qa.run_cmd_on_node(node, cmd)
