@@ -72,6 +72,7 @@ class rpcsqa_helper:
         return {'success': success, 'runs': runs}
 
     def run_chef_client(self, chef_node, num_times=1, log_level='error', quiet=False):
+        # log level can be (debug, info, warn, error, fatal)
         return self.run_command_on_node(chef_node, 'chef-client -l %s' % log_level, num_times, quiet)
 
 
