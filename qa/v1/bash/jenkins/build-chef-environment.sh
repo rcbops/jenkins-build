@@ -100,6 +100,26 @@ function build_nova_quantum() {
     build_chef_environment
 }
 
+function build_swift() {
+
+    # build environment files from templates
+    set_environment_files
+
+    # source our secret file with hidden info
+    source ~/source_files/SWIFT_STUFF.sh
+
+    ## replace the lines we are looking for
+    echo "Replacing template values with real values..."
+    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<MANAGEMENT_NETWORK>/'${MANAGEMENT_NETWORK}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<EXTERNAL_NETWORK>/'${EXTERNAL_NETWORK}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<SWIFT_HASH_PREFIX>/'${SWIFT_HASH_PREFIX}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<SWIFT_HASH_SUFFIX>/'${SWIFT_HASH_SUFFIX}'/g' $ENVIRONMENT_FILENAME`
+
+    # build chef environment
+    build_chef_environment
+}
+
 function build_opencenter() {
 
     # build environment files from templates
@@ -149,6 +169,7 @@ case $FEATURE_SET in
     'glance-cf')        build_glance_cf;;
     'keystone-ldap')    build_keystone_ldap;;
     'nova-quantum')     build_nova_quantum;;
+    'swift')            build_swift;;
     'opencenter')       build_opencenter;;
 esac
 

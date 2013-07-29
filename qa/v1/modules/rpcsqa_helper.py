@@ -538,6 +538,14 @@ class rpcsqa_helper:
 
         return ret_nodes
 
+    def get_node_ip(self, server):
+
+        # Gather node ip
+        node = Node(server, api=self.api)
+        node_ip = node['ipaddress']
+
+        return node_ip
+
     def install_cookbooks(self, chef_server, cookbooks, local_repo='/opt/rcbops'):
         '''
         @summary: This will pull the cookbooks down for git that you pass in cookbooks
@@ -615,6 +623,7 @@ class rpcsqa_helper:
                 sys.exit(1)
 
     def install_git(self, chef_server):
+        # This needs to be taken out and install_package used instead (jwagner)
         # Gather node info
         chef_server_node = Node(chef_server, api=self.chef)
         chef_server_ip = chef_server_node['ipaddress']
@@ -683,6 +692,52 @@ class rpcsqa_helper:
         else:
             print "OpenCenter %s successfully installed on vm with ip %s" \
                 % (role, vm_ip)
+
+    def install_packages(self, server, packages):
+
+        for package in packages:
+            self.install_package(server, package)
+
+    def install_package(self, server, package):
+
+        # Gather node info
+        server_node = Node(server, api=self.chef)
+        server_ip = server_node['ipaddress']
+        server_password = self.razor_password(server_node)
+        server_platform = server_node['platform']
+
+        # Install package
+        if server_platform == 'ubuntu':
+            to_run_list = ['apt-get install -y {0}'.format(package)]
+        elif server_platform == 'centos' or server_platform == 'redhat':
+            to_run_list = ['yum install -y {0}'.format(package)]
+        else:
+            print "Platform %s not supported" % server_platform
+            sys.exit(1)
+
+        for cmd in to_run_list:
+            run_cmd = run_remote_ssh_cmd(server_ip,
+                                         'root',
+                                         server_password,
+                                         cmd)
+            if not run_cmd['success']:
+                print "Command: %s failed to run on %s" % (cmd, server)
+                print run_cmd
+                sys.exit(1)
+
+    def install_ruby_gem(self, server, gem):
+        server_node = Node(server, api=self.api)
+        server_ip = server_node['ipaddress']
+        server_password = self.razor_password(server_node)
+
+        cmd = 'gem install {0}'.format(gem)
+
+        run_cmd = run_remote_ssh_cmd(server_ip, 'root', server_password, cmd)
+
+        if not run_cmd['success']:
+            print "Command: {0} failed to run on {1}".format(cmd, server)
+            print run_cmd
+            sys.exit(1)
 
     def install_server_vms(self, server, opencenter_server_ip,
                            chef_server_ip, vm_bridge, vm_bridge_device):
@@ -936,6 +991,34 @@ class rpcsqa_helper:
         password = self.razor_password(node)
         ip = node['ipaddress']
         run_remote_scp_cmd(ip, user, password, path)
+
+    def set_environment_variables(self, environment, variable_dict, attributes='override'):
+        '''
+        Take the variable hash and place it inside the environment under the attribute tag
+        @param environment The chef environment to place hash
+        @type environment String
+        @param variable_dict A Dict to place into the environment
+        @type variable_dict Dict
+        @param attributes The attributes to place hash under (override, default, etc.)
+        @type attributes String
+        '''
+
+        # Grab the environment to edit
+        chef_env = Environment(env, api=self.chef)
+
+        # Check to see if the environment exists
+        if not chef_env.exists:
+            print "The chef environment you are trying to edit doesnt exist"
+            sys.exit(1)
+
+        # Load the environemnt into a dict
+        env_json = chef_env.to_dict()
+
+        # Update the appropriate attributes with the passed dict
+        env_json['{0}_attributes'.format(attributes)].update(variable_dict)
+
+        # Save the environment
+        chef_env.save()
 
     def set_network_interface(self, chef_node):
         if "role[qa-base]" in chef_node.run_list:

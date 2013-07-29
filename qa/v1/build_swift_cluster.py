@@ -1,8 +1,7 @@
 #!/usr/bin/python
-import sys
 import argparse
-from rpcsqa_helper import *
-from chef_helper import *
+from modules.rpcsqa_helper import *
+from modules.chef_helper import *
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
@@ -94,21 +93,23 @@ print "***********************************************************"
 
 cookbooks = [
     {
-        "url": "https://github.com/rcbops/chef-cookbooks.git",
-        "branch": "{0}".format(results.branch),
-        "tag": results.repo_tag
-    },
-    {
-        "url": "https://github.com/rcbops-cookbooks/swift-lite.git",
-        "branch": "master",
-        "tag": None
-    },
-    {
         "url": "https://github.com/rcbops-cookbooks/swift-private-cloud.git",
         "branch": "master",
         "tag": None
     }
 ]
+
+# Get the IP of the proxy server and load it into environment
+keystone_ip = rpcsqa.get_node_ip(keystone_server)
+keystone = {
+    "keystone": {
+        "swift_admin_url": "http://{0}:8080/v1/AUTH_%(tenant_id)s".format(keystone_ip),
+        "swift_public_url": "http://{0}:8080/v1/AUTH_%(tenant_id)s".format(keystone_ip),
+        "swift_internal_url": "http://{0}:8080/v1/AUTH_%(tenant_id)s".format(keystone_ip)
+    }
+}
+# Override the keystone attributes
+rpcsqa.set_environment_variables(env, keystone, 'override')
 
 # Set the node to be chef server
 rpcsqa.set_node_in_use(chef_server, 'chef-server')
@@ -122,6 +123,11 @@ rpcsqa.remove_chef(chef_server)
 
 # Build Chef Server
 rpcsqa.build_chef_server(chef_server)
+
+# Install Berkshelf (ruby, gem, berkshelf)
+packages = ["ruby", "gem"]
+rpcsqa.install_packages(chef_server, packages)
+rpcsqa.install_ruby_gem(chef_server, 'berkshelf')
 
 # Install the proper cookbooks
 for cookbook in cookbooks:
@@ -137,7 +143,7 @@ config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 # Build Swift Keystone
 ###################################################################
 
-# Make controller
+# Make keystone server
 rpcsqa.set_node_in_use(keystone_server, 'swift_keystone')
 
 # Need to prep centos boxes
