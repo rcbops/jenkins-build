@@ -133,6 +133,9 @@ rpcsqa.install_ruby_gem(chef_server, 'berkshelf')
 for cookbook in cookbooks:
     rpcsqa.install_cookbook(chef_server, cookbook['url'], cookbook['branch'])
 
+# Run berkshelf on server
+rpcsqa.run_cmd_on_node(chef_server, 'cd /opt/rcbops-cookbooks/swift-private-cloud; berks install; berks upload')
+
 # setup environment file to remote chef server
 rpcsqa.setup_remote_chef_environment(chef_server, env)
 
