@@ -58,6 +58,7 @@ if results.os_distro == 'precise':
 else:
     packages = ["rpm -qa"]
 
+# Make this a hash...
 misc_cmds = [["networking", ["iptables-save", "ip a", "netstat -nt",
                              "route", "brctl show",
                              "ovs-vsctl show"]],
@@ -69,7 +70,7 @@ misc_cmds = [["networking", ["iptables-save", "ip a", "netstat -nt",
 roles = {}
 log_path = "logs"
 # run_cmd("rm -rf %s; mkdir -p %s" % (log_path, log_path))
-run_cmd("rm *.tar")
+run_cmd("rm *.tar.gz")
 for node in nodes:
     role = node.attributes['in_use']
     if role in roles:
@@ -99,7 +100,7 @@ for node in nodes:
                     'do knife node show $i -l >> {0}/{1}/$i.knife;'
                     'done'.format(node_name, misc_path))
 
-    tar_cmd = "tar -czf %s.tar %s" % (node_name, node_name)
+    tar_cmd = "tar -czf %s.tar.gz %s" % (node_name, node_name)
 
     # Run all the commands at once.  SSH takes eternities
     cmd = '; '.join((prepare_cmd, archive_cmd, chef_cmd,
@@ -108,10 +109,4 @@ for node in nodes:
 
     qa.run_cmd_on_node(node, cmd)
 
-    qa.scp_from_node(node, path="%s.tar" % node_name, destination=".")
-
-    # # transfer artifacts
-    # qa.scp_from_node(node, path="%s.tar" % node_name, destination="./%s/" % log_path)
-
-    # # extract artifacts
-    # run_cmd("cd {1}; tar -xf {0}.tar; rm {0}.tar".format(node_name, log_path))
+    qa.scp_from_node(node, path="%s.tar.gz" % node_name, destination=".")

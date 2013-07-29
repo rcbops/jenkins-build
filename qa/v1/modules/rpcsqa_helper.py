@@ -1206,10 +1206,20 @@ class rpcsqa_helper:
         compute_node_ip = compute_node['ipaddress']
         compute_node_password = self.razor_password(compute_node)
 
+        if controller_node['platform_family'] == "debian":
+            phy_dev = "eth1"
+        elif controller_node['platform_family'] == "rhel":
+            phy_dev = "em1"
+        else:
+            print "Platform Family %s is not supported." \
+                % chef_node['platform_family']
+            sys.exit(1)
+    
+
         # Setup OVS bridge on network and compute node
         print "Setting up OVS bridge and ports on Quantum / Compute Node(s)."
-        to_run_list = ['ip a f eth1',
-                       'ovs-vsctl add-port br-eth1 eth1']
+        to_run_list = ['ip a f {0}'.format(phy_dev),
+                       'ovs-vsctl add-port br-{0} {0}'.format(phy_dev)]
 
         for command in to_run_list:
             # Run command on quantum node
@@ -1237,7 +1247,7 @@ class rpcsqa_helper:
                 sys.exit(1)
 
         print "Adding Quantum Network."
-        to_run_list = ["source openrc admin; quantum net-create --provider:physical_network=ph-eth1 --provider:network_type=flat flattest",
+        to_run_list = ["source openrc admin; quantum net-create --provider:physical_network=ph-{0} --provider:network_type=flat flattest".format(phy_dev),
                        "source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.129,end=10.0.0.254 flattest 10.0.0.128/25"]
 
         for command in to_run_list:
