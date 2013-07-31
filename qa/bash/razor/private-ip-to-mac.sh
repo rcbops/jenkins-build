@@ -23,7 +23,7 @@ done
 # Run nmap to get the boxes that are alive
 results=`nmap -sP -oG alive 10.0.0.0/24 | grep 10.0.0.* | awk '{print $5 $6}'`
 
-# Loop through the alive boxes, grab the ip and then reboot them
+# Loop through the alive boxes, get the mac and attack IP
 IP_END=255
 for item in ${results}
 do
