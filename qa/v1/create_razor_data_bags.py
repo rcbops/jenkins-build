@@ -3,108 +3,106 @@ import os
 import json
 import argparse
 
-def create_data_bag(ip, ident=None):
 
-	ip_array = ip.split(".")
-	
-	if ident is None:
-		data_bag = {
-			"id": temp_ident,
-			"network_interfaces": {
-				"debian": [
-					{
-						"auto": "true",
-		    			"type": "static",
-		    			"device": "eth0",
-		    			"netmask": "255.255.255.0",
-		    			"address": ip,
-		    			"gateway": "%s.%s.%s.%s" % (
-		    				ip_array[0], ip_array[1], ip_array[2], 1),
-		    			"dnsnameservers": "8.8.8.8 8.8.4.4",
-		    			"dnssearch": "rcb.rackspace.com"
-					}
-				],
-				"redhat": [
-					{
-						"device": "em1",
-						"bootproto": "none",
-						"onboot": "yes",
-						"netmask": "255.255.255.0",
-						"gateway": "%s.%s.%s.%s" % (
-							ip_array[0], ip_array[1], ip_array[2], 1),
-						"peerdns": "yes",
-						"dns1": "8.8.8.8",
-						"dns2": "8.8.4.4",
-						"ipaddr": ip,
-						"userctl": "no"
-					}
-				]
-			}
-		}
+def create_data_bag(public, drac, ident=None):
+    public_array = public.split(".")
 
-		try:
-			# Open the file
-			fo = open("%s.json" % ip, "w")
-		except IOError:
-			print "Failed to open file %s.json" % ip
-		else:
-			# Write the json string
-			fo.write(json.dumps(data_bag, indent=4))
+    if ident is None:
+        data_bag = {
+            "id": "temp_ident",
+            "network_interfaces": {
+                "drac": drac,
+                "debian": [
+                    {
+                        "auto": "true",
+                        "type": "static",
+                        "device": "eth0",
+                        "netmask": "255.255.255.0",
+                        "address": public,
+                        "gateway": "%s.%s.%s.%s" % (public_array[0], public_array[1], public_array[2], 1),
+                        "dnsnameservers": "8.8.8.8 8.8.4.4",
+                        "dnssearch": "rcb.rackspace.com"
+                    }
+                ],
+                "redhat": [
+                    {
+                        "device": "em1",
+                        "bootproto": "none",
+                        "onboot": "yes",
+                        "netmask": "255.255.255.0",
+                        "gateway": "%s.%s.%s.%s" % (public_array[0], public_array[1], public_array[2], 1),
+                        "peerdns": "yes",
+                        "dns1": "8.8.8.8",
+                        "dns2": "8.8.4.4",
+                        "ipaddr": public,
+                        "userctl": "no"
+                    }
+                ]
+            }
+        }
 
-			#close the file
-			fo.close()
+        try:
+            # Open the file
+            fo = open("%s.json" % public, "w")
+        except IOError:
+            print "Failed to open file %s.json" % public
+        else:
+            # Write the json string
+            fo.write(json.dumps(data_bag, indent=4))
 
-			# print message for debugging
-			print "%s.json successfully saved" % ip
-	else:
-		data_bag = {
-			"id": ident,
-			"network_interfaces": {
-				"debian": [
-					{
-						"auto": "true",
-		    			"type": "static",
-		    			"device": "eth0",
-		    			"netmask": "255.255.255.0",
-		    			"address": ip,
-		    			"gateway": "%s.%s.%s.%s" % (
-		    				ip_array[0], ip_array[1], ip_array[2], 1),
-						"dnsnameservers": "8.8.8.8 8.8.4.4",
-						"dnssearch": "rcb.rackspace.com"
-					}
-				],
-				"redhat": [
-					{
-						"device": "em1",
-						"bootproto": "none",
-						"onboot": "yes",
-						"netmask": "255.255.255.0",
-						"gateway": "%s.%s.%s.%s" % (
-							ip_array[0], ip_array[1], ip_array[2], 1),
-						"peerdns": "yes",
-						"dns1": "8.8.8.8",
-						"dns2": "8.8.4.4",
-						"ipaddr": ip,
-						"userctl": "no"
-					}
-				]
-			}
-		}
+            #close the file
+            fo.close()
 
-		try:
-			# Open the file
-			fo = open("%s.json" % ident, "w")
-		except IOError:
-			print "Failed to open file %s.json" % ident
-		else:
-			# Write the json string
-			fo.write(json.dumps(data_bag, indent=4))
+            # print message for debugging
+            print "%s.json successfully saved" % public
+    else:
+        data_bag = {
+            "id": ident,
+            "network_interfaces": {
+                "drac": drac,
+                "debian": [
+                    {
+                        "auto": "true",
+                        "type": "static",
+                        "device": "eth0",
+                        "netmask": "255.255.255.0",
+                        "address": public,
+                        "gateway": "%s.%s.%s.%s" % (public_array[0], public_array[1], public_array[2], 1),
+                        "dnsnameservers": "8.8.8.8 8.8.4.4",
+                        "dnssearch": "rcb.rackspace.com"
+                    }
+                ],
+                "redhat": [
+                    {
+                        "device": "em1",
+                        "bootproto": "none",
+                        "onboot": "yes",
+                        "netmask": "255.255.255.0",
+                        "gateway": "%s.%s.%s.%s" % (public_array[0], public_array[1], public_array[2], 1),
+                        "peerdns": "yes",
+                        "dns1": "8.8.8.8",
+                        "dns2": "8.8.4.4",
+                        "ipaddr": public,
+                        "userctl": "no"
+                    }
+                ]
+            }
+        }
 
-			#close the file
-			fo.close()
+        try:
+            # Open the file
+            fo = open("%s.json" % ident, "w")
+        except IOError:
+            print "Failed to open file %s.json" % ident
+        else:
+            # Write the json string
+            fo.write(json.dumps(data_bag, indent=4))
 
-			# print message for debugging
-			print "%s.json successfully saved" % ident
+            #close the file
+            fo.close()
+
+            # print message for debugging
+            print "%s.json successfully saved" % ident
 
 
 # MAIN PROGRAM
@@ -112,8 +110,8 @@ def create_data_bag(ip, ident=None):
 parser = argparse.ArgumentParser()
 
 # Path to JSON file of MACs
-parser.add_argument('--file_path', action="store", dest="file_path", 
-	required=True, default=None, help="Path to the JSON file")
+parser.add_argument('--file_path', action="store", dest="file_path",
+                    required=True, default=None, help="Path to the JSON file")
 
 # Parse the parameters
 results = parser.parse_args()
@@ -123,14 +121,14 @@ path = os.path.abspath(results.file_path)
 
 # Open the file and write macs to ips
 try:
-	fo = open(path, 'r')
+    fo = open(path, 'r')
 except IOError:
-		print "Failed to open file @ %s" % path
+    print "Failed to open file @ %s" % path
 else:
-	print fo
-	macs_to_ips = json.loads(fo.read())
-	fo.close()
+    print fo
+    macs_to_ips = json.loads(fo.read())
+    fo.close()
 
-for k,v in macs_to_ips.items():
-	print "key: %s, value: %s" % (k,v)
-	create_data_bag(v, k)
+for k, v in macs_to_ips.items():
+    print "key: %s, value: %s" % (k, v)
+    create_data_bag(v['public'], v['drac'], k)

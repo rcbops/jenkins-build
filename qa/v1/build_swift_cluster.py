@@ -143,7 +143,7 @@ rpcsqa.setup_remote_chef_environment(chef_server, env)
 config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 
 ###################################################################
-# Build Swift Keystone
+# Build Swift Management
 ###################################################################
 
 # Make keystone server
@@ -155,7 +155,3 @@ if results.os_distro == 'centos':
 
 rpcsqa.remove_chef(keystone_server)
 rpcsqa.bootstrap_chef(keystone_server, chef_server)
-
-                        env,
-                        remote=results.remote_chef,
-                        chef_config_file=config_file)
