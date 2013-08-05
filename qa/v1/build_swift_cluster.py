@@ -134,7 +134,11 @@ for cookbook in cookbooks:
     rpcsqa.install_cookbook(chef_server, cookbook['url'], cookbook['branch'])
 
 # Run berkshelf on server
-rpcsqa.run_cmd_on_node(chef_server, 'cd /opt/rcbops-cookbooks/swift-private-cloud; berks install; berks upload')
+berks_run = rpcsqa.run_cmd_on_node(chef_server, 
+                                   'cd /opt/rcbops-cookbooks/swift-private-cloud; berks install; berks upload')
+if not berks_run['success']:
+    print "Failed to run berkshelf on chef server {0}".format(chef_server)
+    sys.exit(1)
 
 # setup environment file to remote chef server
 rpcsqa.setup_remote_chef_environment(chef_server, env)
@@ -143,15 +147,32 @@ rpcsqa.setup_remote_chef_environment(chef_server, env)
 config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 
 ###################################################################
-# Build Swift Management
+# Build Swift Management (keystone)
 ###################################################################
 
 # Make keystone server
-rpcsqa.set_node_in_use(keystone_server, 'swift_keystone')
+rpcsqa.set_node_in_use(keystone_server, 'swift-keystone')
 
 # Need to prep centos boxes
 if results.os_distro == 'centos':
     rpcsqa.prepare_server(keystone_server)
 
+# Remove Razor/Chef chef and bootstrap to new chef server
 rpcsqa.remove_chef(keystone_server)
 rpcsqa.bootstrap_chef(keystone_server, chef_server)
+
+# Build Swift Keystone Node
+rpcsqa.build_swift_node(keystone_server,
+                        'swift-keystone',
+                        env,
+                        remote=results.remove_chef,
+                        chef_config_file=chef_config_file)
+
+###################################################################
+# Build Swift Proxy
+###################################################################
+
+###################################################################
+# Build Swift Object Storage
+###################################################################
+
