@@ -351,11 +351,11 @@ class rpcsqa_helper:
                 if run2['success']:
                     print "Second chef-client run successful..."
                 else:
-                    print "Error running chef-client for controller %s" % controller_node
+                    print "Error running chef-client for controller %s" % quantum_node
                     print run2
                     sys.exit(1)
             else:
-                print "Error running chef-client for controller %s" % controller_node
+                print "Error running chef-client for controller %s" % quantum_node
                 print run1
                 sys.exit(1)
 
@@ -367,6 +367,37 @@ class rpcsqa_helper:
         chef_node = Node(swift_node, api=self.chef)
         chef_node['in_use'] = 'swift-{0}'.format(swift_role)
         chef_node.run_list = ['role[swift-{0}'.format(swift_role)]
+        chef_node.save()
+
+        # If remote is set, then use the remote chef
+        if remote:
+            remote_chef = chef_helper(chef_config_file)
+            remote_chef.build_swift(swift_node, swift_role, environment, 'root', self.razor_password(chef_node))
+
+        else:
+            print "Updating server...this may take some time"
+            self.update_node(chef_node)
+
+            if chef_node['platform_family'] == 'rhel':
+                print "Platform is RHEL family, disabling iptables"
+                self.disable_iptables(chef_node)
+
+            # Run chef-client twice
+            print "Running chef-client for controller node, this may take some time..."
+            run1 = self.run_chef_client(chef_node)
+            if run1['success']:
+                print "First chef-client run successful, starting second run..."
+                run2 = self.run_chef_client(chef_node)
+                if run2['success']:
+                    print "Second chef-client run successful..."
+                else:
+                    print "Error running chef-client for controller %s" % swift_node
+                    print run2
+                    sys.exit(1)
+            else:
+                print "Error running chef-client for controller %s" % swift_node
+                print run1
+                sys.exit(1)
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:
