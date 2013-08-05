@@ -183,48 +183,85 @@ class rpcsqa_helper:
         uuid = metadata['razor_active_model_uuid']
         return self.razor.get_active_model_pass(uuid)['password']
 
+    def set_remote_chef_client(self, env):
+        # RSAifying key
+        remote_dict = env.override_attributes['remote_chef']
+        pem = StringIO.StringIO(remote_dict['key'])
+        remote_dict['key'] = rsa.Key(pem)
+        self.chef = ChefAPI(**remote_dict)
 
+    def remove_chef(self, server):
+        """
+        @param chef_node
+        """
+        chef_node = Node(server, api=self.chef)
 
+        print "removing chef on %s..." % chef_node
+        if chef_node['platform_family'] == "debian":
+            command = "apt-get remove --purge -y chef; rm -rf /etc/chef"
+        elif chef_node['platform_family'] == "rhel":
+            command = 'yum remove -y chef; rm -rf /etc/chef /var/chef'
+        else:
+            print "OS Distro not supported"
+            sys.exit(1)
+        
+        run = self.run_command_on_node(self, chef_node, command)
+        if run['success']:
+            print "Removed Chef on %s" % server
+        else:
+            print "Failed to remove chef on server %s" % server
+            sys.exit(1)
 
-
-
-
-
-
-
-
-
-
-
-
-
-    def bootstrap_chef(self, client_node, server_node):
+    def build_chef_server(self, chef_server_node):
         '''
-        @summary: installes chef client on a node and bootstraps it to chef_server
-        @param node: node to install chef client on
-        @type node: String
-        @param chef_server: node that is the chef server
-        @type chef_server: String
+        This will build a chef server using the rcbops script and install git
         '''
 
-        # Gather the chef info for the nodes
-        chef_server_node = Node(server_node, api=self.chef)
-        chef_client_node = Node(client_node, api=self.chef)
+        # Load controller node
+        chef_node = Node(chef_server_node, api=self.chef)
+        install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
 
-        chef_server_ip = chef_server_node['ipaddress']
-        chef_server_password = self.razor_password(chef_server_node)
 
-        chef_client_ip = chef_client_node['ipaddress']
-        chef_client_password = self.razor_password(chef_client_node)
+        ##TODO: CAMERON
 
-        # install chef client and bootstrap
-        cmd = 'knife bootstrap %s -x root -P %s' % (chef_client_ip,
-                                                    chef_client_password)
+        #update node
+        self.update_node(chef_node)
 
-        ssh_run = run_remote_ssh_cmd(chef_server_ip,
+        # SCP install script to chef_server node
+        scp_run = run_remote_scp_cmd(chef_server_ip,
                                      'root',
-                                     chef_server_password,
-                                     cmd)
+                                     chef_server_pass,
+                                     install_script)
+        if scp_run['success']:
+            print "Successfully copied chef server install script to chef_server node %s" % chef_server_node
+        else:
+            print "Failed to copy chef server install script to chef_server node %s" % chef_server_node
+            print scp_run
+            sys.exit(1)
 
-        if ssh_run['success']:
-            print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
+        # Run the install script
+        to_run_list = ['chmod u+x ~/install-chef-server.sh',
+                       './install-chef-server.sh']
+        for cmd in to_run_list:
+            ssh_run = run_remote_ssh_cmd(chef_server_ip,
+                                         'root',
+                                         chef_server_pass,
+                                         cmd)
+            if ssh_run['success']:
+                print "command: %s ran successfully on %s" % (cmd,
+                                                              chef_server_node)
+
+        self.install_git(chef_server_node)
+
+    def update_node(self, chef_node):
+        ip = chef_node['ipaddress']
+        user_pass = self.razor_password(chef_node)
+        if chef_node['platform_family'] == "debian":
+            run_remote_ssh_cmd(ip, 'root', user_pass,
+                               'apt-get update -y; apt-get upgrade -y')
+        elif chef_node['platform_family'] == "rhel":
+            run_remote_ssh_cmd(ip, 'root', user_pass, 'yum update -y')
+        else:
+            print "Platform Family %s is not supported." \
+                % chef_node['platform_family']
+            sys.exit(1)

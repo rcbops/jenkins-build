@@ -144,7 +144,8 @@ else:
 
         if args.remote_chef:
             build.append({'name': nodes.pop(),
-                          'in_use': 'chef_server'})
+                          'in_use': 'chef_server',
+                          'pre_commands': [{'function': 'set_remote_chef_client', 'kwargs': {'env': env}}])
 
         if args.quantum:
             build.append({'name': nodes.pop(),
@@ -184,15 +185,14 @@ else:
 
     try:
         for b in build:
-            
+            node = Node(b['name'])
+            node['in_use'] = b['in_use']
+            node.run_list = b['run_list']
+            node.save()
             if 'pre_commands' in b:
-                pass
+                _run_commands("post", b['pre_commands'])
 
-            if 'run_list' in b:                    
-                node = Node(b['name'])
-                node['in_use'] = b['in_use']
-                node.run_list = b['run_list']
-                node.save()
+            if 'run_list' in b:
                 print "Running chef client for %s" % node
                 chef_client = rpcsqa.run_chef_client(node, num_times=2, log_level=args.log_level)
                 if not chef_client['success']:
@@ -201,20 +201,8 @@ else:
                     break
 
             if 'post_commands' in b:
-                print "#" * 70
-                print "Running post chef-client commands...."
-                for command in b['post_commands']:
-                    print "Running:  %s" % command
-                    #If its a string run on remote server
-                    if isinstance(command, str):
-                        rpcsqa.run_command_on_node(node, command)
-                    if isinstance(command, dict):
-                        func = command['function']
-                        func(**command['kwargs'])
-                    #elif function run the function
-                    elif hasattr(command, '__call__'):
-                        command()
-                print "#" * 70
+                _run_commands("post", b['post_commands'])
+
     except Exception, e:
         print e
         sys.exit(1)
@@ -236,3 +224,20 @@ if args.destroy:
     rpcsqa.delete_environment(env)
 
 print "DONE!"
+
+
+def _run_commands(name, commands):
+    print "#" * 70
+    print "Running {0} chef-client commands....".format(name)
+    for command in commands:
+        print "Running:  %s" % command
+        #If its a string run on remote server
+        if isinstance(command, str):
+            rpcsqa.run_command_on_node(node, command)
+        if isinstance(command, dict):
+            func = command['function']
+            func(**command['kwargs'])
+            #elif function run the function
+        elif hasattr(command, '__call__'):
+            command()
+    print "#" * 70
