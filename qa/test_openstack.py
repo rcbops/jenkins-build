@@ -5,7 +5,7 @@ import sys
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
-parser.add_argument('--environment', action="store", dest="environment",
+parser.add_argument('--env', action="store", dest="environment",
                     required=False, default="autotest-precise-grizzly-openldap",
                     help="Name for the openstack chef environment")
 parser.add_argument('--razor_ip', action="store", dest="razor_ip",
