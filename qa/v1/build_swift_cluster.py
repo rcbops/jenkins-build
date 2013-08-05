@@ -65,13 +65,13 @@ env = rpcsqa.prepare_environment(results.name,
 # Gather all the nodes for the os_distro
 all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 
+# Set the cluster size
+cluster_size = int(results.cluster_size)
+
 # If we are testing swift, we need 1 controller, 1 proxy and 3 swift nodes
 if cluster_size < 5:
     print "Swift Selected, setting cluster size to 5 (minimum)"
     cluster_size = 5
-
-# Set the cluster size
-cluster_size = int(results.cluster_size)
 
 # Assign nodes to names
 chef_server = openstack_list[0]
