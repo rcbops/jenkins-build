@@ -2,6 +2,8 @@
 import argparse
 from modules.rpcsqa_helper import *
 
+
+
 print "Starting up..."
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
@@ -53,16 +55,14 @@ parser.add_argument('--remote_chef', action="store_true", dest="remote_chef",
                     required=False, default=False,
                     help="Build a new chef server for this deploy")
 
-parser.add_argument('--log_level', action="store", dest="log_level", 
-                            default="error", required=False,
-                            help="Log level for chef client runs.")
+parser.add_argument('--log_level', action="store", dest="log_level",
+                    default="error", required=False,
+                    help="Log level for chef client runs.")
 
 #Testing
 parser.add_argument('--tempest', action="store_true", dest="tempest",
                     required=False, default=False,
                     help="Run tempest after installing openstack?")
-
-
 
 #Defaulted arguments
 parser.add_argument('--razor_ip', action="store", dest="razor_ip",
@@ -184,16 +184,21 @@ else:
 
     try:
         for b in build:
-            node = Node(b['name'])
-            node['in_use'] = b['in_use']
-            node.run_list = b['run_list']
-            node.save()
-            print "Running chef client for %s" % node
-            chef_client = rpcsqa.run_chef_client(node, num_times=2, log_level=args.log_level)
-            if not chef_client['success']:
-                print "chef-client run failed"
-                success = False
-                break
+            
+            if 'pre_commands' in b:
+                pass
+
+            if 'run_list' in b:                    
+                node = Node(b['name'])
+                node['in_use'] = b['in_use']
+                node.run_list = b['run_list']
+                node.save()
+                print "Running chef client for %s" % node
+                chef_client = rpcsqa.run_chef_client(node, num_times=2, log_level=args.log_level)
+                if not chef_client['success']:
+                    print "chef-client run failed"
+                    success = False
+                    break
 
             if 'post_commands' in b:
                 print "#" * 70

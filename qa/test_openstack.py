@@ -34,4 +34,4 @@ else:
     controller.save()
 
     print "Running chef-client"
-    chef_client = qa.run_chef_client(controller, num_times=1, log_level=args.log_level))
+    chef_client = qa.run_chef_client(controller, num_times=1, log_level=args.log_level)

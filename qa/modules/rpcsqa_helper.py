@@ -41,7 +41,7 @@ class rpcsqa_helper:
             if feature in environments.__dict__:
                 env_json['override_attributes'].update(environments.__dict__[feature])
         chef_env.override_attributes.update(env_json['override_attributes'])
-        chef_env['package_component'] = branch
+        chef_env.override_attributes['package_component'] = branch
         chef_env.save()
         return env
 
