@@ -2,6 +2,8 @@
 import argparse
 from modules.rpcsqa_helper import *
 
+
+
 print "Starting up..."
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
@@ -184,16 +186,21 @@ else:
 
     try:
         for b in build:
-            node = Node(b['name'])
-            node['in_use'] = b['in_use']
-            node.run_list = b['run_list']
-            node.save()
-            print "Running chef client for %s" % node
-            chef_client = rpcsqa.run_chef_client(node, num_times=2, log_level=args.log_level)
-            if not chef_client['success']:
-                print "chef-client run failed"
-                success = False
-                break
+            
+            if 'pre_commands' in b:
+                pass
+
+            if 'run_list' in b:                    
+                node = Node(b['name'])
+                node['in_use'] = b['in_use']
+                node.run_list = b['run_list']
+                node.save()
+                print "Running chef client for %s" % node
+                chef_client = rpcsqa.run_chef_client(node, num_times=2, log_level=args.log_level)
+                if not chef_client['success']:
+                    print "chef-client run failed"
+                    success = False
+                    break
 
             if 'post_commands' in b:
                 print "#" * 70
