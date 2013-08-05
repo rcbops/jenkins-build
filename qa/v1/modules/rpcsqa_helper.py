@@ -365,8 +365,9 @@ class rpcsqa_helper:
         """
         # Set the node in use on Razor/Chef server
         chef_node = Node(swift_node, api=self.chef)
-        chef_node['in_use'] = 'swift-{0}'.format(swift_role)
-        chef_node.run_list = ['role[swift-{0}'.format(swift_role)]
+        chef_node['in_use'] = '{0}'.format(swift_role)
+        # This can only be run on a remote chef where the cookbooks are properly set up
+        #chef_node.run_list = ['role[{0}]'.format(swift_role)]
         chef_node.save()
 
         # If remote is set, then use the remote chef

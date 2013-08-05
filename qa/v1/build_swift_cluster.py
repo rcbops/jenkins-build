@@ -34,7 +34,7 @@ parser.add_argument('--action', action="store", dest="action",
                     help="Action to do for Open Stack (build/destroy/add)")
 
 parser.add_argument('--remote_chef', action="store_true", dest="remote_chef",
-                    required=False, default=False,
+                    required=False, default=True,
                     help="Build a new chef server for this deploy")
 
 #Defaulted arguments
