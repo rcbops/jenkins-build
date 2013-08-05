@@ -365,8 +365,9 @@ class rpcsqa_helper:
         """
         # Set the node in use on Razor/Chef server
         chef_node = Node(swift_node, api=self.chef)
-        chef_node['in_use'] = 'swift-{0}'.format(swift_role)
-        chef_node.run_list = ['role[swift-{0}'.format(swift_role)]
+        chef_node['in_use'] = '{0}'.format(swift_role)
+        # This can only be run on a remote chef where the cookbooks are properly set up
+        #chef_node.run_list = ['role[{0}]'.format(swift_role)]
         chef_node.save()
 
         # If remote is set, then use the remote chef
@@ -572,7 +573,7 @@ class rpcsqa_helper:
     def get_node_ip(self, server):
 
         # Gather node ip
-        node = Node(server, api=self.api)
+        node = Node(server, api=self.chef)
         node_ip = node['ipaddress']
 
         return node_ip
@@ -757,7 +758,7 @@ class rpcsqa_helper:
                 sys.exit(1)
 
     def install_ruby_gem(self, server, gem):
-        server_node = Node(server, api=self.api)
+        server_node = Node(server, api=self.chef)
         server_ip = server_node['ipaddress']
         server_password = self.razor_password(server_node)
 
