@@ -757,6 +757,9 @@ class rpcsqa_helper:
                 print run_cmd
                 sys.exit(1)
 
+        # update after install
+        self.update_node(server_node)
+
     def install_ruby_gem(self, server, gem):
         server_node = Node(server, api=self.chef)
         server_ip = server_node['ipaddress']
