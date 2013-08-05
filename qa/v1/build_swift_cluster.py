@@ -99,6 +99,12 @@ cookbooks = [
     }
 ]
 
+swift_roles = {
+    "controller": "spc-starter-controller",
+    "proxy": "spc-starter-proxy",
+    "storage": "spc-starter-storage"
+}
+
 # Get the IP of the proxy server and load it into environment
 keystone_ip = rpcsqa.get_node_ip(keystone_server)
 keystone = {
@@ -151,7 +157,7 @@ config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 ###################################################################
 
 # Make keystone server
-rpcsqa.set_node_in_use(keystone_server, 'swift-keystone')
+rpcsqa.set_node_in_use(keystone_server, swift_roles['controller'])
 
 # Need to prep centos boxes
 if results.os_distro == 'centos':
@@ -163,7 +169,7 @@ rpcsqa.bootstrap_chef(keystone_server, chef_server)
 
 # Build Swift Keystone Node
 rpcsqa.build_swift_node(keystone_server,
-                        'swift-keystone',
+                        swift_roles['controller'],
                         env,
                         remote=results.remove_chef,
                         chef_config_file=chef_config_file)
@@ -172,7 +178,44 @@ rpcsqa.build_swift_node(keystone_server,
 # Build Swift Proxy
 ###################################################################
 
+# Make Swift Proxy Node
+rpcsqa.set_node_in_use(swift_proxy, swift_roles['proxy'])
+
+# Need to prep centos boxes
+if results.os_distro == 'centos':
+    rpcsqa.prepare_server(swift_proxy)
+
+# Remove Razor/Chef and bootstrap to new chef server
+rpcsqa.remove_chef(swift_proxy)
+rpcsqa.bootstrap_chef(swift_proxy, chef_server)
+
+# Build Swift Proxy Node
+rpcsqa.build_swift_node(swift_proxy,
+                        swift_roles['proxy'],
+                        env,
+                        remote=results.remote_chef,
+                        chef_config_file=config_file)
+
 ###################################################################
-# Build Swift Object Storage
+# Build Swift Object Storage Boxes
 ###################################################################
 
+for node in swift_nodes:
+
+    # Make Swift Proxy Node
+    rpcsqa.set_node_in_use(node, swift_roles['storage'])
+
+    # Need to prep centos boxes
+    if results.os_distro == 'centos':
+        rpcsqa.prepare_server(node)
+
+    # Remove Razor/Chef and bootstrap to new chef server
+    rpcsqa.remove_chef(node)
+    rpcsqa.bootstrap_chef(node, chef_server)
+
+    # Build Swift Proxy Node
+    rpcsqa.build_swift_node(node,
+                            swift_roles['storage'],
+                            env,
+                            remote=results.remote_chef,
+                            chef_config_file=config_file)
