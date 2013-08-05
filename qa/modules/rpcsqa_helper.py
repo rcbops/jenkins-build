@@ -34,12 +34,14 @@ class rpcsqa_helper:
         if not chef_env.exists:
             print "Making environment: %s " % env
             chef_env.create(env, api=self.chef)
+
         env_json = chef_env.to_dict()
         env_json['override_attributes'].update(environments.base_env['override_attributes'])
         for feature in features:
             if feature in environments.__dict__:
                 env_json['override_attributes'].update(environments.__dict__[feature])
         chef_env.override_attributes.update(env_json['override_attributes'])
+        chef_env['package_component'] = branch
         chef_env.save()
         return env
 
