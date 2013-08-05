@@ -25,8 +25,9 @@ else:
 
     print "Adding tempest to controller run_list"
     if 'recipe[tempest]' not in controller.run_list:
-        controller.run_list.append(['recipe[tempest]'])
+        controller.run_list.append('recipe[tempest]')
+    print controller.run_list
     controller.save()
 
     print "Running chef-client"
-    chef_client = qa.run_chef_client(controller, num_times=2)
+    chef_client = qa.run_chef_client(controller, num_times=1, log_level='info')

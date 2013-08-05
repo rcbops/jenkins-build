@@ -6,7 +6,7 @@ print "Starting up..."
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', action="store", dest="name", required=False,
-                    default="test",
+                    default="autotest",
                     help="Name for the Open Stack chef environment")
 
 parser.add_argument('--vm', action="store_true", dest="vm",
@@ -217,6 +217,7 @@ else:
 
 if success:
     print "Welcome to the cloud..."
+    print env
     print "Your cloud:   %s" % json.dumps(build, indent=4,  default=lambda o: o.__name__)
     print "#" * 70
 else:
