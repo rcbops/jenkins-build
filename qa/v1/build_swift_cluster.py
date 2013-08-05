@@ -155,10 +155,8 @@ if results.action == "build":
     # Build Chef Server
     rpcsqa.build_chef_server(chef_server)
 
-    # Install Berkshelf (ruby, gem, berkshelf)
-    packages = ["ruby1.9.3", "rubygems"]
-    rpcsqa.install_packages(chef_server, packages)
-    rpcsqa.install_ruby_gem(chef_server, 'berkshelf')
+    # Install Berkshelf , This is a convoluded mess, thanks ruby
+    rpcsqa.install_berkshelf(chef_server)
 
     # Install the proper cookbooks
     for cookbook in cookbooks:

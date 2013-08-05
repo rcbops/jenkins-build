@@ -570,13 +570,44 @@ class rpcsqa_helper:
 
         return ret_nodes
 
+    def get_server_info(self, server):
+
+        # Gather node info
+        node = Node(server, api=self.chef)
+        return {'node': node,
+                'ip': node['ipaddress'], 
+                'password': self.razor_password(node),
+                'platform': node['platform']}
+
     def get_node_ip(self, server):
 
-        # Gather node ip
-        node = Node(server, api=self.chef)
-        node_ip = node['ipaddress']
+        return self.get_server_info(server)['ip']
 
-        return node_ip
+    def install_berkshelf(self, server):
+        """
+        This is needed cause berkshelf is a bia to get up and running
+        """
+
+        # Gather node info
+        server_info = self.gather_server_info(server)
+
+        # Install needed server packages for berkshelf
+        packages = ['libxml2-dev', 'libxslt-dev', 'libz-dev']
+        rvm_install = "curl -L https://get.rvm.io | bash -s stable --ruby --autolibs=enable --auto-dotfiles"
+        ruby_versions = ['1.8.7', '1.9.3']
+        gems = ['berkshelf', 'chef']
+
+        # Install OS packages
+        self.install_packages(server_info, packages)
+
+        # Install RVM
+        self.run_cmd_on_node(server_info['node'], rvm_install)
+
+        # Install RVM Ruby Versions
+        self.install_rvm_versions(server_info, ruby_versions)
+
+        # Install Ruby Gems
+        self.install_ruby_gems(server_info, gems)
 
     def install_cookbooks(self, chef_server, cookbooks, local_repo='/opt/rcbops'):
         '''
@@ -732,47 +763,54 @@ class rpcsqa_helper:
 
     def install_package(self, server, package):
 
-        # Gather node info
-        server_node = Node(server, api=self.chef)
-        server_ip = server_node['ipaddress']
-        server_password = self.razor_password(server_node)
-        server_platform = server_node['platform']
-
         # Install package
-        if server_platform == 'ubuntu':
+        if server['platform'] == 'ubuntu':
             to_run_list = ['apt-get install -y {0}'.format(package)]
-        elif server_platform == 'centos' or server_platform == 'redhat':
+        elif server['platform'] == 'centos' or server['platform'] == 'redhat':
             to_run_list = ['yum install -y {0}'.format(package)]
         else:
-            print "Platform %s not supported" % server_platform
+            print "Platform %s not supported" % server['platform']
             sys.exit(1)
 
         for cmd in to_run_list:
-            run_cmd = run_remote_ssh_cmd(server_ip,
+            run_cmd = run_remote_ssh_cmd(server['ip'],
                                          'root',
-                                         server_password,
+                                         server['password'],
                                          cmd)
             if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, server)
+                print "Command: %s failed to run on %s" % (cmd, server['node'])
                 print run_cmd
                 sys.exit(1)
 
         # update after install
-        self.update_node(server_node)
+        self.update_node(server['node'])
+
+    def install_ruby_gems(self, server, gems):
+
+        for gem in gems:
+            self.install_ruby_gem(server, gem)
 
     def install_ruby_gem(self, server, gem):
-        server_node = Node(server, api=self.chef)
-        server_ip = server_node['ipaddress']
-        server_password = self.razor_password(server_node)
 
         cmd = 'gem install {0}'.format(gem)
 
-        run_cmd = run_remote_ssh_cmd(server_ip, 'root', server_password, cmd)
+        run_cmd = run_remote_ssh_cmd(server['ip'], 'root', server['password'], cmd)
 
         if not run_cmd['success']:
-            print "Command: {0} failed to run on {1}".format(cmd, server)
+            print "Command: {0} failed to run on {1}".format(cmd, server['node'])
             print run_cmd
             sys.exit(1)
+
+    def install_rvm_versions(self, server, versions):
+
+        for version in versions:
+            self.install_rvm_version(server, version)
+
+    def install_rvm_version(self, server, version):
+
+        cmd = 'rvm install {0}'.format(version)
+
+        self.run_cmd_on_node(server['node'], cmd)
 
     def install_server_vms(self, server, opencenter_server_ip,
                            chef_server_ip, vm_bridge, vm_bridge_device):
