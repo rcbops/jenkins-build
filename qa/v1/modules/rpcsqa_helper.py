@@ -573,7 +573,7 @@ class rpcsqa_helper:
     def get_node_ip(self, server):
 
         # Gather node ip
-        node = Node(server, api=self.api)
+        node = Node(server, api=self.chef)
         node_ip = node['ipaddress']
 
         return node_ip
@@ -758,7 +758,7 @@ class rpcsqa_helper:
                 sys.exit(1)
 
     def install_ruby_gem(self, server, gem):
-        server_node = Node(server, api=self.api)
+        server_node = Node(server, api=self.chef)
         server_ip = server_node['ipaddress']
         server_password = self.razor_password(server_node)
 
