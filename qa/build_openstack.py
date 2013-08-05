@@ -55,16 +55,14 @@ parser.add_argument('--remote_chef', action="store_true", dest="remote_chef",
                     required=False, default=False,
                     help="Build a new chef server for this deploy")
 
-parser.add_argument('--log_level', action="store", dest="log_level", 
-                            default="error", required=False,
-                            help="Log level for chef client runs.")
+parser.add_argument('--log_level', action="store", dest="log_level",
+                    default="error", required=False,
+                    help="Log level for chef client runs.")
 
 #Testing
 parser.add_argument('--tempest', action="store_true", dest="tempest",
                     required=False, default=False,
                     help="Run tempest after installing openstack?")
-
-
 
 #Defaulted arguments
 parser.add_argument('--razor_ip', action="store", dest="razor_ip",
