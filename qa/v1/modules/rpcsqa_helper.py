@@ -1036,7 +1036,7 @@ class rpcsqa_helper:
         '''
 
         # Grab the environment to edit
-        chef_env = Environment(env, api=self.chef)
+        chef_env = Environment(environment, api=self.chef)
 
         # Check to see if the environment exists
         if not chef_env.exists:
