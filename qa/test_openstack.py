@@ -5,12 +5,16 @@ import sys
 
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
-parser.add_argument('--environment', action="store", dest="environment",
+parser.add_argument('--env', action="store", dest="environment",
                     required=False, default="autotest-precise-grizzly-openldap",
                     help="Name for the openstack chef environment")
 parser.add_argument('--razor_ip', action="store", dest="razor_ip",
                     default="198.101.133.3",
                     help="IP for the Razor server")
+
+parser.add_argument('--log_level', action="store", dest="log_level", 
+                            default="error", required=False,
+                            help="Log level for chef client runs.")
 
 args = parser.parse_args()
 
@@ -30,4 +34,4 @@ else:
     controller.save()
 
     print "Running chef-client"
-    chef_client = qa.run_chef_client(controller, num_times=1, log_level='info')
+    chef_client = qa.run_chef_client(controller, num_times=1, log_level=args.log_level))
