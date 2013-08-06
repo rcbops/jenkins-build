@@ -77,6 +77,22 @@ features = [x for x in feature_list if args.__dict__[x] is True]
 if features == []:
     features = ['default']
 
+def _run_commands(name, commands):
+    print "#" * 70
+    print "Running {0} chef-client commands....".format(name)
+    for command in commands:
+        print "Running:  %s" % command
+        #If its a string run on remote server
+        if isinstance(command, str):
+            rpcsqa.run_command_on_node(node, command)
+        if isinstance(command, dict):
+            func = command['function']
+            func(**command['kwargs'])
+            #elif function run the function
+        elif hasattr(command, '__call__'):
+            command()
+    print "#" * 70
+    
 # Setup the helper class ( Chef / Razor )
 rpcsqa = rpcsqa_helper()
 
@@ -226,18 +242,4 @@ if args.destroy:
 print "DONE!"
 
 
-def _run_commands(name, commands):
-    print "#" * 70
-    print "Running {0} chef-client commands....".format(name)
-    for command in commands:
-        print "Running:  %s" % command
-        #If its a string run on remote server
-        if isinstance(command, str):
-            rpcsqa.run_command_on_node(node, command)
-        if isinstance(command, dict):
-            func = command['function']
-            func(**command['kwargs'])
-            #elif function run the function
-        elif hasattr(command, '__call__'):
-            command()
-    print "#" * 70
+
