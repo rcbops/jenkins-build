@@ -361,7 +361,7 @@ class rpcsqa_helper:
 
         print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment, 
                                                                                          chef_server_node, 
-                                                                                         chef_server_node.['ipaddress'])
+                                                                                         chef_server_node['ipaddress'])
 
 
 
