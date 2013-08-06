@@ -145,7 +145,7 @@ else:
         if args.remote_chef:
             build.append({'name': nodes.pop(),
                           'in_use': 'chef_server',
-                          'pre_commands': [{'function': 'set_remote_chef_client', 'kwargs': {'env': env}}])
+                          'pre_commands': [{'function': 'set_remote_chef_client', 'kwargs': {'env': env}}]})
 
         if args.quantum:
             build.append({'name': nodes.pop(),
