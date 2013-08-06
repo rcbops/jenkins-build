@@ -28,8 +28,8 @@ class rpcsqa_helper:
         return outl
 
     def prepare_environment(self, name, os_distro, branch, features):
-        # If the environment doesnt exist in chef, make it.
-        env = "%s-%s-%s-%s" % (name, os_distro, branch, "-".join(features))
+        """ If the environment doesnt exist in chef, make it. """
+        envp = "%s-%s-%s-%s" % (name, os_distro, branch, "-".join(features))
         chef_env = Environment(env, api=self.chef)
         if not chef_env.exists:
             print "Making environment: %s " % env
@@ -49,17 +49,15 @@ class rpcsqa_helper:
         Environment(chef_environment, api=self.chef).delete()
 
     def cleanup_environment(self, chef_environment):
-        nodes = Search('node', api=self.chef).query("chef_environment:%s" % chef_environment)
-        if nodes:
-            for n in nodes:
-                name = n['name']
-                node = Node(name, api=self.chef)
-                if node['in_use'] != 0:
-                    self.erase_node(node)
-                else:
-                    node.chef_environment = "_default"
-                    node.save()
-            #Environment(chef_environment).delete()
+        """ Rekick nodes previously in use and reuse clean nodes. """
+        query = "chef_environment:%s" % chef_environment
+        nodes = self.node_search(query)
+        for n in nodes:
+            if n['in_use'] != 0:
+                self.erase_node(n)
+            else:
+                n.chef_environment = "_default"
+                n.save()
 
     def run_command_on_node(self, chef_node, command='', num_times=1, quiet=False):
         runs = []
@@ -77,18 +75,17 @@ class rpcsqa_helper:
         # log level can be (debug, info, warn, error, fatal)
         return self.run_command_on_node(chef_node, 'chef-client -l %s' % log_level, num_times, quiet)
 
-
     def interface_physical_nodes(self, os):
         #Make sure all network interfacing is set
-        for node in Search('node', api=self.chef).query("name:*%s*" % os):
-            chef_node = Node(node['name'], api=self.chef)
-            if "role[qa-base]" in chef_node.run_list:
-                chef_node.run_list = ["recipe[network-interfaces]"]
-                chef_node['in_use'] = 0
-                chef_node.save()
-                print "Running network interfaces for %s" % chef_node
+        query = "name:*%s*" % os
+        for node in self.node_search(query):
+            if "role[qa-base]" in node.run_list:
+                node.run_list = ["recipe[network-interfaces]"]
+                node['in_use'] = 0
+                node.save()
+                print "Running network interfaces for %s" % node
                 #Run chef client thrice
-                run_chef_client = self.run_chef_client(chef_node, num_times=3, quiet=True)
+                run_chef_client = self.run_chef_client(node, num_times=3, quiet=True)
                 if run_chef_client['success']:
                     print "Done running chef-client"
                 else:
@@ -98,18 +95,18 @@ class rpcsqa_helper:
     def gather_razor_nodes(self, os, environment, cluster_size):
         ret_nodes = []
         count = 0
-        nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os)
+        query = "name:qa-%s-pool*" % os
+        nodes = self.node_search(query)
         # Take a node from the default environment that has its network interfaces set.
-        for n in nodes:
-            name = n['name']
-            node = Node(name, api=self.chef)
-            if ((node.chef_environment == "_default" or node.chef_environment == environment)
+        for node in nodes:
+            if ((node.chef_environment == "_default" or
+                 node.chef_environment == environment)
                     and "recipe[network-interfaces]" in node.run_list):
                 if node.chef_environment != environment:
                     node.chef_environment = environment
                     node.save()
-                ret_nodes.append(name)
-                print "Taking node: %s" % name
+                ret_nodes.append(node.name)
+                print "Taking node: %s" % name.name
                 count += 1
                 if count >= cluster_size:
                     break
@@ -149,16 +146,16 @@ class rpcsqa_helper:
 
     def update_openldap_environment(self, env):
         chef_env = Environment(env, api=self.chef)
-        ldap_query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
+        query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
         num_try = 0
-        ldap_name = [n['name'] for n in Search('node', api=self.chef).query(ldap_query)]
+        ldap_name = node_search(query)
         while num_try <= 10 and not ldap_name:
             num_try = num_try + 1
             print "Couldn't find openldap server....waiting 5 seconds retry (%s / 10) " % num_try
             time.sleep(5)
-            ldap_name = [n['name'] for n in Search('node', api=self.chef).query(ldap_query)]
+            ldap_name = node_search(query)
         if ldap_name:
-            ldap_ip = Node(ldap_name[0], api=self.chef)['ipaddress']
+            ldap_ip = ldap_name[0]['ipaddress']
             chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ldap_ip
             chef_env.override_attributes['keystone']['ldap']['password'] = 'ostackdemo'
             chef_env.save()
@@ -166,16 +163,14 @@ class rpcsqa_helper:
         else:
             raise Exception("Couldn't find ldap server: %s" % ldap_name)
 
-
     def get_environment_nodes(self, environment='', api=None):
         """Returns all the nodes of an environment"""
         api = api or self.chef
-        search = Search("node", api=api).query("chef_environment:%s" % environment)
-        return (Node(n['name'], api=api) for n in search)
+        query = "chef_environment:%s" % environment
+        return self.node_search(query, api)
         
     def find_controller(self, environment):
         pass
-
 
     def razor_password(self, chef_node):
         chef_node = Node(chef_node.name, api=self.chef)
@@ -183,19 +178,17 @@ class rpcsqa_helper:
         uuid = metadata['razor_active_model_uuid']
         return self.razor.get_active_model_pass(uuid)['password']
 
-    def set_remote_chef_client(self, env):
+    def remote_chef_client(self, env):
         # RSAifying key
         remote_dict = env.override_attributes['remote_chef']
         pem = StringIO.StringIO(remote_dict['key'])
         remote_dict['key'] = rsa.Key(pem)
-        self.chef = ChefAPI(**remote_dict)
+        return ChefAPI(**remote_dict)
 
-    def remove_chef(self, server):
+    def remove_chef(self, chef_node):
         """
         @param chef_node
         """
-        chef_node = Node(server, api=self.chef)
-
         print "removing chef on %s..." % chef_node
         if chef_node['platform_family'] == "debian":
             command = "apt-get remove --purge -y chef; rm -rf /etc/chef"
@@ -204,7 +197,7 @@ class rpcsqa_helper:
         else:
             print "OS Distro not supported"
             sys.exit(1)
-        
+
         run = self.run_command_on_node(self, chef_node, command)
         if run['success']:
             print "Removed Chef on %s" % server
@@ -212,26 +205,20 @@ class rpcsqa_helper:
             print "Failed to remove chef on server %s" % server
             sys.exit(1)
 
-    def build_chef_server(self, chef_server_node):
+    def build_chef_server(self, chef_server_node, cookbooks=None, env=None):
         '''
         This will build a chef server using the rcbops script and install git
         '''
+        self.remove_chef(chef_server_node)
 
-        # Load controller node
-        chef_node = Node(chef_server_node, api=self.chef)
         install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
 
-
-        ##TODO: CAMERON
-
-        #update node
-        self.update_node(chef_node)
+        # #update node
+        # self.update_node(chef_server_node)
 
         # SCP install script to chef_server node
-        scp_run = run_remote_scp_cmd(chef_server_ip,
-                                     'root',
-                                     chef_server_pass,
-                                     install_script)
+        scp_run = self.scp_to_node(chef_server_node, install_script)
+
         if scp_run['success']:
             print "Successfully copied chef server install script to chef_server node %s" % chef_server_node
         else:
@@ -240,28 +227,158 @@ class rpcsqa_helper:
             sys.exit(1)
 
         # Run the install script
-        to_run_list = ['chmod u+x ~/install-chef-server.sh',
-                       './install-chef-server.sh']
-        for cmd in to_run_list:
-            ssh_run = run_remote_ssh_cmd(chef_server_ip,
-                                         'root',
-                                         chef_server_pass,
-                                         cmd)
+        cmds = ['chmod u+x ~/install-chef-server.sh',
+                './install-chef-server.sh']
+        for cmd in cmds:
+            ssh_run = self.run_command_on_node(chef_server_node,
+                                               command=cmd)
             if ssh_run['success']:
-                print "command: %s ran successfully on %s" % (cmd,
-                                                              chef_server_node)
+                print "command: %s ran successfully on %s" % (cmd, chef_server_node.name)
 
         self.install_git(chef_server_node)
+        self.install_cookbooks(chef_server_node, cookbooks)
+        if env:
+            self.setup_remote_chef_environment(chef_server_node, env)
 
-    def update_node(self, chef_node):
-        ip = chef_node['ipaddress']
-        user_pass = self.razor_password(chef_node)
-        if chef_node['platform_family'] == "debian":
-            run_remote_ssh_cmd(ip, 'root', user_pass,
-                               'apt-get update -y; apt-get upgrade -y')
-        elif chef_node['platform_family'] == "rhel":
-            run_remote_ssh_cmd(ip, 'root', user_pass, 'yum update -y')
+    def install_git(self, chef_server_node):
+        # This needs to be taken out and install_package used instead (jwagner)
+        # Gather node info
+        chef_server_platform = chef_server_node['platform']
+
+        # Install git and clone the other cookbook
+        if chef_server_platform == 'ubuntu':
+            to_run_list = ['apt-get install git -y']
+        elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
+            to_run_list = ['yum install git -y']
         else:
-            print "Platform Family %s is not supported." \
-                % chef_node['platform_family']
+            print "Platform %s not supported" % chef_server_platform
             sys.exit(1)
+
+        for cmd in to_run_list:
+            run_cmd = run_command_on_node(chef_server_node, cmd)
+            if not run_cmd['success']:
+                print "Command: %s failed to run on %s" % (cmd, chef_server_node.name)
+                print run_cmd
+                sys.exit(1)
+
+    def node_search(self, query=None, api=None):
+        api = api or self.chef
+        search = Search("node", api=api).query(query)
+        return (Node(n['name'], api=api) for n in search)
+
+    # Make these use run_command_on_node
+    def scp_from_node(self, node=None, path=None, destination=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        return get_file_from_server(ip, user, password, path, destination)
+
+    def scp_to_node(self, node=None, path=None):
+        user = "root"
+        password = self.razor_password(node)
+        ip = node['ipaddress']
+        return run_remote_scp_cmd(ip, user, password, path)
+
+    def install_cookbooks(self, chef_server_node, cookbooks, local_repo='/opt/rcbops'):
+        '''
+        @summary: This will pull the cookbooks down for git that you pass in cookbooks
+        @param chef_server: The node that the chef server is installed on
+        @type chef_server: String
+        @param cookbooks A List of cookbook repos in dict form {url: 'asdf', branch: 'asdf'}
+        @type cookbooks dict
+        @param local_repo The location to place the cookbooks i.e. '/opt/rcbops'
+        @type String
+        '''
+
+        # Make directory that the cookbooks will live in
+        command = 'mkdir -p {0}'.format(local_repo)
+        run_cmd = run_command_on_node(chef_server_node, command)
+        if not run_cmd['success']:
+            print "Command: %s failed to run on %s" % (cmd, chef_server_node.name)
+            print run_cmd
+            sys.exit(1)
+
+        for cookbook in cookbooks:
+            self.install_cookbook(chef_server_node, cookbook, local_repo)
+
+    def install_cookbook(self, chef_server, cookbook, local_repo):
+        # clone to cookbook
+        cmds = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], cookbook['branch'])]
+
+        # if a tag was sent in, use the tagged cookbooks
+        if cookbook['tag'] is not None:
+            cmds.append('cd /opt/rcbops/chef-cookbooks; git checkout v%s' % cookbook['tag'])
+        else:
+            cmds.append('cd /opt/rcbops/chef-cookbooks; git checkout %s' % cookbook['branch'])
+
+        # Since we are installing from git, the urls are pretty much constant
+        # Pulling the url apart to get the name of the cookbooks
+        cookbook_name = cookbook['url'].split("/")[-1].split(".")[0]
+
+        # Stupid logic to see if the repo name contains "cookbooks", if it does then
+        # we need to load from cookbooks repo, not the repo itself.
+        # I think this is stupid logic, there has to be a better way (jacob)
+        if 'cookbooks' in cookbook_name:
+             # add submodule stuff to list
+            cmds.append('cd /opt/rcbops/chef-cookbooks;'
+                        'git submodule init;'
+                        'git submodule sync;'
+                        'git submodule update')
+            cmds.append('knife cookbook upload --all --cookbook-path {0}/{1}/cookbooks'.format(local_repo, cookbook_name))
+        else:
+            cmds = ['knife cookbook upload --all --cookbook-path {0}/{1}'.format(local_repo, cookbook_name)]
+
+        # Append role load to run list
+        cmds.append('knife role from file {0}/{1}/roles/*.rb'.format(local_repo, cookbook_name))
+
+        for cmd in cmds:
+            run_cmd = run_command_on_node(chef_server_node, cmd)
+            if not run_cmd['success']:
+                print "Command: %s failed to run on %s" % (cmd, chef_server_node.name)
+                print run_cmd
+                sys.exit(1)
+
+    def setup_remote_chef_environment(self, chef_server_node, chef_environment):
+        """
+        @summary This will copy the environment file and set it on the remote
+        chef server.
+        """
+        environment_file = '/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/%s.json' % chef_environment
+        run_scp = self.scp_to_node(chef_server_node, environment_file)
+        if not run_scp['success']:
+            print "Failed to copy environment file to remote chef server"
+            print run_scp
+            sys.exit(1)
+
+        cmds = ['cp ~/%s.json /opt/rcbops/chef-cookbooks/environments' % chef_environment,
+                'knife environment from file /opt/rcbops/chef-cookbooks/environments/%s.json' % chef_environment]
+        for cmd in cmds:
+            run_cmd = self.run_command_on_node(chef_server_node, cmd)
+            if not run_cmd['success']:
+                print "Failed to run remote ssh command on server %s" % (chef_server_node.name)
+                print run_ssh
+                sys.exit(1)
+
+        print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment, 
+                                                                                         chef_server_node, 
+                                                                                         chef_server_node.['ipaddress'])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
