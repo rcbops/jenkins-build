@@ -2,8 +2,6 @@
 import argparse
 from modules.rpcsqa_helper import *
 
-
-
 print "Starting up..."
 # Parse arguments from the cmd line
 parser = argparse.ArgumentParser()
@@ -77,6 +75,7 @@ features = [x for x in feature_list if args.__dict__[x] is True]
 if features == []:
     features = ['default']
 
+
 def _run_commands(name, commands):
     print "#" * 70
     print "Running {0} chef-client commands....".format(name)
@@ -92,7 +91,7 @@ def _run_commands(name, commands):
         elif hasattr(command, '__call__'):
             command()
     print "#" * 70
-    
+
 # Setup the helper class ( Chef / Razor )
 rpcsqa = rpcsqa_helper()
 
@@ -146,9 +145,16 @@ if nodes is None:
     print "You have no nodes!"
     sys.exit(1)
 else:
-
+    # These builds would be nice as a class
     build = []
     try:
+
+        if args.remote_chef:
+            build.append({'name': nodes.pop(),
+                          'in_use': 'chef_server',
+                          'post_commands': [{'function': 'build_chef_server',
+                                            'kwargs': {'cookbooks': cookbooks,
+                                                       'env': env}}]})
 
         if args.openldap:
             build.append({'name': nodes.pop(),
@@ -157,11 +163,6 @@ else:
                           'post_commands': ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
                                             {'function': rpcsqa.update_openldap_environment, 'kwargs': {'env': env}}]
                           })
-
-        if args.remote_chef:
-            build.append({'name': nodes.pop(),
-                          'in_use': 'chef_server',
-                          'pre_commands': [{'function': 'set_remote_chef_client', 'kwargs': {'env': env}}]})
 
         if args.quantum:
             build.append({'name': nodes.pop(),
@@ -203,12 +204,12 @@ else:
         for b in build:
             node = Node(b['name'])
             node['in_use'] = b['in_use']
-            node.run_list = b['run_list']
             node.save()
-            if 'pre_commands' in b:
-                _run_commands("post", b['pre_commands'])
 
             if 'run_list' in b:
+                node = Node(node.name, api=rpcsqa.remote_chef_client(env) if args.remote_chef
+                node.run_list = b['run_list']
+                node.save()
                 print "Running chef client for %s" % node
                 chef_client = rpcsqa.run_chef_client(node, num_times=2, log_level=args.log_level)
                 if not chef_client['success']:
@@ -232,14 +233,9 @@ if success:
 else:
     print "Sorry....no cloud for you...."
 
-
-
 if args.destroy:
     print "Destroying your cloud now!!!"
     rpcsqa.cleanup_environment(env)
     rpcsqa.delete_environment(env)
 
 print "DONE!"
-
-
-
