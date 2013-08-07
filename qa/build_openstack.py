@@ -1,6 +1,6 @@
 #!/usr/bin/python
-import argparse
 import json
+import argparse
 from modules.rpcsqa_helper import *
 
 print "Starting up..."
