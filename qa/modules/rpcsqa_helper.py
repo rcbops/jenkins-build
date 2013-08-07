@@ -230,7 +230,7 @@ class rpcsqa_helper:
         for cmd in cmds:
             ssh_run = self.run_command_on_node(chef_node, cmd)
             if ssh_run['success']:
-                print "command: %s ran successfully on %s" % (cmd, chef_node.name)
+                print "command: %s ran successfully on %s" % (cmd, chef_node)
 
         self.install_git(chef_node)
         self.install_cookbooks(chef_node, cookbooks)
@@ -240,21 +240,21 @@ class rpcsqa_helper:
     def install_git(self, chef_node):
         # This needs to be taken out and install_package used instead (jwagner)
         # Gather node info
-        chef_server_platform = chef_node['platform']
+        platform = chef_node['platform']
 
         # Install git and clone the other cookbook
-        if chef_server_platform == 'ubuntu':
-            to_run_list = ['apt-get install git -y']
-        elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
-            to_run_list = ['yum install git -y']
+        if platform == 'ubuntu':
+            cmds = ['apt-get install git -y']
+        elif platform == 'centos' or platform == 'redhat':
+            cmds = ['yum install git -y']
         else:
-            print "Platform %s not supported" % chef_server_platform
+            print "Platform %s not supported" % platform
             sys.exit(1)
 
-        for cmd in to_run_list:
+        for cmd in cmds:
             run_cmd = self.run_command_on_node(chef_node, cmd)
             if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, chef_node.name)
+                print "Command: %s failed to run on %s" % (cmd, chef_node)
                 print run_cmd
                 sys.exit(1)
 
@@ -295,7 +295,7 @@ class rpcsqa_helper:
         command = 'mkdir -p {0}'.format(local_repo)
         run_cmd = self.run_command_on_node(chef_node, command)
         if not run_cmd['success']:
-            print "Command: %s failed to run on %s" % (cmd, chef_node.name)
+            print "Command: %s failed to run on %s" % (cmd, chef_node)
             print run_cmd
             sys.exit(1)
 
@@ -331,7 +331,7 @@ class rpcsqa_helper:
         for cmd in cmds:
             run_cmd = self.run_command_on_node(chef_node, cmd)
             if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, chef_node.name)
+                print "Command: %s failed to run on %s" % (cmd, chef_node)
                 print run_cmd
                 sys.exit(1)
 
@@ -352,7 +352,7 @@ class rpcsqa_helper:
         for cmd in cmds:
             run_cmd = self.run_command_on_node(chef_node, cmd)
             if not run_cmd['success']:
-                print "Failed to run remote ssh command on server %s" % (chef_node.name)
+                print "Failed to run remote ssh command on server %s" % (chef_node)
                 print run_ssh
                 sys.exit(1)
 
