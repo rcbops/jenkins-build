@@ -59,7 +59,7 @@ class rpcsqa_helper:
                 n.chef_environment = "_default"
                 n.save()
 
-    def run_command_on_node(self, chef_node, command='', num_times=1, quiet=False):
+    def run_command_on_node(self, chef_node, command, num_times=1, quiet=False):
         runs = []
         success = True
         for i in xrange(0, num_times):
@@ -203,13 +203,12 @@ class rpcsqa_helper:
         '''
         This will build a chef server using the rcbops script and install git
         '''
-        print "HI"
+
         if not chef_server_node:
             query = "chef_environment:%s AND in_use:chef_server" % env
             print query
             print list(self.node_search(query))
             chef_server_node = next(self.node_search(query, tries=10))
-        print "HI2"
         self.remove_chef(chef_server_node)
         print "HI3"
         install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
@@ -264,10 +263,8 @@ class rpcsqa_helper:
 
     def node_search(self, query=None, api=None, tries=1):
         api = api or self.chef
-        print vars(api)
         search = None
         while not search and tries > 0:
-            print "Searching for: %s" % query
             search = Search("node", api=api).query(query)
             time.sleep(10)
             tries = tries - 1
