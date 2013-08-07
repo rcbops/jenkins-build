@@ -197,7 +197,7 @@ class rpcsqa_helper:
             print "Failed to remove chef on %s" % chef_node
             sys.exit(1)
 
-    def build_chef_server(self, chef_node=None, cookbooks=None, env=None):
+    def build_chef_server(self, chef_node, cookbooks=None, env=None):
         '''
         This will build a chef server using the rcbops script and install git
         '''
@@ -208,7 +208,7 @@ class rpcsqa_helper:
             print list(self.node_search(query))
             chef_node = next(self.node_search(query, tries=10))
         self.remove_chef(chef_node)
-        print "HI3"
+
         install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
 
         # #update node
@@ -238,6 +238,7 @@ class rpcsqa_helper:
             self.setup_remote_chef_environment(chef_node, env)
 
     def install_git(self, chef_node):
+        print "BEGIN GIT"
         # This needs to be taken out and install_package used instead (jwagner)
         # Gather node info
         platform = chef_node['platform']
@@ -252,11 +253,13 @@ class rpcsqa_helper:
             sys.exit(1)
 
         for cmd in cmds:
+            print "CMD" * 10
             run_cmd = self.run_command_on_node(chef_node, cmd)
             if not run_cmd['success']:
                 print "Command: %s failed to run on %s" % (cmd, chef_node)
                 print run_cmd
                 sys.exit(1)
+        print "END GIT"
 
     def node_search(self, query=None, api=None, tries=1):
         api = api or self.chef
