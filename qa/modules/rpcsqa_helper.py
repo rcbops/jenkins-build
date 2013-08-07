@@ -268,7 +268,7 @@ class rpcsqa_helper:
     def node_search(self, query=None, api=None):
         api = api or self.chef
         search = Search("node", api=api).query(query)
-        return (Node(n.name, api=api) for n in search)
+        return (Node(n, api=api) for n in search)
 
     # Make these use run_command_on_node
     def scp_from_node(self, node=None, path=None, destination=None):
