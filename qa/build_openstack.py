@@ -159,7 +159,7 @@ else:
         if args.remote_chef:
             build.append({'name': nodes.pop(),
                           'in_use': 'chef_server',
-                          'post_commands': [{'function': 'build_chef_server',
+                          'post_commands': [{'function': build_chef_server,
                                             'kwargs': {'cookbooks': cookbooks,
                                                        'env': env}}]})
 
