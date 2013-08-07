@@ -230,8 +230,7 @@ class rpcsqa_helper:
         cmds = ['chmod u+x ~/install-chef-server.sh',
                 './install-chef-server.sh']
         for cmd in cmds:
-            ssh_run = self.run_command_on_node(chef_server_node,
-                                               command=cmd)
+            ssh_run = self.run_command_on_node(chef_server_node, cmd)
             if ssh_run['success']:
                 print "command: %s ran successfully on %s" % (cmd, chef_server_node.name)
 
