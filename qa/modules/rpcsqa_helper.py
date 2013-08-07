@@ -209,12 +209,13 @@ class rpcsqa_helper:
         '''
         This will build a chef server using the rcbops script and install git
         '''
-
+        print "HI"
         if not chef_server_node:
             query = "chef_environment:{0} AND in_use:chef_server".format(env)
             chef_server_node = next(self.node_search(query))
+        print "HI2"
         self.remove_chef(chef_server_node)
-
+        print "HI3"
         install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
 
         # #update node
