@@ -62,7 +62,7 @@ class rpcsqa_helper:
     def run_command_on_node(self, chef_node, command='', num_times=1, quiet=False):
         runs = []
         success = True
-        for i in range(0, num_times):
+        for i in xrange(0, num_times):
             ip = chef_node['ipaddress']
             user_pass = self.razor_password(chef_node)
             run = run_remote_ssh_cmd(ip, 'root', user_pass, command, quiet)
@@ -205,7 +205,7 @@ class rpcsqa_helper:
         '''
         print "HI"
         if not chef_server_node:
-            query = "chef_environment:{0} AND in_use:chef_server".format(env)
+            query = "chef_environment:%s AND in_use:chef_server" % env
             print query
             print list(self.node_search(query))
             chef_server_node = next(self.node_search(query, tries=10))
@@ -266,9 +266,11 @@ class rpcsqa_helper:
         api = api or self.chef
         print vars(api)
         for i in xrange(tries):
+            print "Searching for: %s" % query
             search = Search("node", api=api).query(query)
             if search:
                 break
+            print "Waiting..."
             time.sleep(100)
         if not search:
             print "Error: Empty query result for: {0}".format(query)
