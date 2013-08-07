@@ -207,7 +207,7 @@ else:
             node.save()
 
             if 'run_list' in b:
-                node = Node(node.name, api=rpcsqa.remote_chef_client(env)) if args.remote_chef
+                node = Node(node.name, api=rpcsqa.remote_chef_client(env)) if args.remote_chef else node
                 node.run_list = b['run_list']
                 node.save()
                 print "Running chef client for %s" % node
