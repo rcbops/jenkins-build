@@ -309,11 +309,7 @@ class rpcsqa_helper:
         # clone to cookbook
         cmds = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], cookbook['branch'])]
 
-        # if a tag was sent in, use the tagged cookbooks
-        if cookbook['tag'] is not None:
-            cmds.append('cd /opt/rcbops/chef-cookbooks; git checkout v%s' % cookbook['tag'])
-        else:
-            cmds.append('cd /opt/rcbops/chef-cookbooks; git checkout %s' % cookbook['branch'])
+        cmds.append('cd /opt/rcbops/chef-cookbooks; git checkout %s' % cookbook['branch'])
 
         # Since we are installing from git, the urls are pretty much constant
         # Pulling the url apart to get the name of the cookbooks
