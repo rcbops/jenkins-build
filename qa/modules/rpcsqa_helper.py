@@ -147,13 +147,7 @@ class rpcsqa_helper:
     def update_openldap_environment(self, env):
         chef_env = Environment(env, api=self.chef)
         query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
-        num_try = 0
-        ldap_name = node_search(query)
-        while num_try <= 10 and not ldap_name:
-            num_try = num_try + 1
-            print "Couldn't find openldap server....waiting 5 seconds retry (%s / 10) " % num_try
-            time.sleep(5)
-            ldap_name = self.node_search(query)
+        ldap_name = node_search(query, tries=10)
         if ldap_name:
             ldap_ip = ldap_name[0]['ipaddress']
             chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ldap_ip
@@ -214,7 +208,7 @@ class rpcsqa_helper:
             query = "chef_environment:{0} AND in_use:chef_server".format(env)
             print query
             print list(self.node_search(query))
-            chef_server_node = next(self.node_search(query))
+            chef_server_node = next(self.node_search(query, tries=10))
         print "HI2"
         self.remove_chef(chef_server_node)
         print "HI3"
@@ -268,9 +262,15 @@ class rpcsqa_helper:
                 print run_cmd
                 sys.exit(1)
 
-    def node_search(self, query=None, api=None):
+    def node_search(self, query=None, api=None, tries=1):
         api = api or self.chef
-        search = Search("node", api=api).query(query)
+        for i in xrange(tries):
+            search = Search("node", api=api).query(query)
+            if search:
+                break
+            time.sleep(100)
+        if not search:
+            print "Error: Empty query result for: {0}".format(query)
         return (Node(n['name'], api=api) for n in search)
 
     # Make these use run_command_on_node
