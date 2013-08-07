@@ -265,15 +265,11 @@ class rpcsqa_helper:
     def node_search(self, query=None, api=None, tries=1):
         api = api or self.chef
         print vars(api)
-        for i in xrange(tries):
+        while not search and num_tries > 0:
             print "Searching for: %s" % query
             search = Search("node", api=api).query(query)
-            if search:
-                break
-            print "Waiting..."
             time.sleep(10)
-        if not search:
-            print "Error: Empty query result for: {0}".format(query)
+            tries = tries - 1
         return (n.object for n in search)
 
     # Make these use run_command_on_node
