@@ -145,7 +145,7 @@ class rpcsqa_helper:
     def update_openldap_environment(self, env):
         chef_env = Environment(env, api=self.chef)
         query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
-        ldap_name = node_search(query, tries=10)
+        ldap_name = node_search(query)
         if ldap_name:
             ldap_ip = ldap_name[0]['ipaddress']
             chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ldap_ip
@@ -204,9 +204,7 @@ class rpcsqa_helper:
 
         if not chef_node:
             query = "chef_environment:%s AND in_use:chef_server" % env
-            print query
-            print list(self.node_search(query))
-            chef_node = next(self.node_search(query, tries=10))
+            chef_node = next(self.node_search(query))
         self.remove_chef(chef_node)
 
         install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
@@ -238,7 +236,6 @@ class rpcsqa_helper:
             self.setup_remote_chef_environment(chef_node, env)
 
     def install_git(self, chef_node):
-        print "BEGIN GIT"
         # This needs to be taken out and install_package used instead (jwagner)
         # Gather node info
         platform = chef_node['platform']
@@ -253,15 +250,13 @@ class rpcsqa_helper:
             sys.exit(1)
 
         for cmd in cmds:
-            print "CMD" * 10
             run_cmd = self.run_command_on_node(chef_node, cmd)
             if not run_cmd['success']:
                 print "Command: %s failed to run on %s" % (cmd, chef_node)
                 print run_cmd
                 sys.exit(1)
-        print "END GIT"
 
-    def node_search(self, query=None, api=None, tries=1):
+    def node_search(self, query=None, api=None, tries=10):
         api = api or self.chef
         search = None
         while not search and tries > 0:
@@ -293,7 +288,6 @@ class rpcsqa_helper:
         @param local_repo The location to place the cookbooks i.e. '/opt/rcbops'
         @type String
         '''
-
         # Make directory that the cookbooks will live in
         command = 'mkdir -p {0}'.format(local_repo)
         run_cmd = self.run_command_on_node(chef_node, command)
@@ -305,7 +299,7 @@ class rpcsqa_helper:
         for cookbook in cookbooks:
             self.install_cookbook(chef_node, cookbook, local_repo)
 
-    def install_cookbook(self, chef_server, cookbook, local_repo):
+    def install_cookbook(self, chef_node, cookbook, local_repo):
         # clone to cookbook
         cmds = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], cookbook['branch'])]
 
