@@ -192,7 +192,7 @@ class rpcsqa_helper:
             print "OS Distro not supported"
             sys.exit(1)
 
-        run = self.run_command_on_node(self, chef_node, command)
+        run = self.run_command_on_node(chef_node, command)
         if run['success']:
             print "Removed Chef on %s" % server
         else:
