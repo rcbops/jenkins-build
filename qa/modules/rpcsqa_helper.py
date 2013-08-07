@@ -106,7 +106,7 @@ class rpcsqa_helper:
                     node.chef_environment = environment
                     node.save()
                 ret_nodes.append(node.name)
-                print "Taking node: %s" % name.name
+                print "Taking node: %s" % node.name
                 count += 1
                 if count >= cluster_size:
                     break
