@@ -92,6 +92,14 @@ def _run_commands(name, commands):
             command()
     print "#" * 70
 
+cookbooks = [
+    {
+        "url": "https://github.com/rcbops/chef-cookbooks.git",
+        "branch": "{0}".format(results.branch),
+        "tag": results.repo_tag
+    }
+]
+
 # Setup the helper class ( Chef / Razor )
 rpcsqa = rpcsqa_helper()
 
