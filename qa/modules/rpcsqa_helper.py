@@ -194,9 +194,9 @@ class rpcsqa_helper:
 
         run = self.run_command_on_node(chef_node, command)
         if run['success']:
-            print "Removed Chef on %s" % server
+            print "Removed Chef on %s" % chef_node
         else:
-            print "Failed to remove chef on server %s" % server
+            print "Failed to remove chef on server %s" % chef_node
             sys.exit(1)
 
     def build_chef_server(self, chef_server_node=None, cookbooks=None, env=None):
