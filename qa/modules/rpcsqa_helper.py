@@ -212,6 +212,8 @@ class rpcsqa_helper:
         print "HI"
         if not chef_server_node:
             query = "chef_environment:{0} AND in_use:chef_server".format(env)
+            print query
+            print list(self.node_search(query))
             chef_server_node = next(self.node_search(query))
         print "HI2"
         self.remove_chef(chef_server_node)
