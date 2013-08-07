@@ -272,7 +272,7 @@ class rpcsqa_helper:
             time.sleep(100)
         if not search:
             print "Error: Empty query result for: {0}".format(query)
-        return (Node(n['name'], api=api) for n in search)
+        return (n.object for n in search)
 
     # Make these use run_command_on_node
     def scp_from_node(self, node=None, path=None, destination=None):
