@@ -197,30 +197,30 @@ class rpcsqa_helper:
             print "Failed to remove chef on %s" % chef_node
             sys.exit(1)
 
-    def build_chef_server(self, chef_server_node=None, cookbooks=None, env=None):
+    def build_chef_server(self, chef_node=None, cookbooks=None, env=None):
         '''
         This will build a chef server using the rcbops script and install git
         '''
 
-        if not chef_server_node:
+        if not chef_node:
             query = "chef_environment:%s AND in_use:chef_server" % env
             print query
             print list(self.node_search(query))
-            chef_server_node = next(self.node_search(query, tries=10))
-        self.remove_chef(chef_server_node)
+            chef_node = next(self.node_search(query, tries=10))
+        self.remove_chef(chef_node)
         print "HI3"
         install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
 
         # #update node
-        # self.update_node(chef_server_node)
+        # self.update_node(chef_node)
 
         # SCP install script to chef_server node
-        scp_run = self.scp_to_node(chef_server_node, install_script)
+        scp_run = self.scp_to_node(chef_node, install_script)
 
         if scp_run['success']:
-            print "Successfully copied chef server install script to chef_server node %s" % chef_server_node
+            print "Successfully copied chef server install script to chef_server node %s" % chef_node
         else:
-            print "Failed to copy chef server install script to chef_server node %s" % chef_server_node
+            print "Failed to copy chef server install script to chef_server node %s" % chef_node
             print scp_run
             sys.exit(1)
 
@@ -228,19 +228,19 @@ class rpcsqa_helper:
         cmds = ['chmod u+x ~/install-chef-server.sh',
                 './install-chef-server.sh']
         for cmd in cmds:
-            ssh_run = self.run_command_on_node(chef_server_node, cmd)
+            ssh_run = self.run_command_on_node(chef_node, cmd)
             if ssh_run['success']:
-                print "command: %s ran successfully on %s" % (cmd, chef_server_node.name)
+                print "command: %s ran successfully on %s" % (cmd, chef_node.name)
 
-        self.install_git(chef_server_node)
-        self.install_cookbooks(chef_server_node, cookbooks)
+        self.install_git(chef_node)
+        self.install_cookbooks(chef_node, cookbooks)
         if env:
-            self.setup_remote_chef_environment(chef_server_node, env)
+            self.setup_remote_chef_environment(chef_node, env)
 
-    def install_git(self, chef_server_node):
+    def install_git(self, chef_node):
         # This needs to be taken out and install_package used instead (jwagner)
         # Gather node info
-        chef_server_platform = chef_server_node['platform']
+        chef_server_platform = chef_node['platform']
 
         # Install git and clone the other cookbook
         if chef_server_platform == 'ubuntu':
@@ -252,9 +252,9 @@ class rpcsqa_helper:
             sys.exit(1)
 
         for cmd in to_run_list:
-            run_cmd = self.run_command_on_node(chef_server_node, cmd)
+            run_cmd = self.run_command_on_node(chef_node, cmd)
             if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, chef_server_node.name)
+                print "Command: %s failed to run on %s" % (cmd, chef_node.name)
                 print run_cmd
                 sys.exit(1)
 
@@ -280,7 +280,7 @@ class rpcsqa_helper:
         ip = node['ipaddress']
         return run_remote_scp_cmd(ip, user, password, path)
 
-    def install_cookbooks(self, chef_server_node, cookbooks, local_repo='/opt/rcbops'):
+    def install_cookbooks(self, chef_node, cookbooks, local_repo='/opt/rcbops'):
         '''
         @summary: This will pull the cookbooks down for git that you pass in cookbooks
         @param chef_server: The node that the chef server is installed on
@@ -293,14 +293,14 @@ class rpcsqa_helper:
 
         # Make directory that the cookbooks will live in
         command = 'mkdir -p {0}'.format(local_repo)
-        run_cmd = self.run_command_on_node(chef_server_node, command)
+        run_cmd = self.run_command_on_node(chef_node, command)
         if not run_cmd['success']:
-            print "Command: %s failed to run on %s" % (cmd, chef_server_node.name)
+            print "Command: %s failed to run on %s" % (cmd, chef_node.name)
             print run_cmd
             sys.exit(1)
 
         for cookbook in cookbooks:
-            self.install_cookbook(chef_server_node, cookbook, local_repo)
+            self.install_cookbook(chef_node, cookbook, local_repo)
 
     def install_cookbook(self, chef_server, cookbook, local_repo):
         # clone to cookbook
@@ -329,19 +329,19 @@ class rpcsqa_helper:
         cmds.append('knife role from file {0}/{1}/roles/*.rb'.format(local_repo, cookbook_name))
 
         for cmd in cmds:
-            run_cmd = self.run_command_on_node(chef_server_node, cmd)
+            run_cmd = self.run_command_on_node(chef_node, cmd)
             if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, chef_server_node.name)
+                print "Command: %s failed to run on %s" % (cmd, chef_node.name)
                 print run_cmd
                 sys.exit(1)
 
-    def setup_remote_chef_environment(self, chef_server_node, chef_environment):
+    def setup_remote_chef_environment(self, chef_node, chef_environment):
         """
         @summary This will copy the environment file and set it on the remote
         chef server.
         """
         environment_file = '/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/%s.json' % chef_environment
-        run_scp = self.scp_to_node(chef_server_node, environment_file)
+        run_scp = self.scp_to_node(chef_node, environment_file)
         if not run_scp['success']:
             print "Failed to copy environment file to remote chef server"
             print run_scp
@@ -350,12 +350,12 @@ class rpcsqa_helper:
         cmds = ['cp ~/%s.json /opt/rcbops/chef-cookbooks/environments' % chef_environment,
                 'knife environment from file /opt/rcbops/chef-cookbooks/environments/%s.json' % chef_environment]
         for cmd in cmds:
-            run_cmd = self.run_command_on_node(chef_server_node, cmd)
+            run_cmd = self.run_command_on_node(chef_node, cmd)
             if not run_cmd['success']:
-                print "Failed to run remote ssh command on server %s" % (chef_server_node.name)
+                print "Failed to run remote ssh command on server %s" % (chef_node.name)
                 print run_ssh
                 sys.exit(1)
 
         print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment,
-                                                                                         chef_server_node,
-                                                                                         chef_server_node['ipaddress'])
+                                                                                         chef_node,
+                                                                                         chef_node['ipaddress'])
