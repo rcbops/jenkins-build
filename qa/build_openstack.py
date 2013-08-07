@@ -75,6 +75,8 @@ features = [x for x in feature_list if args.__dict__[x] is True]
 if features == []:
     features = ['default']
 
+# Setup the helper class ( Chef / Razor )
+rpcsqa = rpcsqa_helper()
 
 def _run_commands(name, commands):
     print "#" * 70
@@ -98,9 +100,6 @@ cookbooks = [
         "branch": args.branch
     }
 ]
-
-# Setup the helper class ( Chef / Razor )
-rpcsqa = rpcsqa_helper()
 
 #Prepare environment
 env = rpcsqa.prepare_environment(args.name,
