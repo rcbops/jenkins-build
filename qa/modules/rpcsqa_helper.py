@@ -197,7 +197,7 @@ class rpcsqa_helper:
             print "Failed to remove chef on %s" % chef_node
             sys.exit(1)
 
-    def build_chef_server(self, chef_node, cookbooks=None, env=None):
+    def build_chef_server(self, chef_node=None, cookbooks=None, env=None):
         '''
         This will build a chef server using the rcbops script and install git
         '''
