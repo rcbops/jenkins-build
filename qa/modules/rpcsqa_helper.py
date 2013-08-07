@@ -153,7 +153,7 @@ class rpcsqa_helper:
             num_try = num_try + 1
             print "Couldn't find openldap server....waiting 5 seconds retry (%s / 10) " % num_try
             time.sleep(5)
-            ldap_name = node_search(query)
+            ldap_name = self.node_search(query)
         if ldap_name:
             ldap_ip = ldap_name[0]['ipaddress']
             chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ldap_ip
