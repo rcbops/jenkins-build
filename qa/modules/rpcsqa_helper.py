@@ -1,11 +1,9 @@
 import sys
 import time
 import StringIO
-import json
 from chef import *
 from server_helper import *
 from razor_api import razor_api
-from subprocess import check_call, CalledProcessError
 import environments
 
 
@@ -162,7 +160,7 @@ class rpcsqa_helper:
         api = api or self.chef
         query = "chef_environment:%s" % environment
         return self.node_search(query, api)
-        
+
     def find_controller(self, environment):
         pass
 
@@ -358,6 +356,6 @@ class rpcsqa_helper:
                 print run_ssh
                 sys.exit(1)
 
-        print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment, 
-                                                                                         chef_server_node, 
+        print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment,
+                                                                                         chef_server_node,
                                                                                          chef_server_node['ipaddress'])
