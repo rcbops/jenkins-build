@@ -95,8 +95,7 @@ def _run_commands(name, commands):
 cookbooks = [
     {
         "url": "https://github.com/rcbops/chef-cookbooks.git",
-        "branch": "{0}".format(results.branch),
-        "tag": results.repo_tag
+        "branch": args.branch
     }
 ]
 
