@@ -78,6 +78,7 @@ if features == []:
 # Setup the helper class ( Chef / Razor )
 rpcsqa = rpcsqa_helper()
 
+
 def _run_commands(name, commands):
     print "#" * 70
     print "Running {0} chef-client commands....".format(name)
