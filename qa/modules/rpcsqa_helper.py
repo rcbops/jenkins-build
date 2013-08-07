@@ -271,7 +271,7 @@ class rpcsqa_helper:
             if search:
                 break
             print "Waiting..."
-            time.sleep(100)
+            time.sleep(10)
         if not search:
             print "Error: Empty query result for: {0}".format(query)
         return (n.object for n in search)
