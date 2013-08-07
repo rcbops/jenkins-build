@@ -205,10 +205,14 @@ class rpcsqa_helper:
             print "Failed to remove chef on server %s" % server
             sys.exit(1)
 
-    def build_chef_server(self, chef_server_node, cookbooks=None, env=None):
+    def build_chef_server(self, chef_server_node=None, cookbooks=None, env=None):
         '''
         This will build a chef server using the rcbops script and install git
         '''
+
+        if not chef_server_node:
+            query = "chef_environment:{0} AND in_use:chef_server".format(env)
+            chef_server_node = next(self.node_search(query))
         self.remove_chef(chef_server_node)
 
         install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
@@ -362,23 +366,3 @@ class rpcsqa_helper:
         print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment, 
                                                                                          chef_server_node, 
                                                                                          chef_server_node['ipaddress'])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
