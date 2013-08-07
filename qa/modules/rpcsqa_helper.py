@@ -29,7 +29,7 @@ class rpcsqa_helper:
 
     def prepare_environment(self, name, os_distro, branch, features):
         """ If the environment doesnt exist in chef, make it. """
-        envp = "%s-%s-%s-%s" % (name, os_distro, branch, "-".join(features))
+        env = "%s-%s-%s-%s" % (name, os_distro, branch, "-".join(features))
         chef_env = Environment(env, api=self.chef)
         if not chef_env.exists:
             print "Making environment: %s " % env
