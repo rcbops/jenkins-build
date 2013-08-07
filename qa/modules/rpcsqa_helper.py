@@ -264,6 +264,7 @@ class rpcsqa_helper:
 
     def node_search(self, query=None, api=None, tries=1):
         api = api or self.chef
+        print vars(api)
         for i in xrange(tries):
             search = Search("node", api=api).query(query)
             if search:
