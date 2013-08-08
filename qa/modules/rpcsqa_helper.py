@@ -378,7 +378,7 @@ class rpcsqa_helper:
     def add_remote_chef_locally(self, chef_server_node, env):
         cmd = "cat ~/.chef/admin.pem"
         run = self.run_command_on_node(chef_server_node, cmd)
-        if not get_file_ret['success']:
+        if not run['success']:
             print "Failed to copy %s from server @ %s" % (item, chef_server_node)
             print run
             sys.exit(1)
