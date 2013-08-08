@@ -234,7 +234,7 @@ class rpcsqa_helper:
         '''
 
         if not chef_node:
-            query = "chef_environment:%s AND in_use:chef_server" % env
+            query = "chef_environment:%s AND in_use:chef_server" % env.name
             chef_node = next(self.node_search(query))
         self.remove_chef(chef_node)
 

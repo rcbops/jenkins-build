@@ -167,7 +167,7 @@ else:
                           'in_use': 'chef_server',
                           'post_commands': [{'function': rpcsqa.build_chef_server,
                                             'kwargs': {'cookbooks': cookbooks,
-                                                       'env': env}}]})
+                                                       'env': Environment(env)}}]})
 
         if args.openldap:
             build.append({'name': nodes.pop(),
