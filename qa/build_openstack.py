@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import json
 import argparse
 from modules.rpcsqa_helper import *
 

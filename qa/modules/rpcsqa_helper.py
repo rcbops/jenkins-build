@@ -1,4 +1,5 @@
 import sys
+import copy
 import time
 import StringIO
 from chef import *
@@ -47,10 +48,6 @@ class rpcsqa_helper:
             num_servers += 1
 
             print "Num servers: %s " % num_servers
-
-
-
-
 
     def __repr__(self):
         """ Print out current instance of razor_api"""
@@ -267,7 +264,8 @@ class rpcsqa_helper:
         self.install_git(chef_node)
         self.install_cookbooks(chef_node, cookbooks)
         if env:
-            self.setup_remote_chef_environment(chef_node, env)
+            api = self.remote_chef_client(env)
+            self.setup_remote_chef_environment(env, api)
 
     def install_git(self, chef_node):
         # This needs to be taken out and install_package used instead (jwagner)
@@ -366,27 +364,11 @@ class rpcsqa_helper:
                 print run_cmd
                 sys.exit(1)
 
-    def setup_remote_chef_environment(self, chef_node, chef_environment):
+    def setup_remote_chef_environment(self, chef_environment, api):
         """
-        @summary This will copy the environment file and set it on the remote
-        chef server.
+        @summary Duplicates the local chef environment remotely
         """
-        environment_file = '/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/%s.json' % chef_environment
-        run_scp = self.scp_to_node(chef_node, environment_file)
-        if not run_scp['success']:
-            print "Failed to copy environment file to remote chef server"
-            print run_scp
-            sys.exit(1)
 
-        cmds = ['cp ~/%s.json /opt/rcbops/chef-cookbooks/environments' % chef_environment,
-                'knife environment from file /opt/rcbops/chef-cookbooks/environments/%s.json' % chef_environment]
-        for cmd in cmds:
-            run_cmd = self.run_command_on_node(chef_node, cmd)
-            if not run_cmd['success']:
-                print "Failed to run remote ssh command on server %s" % (chef_node)
-                print run_ssh
-                sys.exit(1)
-
-        print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment,
-                                                                                         chef_node,
-                                                                                         chef_node['ipaddress'])
+        env = copy.copy(chef_environment)
+        env.api = api
+        env.save()
