@@ -22,10 +22,9 @@ class rpcsqa_helper:
 
     def enable_public_cloud(self, username, api_key):
         import pyrax
-        pyrax.set_setting("identity_type","rackspace")
-        pyrax.set_credentials(username,api_key)
+        pyrax.set_setting("identity_type", "rackspace")
+        pyrax.set_credentials(username, api_key)
         self.cloudservers = pyrax.cloudservers
-
 
     def gather_public_cloud_nodes(self, os, environment, cluster_size):
         cs = self.cloudservers
@@ -44,7 +43,7 @@ class rpcsqa_helper:
             elif os == "centos":
                 image = [img for img in cs.images.list() if "Centos 6.3" in img.name][0]
             flavor = [flavor for flavor in cs.flavors.list() if flavor.ram == 512][0]
-            
+
             server = cs.servers.create("qa-cloud-%s-pool%s" % (os, num_servers+1), image.id, flavor.id)
             num_servers += 1
 
