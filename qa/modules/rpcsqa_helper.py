@@ -265,6 +265,7 @@ class rpcsqa_helper:
         self.install_git(chef_node)
         self.install_cookbooks(chef_node, cookbooks)
         if env:
+            self.add_remote_chef_locally(chef_node, env)
             api = self.remote_chef_client(env)
             self.setup_remote_chef_environment(env, api)
 
@@ -372,4 +373,16 @@ class rpcsqa_helper:
 
         env = copy.copy(chef_environment)
         env.api = api
+        env.save()
+
+    def add_remote_chef_locally(self, chef_server_node, env):
+        cmd = "cat ~/.chef/admin.pem"
+        run = self.run_command_on_node(chef_server_node, cmd % pem)
+        if not get_file_ret['success']:
+            print "Failed to copy %s from server @ %s" % (item, chef_server_node)
+            print run
+            sys.exit(1)
+        admin_pem = run['runs'][0]
+        remote_dict = {"client": "admin", "key": admin_pem, "url": "https://%s:4443" % chef_server_node['ipaddress']}
+        env.override_attributes['remote_chef'] = remote_dict
         env.save()
