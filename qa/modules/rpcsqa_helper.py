@@ -20,6 +20,40 @@ class rpcsqa_helper:
         if razor_ip != '':
             self.razor = razor_api(razor_ip)
 
+    def enable_public_cloud(self, username, api_key):
+        import pyrax
+        pyrax.set_setting("identity_type","rackspace")
+        pyrax.set_credentials(username,api_key)
+        self.cloudservers = pyrax.cloudservers
+
+
+    def gather_public_cloud_nodes(self, os, environment, cluster_size):
+        cs = self.cloudservers
+        if not hasattr(self, 'cloudservers'):
+            print "No cloudservers setup"
+            sys.exit(1)
+        else:
+            qa_servers = [n.name for n in cs.list() if "qa-cloud-%s-pool" % os in n.name]
+            max_num_servers = cluster_size if cluster_size > 10 else 10
+            num_servers = len(qa_servers)
+            if num_servers < max_num_servers:
+                print "Currently %s servers in pool. Adding %s servers." % (len(qa_servers), max_num_servers-len(qa_servers))
+
+            if os == "precise":
+                image = [img for img in cs.images.list() if "Ubuntu 12.04" in img.name][0]
+            elif os == "centos":
+                image = [img for img in cs.images.list() if "Centos 6.3" in img.name][0]
+            flavor = [flavor for flavor in cs.flavors.list() if flavor.ram == 512][0]
+            
+            server = cs.servers.create("qa-cloud-%s-pool%s" % (os, num_servers+1), image.id, flavor.id)
+            num_servers += 1
+
+            print "Num servers: %s " % num_servers
+
+
+
+
+
     def __repr__(self):
         """ Print out current instance of razor_api"""
         outl = 'class :' + self.__class__.__name__
@@ -148,7 +182,7 @@ class rpcsqa_helper:
         chef_env = Environment(env, api=self.chef)
         query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
         num_try = 0
-        ldap_name = node_search(query)
+        ldap_name = self.node_search(query)
         while num_try <= 10 and not ldap_name:
             num_try = num_try + 1
             print "Couldn't find openldap server....waiting 5 seconds retry (%s / 10) " % num_try
