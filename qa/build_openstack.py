@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import json
 import argparse
 from modules.rpcsqa_helper import *
 
@@ -77,6 +78,7 @@ if features == []:
 
 # Setup the helper class ( Chef / Razor )
 rpcsqa = rpcsqa_helper()
+
 
 def _run_commands(name, commands):
     print "#" * 70
