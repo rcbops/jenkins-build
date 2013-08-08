@@ -182,13 +182,14 @@ class rpcsqa_helper:
         chef_env = Environment(env, api=self.chef)
         query = 'chef_environment:%s AND run_list:*qa-openldap*' % env
         num_try = 0
-        ldap_name = self.node_search(query)
+        ldap_name = list(self.node_search(query))
         while num_try <= 10 and not ldap_name:
             num_try = num_try + 1
             print "Couldn't find openldap server....waiting 5 seconds retry (%s / 10) " % num_try
             time.sleep(5)
-            ldap_name = self.node_search(query)
+            ldap_name = list(self.node_search(query))
         if ldap_name:
+            print ldap_name
             ldap_ip = ldap_name[0]['ipaddress']
             chef_env.override_attributes['keystone']['ldap']['url'] = "ldap://%s" % ldap_ip
             chef_env.override_attributes['keystone']['ldap']['password'] = 'ostackdemo'

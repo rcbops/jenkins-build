@@ -89,8 +89,14 @@ def _run_commands(name, commands):
         if isinstance(command, str):
             rpcsqa.run_command_on_node(node, command)
         if isinstance(command, dict):
-            func = command['function']
-            func(**command['kwargs'])
+            try:
+                func = command['function']
+                func(**command['kwargs'])
+            except:
+                import traceback
+                print traceback.format_exc()
+                sys.exit(1)
+                
             #elif function run the function
         elif hasattr(command, '__call__'):
             command()
