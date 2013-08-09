@@ -89,7 +89,7 @@ class rpcsqa_helper:
                 n.save()
 
     def run_command_on_node(self, chef_node, command, num_times=1, quiet=False):
-        chef_node = Node(chef_node, api=self.chef)
+        chef_node = Node(chef_node.name, api=self.chef)
         runs = []
         success = True
         for i in xrange(0, num_times):
@@ -355,7 +355,7 @@ class rpcsqa_helper:
         env.save()
 
     def add_remote_chef_locally(self, chef_server_node, env):
-        chef_server_node = Node(chef_server_node, api=self.chef)
+        chef_server_node = Node(chef_server_node.name, api=self.chef)
         cmd = "cat ~/.chef/admin.pem"
         run = self.run_command_on_node(chef_server_node, cmd)
         if not run['success']:
@@ -366,13 +366,3 @@ class rpcsqa_helper:
         remote_dict = {"client": "admin", "key": admin_pem, "url": "https://%s:4443" % chef_server_node['ipaddress']}
         env.override_attributes['remote_chef'] = remote_dict
         env.save()
-
-
-
-
-
-
-
-
-
-
