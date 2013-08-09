@@ -355,7 +355,7 @@ class rpcsqa_helper:
         env.save()
 
     def add_remote_chef_locally(self, chef_server_node, env):
-        Node(chef_server_node, api=self.api)
+        chef_server_node = Node(chef_server_node, api=self.api)
         cmd = "cat ~/.chef/admin.pem"
         run = self.run_command_on_node(chef_server_node, cmd)
         if not run['success']:
