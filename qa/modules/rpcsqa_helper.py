@@ -234,7 +234,7 @@ class rpcsqa_helper:
         '''
 
         if not chef_node:
-            query = "chef_environment:%s AND in_use:chef_server" % env.name
+            query = "chef_environment:%s AND in_use:chef_server" % env
             chef_node = next(self.node_search(query))
         self.remove_chef(chef_node)
 
@@ -264,9 +264,10 @@ class rpcsqa_helper:
         self.install_git(chef_node)
         self.install_cookbooks(chef_node, cookbooks)
         if env:
-            self.add_remote_chef_locally(chef_node, env)
-            api = self.remote_chef_client(env)
-            self.setup_remote_chef_environment(env, api)
+            chef_env = Environment(env)
+            self.add_remote_chef_locally(chef_node, chef_env)
+            api = self.remote_chef_client(chef_env)
+            self.setup_remote_chef_environment(chef_env, api)
 
     def install_git(self, chef_node):
         # This needs to be taken out and install_package used instead (jwagner)
