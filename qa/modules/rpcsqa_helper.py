@@ -89,6 +89,7 @@ class rpcsqa_helper:
                 n.save()
 
     def run_command_on_node(self, chef_node, command, num_times=1, quiet=False):
+        chef_node = Node(chef_node, api=self.api)
         runs = []
         success = True
         for i in xrange(0, num_times):
@@ -261,34 +262,12 @@ class rpcsqa_helper:
             if ssh_run['success']:
                 print "command: %s ran successfully on %s" % (cmd, chef_node)
 
-        self.install_git(chef_node)
         self.install_cookbooks(chef_node, cookbooks)
         if env:
             chef_env = Environment(env)
             self.add_remote_chef_locally(chef_node, chef_env)
             api = self.remote_chef_client(chef_env)
             self.setup_remote_chef_environment(chef_env, api)
-
-    def install_git(self, chef_node):
-        # This needs to be taken out and install_package used instead (jwagner)
-        # Gather node info
-        platform = chef_node['platform']
-
-        # Install git and clone the other cookbook
-        if platform == 'ubuntu':
-            cmds = ['apt-get install git -y']
-        elif platform == 'centos' or platform == 'redhat':
-            cmds = ['yum install git -y']
-        else:
-            print "Platform %s not supported" % platform
-            sys.exit(1)
-
-        for cmd in cmds:
-            run_cmd = self.run_command_on_node(chef_node, cmd)
-            if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, chef_node)
-                print run_cmd
-                sys.exit(1)
 
     def node_search(self, query=None, api=None, tries=10):
         api = api or self.chef
