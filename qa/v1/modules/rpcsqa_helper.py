@@ -794,7 +794,7 @@ class rpcsqa_helper:
 
         cmd = 'gem install {0}'.format(gem)
 
-        self.run_cmd_on_node(server_info['node'], cmd)
+        self.run_cmd_on_node(server['node'], cmd)
 
     def install_rvm_versions(self, server, versions):
 
