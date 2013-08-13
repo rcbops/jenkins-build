@@ -29,10 +29,10 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
                "-o UserKnownHostsFile=/dev/null "
                "-o StrictHostKeyChecking=no "
                "-o LogLevel=quiet "
-               "-l %s %s /bin/bash -c '%s'") % (password,
-                                                user,
-                                                server_ip,
-                                                remote_cmd)
+               "-l %s %s '%s'") % (password,
+                                   user,
+                                   server_ip,
+                                   remote_cmd)
     try:
         ret = check_call(command, shell=True)
         return {'success': True, 'return': ret, 'exception': None}
