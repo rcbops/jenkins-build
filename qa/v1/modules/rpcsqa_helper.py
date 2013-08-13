@@ -808,7 +808,7 @@ class rpcsqa_helper:
 
     def install_rvm_version(self, server, version):
 
-        cmd = 'rvm install {0}'.format(version)
+        cmd = 'source /usr/local/rvm/scripts/rvm; rvm install {0}'.format(version)
 
         self.run_cmd_on_node(server['node'], cmd)
 
