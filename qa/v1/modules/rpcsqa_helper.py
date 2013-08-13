@@ -593,7 +593,7 @@ class rpcsqa_helper:
 
         # Install needed server packages for berkshelf
         packages = ['libxml2-dev', 'libxslt-dev', 'libz-dev']
-        rvm_install = "curl -L https://get.rvm.io | bash -s -- stable --ruby=1.9.3 --autolibs=enable --auto-dotfiles"
+        rvm_install = "curl -L https://get.rvm.io | bash -stable -- s --ruby=1.9.3 --autolibs=enable --auto-dotfiles"
         #ruby_versions = ['1.8.7', '1.9.3']
         gems = ['berkshelf', 'chef']
 
@@ -794,12 +794,7 @@ class rpcsqa_helper:
 
         cmd = 'gem install {0}'.format(gem)
 
-        run_cmd = run_remote_ssh_cmd(server['ip'], 'root', server['password'], cmd)
-
-        if not run_cmd['success']:
-            print "Command: {0} failed to run on {1}".format(cmd, server['node'])
-            print run_cmd
-            sys.exit(1)
+        self.run_cmd_on_node(server_info['node'], cmd)
 
     def install_rvm_versions(self, server, versions):
 
