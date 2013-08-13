@@ -108,6 +108,7 @@ if results.action == "build":
     print "Chef Server: {0}".format(rpcsqa.print_server_info(chef_server))
     print "Keystone Server {0}".format(rpcsqa.print_server_info(management_server))
     print "Swift Proxy {0}".format(rpcsqa.print_server_info(swift_proxy))
+    print "Swift Storage Nodes: "
     print [rpcsqa.print_server_info(node) for node in swift_nodes]
     print "***********************************************************"
 
