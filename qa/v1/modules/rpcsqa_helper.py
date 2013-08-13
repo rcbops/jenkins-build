@@ -593,8 +593,8 @@ class rpcsqa_helper:
 
         # Install needed server packages for berkshelf
         packages = ['libxml2-dev', 'libxslt-dev', 'libz-dev']
-        rvm_install = "curl -L https://get.rvm.io | bash -s stable --ruby --autolibs=enable --auto-dotfiles"
-        ruby_versions = ['1.8.7', '1.9.3']
+        rvm_install = "curl -L https://get.rvm.io | bash -s -- stable --ruby=1.9.3 --autolibs=enable --auto-dotfiles"
+        #ruby_versions = ['1.8.7', '1.9.3']
         gems = ['berkshelf', 'chef']
 
         # Install OS packages
@@ -604,7 +604,7 @@ class rpcsqa_helper:
         self.run_cmd_on_node(server_info['node'], rvm_install)
 
         # Install RVM Ruby Versions
-        self.install_rvm_versions(server_info, ruby_versions)
+        #self.install_rvm_versions(server_info, ruby_versions)
 
         # Install Ruby Gems
         self.install_ruby_gems(server_info, gems)
