@@ -585,11 +585,11 @@ class rpcsqa_helper:
 
     def install_berkshelf(self, server):
         """
-        This is needed cause berkshelf is a bia to get up and running
+        This is needed cause berkshelf is a PITA to get up and running
         """
 
         # Gather node info
-        server_info = self.gather_server_info(server)
+        server_info = self.get_server_info(server)
 
         # Install needed server packages for berkshelf
         packages = ['libxml2-dev', 'libxslt-dev', 'libz-dev']
