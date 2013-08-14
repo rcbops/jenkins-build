@@ -350,8 +350,8 @@ class rpcsqa_helper:
         @summary Duplicates the local chef environment remotely
         """
 
-        env = copy.copy(chef_environment)
-        env.api = api
+        env = Environment(chef_environment.name, api=api)
+        env.override_attributes = chef_environment.override_attributes
         env.save()
 
     def add_remote_chef_locally(self, chef_server_node, env):
