@@ -24,6 +24,9 @@ environments.names.remove('_default')
 if 'cloudcafe-precise-grizzly-default' in environments.names:
     environments.names.remove('cloudcafe-precise-grizzly-default')
 
+if 'kaushik-precise-grizzly-default' in environments.names:
+    environments.names.remove('kaushik-precise-grizzly-default')
+
 # destroy them all
 for environment in environments.names:
     print "Cleaning up environment {0}".format(environment)
