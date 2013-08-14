@@ -362,7 +362,7 @@ class rpcsqa_helper:
             print "Failed to copy %s from server @ %s" % (item, chef_server_node)
             print run
             sys.exit(1)
-        admin_pem = run['runs'][0]
+        admin_pem = run['runs'][0]['return']
         remote_dict = {"client": "admin", "key": admin_pem, "url": "https://%s:4443" % chef_server_node['ipaddress']}
         env.override_attributes['remote_chef'] = remote_dict
         env.save()
