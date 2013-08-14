@@ -350,8 +350,8 @@ class rpcsqa_helper:
         @summary Duplicates the local chef environment remotely
         """
 
-        env = copy.copy(chef_environment)
-        env.api = api
+        env = Environment(chef_environment.name, api=api)
+        env.override_attributes = chef_environment.override_attributes
         env.save()
 
     def add_remote_chef_locally(self, chef_server_node, env):
@@ -362,7 +362,7 @@ class rpcsqa_helper:
             print "Failed to copy %s from server @ %s" % (item, chef_server_node)
             print run
             sys.exit(1)
-        admin_pem = run['runs'][0]
+        admin_pem = run['runs'][0]['return']
         remote_dict = {"client": "admin", "key": admin_pem, "url": "https://%s:4443" % chef_server_node['ipaddress']}
         env.override_attributes['remote_chef'] = remote_dict
         env.save()

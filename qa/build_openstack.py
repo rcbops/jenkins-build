@@ -54,7 +54,7 @@ parser.add_argument('--remote_chef', action="store_true", dest="remote_chef",
                     help="Build a new chef server for this deploy")
 
 parser.add_argument('--log_level', action="store", dest="log_level",
-                    default="error", required=False,
+                    default="info", required=False,
                     help="Log level for chef client runs.")
 
 #Testing
