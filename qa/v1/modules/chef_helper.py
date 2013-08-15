@@ -127,7 +127,47 @@ class chef_helper:
         chef_node.run_list = ["role[single-network-node]"]
         chef_node.save()
 
-         # Set the environment
+        # Set the environment
+        self.set_node_environment(chef_node, environment)
+
+        # Run chef-client twice
+        print "Running chef-client for controller node, this may take some time..."
+        run1 = self.run_chef_client(chef_node, user, password)
+        if run1['success']:
+            print "First chef-client run successful, starting second run..."
+            run2 = self.run_chef_client(chef_node, user, password)
+            if run2['success']:
+                print "Second chef-client run successful..."
+            else:
+                print "Error running chef-client for controller %s" % quantum_node
+                print run2
+                sys.exit(1)
+        else:
+            print "Error running chef-client for controller %s" % quantum_node
+            print run1
+            sys.exit(1)
+
+    def build_swift(self, swift_node, swift_role, environment, user, password):
+        '''
+        @summary Builds a Swift Node
+        @param swift_node: The node to build as a controller
+        @type swift_node: String
+        @param swift_role: The Role that the node will have
+        @type swift_role: String
+        @param environment: The environemnt of the node
+        @param environment: String
+        @param user: user name on controller node
+        @type user: String
+        @param password: password for the user
+        @type password: String
+        '''
+        # Set node role
+        chef_node = Node(swift_node, api=self.chef)
+        chef_node['in_use'] = '{0}'.format(swift_role)
+        chef_node.run_list = ['role[{0}]'.format(swift_role)]
+        chef_node.save()
+
+        # Set the environment
         self.set_node_environment(chef_node, environment)
 
         # Run chef-client twice
