@@ -224,6 +224,7 @@ else:
                 node.run_list = b['run_list']
                 node.save()
                 print "Running chef client for %s" % node
+                print node.run_list
                 chef_client = rpcsqa.run_chef_client(node, num_times=2, log_level=args.log_level)
                 if not chef_client['success']:
                     print "chef-client run failed"
