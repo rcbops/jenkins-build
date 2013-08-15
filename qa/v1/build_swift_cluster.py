@@ -201,7 +201,7 @@ if results.action == "build":
     rpcsqa.build_swift_node(management_server,
                             swift_roles['controller'],
                             env,
-                            remote=results.remove_chef,
+                            remote=results.remote_chef,
                             chef_config_file=chef_config_file)
 
     ###################################################################
