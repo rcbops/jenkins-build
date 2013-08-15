@@ -166,7 +166,7 @@ if results.action == "build":
     chef_node = rpcsqa.get_server_info(chef_server)
 
     # Drop config.json onto berkshelf to overwrite verify
-    command = ('mkdir -p .berkshelf; cd .berkshelf; echo "{\"ssl\":{\"verify\":false}}" > config.json')
+    command = ('mkdir -p .berkshelf; cd .berkshelf; echo "{\\"ssl\\":{\\"verify\\":false}}" > config.json')
     rpcsqa.run_cmd_on_node(chef_node['node'], command)
 
     # Run berkshelf on server
