@@ -1070,6 +1070,8 @@ class rpcsqa_helper:
         @type environment String
         @param variable_dict A Dict to place into the environment
         @type variable_dict Dict
+        @param attrib_key The key inside the attributes to write to
+        @type String
         @param attributes The attributes to place hash under (override, default, etc.)
         @type attributes String
         '''
