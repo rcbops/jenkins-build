@@ -162,12 +162,14 @@ if results.action == "build":
     # Install the proper cookbooks
     rpcsqa.install_cookbooks(chef_server, cookbooks, '/opt/rcbops')
 
+    # Gather Chef node
+    chef_node = rpcsqa.get_server_info(chef_server)
+
     # Drop config.json onto berkshelf to overwrite verify
     command = ('cd .berkshelf; echo "{\"ssl\":{\"verify\":false}}" > config.json')
     rpcsqa.run_cmd_on_node(chef_node['node'], command)
 
     # Run berkshelf on server
-    chef_node = rpcsqa.get_server_info(chef_server)
     command = ('cd /opt/rcbops/swift-private-cloud; '
                'source /usr/local/rvm/scripts/rvm; '
                'berks install; '
