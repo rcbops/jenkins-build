@@ -664,10 +664,10 @@ class rpcsqa_helper:
         # I think this is stupid logic, there has to be a better way (jacob)
         if 'cookbooks' in cookbook_name:
              # add submodule stuff to list
-            to_run_list.append('cd /opt/rcbops/chef-cookbooks;'
+            to_run_list.append('cd {0}/{1};'
                                'git submodule init;'
                                'git submodule sync;'
-                               'git submodule update')
+                               'git submodule update'.format(local_repo, cookbook_name))
             to_run_list.append('knife cookbook upload --all --cookbook-path {0}/{1}/cookbooks'.format(local_repo, cookbook_name))
         else:
             to_run_list = ['knife cookbook upload --all --cookbook-path {0}/{1}'.format(local_repo, cookbook_name)]
