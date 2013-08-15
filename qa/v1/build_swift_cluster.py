@@ -202,7 +202,7 @@ if results.action == "build":
                             swift_roles['controller'],
                             env,
                             remote=results.remote_chef,
-                            chef_config_file=chef_config_file)
+                            chef_config_file=config_file)
 
     ###################################################################
     # Build Swift Proxy
