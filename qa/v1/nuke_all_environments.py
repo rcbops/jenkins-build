@@ -21,6 +21,7 @@ environments = Environment.list(api=rpcsqa.chef)
 # remove _default from environments
 print "Removing _default environment to protect it from the destroy"
 environments.names.remove('_default')
+
 if 'cloudcafe-precise-grizzly-default' in environments.names:
     environments.names.remove('cloudcafe-precise-grizzly-default')
 

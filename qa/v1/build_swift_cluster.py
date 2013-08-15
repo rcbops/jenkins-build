@@ -116,7 +116,7 @@ if results.action == "build":
         {
             "url": "https://github.com/rcbops-cookbooks/swift-private-cloud.git",
             "branch": "master",
-            "tag": None
+            "tag": results.repo_tag
         }
     ]
 
@@ -160,8 +160,7 @@ if results.action == "build":
     rpcsqa.install_berkshelf(chef_server)
 
     # Install the proper cookbooks
-    for cookbook in cookbooks:
-        rpcsqa.install_cookbook(chef_server, cookbook['url'], cookbook['branch'])
+    rpcsqa.install_cookbooks(chef_server, cookbooks, '/opt/rcbops')
 
     # Run berkshelf on server
     berks_run = rpcsqa.run_cmd_on_node(chef_server, 
@@ -261,5 +260,6 @@ if results.action == "build":
     print "Chef Server: {0}".format(rpcsqa.print_server_info(chef_server))
     print "Keystone Server {0}".format(rpcsqa.print_server_info(management_server))
     print "Swift Proxy {0}".format(rpcsqa.print_server_info(swift_proxy))
+    print "Swift Storage Nodes: "
     print [rpcsqa.print_server_info(node) for node in swift_nodes]
     print "***********************************************************"
