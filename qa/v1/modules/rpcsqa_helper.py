@@ -991,7 +991,19 @@ class rpcsqa_helper:
         ip = node['ipaddress']
         print "### Running: %s ###" % cmd
         print "### On: %s - %s ###" % (node.name, ip)
-        run_remote_ssh_cmd(ip, user, password, cmd)
+        run = run_remote_ssh_cmd(ip, user, password, cmd)
+
+        if not run['success']:
+            print "### {0} Failed to Run ###".format(cmd)
+            print "### Exited with exception: {0} ###".format(run['exception'])
+            print "### Trying Again ###"
+            run2 = run_remote_ssh_cmd(ip, user, password, cmd)
+
+            if not run2['success']:
+                print "### {0} Failed to Run a second time ###".format(cmd)
+                print "### Exited with exception: {0} ###".format(run2['exception'])
+                print "### EXITING ###"
+                sys.exit(1)
 
     def run_chef_client(self, chef_node):
         """
