@@ -676,14 +676,7 @@ class rpcsqa_helper:
         to_run_list.append('knife role from file {0}/{1}/roles/*.rb'.format(local_repo, cookbook_name))
 
         for cmd in to_run_list:
-            run_cmd = run_remote_ssh_cmd(chef_server_ip,
-                                         'root',
-                                         chef_server_password,
-                                         cmd)
-            if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, chef_server)
-                print run_cmd
-                sys.exit(1)
+            self.run_cmd_on_node(chef_server_node, cmd)
 
     def install_git(self, chef_server):
         # This needs to be taken out and install_package used instead (jwagner)
