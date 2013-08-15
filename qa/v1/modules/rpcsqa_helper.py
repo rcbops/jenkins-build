@@ -643,8 +643,6 @@ class rpcsqa_helper:
 
         # Gather node info
         chef_server_node = Node(chef_server, api=self.chef)
-        chef_server_ip = chef_server_node['ipaddress']
-        chef_server_password = self.razor_password(chef_server_node)
 
         # Since we are installing from git, the urls are pretty much constant
         # Pulling the url apart to get the name of the cookbooks
@@ -670,7 +668,7 @@ class rpcsqa_helper:
                                'git submodule update'.format(local_repo, cookbook_name))
             to_run_list.append('knife cookbook upload --all --cookbook-path {0}/{1}/cookbooks'.format(local_repo, cookbook_name))
         else:
-            to_run_list = ['knife cookbook upload --all --cookbook-path {0}/{1}'.format(local_repo, cookbook_name)]
+            to_run_list.append('knife cookbook upload --all --cookbook-path {0}/{1}'.format(local_repo, cookbook_name))
 
         # Append role load to run list
         to_run_list.append('knife role from file {0}/{1}/roles/*.rb'.format(local_repo, cookbook_name))
