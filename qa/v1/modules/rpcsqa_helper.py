@@ -646,18 +646,18 @@ class rpcsqa_helper:
         chef_server_ip = chef_server_node['ipaddress']
         chef_server_password = self.razor_password(chef_server_node)
 
+        # Since we are installing from git, the urls are pretty much constant
+        # Pulling the url apart to get the name of the cookbooks
+        cookbook_name = cookbook['url'].split("/")[-1].split(".")[0]
+
         # clone to cookbook
         to_run_list = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], cookbook['branch'])]
 
         # if a tag was sent in, use the tagged cookbooks
         if cookbook['tag'] is not None:
-            to_run_list.append('cd /opt/rcbops/chef-cookbooks; git checkout v%s' % cookbook['tag'])
+            to_run_list.append('cd {0}/{1}; git checkout v{2}'.format(local_repo, cookbook_name, cookbook['tag']))
         else:
-            to_run_list.append('cd /opt/rcbops/chef-cookbooks; git checkout %s' % cookbook['branch'])
-
-        # Since we are installing from git, the urls are pretty much constant
-        # Pulling the url apart to get the name of the cookbooks
-        cookbook_name = cookbook['url'].split("/")[-1].split(".")[0]
+            to_run_list.append('cd {0}/{1}; git checkout {2}'.format(local_repo, cookbook_name, cookbook['branch']))
 
         # Stupid logic to see if the repo name contains "cookbooks", if it does then
         # we need to load from cookbooks repo, not the repo itself.
