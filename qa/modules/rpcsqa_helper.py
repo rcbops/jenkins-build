@@ -204,7 +204,7 @@ class rpcsqa_helper:
 
     def remote_chef_client(self, env):
         # RSAifying key
-        remote_dict = env.override_attributes['remote_chef']
+        remote_dict = dict(env.override_attributes['remote_chef'])
         pem = StringIO.StringIO(remote_dict['key'])
         remote_dict['key'] = rsa.Key(pem)
         return ChefAPI(**remote_dict)
