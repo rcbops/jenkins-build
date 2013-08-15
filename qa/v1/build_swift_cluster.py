@@ -164,7 +164,11 @@ if results.action == "build":
 
     # Run berkshelf on server
     chef_node = rpcsqa.get_server_info(chef_server)
-    rpcsqa.run_cmd_on_node(chef_node['node'], 'cd /opt/rcbops-cookbooks/swift-private-cloud; berks install; berks upload')
+    command = ('source /usr/local/rvm/scripts/rvm;'
+               'cd /opt/rcbops-cookbooks/swift-private-cloud;'
+               'berks install;'
+               'berks upload')
+    rpcsqa.run_cmd_on_node(chef_node['node'], command)
 
     # setup environment file to remote chef server
     rpcsqa.setup_remote_chef_environment(chef_server, env)
