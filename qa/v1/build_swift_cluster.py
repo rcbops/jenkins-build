@@ -141,7 +141,7 @@ if results.action == "build":
     ###################################################################
 
     # Override the keystone attributes
-    rpcsqa.set_environment_variables(env, keystone, 'override')
+    rpcsqa.set_environment_variables(env, keystone, 'swift-private-cloud', 'override')
 
     # Set the node to be chef server
     rpcsqa.set_node_in_use(chef_server, 'chef-server')

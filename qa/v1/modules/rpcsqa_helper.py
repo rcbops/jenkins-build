@@ -1063,7 +1063,7 @@ class rpcsqa_helper:
         ip = node['ipaddress']
         run_remote_scp_cmd(ip, user, password, path)
 
-    def set_environment_variables(self, environment, variable_dict, attributes='override'):
+    def set_environment_variables(self, environment, variable_dict, attrib_key, attributes='override'):
         '''
         Take the variable hash and place it inside the environment under the attribute tag
         @param environment The chef environment to place hash
@@ -1086,7 +1086,7 @@ class rpcsqa_helper:
         env_json = chef_env.to_dict()
 
         # Update the appropriate attributes with the passed dict
-        env_json['{0}_attributes'.format(attributes)].update(variable_dict)
+        env_json['{0}_attributes'.format(attributes)][attrib_key].update(variable_dict)
 
         # Save the environment
         chef_env.save()
