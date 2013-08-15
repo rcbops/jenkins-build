@@ -783,7 +783,7 @@ class rpcsqa_helper:
 
     def install_ruby_gem(self, server, gem):
 
-        cmd = 'source /usr/local/rvm/scripts/rvm; gem install {0}'.format(gem)
+        cmd = 'source /usr/local/rvm/scripts/rvm; gem install --no-rdoc --no-ri {0}'.format(gem)
 
         self.run_cmd_on_node(server['node'], cmd)
 
