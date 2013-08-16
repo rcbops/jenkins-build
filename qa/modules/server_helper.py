@@ -23,7 +23,6 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
                                    remote_cmd)
    
     ret = ''
-    print command.split(' ')
     proc=subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     for line in proc.stdout:
         sys.stdout.write(line)
