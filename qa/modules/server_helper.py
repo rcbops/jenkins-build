@@ -1,4 +1,5 @@
 import sys
+import subprocess
 from subprocess import check_call, CalledProcessError, check_output
 import os
 
@@ -20,19 +21,19 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
                                    user,
                                    server_ip,
                                    remote_cmd)
-    try:
-        if quiet is True:
-            with open(os.devnull, 'w') as shutup:
-                ret = check_output(command, shell=True)
-        else:
-            ret = check_output(command, shell=True)
-            print ret
-        return {'success': True, 'return': ret, 'exception': None}
-    except CalledProcessError, cpe:
-        return {'success': False,
-                'return': None,
-                'exception': cpe,
-                'command': command}
+   
+    ret = ''
+    print command.split(' ')
+    proc=subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    for line in proc.stdout:
+        sys.stdout.write(line)
+        ret += line
+    proc.wait()
+    if proc.returncode == 0:
+        return {'success': True, 'return': ret}
+    else:
+        return {'success': False, 'return': ret, 'command': command}
+
 
 
 def run_remote_scp_cmd(server_ip, user, password, to_copy):
