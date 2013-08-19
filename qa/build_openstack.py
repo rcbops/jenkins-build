@@ -219,6 +219,7 @@ else:
 
     try:
         for b in build:
+            print "Building: %s" % b
             node = Node(b['name'])
             node['in_use'] = b['in_use']
             node.save()
