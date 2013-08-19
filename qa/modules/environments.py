@@ -387,7 +387,6 @@ base_env = {
                       "label":"public"}}
         },
         "osops": {"apply_patches": True},
-        "horizon": {"theme": "Rackspace"},
         "developer_mode": False,
         "osops_networks": {"management": "198.101.133.0/24", "nova": "198.101.133.0/24", "public": "198.101.133.0/24"},
         "glance": {"image_upload": True, "images": ["cirros", "precise"]}

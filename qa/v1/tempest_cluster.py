@@ -39,11 +39,15 @@ local_env = qa.cluster_environment(**env_dict)
 if not local_env.exists:
     print "Error: Environment %s doesn't exist" % local_env.name
     sys.exit(1)
-remote_chef = qa.remote_chef_api(local_env)
-env = qa.cluster_environment(chef_api=remote_chef, **env_dict)
+if 'remote_chef' in local_env.override_attributes:
+    api = qa.remote_chef_api(local_env)
+    env = qa.cluster_environment(chef_api=remote_chef, **env_dict)
+else:
+    env = local_env
+    api = qa.chef
 
 # Gather information from the cluster
-controller, ip = qa.cluster_controller(env, remote_chef)
+controller, ip = qa.cluster_controller(env, api)
 if not controller:
     print "Controller not found for env: %s" % env.name
     sys.exit(1)

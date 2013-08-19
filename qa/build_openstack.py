@@ -93,7 +93,8 @@ def _run_commands(name, commands):
                 func(**command['kwargs'])
             except:
                 import traceback
-                print traceback.format_exc()
+                print traceback.print_exc()
+
                 sys.exit(1)
                 
             #elif function run the function
@@ -218,6 +219,7 @@ else:
 
     try:
         for b in build:
+            print "Building: %s" % b
             node = Node(b['name'])
             node['in_use'] = b['in_use']
             node.save()
