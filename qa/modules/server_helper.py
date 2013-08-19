@@ -1,5 +1,7 @@
 import sys
-from subprocess import check_call, CalledProcessError, check_output
+import paramiko
+from cStringIO import StringIO
+from subprocess import check_call, CalledProcessError
 import os
 
 
@@ -11,28 +13,32 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
     @param remote_cmd
     @return A map based on pass / fail run info
     """
-    command = ("sshpass -p %s ssh "
-               "-o ConnectTimeout=3 "
-               "-o UserKnownHostsFile=/dev/null "
-               "-o StrictHostKeyChecking=no "
-               "-o LogLevel=quiet "
-               "-l %s %s '%s'") % (password,
-                                   user,
-                                   server_ip,
-                                   remote_cmd)
+    output = StringIO()
+    error = StringIO()
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
-        if quiet is True:
-            with open(os.devnull, 'w') as shutup:
-                ret = check_output(command, shell=True)
-        else:
-            ret = check_output(command, shell=True)
-            print ret
-        return {'success': True, 'return': ret, 'exception': None}
-    except CalledProcessError, cpe:
+        ssh.connect(server_ip, username=user, password=password)
+        stdin, stdout, stderr = ssh.exec_command(remote_cmd)
+        stdin.close()
+        for line in stdout.xreadlines():
+            if not quiet:
+                sys.stdout.write(line)
+            output.write(line)
+        for line in stderr.xreadlines():
+            sys.out.write(line)
+            error.write(line)
+        exit_status = stdout.channel.recv_exit_status()
+        return {'success': True if exit_status == 0 else False,
+                'return': output.getvalue(),
+                'exit_status': exit_status,
+                'error': error.getvalue()}
+    except:
+        print "unexpected error: " + sys.exc_info()[0]
         return {'success': False,
                 'return': None,
-                'exception': cpe,
-                'command': command}
+                'exit_status': None,
+                'error': None}
 
 
 def run_remote_scp_cmd(server_ip, user, password, to_copy):

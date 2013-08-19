@@ -193,8 +193,12 @@ else:
         else:
             build.append({'name': nodes.pop(),
                           'in_use': 'single-controller',
-                          'run_list': ['role[single-controller]']})
+                          'run_list': ['role[ha-controller1]']})
 
+        #If no nodes left, run controller as compute
+        if not nodes:
+            build[-1]['run_list'] = build[-1]['run_list'] + ['role[single-compute]']
+        
         #Compute with whatever is left
         for n in nodes:
             build.append({'name': n,
