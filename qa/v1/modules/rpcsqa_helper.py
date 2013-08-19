@@ -1093,6 +1093,9 @@ class rpcsqa_helper:
         # Save the environment
         chef_env.save()
 
+        # Write the environment to the file
+        self.write_chef_env_to_file(environment)
+
     def set_network_interface(self, chef_node):
         if "role[qa-base]" in chef_node.run_list:
             chef_node.run_list = ["recipe[network-interfaces]"]
@@ -1349,3 +1352,40 @@ class rpcsqa_helper:
             print "Platform Family %s is not supported." \
                 % chef_node['platform_family']
             sys.exit(1)
+
+
+    def write_chef_env_to_file(self, environment, file_path='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments'):
+        '''
+        @summary writes the current chef environment to the correct file that it represents
+        @param environment The chef environment to write to file (name must match file name)
+        @type environment String
+        @param file_path The path to the chef environments directory to write to
+        @type file_path String
+        '''
+
+        # Grab the current chef environment
+        chef_env = Environment(environment, api=self.chef)
+
+        if not chef_env.exists:
+            print "The chef environment that you are trying to write does not exist"
+            sys.exit(1)
+
+        # Convert the env to a json dict
+        env_json = chef_env.to_dict()
+
+        file_name = "{0}/{1}.json".format(file_path, environment)
+        # Open the environment file for write
+        try:
+            # Open the file
+            fo = open(file_name, "w")
+        except IOError:
+            print "Failed to open file: {0}".format(file_name)
+        else:
+            # Write the json string
+            fo.write(json.dumps(env_json))
+
+            #close the file
+            fo.close()
+
+            # print message for debugging
+            print "{0} successfully saved".format(file_name)
