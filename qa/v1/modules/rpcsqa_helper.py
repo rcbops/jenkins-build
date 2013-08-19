@@ -668,7 +668,7 @@ class rpcsqa_helper:
                                'git submodule update'.format(local_repo, cookbook_name))
             to_run_list.append('knife cookbook upload --all --cookbook-path {0}/{1}/cookbooks'.format(local_repo, cookbook_name))
         else:
-            to_run_list.append('knife cookbook upload --all --cookbook-path {0}/{1}'.format(local_repo, cookbook_name))
+            to_run_list.append('knife cookbook upload --all --cookbook-path {0}/{1}/cookbooks'.format(local_repo, cookbook_name))
 
         # Append role load to run list
         to_run_list.append('knife role from file {0}/{1}/roles/*.rb'.format(local_repo, cookbook_name))
