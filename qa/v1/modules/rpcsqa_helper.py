@@ -416,7 +416,7 @@ class rpcsqa_helper:
         if nodes:
             for n in nodes:
                 name = n['name']
-                print "Node {0} belongs to chef enviornment {1}".format(name, chef_environment)
+                print "Node {0} belongs to chef environment {1}".format(name, chef_environment)
                 node = Node(name, api=self.chef)
                 if node['in_use'] != 0:
                     self.erase_node(node)
