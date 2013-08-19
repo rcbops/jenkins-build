@@ -258,7 +258,8 @@ if results.action == "build":
     # Run chef on management server again
     #################################################################
 
-    management_node = Node(management_server, api=self.chef)
+    # Gather Chef node
+    management_node = rpcsqa.get_server_info(management_server)
     print "Swift Setup...running chef client on {0} to finish setup...".format(management_server)
     rpcsqa.run_chef_client(management_node)
 
