@@ -261,7 +261,7 @@ if results.action == "build":
     # Gather Chef node
     management_node = rpcsqa.get_server_info(management_server)
     print "Swift Setup...running chef client on {0} to finish setup...".format(management_server)
-    rpcsqa.run_chef_client(management_node)
+    rpcsqa.run_chef_client(management_node['node'])
 
     #################################################################
     # Successful Setup, exit
