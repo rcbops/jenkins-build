@@ -132,7 +132,9 @@ if results.action == "build":
         "keystone": {
             "swift_admin_url": "http://{0}:8080/v1/AUTH_%(tenant_id)s".format(keystone_ip),
             "swift_public_url": "http://{0}:8080/v1/AUTH_%(tenant_id)s".format(keystone_ip),
-            "swift_internal_url": "http://{0}:8080/v1/AUTH_%(tenant_id)s".format(keystone_ip)
+            "swift_internal_url": "http://{0}:8080/v1/AUTH_%(tenant_id)s".format(keystone_ip),
+            "auth_password": "secrete",
+            "admin_password": "secrete"
         }
     }
 
