@@ -372,3 +372,30 @@ class rpcsqa_helper:
                        chef_server_node['ipaddress']}
         env.override_attributes['remote_chef'] = remote_dict
         env.save()
+
+    def bootstrap_chef(self, client_node, server_node):
+        '''
+        @summary: installes chef client on a node and bootstraps it to chef_server
+        @param node: node to install chef client on
+        @type node: String
+        @param chef_server: node that is the chef server
+        @type chef_server: String
+        '''
+
+        # install chef client and bootstrap
+        cmd = 'knife bootstrap %s -x root -P %s' % (chef_client_ip,
+                                                    chef_client_password)
+        ssh_run = qa.run_command_on_node(server_node, cmd)
+
+        if ssh_run['success']:
+            print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
+
+
+
+
+
+
+
+
+
+
