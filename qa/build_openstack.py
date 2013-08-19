@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+import traceback
 from modules.rpcsqa_helper import *
 
 print "Starting up..."
@@ -240,7 +241,7 @@ else:
                 _run_commands("post", b['post_commands'])
 
     except Exception, e:
-        print e
+        print traceback.print_exc()
         sys.exit(1)
 
 
