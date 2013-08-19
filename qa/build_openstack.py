@@ -225,7 +225,7 @@ else:
             node['in_use'] = b['in_use']
             node.save()
 
-            if results.remote_chef and not b['in_use'] is "chef_server":
+            if args.remote_chef and not b['in_use'] is "chef_server":
                 rpcsqa.remove_chef(node)
                 query = "chef_environment:%s AND in_use:chef_server" % env
                 chef_server = next(self.node_search(query))
