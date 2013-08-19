@@ -2,7 +2,7 @@ import sys
 import copy
 import json
 import time
-import StringIO
+from cStringIO import StringIO
 from chef import *
 from server_helper import *
 from razor_api import razor_api
@@ -205,7 +205,7 @@ class rpcsqa_helper:
     def remote_chef_client(self, env):
         # RSAifying key
         remote_dict = dict(env.override_attributes['remote_chef'])
-        pem = StringIO.StringIO(remote_dict['key'])
+        pem = StringIO(remote_dict['key'])
         remote_dict['key'] = rsa.Key(pem)
         return ChefAPI(**remote_dict)
 
