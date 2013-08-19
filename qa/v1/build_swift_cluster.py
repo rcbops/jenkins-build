@@ -76,7 +76,7 @@ if results.action == "build":
 
     # If we are testing swift, we need 1 controller, 1 proxy and 3 swift nodes
     if cluster_size < 6:
-        print "Swift Selected, setting cluster size to 5 (minimum)"
+        print "Swift Selected, setting cluster size to 6 (minimum)"
         cluster_size = 6
 
     # If remote_chef is enabled, add one to the cluster size
@@ -271,7 +271,8 @@ if results.action == "build":
     print "***********************************************************"
     print "Chef Server: {0}".format(rpcsqa.print_server_info(chef_server))
     print "Keystone Server {0}".format(rpcsqa.print_server_info(management_server))
-    print "Swift Proxy {0}".format(rpcsqa.print_server_info(swift_proxy))
+    print "Swift Proxy: "
+    print [rpcsqa.print_server_info(node) for node in swift_proxy]
     print "Swift Storage Nodes: "
     print [rpcsqa.print_server_info(node) for node in swift_nodes]
     print "***********************************************************"
