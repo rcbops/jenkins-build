@@ -32,3 +32,4 @@ if 'kaushik-precise-grizzly-default' in environments.names:
 for environment in environments.names:
     print "Cleaning up environment {0}".format(environment)
     rpcsqa.cleanup_environment(environment)
+    rpcsqa.remove_empty_environments()
