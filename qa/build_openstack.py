@@ -93,7 +93,8 @@ def _run_commands(name, commands):
                 func(**command['kwargs'])
             except:
                 import traceback
-                print traceback.format_exc()
+                print traceback.print_exc()
+
                 sys.exit(1)
                 
             #elif function run the function
