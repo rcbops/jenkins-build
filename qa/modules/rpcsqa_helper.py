@@ -204,6 +204,7 @@ class rpcsqa_helper:
 
     def remote_chef_client(self, env):
         # RSAifying key
+        print "Create chef client for env: %s" % env.name
         remote_dict = dict(env.override_attributes['remote_chef'])
         pem = StringIO(remote_dict['key'])
         remote_dict['key'] = rsa.Key(pem)
@@ -348,7 +349,7 @@ class rpcsqa_helper:
         """
         @summary Duplicates the local chef environment remotely
         """
-        remote_api = self.remote_chef_client(chef_env)
+        remote_api = self.remote_chef_client(chef_environment)
         env = Environment(chef_environment.name, api=remote_api)
         env.override_attributes = chef_environment.override_attributes
         env.save()
@@ -368,3 +369,4 @@ class rpcsqa_helper:
                        chef_server_node['ipaddress']}
         env.override_attributes['remote_chef'] = remote_dict
         env.save()
+
