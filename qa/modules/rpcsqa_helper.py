@@ -350,8 +350,9 @@ class rpcsqa_helper:
         @summary Duplicates the local chef environment remotely
         """
         print "Putting environment onto remote chef server"
+        name = chef_environment.name
         remote_api = self.remote_chef_client(chef_environment)
-        env = Environment(chef_environment, api=remote_api)
+        env = Environment(name, api=remote_api)
         env.override_attributes = chef_environment.override_attributes
         env.save()
 
