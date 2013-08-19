@@ -34,6 +34,7 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
                 'exit_status': exit_status,
                 'error': error.getvalue()}
     except:
+        print "unexpected error: " + sys.exc_info()[0]
         return {'success': False,
                 'return': None,
                 'exit_status': None,
