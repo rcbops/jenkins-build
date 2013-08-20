@@ -34,9 +34,9 @@ parser.add_argument('--branch', action="store", dest="branch", required=False,
                     default="grizzly",
                     help="The rcbops cookbook branch")
 
-parser.add_argument('--cluster_size', action="store", dest="cluster_size",
+parser.add_argument('--computes', action="store", dest="computes",
                     required=False, default=1,
-                    help="Size of the Open Stack cluster.")
+                    help="Number of computes.")
 
 parser.add_argument('--ha', action='store_true', dest='ha',
                     required=False, default=False,
@@ -118,7 +118,7 @@ env = qa.prepare_environment(args.name,
 
 
 # Set the cluster size
-cluster_size = int(args.cluster_size)
+computes = int(args.computes)
 
 
 nodes = None
@@ -145,7 +145,7 @@ if args.baremetal:
         qa.cleanup_environment(env)
 
         print "Gather nodes..."
-        nodes = qa.gather_razor_nodes(args.os_distro, env, cluster_size)
+        nodes = qa.gather_razor_nodes(args.os_distro, env)
 
     except Exception, e:
         print e
@@ -202,13 +202,13 @@ else:
             build[-1]['run_list'] = build[-1]['run_list'] + ['role[single-compute]']
 
         #Compute with whatever is left
-        for n in nodes:
-            build.append({'name': n,
+        for n in xrange(computes):
+            build.append({'name': nodes.pop(),
                           'in_use': 'single-compute',
                           'run_list': ['role[single-compute]']})
 
     except IndexError, e:
-        print "*** Not enough nodes for your setup (%s) ....try increasing cluster_size" % cluster_size
+        print "*** Error: Not enough nodes for your setup"
         qa.cleanup_environment(env)
         qa.delete_environment(env)
         sys.exit(1)
