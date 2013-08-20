@@ -39,8 +39,7 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
     except CalledProcessError, cpe:
         return {'success': False,
                 'return': None,
-                'exception': cpe,
-                'command': command}
+                'exception': cpe}
 
 
 def run_remote_scp_cmd(server_ip, user, password, to_copy):
@@ -67,8 +66,7 @@ def run_remote_scp_cmd(server_ip, user, password, to_copy):
     except CalledProcessError, cpe:
         return {'success': False,
                 'return': None,
-                'exception': cpe,
-                'command': command}
+                'exception': cpe}
 
 
 def get_file_from_server(server_ip, user, password, path_to_file, copy_location):
@@ -98,8 +96,7 @@ def get_file_from_server(server_ip, user, password, path_to_file, copy_location)
     except CalledProcessError, cpe:
         return {'success': False,
                 'return': None,
-                'exception': cpe,
-                'command': command}
+                'exception': cpe}
 
 
 def disable_iptables(ip, user, password, logfile="STDOUT"):

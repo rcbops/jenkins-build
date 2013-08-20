@@ -313,7 +313,7 @@ class rpcsqa_helper:
 
         self.install_git(chef_server_node)
 
-    def build_quantum_network_node(self, quantum_node, environment=None, remote=False, chef_config_file=None):
+    def build_quantum_network_node(self, quantum_node, environment, remote=False, chef_config_file=None):
         """
         @summary: This method will attempt to build a quantum network node for a
         OpenStack Cluster on the given node for the given environment
@@ -359,7 +359,7 @@ class rpcsqa_helper:
                 print run1
                 sys.exit(1)
 
-    def build_swift_node(self, swift_node, swift_role, environment=None, remote=False, chef_config_file=None):
+    def build_swift_node(self, swift_node, swift_role, environment, remote=False, chef_config_file=None):
         """
         @summary: This will build one of 3 swift nodes (keystone, proxy, storage).
         """
@@ -399,6 +399,18 @@ class rpcsqa_helper:
                 print "Error running chef-client for controller %s" % swift_node
                 print run1
                 sys.exit(1)
+
+    def build_swift_rings(self, management_node, storage_nodes):
+
+        '''
+        @summary This method will build out the rings for a swift cluster
+        @param management_node The swift management server node object (chef)
+        @type management_node Object
+        @param storage_nodes The swift storage node objects (chef)
+        @param storage List
+        '''
+
+        # Setup partitions on storage nodes
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:
@@ -531,6 +543,13 @@ class rpcsqa_helper:
         self.razor.remove_active_model(am_uuid)
         time.sleep(15)
 
+    def failed_ssh_command_exit(self, cmd, chef_node, error_message):
+
+        print "## Failed to run command: {0} on {1} ##".format(cmd, chef_node['name'])
+        print "## Exited with exception {0}".format(error_message)
+        print "## EXITING ##"
+        sys.exit(1)
+
     def gather_all_nodes(self, os):
         # Gather the nodes for the requested OS
         nodes = Search('node', api=self.chef).query("name:qa-%s-pool*" % os)
@@ -601,7 +620,10 @@ class rpcsqa_helper:
         self.install_packages(server_info, packages)
 
         # Install RVM
-        self.run_cmd_on_node(server_info['node'], rvm_install)
+        run = self.run_cmd_on_node(server_info['node'], rvm_install)
+
+        if not run['success']:
+            self.failed_ssh_command_exit(rvm_install, server_info['node'], run['exception'])
 
         # Install RVM Ruby Versions
         #self.install_rvm_versions(server_info, ruby_versions)
@@ -674,7 +696,11 @@ class rpcsqa_helper:
         to_run_list.append('knife role from file {0}/{1}/roles/*.rb'.format(local_repo, cookbook_name))
 
         for cmd in to_run_list:
-            self.run_cmd_on_node(chef_server_node, cmd)
+            run = self.run_cmd_on_node(chef_server_node, cmd)
+
+            if not run['success']:
+                self.failed_ssh_command_exit(cmd, chef_server_node, run['exception'])
+                
 
     def install_git(self, chef_server):
         # This needs to be taken out and install_package used instead (jwagner)
@@ -785,7 +811,10 @@ class rpcsqa_helper:
 
         cmd = 'source /usr/local/rvm/scripts/rvm; gem install --no-rdoc --no-ri {0}'.format(gem)
 
-        self.run_cmd_on_node(server['node'], cmd)
+        run = self.run_cmd_on_node(server['node'], cmd)
+
+        if not run['success']:
+            self.failed_ssh_command_exit(cmd, server['node'], run['exception'])
 
     def install_rvm_versions(self, server, versions):
 
@@ -796,7 +825,10 @@ class rpcsqa_helper:
 
         cmd = 'source /usr/local/rvm/scripts/rvm; rvm install {0}'.format(version)
 
-        self.run_cmd_on_node(server['node'], cmd)
+        run = self.run_cmd_on_node(server['node'], cmd)
+
+        if not run['success']:
+            self.failed_ssh_command_exit(cmd, server['node'], run['exception'])
 
     def install_server_vms(self, server, opencenter_server_ip,
                            chef_server_ip, vm_bridge, vm_bridge_device):
@@ -985,25 +1017,13 @@ class rpcsqa_helper:
                     print "!!## -- Trouble removing broker fail -- ##!!"
                     print run
 
-    def run_cmd_on_node(self, node=None, cmd=None):
-        user = "root"
-        password = self.razor_password(node)
+    def run_cmd_on_node(self, node=None, cmd=None, user=None, password=None):
+        user = user if user else "root"
+        password = password if password else self.razor_password(node)
         ip = node['ipaddress']
         print "### Running: %s ###" % cmd
         print "### On: %s - %s ###" % (node.name, ip)
-        run = run_remote_ssh_cmd(ip, user, password, cmd)
-
-        if not run['success']:
-            print "### {0} Failed to Run ###".format(cmd)
-            print "### Exited with exception: {0} ###".format(run['exception'])
-            print "### Trying Again ###"
-            run2 = run_remote_ssh_cmd(ip, user, password, cmd)
-
-            if not run2['success']:
-                print "### {0} Failed to Run a second time ###".format(cmd)
-                print "### Exited with exception: {0} ###".format(run2['exception'])
-                print "### EXITING ###"
-                sys.exit(1)
+        return run_remote_ssh_cmd(ip, user, password, cmd)
 
     def run_chef_client(self, chef_node):
         """
@@ -1352,7 +1372,6 @@ class rpcsqa_helper:
             print "Platform Family %s is not supported." \
                 % chef_node['platform_family']
             sys.exit(1)
-
 
     def write_chef_env_to_file(self, environment, file_path='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments'):
         '''

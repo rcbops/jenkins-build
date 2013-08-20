@@ -170,14 +170,18 @@ if results.action == "build":
 
     # Drop config.json onto berkshelf to overwrite verify
     command = ('mkdir -p .berkshelf; cd .berkshelf; echo "{\\"ssl\\":{\\"verify\\":false}}" > config.json')
-    rpcsqa.run_cmd_on_node(chef_node['node'], command)
+    run = rpcsqa.run_cmd_on_node(chef_node['node'], command)
+    if not run['success']:
+        rpcsqa.failed_ssh_command_exit(command, chef_node['node'], run['exception'])
 
     # Run berkshelf on server
     command = ('cd /opt/rcbops/swift-private-cloud; '
                'source /usr/local/rvm/scripts/rvm; '
                'berks install; '
                'berks upload')
-    rpcsqa.run_cmd_on_node(chef_node['node'], command)
+    run = rpcsqa.run_cmd_on_node(chef_node['node'], command)
+    if not run['success']:
+        rpcsqa.failed_ssh_command_exit(command, chef_node['node'], run['exception'])
 
     # setup environment file to remote chef server
     rpcsqa.setup_remote_chef_environment(chef_server, env)
