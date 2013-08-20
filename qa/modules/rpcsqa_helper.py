@@ -71,7 +71,7 @@ class rpcsqa_helper:
         chef_env.override_attributes.update(env_json['override_attributes'])
         chef_env.override_attributes['package_component'] = branch
         if os_distro == "centos":
-            chef_env.override_attributes['networks']['public']['bridge_dev'] = "em1"
+            chef_env.override_attributes['nova']['networks']['public']['bridge_dev'] = "em1"
         chef_env.save()
         return env
 
