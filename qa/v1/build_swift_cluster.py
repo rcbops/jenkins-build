@@ -54,15 +54,18 @@ if results.repo_tag is not None:
         results.repo_tag = None
 
 # Remove broker fails for qa-%os_distro-pool
-rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
+print "## -- Removing Broker Fails from Razor for qa-{0}-pool -- ##".format(results.os_distro)
+rpcsqa.remove_broker_fail("qa-{0}-pool".format(results.os_distro))
 
 # Prepare environment
+print "## -- Preparing chef environment -- ##"
 env = rpcsqa.prepare_environment(results.name,
                                  results.os_distro,
                                  results.feature_set,
                                  results.branch)
 
 # Gather all the nodes for the os_distro
+print "## -- Gathering all available nodes for {0} -- ##".format(results.os_distro)
 all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 
 # Set the cluster size
@@ -71,6 +74,7 @@ cluster_size = int(results.cluster_size)
 # Build a new cluster
 if results.action == "build":
 
+    print "## -- Beginning build of new Swift Cluster -- ##"
     # Clean up the current running environment
     rpcsqa.cleanup_environment(env)
 
@@ -85,16 +89,18 @@ if results.action == "build":
         cluster_size += 1
 
     # Collect the amount of servers we need for the swift install
+    print "## -- Checking to see if {0} are available -- ##".format(cluster_size)
     rpcsqa.check_cluster_size(all_nodes, cluster_size)
 
     # Gather the nodes and set there environment
+    print "## -- Setting nodes environment to {0} -- ##".format(env)
     openstack_list = rpcsqa.gather_size_nodes(results.os_distro,
                                               env,
                                               cluster_size)
 
     # If there were no nodes available, exit
     if not openstack_list:
-        print "No nodes available..."
+        print "## -- Not enough availble nodes...try again later...Exiting"
         sys.exit(1)
 
     # Assign nodes to names
@@ -143,6 +149,9 @@ if results.action == "build":
     # Set up Chef Server
     ###################################################################
 
+    print "#############################################################"
+    print "################## Setting up Chef Server ###################"
+    print "#############################################################"
     # Override the keystone attributes
     rpcsqa.set_environment_variables(env, keystone, 'swift-private-cloud', 'override')
 
@@ -160,6 +169,9 @@ if results.action == "build":
     rpcsqa.build_chef_server(chef_server)
 
     # Install Berkshelf , This is a convoluded mess, thanks ruby
+    print "#############################################################"
+    print "################# Installing Berkshelf ######################"
+    print "#############################################################"
     rpcsqa.install_berkshelf(chef_server)
 
     # Install the proper cookbooks
@@ -193,6 +205,10 @@ if results.action == "build":
     # Build Swift Management (keystone)
     ###################################################################
 
+    print "#############################################################"
+    print "############# Building Swift Management Node ################"
+    print "#############################################################"
+
     # Make keystone server
     rpcsqa.set_node_in_use(management_server, swift_roles['controller'])
 
@@ -214,6 +230,10 @@ if results.action == "build":
     ###################################################################
     # Build Swift Proxy
     ###################################################################
+
+    print "#############################################################"
+    print "############### Building Swift Proxy Nodes ##################"
+    print "#############################################################"
 
     for proxy in swift_proxy:
         # Make Swift Proxy Node
@@ -237,6 +257,10 @@ if results.action == "build":
     ###################################################################
     # Build Swift Object Storage Boxes
     ###################################################################
+
+    print "#############################################################"
+    print "############## Building Swift Storage Nodes #################"
+    print "#############################################################"
 
     for node in swift_nodes:
 
@@ -262,14 +286,37 @@ if results.action == "build":
     # Run chef on management server again
     #################################################################
 
+    print "#############################################################"
+    print "############### Finishing Swift Chef Setup ##################"
+    print "#############################################################"
+    
     # Gather Chef node
     management_node = rpcsqa.get_server_info(management_server)
-    print "Swift Setup...running chef client on {0} to finish setup...".format(management_server)
     rpcsqa.run_chef_client(management_node['node'])
+
+    #################################################################
+    # Setup the disks and the swift rings on the cluster
+    #################################################################
+
+    print "#############################################################"
+    print "################# Setting up Swift Rings ####################"
+    print "#############################################################"
+
+    # Gather the chef node objects for the storage nodes
+    storage_nodes = []
+    for node in swift_nodes:
+        storage_nodes.append(rpcsqa.get_server_info(node))
+
+    # Build baby build (and cross fingers)
+    rpcsqa.build_swift_rings(management_node, storage_nodes, 3)
 
     #################################################################
     # Successful Setup, exit
     #################################################################
+
+    print "#############################################################"
+    print "############# Swift Cluster Build Successful ################"
+    print "#############################################################"
 
     # print all servers info
     print "***********************************************************"
