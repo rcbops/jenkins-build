@@ -217,7 +217,7 @@ else:
     print "Going to build.....%s" % json.dumps(build, indent=4,  default=lambda o: o.__name__)
     print "#" * 70
     success = True
-
+    environment = Environment(env)
     try:
         for b in build:
             print "Building: %s" % b
@@ -233,7 +233,7 @@ else:
 
             if 'run_list' in b:
                 # Reacquires node if using remote chef
-                node = Node(node.name, api=qa.remote_chef_client(env)) if args.remote_chef else node
+                node = Node(node.name, api=qa.remote_chef_client(environment)) if args.remote_chef else node
                 node.run_list = b['run_list']
                 node.save()
                 print "Running chef client for %s" % node
