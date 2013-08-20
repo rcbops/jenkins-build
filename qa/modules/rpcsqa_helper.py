@@ -123,9 +123,8 @@ class rpcsqa_helper:
                     for index, run in enumerate(run_chef_client['runs']):
                         print "Run %s: %s" % (index+1, run)
 
-    def gather_razor_nodes(self, os, environment, cluster_size):
+    def gather_razor_nodes(self, os, environment):
         ret_nodes = []
-        count = 0
         query = "name:qa-%s-pool*" % os
         nodes = self.node_search(query)
         # Take a node from the default environment that has its network interfaces set.
@@ -138,11 +137,6 @@ class rpcsqa_helper:
                     node.save()
                 ret_nodes.append(node.name)
                 print "Taking node: %s" % node.name
-                count += 1
-                if count >= cluster_size:
-                    break
-        if count < cluster_size:
-            raise Exception("Not enough available nodes for requested cluster size of %s, try again later..." % cluster_size)
         return ret_nodes
 
     def remove_broker_fail(self, policy):
