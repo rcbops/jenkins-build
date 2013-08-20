@@ -17,7 +17,6 @@ def _run_commands(name, commands):
                 func = command['function']
                 func(**command['kwargs'])
             except:
-                import traceback
                 print traceback.print_exc()
 
                 sys.exit(1)
@@ -40,8 +39,8 @@ def main():
                         required=False, default=False,
                         help="Use libvirt to test instead of physical??")
 
-    parser.add_argument('--public_cloud', action="store_true", dest="public_cloud",
-                        required=False, default=False,
+    parser.add_argument('--public_cloud', action="store_true",
+                        dest="public_cloud", required=False, default=False,
                         help="Use public cloud to test instead of physical??")
 
     parser.add_argument('--baremetal', action="store_true", dest="baremetal",
@@ -54,10 +53,10 @@ def main():
 
     parser.add_argument('--os_distro', action="store", dest="os_distro",
                         required=False, default='precise',
-                        help="Operating System Distribution to build OpenStack on")
+                        help="Operating System Distribution")
 
-    parser.add_argument('--branch', action="store", dest="branch", required=False,
-                        default="grizzly",
+    parser.add_argument('--branch', action="store", dest="branch",
+                        required=False, default="grizzly",
                         help="The rcbops cookbook branch")
 
     parser.add_argument('--computes', action="store", dest="computes",
@@ -76,8 +75,8 @@ def main():
                         required=False, default=False,
                         help="Do you want openldap keystone?")
 
-    parser.add_argument('--remote_chef', action="store_true", dest="remote_chef",
-                        required=False, default=False,
+    parser.add_argument('--remote_chef', action="store_true",
+                        dest="remote_chef", required=False, default=False,
                         help="Build a new chef server for this deploy")
 
     parser.add_argument('--log_level', action="store", dest="log_level",
@@ -94,19 +93,16 @@ def main():
                         default="198.101.133.3",
                         help="IP for the Razor server")
 
-
     # Save the parsed arguments
     args = parser.parse_args()
     feature_list = ['openldap', 'quantum', 'ha']
     features = [x for x in feature_list if args.__dict__[x] is True]
     if features == []:
         features = ['default']
+    computes = int(args.computes)
 
     # Setup the helper class ( Chef / Razor )
-    qa = rpcsqa_helper()
-
-
-
+    qa = rpcsqa_helper(args.razor_ip)
 
     cookbooks = [
         {
@@ -121,12 +117,6 @@ def main():
                                  args.branch,
                                  features)
 
-
-    # Set the cluster size
-    computes = int(args.computes)
-
-
-    nodes = None
     #####################
     #   GATHER NODES
     #####################
@@ -139,10 +129,10 @@ def main():
         sys.exit(1)
 
     if args.baremetal:
-        qa.enable_razor(args.razor_ip)
         print "Starting baremetal...."
-        print "Removing broker fails and interfacing nodes that need it....(razor api is slow)"
+        print "Removing broker fails"
         qa.remove_broker_fail("qa-%s-pool" % args.os_distro)
+        print "Interfacing nodes that need it"
         qa.interface_physical_nodes(args.os_distro)
         try:
             print "Cleaning up old enviroment (deleting nodes) "
@@ -157,7 +147,6 @@ def main():
             qa.cleanup_environment(env)
             sys.exit(1)
 
-
     #####################
     #   BUILD
     #####################
@@ -168,20 +157,22 @@ def main():
         # These builds would be nice as a class
         build = []
         try:
-
             if args.remote_chef:
+                post_commands = [{'function': qa.build_chef_server,
+                                  'kwargs': {'cookbooks': cookbooks,
+                                             'env': env}}]
                 build.append({'name': nodes.pop(),
                               'in_use': 'chef_server',
-                              'post_commands': [{'function': qa.build_chef_server,
-                                                'kwargs': {'cookbooks': cookbooks,
-                                                           'env': env}}]})
+                              'post_commands': post_commands})
 
             if args.openldap:
+                role = 'role[qa-openldap-%s]' % args.os_distro
+                post_commands = ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
+                                 {'function': qa.update_openldap_environment, 'kwargs': {'env': env}}]
                 build.append({'name': nodes.pop(),
                               'in_use': 'directory_server',
-                              'run_list': ['role[qa-openldap-%s]' % args.os_distro],
-                              'post_commands': ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
-                                                {'function': qa.update_openldap_environment, 'kwargs': {'env': env}}]
+                              'run_list': [role],
+                              'post_commands': post_commands
                               })
 
             if args.quantum:
@@ -219,7 +210,9 @@ def main():
             sys.exit(1)
 
         #Build out cluster
-        print "Going to build.....%s" % json.dumps(build, indent=4,  default=lambda o: o.__name__)
+        print "Going to build.....%s" % json.dumps(build,
+                                                   indent=4,
+                                                   default=lambda o: o.__name__)
         print "#" * 70
         success = True
         environment = Environment(env)
@@ -238,12 +231,16 @@ def main():
 
                 if 'run_list' in b:
                     # Reacquires node if using remote chef
-                    node = Node(node.name, api=qa.remote_chef_client(environment)) if args.remote_chef else node
+                    node = Node(node.name,
+                                # perhaps add remote chef to rpcsqa_helper
+                                api=qa.remote_chef_client(environment)) if args.remote_chef else node
                     node.run_list = b['run_list']
                     node.save()
                     print "Running chef client for %s" % node
                     print node.run_list
-                    chef_client = qa.run_chef_client(node, num_times=2, log_level=args.log_level)
+                    chef_client = qa.run_chef_client(node,
+                                                     num_times=2,
+                                                     log_level=args.log_level)
                     if not chef_client['success']:
                         print "chef-client run failed"
                         success = False
@@ -256,11 +253,12 @@ def main():
             print traceback.print_exc()
             sys.exit(1)
 
-
     if success:
         print "Welcome to the cloud..."
         print env
-        print "Your cloud:   %s" % json.dumps(build, indent=4,  default=lambda o: o.__name__)
+        print "Your cloud:   %s" % json.dumps(build,
+                                              indent=4,
+                                              default=lambda o: o.__name__)
         print "#" * 70
     else:
         print "Sorry....no cloud for you...."
