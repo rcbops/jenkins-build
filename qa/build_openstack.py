@@ -217,6 +217,7 @@ def main():
         print "#" * 70
         success = True
         environment = Environment(env)
+        api = qa.chef
         try:
             for b in build:
                 print "Building: %s" % b
@@ -229,12 +230,11 @@ def main():
                     query = "chef_environment:%s AND in_use:chef_server" % env
                     chef_server = next(qa.node_search(query))
                     qa.bootstrap_chef(node, chef_server)
+                    api = qa.remote_chef_client(environment)
 
                 if 'run_list' in b:
                     # Reacquires node if using remote chef
-                    node = Node(node.name,
-                                # perhaps add remote chef to rpcsqa_helper
-                                api=qa.remote_chef_client(environment)) if args.remote_chef else qa.chef
+                    node = Node(node.name, api=api)
                     node.run_list = b['run_list']
                     node.save()
                     print "Running chef client for %s" % node
