@@ -101,8 +101,8 @@ def main():
         features = ['default']
     computes = int(args.computes)
 
-    # Setup the helper class ( Chef / Razor )
-    qa = rpcsqa_helper(args.razor_ip)
+    # Setup the helper class ( Chef )
+    qa = rpcsqa_helper()
 
     cookbooks = [
         {
@@ -129,6 +129,7 @@ def main():
         sys.exit(1)
 
     if args.baremetal:
+        qa.enable_razor(args.razor_ip)
         print "Starting baremetal...."
         print "Removing broker fails"
         qa.remove_broker_fail("qa-%s-pool" % args.os_distro)
