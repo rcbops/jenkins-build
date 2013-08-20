@@ -408,7 +408,9 @@ class rpcsqa_helper:
         @param management_node The swift management server node object (chef)
         @type management_node Object
         @param storage_nodes The swift storage node objects (chef)
-        @param storage List
+        @type storage List
+        @param num_rings The number of rings you want in your swift
+        @type num_rings Integer
         '''
 
         # Setup partitions on storage nodes, (must run as swiftops user)
@@ -437,6 +439,7 @@ class rpcsqa_helper:
                 commands.append("swift-ring-builder {0}.builder add z{1}-{2}:6000/sdb1 1000".format(builder, num + 1, node['ip']))
                 num += 1
 
+        # Finish the command list
         temp_list = ["swift-ring-builder object.builder rebalance",
                      "swift-ring-builder container.builder rebalance",
                      "swift-ring-builder account.builder rebalance",
@@ -449,8 +452,10 @@ class rpcsqa_helper:
         for item in temp_list:
             commands.append(item)
 
+        # join all the commands into a single command, seperated by ";"
         command = commands.join(";")
 
+        # Run the command on the swift management node
         run = self.run_cmd_on_node(management_node['node'], command)
         if not run['success']:
             self.failed_ssh_command_exit(command, management_node['node'], run['exception'])
