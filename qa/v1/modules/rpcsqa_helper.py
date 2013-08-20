@@ -426,12 +426,11 @@ class rpcsqa_helper:
         # Determine how many storage nodes we have and add them appropriatly
         builders = ['object', 'container', 'account']
         for builder in builders:
-            num = 0
-            for node in storage_nodes:
+            for index, node in enumerate(storage_nodes):
                 
                 # if the current index of the node is % num_rings = 0, 
                 # reset num so we dont add anymore rings past num_rings
-                if num % num_rings is 0:
+                if index % num_rings is 0:
                     num = 0
                 
                 # Add the line to command to build the object
@@ -439,13 +438,13 @@ class rpcsqa_helper:
                 num += 1
 
         temp_list = ["swift-ring-builder object.builder rebalance",
-                    "swift-ring-builder container.builder rebalance",
-                    "swift-ring-builder account.builder rebalance",
-                    "git remote add origin /srv/git/rings",
-                    "git add .",
-                    "git commit -m \"initial checkin\"",
-                    "git push origin master",
-                    "dsh -g swift -- sudo /usr/local/bin/pull-rings.sh"]
+                     "swift-ring-builder container.builder rebalance",
+                     "swift-ring-builder account.builder rebalance",
+                     "git remote add origin /srv/git/rings",
+                     "git add .",
+                     "git commit -m \"initial checkin\"",
+                     "git push origin master",
+                     "dsh -g swift -- sudo /usr/local/bin/pull-rings.sh"]
 
         for item in temp_list:
             commands.append(item)
