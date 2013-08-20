@@ -385,6 +385,8 @@ class rpcsqa_helper:
         '''
 
         # install chef client and bootstrap
+        chef_client_ip = client_node['ipaddress']
+        chef_client_password = self.razor_password(client_node)
         cmd = 'knife bootstrap %s -x root -P %s' % (chef_client_ip,
                                                     chef_client_password)
         ssh_run = qa.run_command_on_node(server_node, cmd)
