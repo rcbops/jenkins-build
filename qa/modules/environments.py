@@ -381,10 +381,10 @@ base_env = {
         "monitoring": {"metric_provider": "collectd", "procmon_provider": "monit"},
         "mysql": {"root_network_acl": "%", "allow_remote_root": True},
         "nova": {
-        "apply_patches": True,
-        "networks": {"public": {"num_networks": "1", "bridge": "br0", "label": "public", "dns1": "8.8.8.8",
-                      "dns2": "8.8.4.4", "bridge_dev": "eth1", "network_size": "254", "ipv4_cidr": "172.31.0.0/24", 
-                      "label":"public"}}
+            "apply_patches": True,
+            "networks": [{"num_networks": "1", "bridge": "br0", "label": "public", "dns1": "8.8.8.8",
+                          "dns2": "8.8.4.4", "bridge_dev": "eth1", "network_size": "254", "ipv4_cidr": "172.31.0.0/24", 
+                          "label":"public"}]
         },
         "osops": {"apply_patches": True},
         "developer_mode": False,

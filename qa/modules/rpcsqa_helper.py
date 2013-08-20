@@ -1,5 +1,4 @@
 import sys
-import copy
 import json
 import time
 from cStringIO import StringIO
@@ -197,9 +196,12 @@ class rpcsqa_helper:
         pass
 
     def razor_password(self, chef_node):
-        chef_node = Node(chef_node.name, api=self.chef)
-        metadata = chef_node.attributes['razor_metadata'].to_dict()
-        uuid = metadata['razor_active_model_uuid']
+        try:
+            chef_node = Node(chef_node.name, api=self.chef)
+            uuid = chef_node.attributes['razor_metadata']['razor_active_model_uuid']
+        except:
+            print dict(chef_node.attributes)
+            raise Exception("Couldn't find razor_metadata/password")
         return self.razor.get_active_model_pass(uuid)['password']
 
     def remote_chef_client(self, env):
@@ -372,3 +374,22 @@ class rpcsqa_helper:
                        chef_server_node['ipaddress']}
         env.override_attributes['remote_chef'] = remote_dict
         env.save()
+
+    def bootstrap_chef(self, client_node, server_node):
+        '''
+        @summary: installes chef client on a node and bootstraps it to chef_server
+        @param node: node to install chef client on
+        @type node: String
+        @param chef_server: node that is the chef server
+        @type chef_server: String
+        '''
+
+        # install chef client and bootstrap
+        chef_client_ip = client_node['ipaddress']
+        chef_client_password = self.razor_password(client_node)
+        cmd = 'knife bootstrap %s -x root -P %s' % (chef_client_ip,
+                                                    chef_client_password)
+        ssh_run = qa.run_command_on_node(server_node, cmd)
+
+        if ssh_run['success']:
+            print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
