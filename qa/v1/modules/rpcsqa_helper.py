@@ -2,6 +2,7 @@ import sys
 import time
 import StringIO
 import json
+from math import *
 from chef import *
 from chef_helper import *
 from server_helper import *
@@ -400,7 +401,7 @@ class rpcsqa_helper:
                 print run1
                 sys.exit(1)
 
-    def build_swift_rings(self, management_node, storage_nodes):
+    def build_swift_rings(self, management_node, storage_nodes, num_rings=3):
 
         '''
         @summary This method will build out the rings for a swift cluster
@@ -410,7 +411,50 @@ class rpcsqa_helper:
         @param storage List
         '''
 
-        # Setup partitions on storage nodes
+        # Setup partitions on storage nodes, (must run as swiftops user)
+        commands = ["su swiftops",
+                    "dsh -g swift-storage -- sudo /usr/local/bin/swift-partition.sh sdb",
+                    "dsh -g swift-storage -- sudo /usr/local/bin/swift-format.sh sdb1",
+                    "mkdir -p /opt/rcbops/rings",
+                    "cd rings",
+                    "git init .",
+                    "echo \"backups\" > .gitignore",
+                    "swift-ring-builder object.builder create 10 3 1",
+                    "swift-ring-builder container.builder create 10 3 1",
+                    "swift-ring-builder account.builder create 10 3 1"]
+
+        # Determine how many storage nodes we have and add them appropriatly
+        builders = ['object', 'container', 'account']
+        for builder in builders:
+            num = 0
+            for node in storage_nodes:
+                
+                # if the current index of the node is % num_rings = 0, 
+                # reset num so we dont add anymore rings past num_rings
+                if num % num_rings is 0:
+                    num = 0
+                
+                # Add the line to command to build the object
+                commands.append("swift-ring-builder {0}.builder add z{1}-{2}:6000/sdb1 1000".format(builder, num + 1, node['ip']))
+                num += 1
+
+        temp_list = ["swift-ring-builder object.builder rebalance",
+                    "swift-ring-builder container.builder rebalance",
+                    "swift-ring-builder account.builder rebalance",
+                    "git remote add origin /srv/git/rings",
+                    "git add .",
+                    "git commit -m \"initial checkin\"",
+                    "git push origin master",
+                    "dsh -g swift -- sudo /usr/local/bin/pull-rings.sh"]
+
+        for item in temp_list:
+            commands.append(item)
+
+        command = commands.join(";")
+
+        run = self.run_cmd_on_node(management_node['node'], command)
+        if not run['success']:
+            self.failed_ssh_command_exit(command, management_node['node'], run['exception'])
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:
@@ -697,10 +741,9 @@ class rpcsqa_helper:
 
         for cmd in to_run_list:
             run = self.run_cmd_on_node(chef_server_node, cmd)
-
+            
             if not run['success']:
                 self.failed_ssh_command_exit(cmd, chef_server_node, run['exception'])
-                
 
     def install_git(self, chef_server):
         # This needs to be taken out and install_package used instead (jwagner)
