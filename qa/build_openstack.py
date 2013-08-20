@@ -228,7 +228,7 @@ else:
             if args.remote_chef and not b['in_use'] is "chef_server":
                 rpcsqa.remove_chef(node)
                 query = "chef_environment:%s AND in_use:chef_server" % env
-                chef_server = next(self.node_search(query))
+                chef_server = next(qa.node_search(query))
                 rpcsqa.bootstrap_chef(node, chef_server)
 
             if 'run_list' in b:
