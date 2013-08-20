@@ -197,9 +197,12 @@ class rpcsqa_helper:
         pass
 
     def razor_password(self, chef_node):
-        chef_node = Node(chef_node.name, api=self.chef)
-        metadata = chef_node.attributes['razor_metadata'].to_dict()
-        uuid = metadata['razor_active_model_uuid']
+        try:
+            chef_node = Node(chef_node.name, api=self.chef)
+            uuid = chef_node.attributes['razor_metadata']['razor_active_model_uuid']
+        except:
+            print dict(chef_node.attributes)
+            raise Exception("Couldn't find razor_metadata/password")
         return self.razor.get_active_model_pass(uuid)['password']
 
     def remote_chef_client(self, env):
