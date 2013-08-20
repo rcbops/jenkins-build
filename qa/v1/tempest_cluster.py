@@ -41,7 +41,7 @@ if not local_env.exists:
     sys.exit(1)
 if 'remote_chef' in local_env.override_attributes:
     api = qa.remote_chef_api(local_env)
-    env = qa.cluster_environment(chef_api=remote_chef, **env_dict)
+    env = qa.cluster_environment(chef_api=api, **env_dict)
 else:
     env = local_env
     api = qa.chef
