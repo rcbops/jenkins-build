@@ -233,7 +233,7 @@ def main():
                     # Reacquires node if using remote chef
                     node = Node(node.name,
                                 # perhaps add remote chef to rpcsqa_helper
-                                api=qa.remote_chef_client(environment)) if args.remote_chef else node
+                                api=qa.remote_chef_client(environment)) if args.remote_chef else qa.chef
                     node.run_list = b['run_list']
                     node.save()
                     print "Running chef client for %s" % node
