@@ -77,7 +77,7 @@ if features == []:
     features = ['default']
 
 # Setup the helper class ( Chef / Razor )
-rpcsqa = rpcsqa_helper()
+qa = rpcsqa_helper()
 
 
 def _run_commands(name, commands):
@@ -87,7 +87,7 @@ def _run_commands(name, commands):
         print "Running:  %s" % command
         #If its a string run on remote server
         if isinstance(command, str):
-            rpcsqa.run_command_on_node(node, command)
+            qa.run_command_on_node(node, command)
         if isinstance(command, dict):
             try:
                 func = command['function']
@@ -97,7 +97,7 @@ def _run_commands(name, commands):
                 print traceback.print_exc()
 
                 sys.exit(1)
-                
+
             #elif function run the function
         elif hasattr(command, '__call__'):
             command()
@@ -111,10 +111,10 @@ cookbooks = [
 ]
 
 #Prepare environment
-env = rpcsqa.prepare_environment(args.name,
-                                 args.os_distro,
-                                 args.branch,
-                                 features)
+env = qa.prepare_environment(args.name,
+                             args.os_distro,
+                             args.branch,
+                             features)
 
 
 # Set the cluster size
@@ -134,22 +134,22 @@ if args.public_cloud:
     sys.exit(1)
 
 if args.baremetal:
-    rpcsqa.enable_razor(args.razor_ip)
+    qa.enable_razor(args.razor_ip)
     print "Starting baremetal...."
     print "Removing broker fails and interfacing nodes that need it....(razor api is slow)"
-    rpcsqa.remove_broker_fail("qa-%s-pool" % args.os_distro)
-    rpcsqa.interface_physical_nodes(args.os_distro)
+    qa.remove_broker_fail("qa-%s-pool" % args.os_distro)
+    qa.interface_physical_nodes(args.os_distro)
     try:
         print "Cleaning up old enviroment (deleting nodes) "
         # Clean up the current running environment (delete old servers)
-        rpcsqa.cleanup_environment(env)
+        qa.cleanup_environment(env)
 
         print "Gather nodes..."
-        nodes = rpcsqa.gather_razor_nodes(args.os_distro, env, cluster_size)
+        nodes = qa.gather_razor_nodes(args.os_distro, env, cluster_size)
 
     except Exception, e:
         print e
-        rpcsqa.cleanup_environment(env)
+        qa.cleanup_environment(env)
         sys.exit(1)
 
 
@@ -167,7 +167,7 @@ else:
         if args.remote_chef:
             build.append({'name': nodes.pop(),
                           'in_use': 'chef_server',
-                          'post_commands': [{'function': rpcsqa.build_chef_server,
+                          'post_commands': [{'function': qa.build_chef_server,
                                             'kwargs': {'cookbooks': cookbooks,
                                                        'env': env}}]})
 
@@ -176,7 +176,7 @@ else:
                           'in_use': 'directory_server',
                           'run_list': ['role[qa-openldap-%s]' % args.os_distro],
                           'post_commands': ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
-                                            {'function': rpcsqa.update_openldap_environment, 'kwargs': {'env': env}}]
+                                            {'function': qa.update_openldap_environment, 'kwargs': {'env': env}}]
                           })
 
         if args.quantum:
@@ -200,7 +200,7 @@ else:
         #If no nodes left, run controller as compute
         if not nodes:
             build[-1]['run_list'] = build[-1]['run_list'] + ['role[single-compute]']
-        
+
         #Compute with whatever is left
         for n in nodes:
             build.append({'name': n,
@@ -209,8 +209,8 @@ else:
 
     except IndexError, e:
         print "*** Not enough nodes for your setup (%s) ....try increasing cluster_size" % cluster_size
-        rpcsqa.cleanup_environment(env)
-        rpcsqa.delete_environment(env)
+        qa.cleanup_environment(env)
+        qa.delete_environment(env)
         sys.exit(1)
 
     #Build out cluster
@@ -226,19 +226,19 @@ else:
             node.save()
 
             if args.remote_chef and not b['in_use'] is "chef_server":
-                rpcsqa.remove_chef(node)
+                qa.remove_chef(node)
                 query = "chef_environment:%s AND in_use:chef_server" % env
                 chef_server = next(qa.node_search(query))
-                rpcsqa.bootstrap_chef(node, chef_server)
+                qa.bootstrap_chef(node, chef_server)
 
             if 'run_list' in b:
                 # Reacquires node if using remote chef
-                node = Node(node.name, api=rpcsqa.remote_chef_client(env)) if args.remote_chef else node
+                node = Node(node.name, api=qa.remote_chef_client(env)) if args.remote_chef else node
                 node.run_list = b['run_list']
                 node.save()
                 print "Running chef client for %s" % node
                 print node.run_list
-                chef_client = rpcsqa.run_chef_client(node, num_times=2, log_level=args.log_level)
+                chef_client = qa.run_chef_client(node, num_times=2, log_level=args.log_level)
                 if not chef_client['success']:
                     print "chef-client run failed"
                     success = False
@@ -262,7 +262,7 @@ else:
 
 if args.destroy:
     print "Destroying your cloud now!!!"
-    rpcsqa.cleanup_environment(env)
-    rpcsqa.delete_environment(env)
+    qa.cleanup_environment(env)
+    qa.delete_environment(env)
 
 print "DONE!"
