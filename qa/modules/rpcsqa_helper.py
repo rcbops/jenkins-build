@@ -1,5 +1,4 @@
 import sys
-import copy
 import json
 import time
 from cStringIO import StringIO
@@ -392,13 +391,3 @@ class rpcsqa_helper:
 
         if ssh_run['success']:
             print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
-
-
-
-
-
-
-
-
-
-
