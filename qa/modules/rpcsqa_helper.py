@@ -390,15 +390,3 @@ class rpcsqa_helper:
 
         if ssh_run['success']:
             print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
-
-
-
-
-
-
-
-
-
-
-
-
