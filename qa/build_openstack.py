@@ -4,7 +4,7 @@ import traceback
 from modules.rpcsqa_helper import *
 
 
-def _run_commands(name, commands):
+def _run_commands(qa, name, commands):
     print "#" * 70
     print "Running {0} chef-client commands....".format(name)
     for command in commands:
@@ -248,7 +248,7 @@ def main():
                         break
 
                 if 'post_commands' in b:
-                    _run_commands("post", b['post_commands'])
+                    _run_commands(qa, "post", b['post_commands'])
 
         except Exception, e:
             print traceback.print_exc()
