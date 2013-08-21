@@ -220,6 +220,7 @@ def main():
             for b in build:
                 print "Building: %s" % b
                 node = Node(b['name'])
+                node.chef_enviroment = env
                 node['in_use'] = b['in_use']
                 node.save()
 
