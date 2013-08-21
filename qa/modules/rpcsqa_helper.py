@@ -134,12 +134,10 @@ class rpcsqa_helper:
         nodes = self.node_search(query)
         # Take a node from the default environment that has its network interfaces set.
         for node in nodes:
-            if ((node.chef_environment == "_default" or
-                 node.chef_environment == environment)
-                    and "recipe[network-interfaces]" in node.run_list):
-                if node.chef_environment != environment:
-                    node.chef_environment = environment
-                    node.save()
+            is_default = node.chef_environment == "_default"
+            is_equal = node.chef_environment == environment
+            iface_in_run_list = "recipe[network-interfaces]" in node.run_list
+            if ((is_default or is_equal) and iface_in_run_list):
                 ret_nodes.append(node.name)
                 print "Taking node: %s" % node.name
         return ret_nodes
