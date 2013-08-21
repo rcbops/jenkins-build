@@ -357,7 +357,7 @@ class rpcsqa_helper:
         name = chef_environment.name
         remote_api = self.remote_chef_client(chef_environment)
         env = Environment(name, api=remote_api)
-        env.override_attributes = chef_environment.override_attributes
+        env.override_attributes = dict(chef_environment.override_attributes)
         env.save()
 
     def add_remote_chef_locally(self, chef_server_node, env):
