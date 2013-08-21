@@ -340,7 +340,7 @@ if results.action == "build":
             rpcsqa.run_chef_client(node['node'])
     else:
         print "#############################################################"
-        print "## To build swift rings, log into {0} and run the following commands ##".format(management_node['ip'])
+        print "## To build swift rings, log into {0} and run the following commands:".format(management_node['ip'])
         rpcsqa.build_swift_rings(False, management_node, storage_nodes, 3)
         print "#############################################################"
         print "## Then run chef-client on all nodes in the following order: "
@@ -350,6 +350,7 @@ if results.action == "build":
         for storage in swift_nodes:
             print "## Swift Storage Server: {0} ##".format(rpcsqa.print_server_info(storage))
         print "#############################################################"
+    
     #####################################################################
     # Successful Setup, exit
     #####################################################################
