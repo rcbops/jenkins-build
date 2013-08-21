@@ -11,17 +11,15 @@ def _run_commands(qa, name, commands):
         print "Running:  %s" % command
         #If its a string run on remote server
         if isinstance(command, str):
-            qa.run_command_on_node(node, command)
+            qa.run_command_on_node(name, command)
         if isinstance(command, dict):
             try:
                 func = command['function']
                 func(**command['kwargs'])
             except:
                 print traceback.print_exc()
-
                 sys.exit(1)
-
-            #elif function run the function
+        #elif function run the function
         elif hasattr(command, '__call__'):
             command()
     print "#" * 70
