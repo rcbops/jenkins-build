@@ -235,6 +235,7 @@ def main():
                     # Reacquires node if using remote chef
                     node = Node(node.name, api=api)
                     node.run_list = b['run_list']
+                    node.enviroment = env
                     node.save()
                     print "Running chef client for %s" % node
                     print node.run_list
