@@ -89,8 +89,8 @@ class rpcsqa_helper:
                 n.chef_environment = "_default"
                 n.save()
 
-    def run_command_on_node(self, node_name, command, num_times=1, quiet=False):
-        chef_node = Node(node_name, api=self.chef)
+    def run_command_on_node(self, node, command, num_times=1, quiet=False):
+        chef_node = Node(node.name, api=self.chef)
         runs = []
         success = True
         for i in xrange(0, num_times):
@@ -104,7 +104,10 @@ class rpcsqa_helper:
 
     def run_chef_client(self, chef_node, num_times=1, log_level='error', quiet=False):
         # log level can be (debug, info, warn, error, fatal)
-        return self.run_command_on_node(chef_node, 'chef-client -l %s' % log_level, num_times, quiet)
+        return self.run_command_on_node(chef_node,
+                                        'chef-client -l %s' % log_level,
+                                        num_times,
+                                        quiet)
 
     def interface_physical_nodes(self, os):
         #Make sure all network interfacing is set
@@ -116,7 +119,9 @@ class rpcsqa_helper:
                 node.save()
                 print "Running network interfaces for %s" % node
                 #Run chef client thrice
-                run_chef_client = self.run_chef_client(node, num_times=3, quiet=True)
+                run_chef_client = self.run_chef_client(node,
+                                                       num_times=3,
+                                                       quiet=True)
                 if run_chef_client['success']:
                     print "Done running chef-client"
                 else:
