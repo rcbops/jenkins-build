@@ -462,7 +462,7 @@ class rpcsqa_helper:
                      "swift-ring-builder container.builder rebalance",
                      "swift-ring-builder account.builder rebalance",
                      "git remote add origin /srv/git/rings",
-                     "git add ."
+                     "git add .",
                      "git config user.email \"swiftops@swiftops.com\"",
                      "git config user.name \"swiftops\"",
                      "git commit -m \"initial checkin\"",
