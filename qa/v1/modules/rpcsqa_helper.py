@@ -401,7 +401,7 @@ class rpcsqa_helper:
                 print run1
                 sys.exit(1)
 
-    def build_swift_rings(self, management_node, storage_nodes, num_rings=3):
+    def build_swift_rings(self, management_node, storage_nodes, num_rings=3, part_power=10, replicas=3, min_part_hours=1, disk_weight=1000):
 
         '''
         @summary This method will build out the rings for a swift cluster
@@ -418,12 +418,12 @@ class rpcsqa_helper:
                     "dsh -g swift-storage -- sudo /usr/local/bin/swift-partition.sh sdb",
                     "dsh -g swift-storage -- sudo /usr/local/bin/swift-format.sh sdb1",
                     "mkdir -p /opt/rcbops/rings",
-                    "cd rings",
+                    "cd /opt/rcbops/rings",
                     "git init .",
                     "echo \"backups\" > .gitignore",
-                    "swift-ring-builder object.builder create 10 3 1",
-                    "swift-ring-builder container.builder create 10 3 1",
-                    "swift-ring-builder account.builder create 10 3 1"]
+                    "swift-ring-builder object.builder create {0} {1} {2}".format(part_power, replicas, min_part_hours),
+                    "swift-ring-builder container.builder create {0} {1} {2}".format(part_power, replicas, min_part_hours),
+                    "swift-ring-builder account.builder create {0} {1} {2}".format(part_power, replicas, min_part_hours)]
 
         # Determine how many storage nodes we have and add them appropriatly
         builders = ['object', 'container', 'account']
@@ -436,7 +436,7 @@ class rpcsqa_helper:
                     num = 0
                 
                 # Add the line to command to build the object
-                commands.append("swift-ring-builder {0}.builder add z{1}-{2}:6000/sdb1 1000".format(builder, num + 1, node['ip']))
+                commands.append("swift-ring-builder {0}.builder add z{1}-{2}:6000/sdb1 {3}".format(builder, num + 1, node['ip'], disk_weight))
                 num += 1
 
         # Finish the command list
