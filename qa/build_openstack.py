@@ -134,7 +134,7 @@ def main():
         print "Interfacing nodes that need it"
         qa.interface_physical_nodes(args.os_distro)
         try:
-            print "Cleaning up old enviroment (deleting nodes) "
+            print "Cleaning up old environment (deleting nodes) "
             # Clean up the current running environment (delete old servers)
             qa.cleanup_environment(env)
 
@@ -220,7 +220,7 @@ def main():
             for b in build:
                 print "Building: %s" % b
                 node = Node(b['name'])
-                node.chef_enviroment = env
+                node.chef_environment = env
                 node['in_use'] = b['in_use']
                 node.save()
 
@@ -236,7 +236,7 @@ def main():
                     # Reacquires node if using remote chef
                     node = Node(node.name, api=api)
                     node.run_list = b['run_list']
-                    node.chef_enviroment = env
+                    node.chef_environment = env
                     node.save()
                     print "Running chef client for %s" % node
                     print node.run_list
