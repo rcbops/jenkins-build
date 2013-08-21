@@ -90,7 +90,6 @@ class rpcsqa_helper:
                 n.save()
 
     def run_command_on_node(self, node_name, command, num_times=1, quiet=False):
-        print chef_node
         chef_node = Node(node_name, api=self.chef)
         runs = []
         success = True
