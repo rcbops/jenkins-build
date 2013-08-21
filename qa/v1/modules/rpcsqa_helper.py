@@ -401,7 +401,7 @@ class rpcsqa_helper:
                 print run1
                 sys.exit(1)
 
-    def build_swift_rings(self, management_node, storage_nodes, num_rings=3, part_power=10, replicas=3, min_part_hours=1, disk_weight=1000):
+    def build_swift_rings(self, build, management_node, storage_nodes, num_rings=3, part_power=10, replicas=3, min_part_hours=1, disk_weight=1000):
 
         '''
         @summary This method will build out the rings for a swift cluster
@@ -470,17 +470,20 @@ class rpcsqa_helper:
         for item in temp_list:
             commands.append(item)
 
-        # join all the commands into a single command, seperated by ";"
-        command = '; '.join(commands)
+        if build:
+            # join all the commands into a single command, seperated by ";"
+            command = '; '.join(commands)
 
-        print command
+            # Run the command on the swift management node
+            run = self.run_cmd_on_node(management_node['node'], command)
+            if not run['success']:
+                self.failed_ssh_command_exit(command, management_node['node'], run['exception'])
 
-        '''
-        # Run the command on the swift management node
-        run = self.run_cmd_on_node(management_node['node'], command)
-        if not run['success']:
-            self.failed_ssh_command_exit(command, management_node['node'], run['exception'])
-        '''
+        else:
+            # loop through and print each command for the user to run
+            print "## Info to manually set up swift rings: ##"
+            for comamnd in commands:
+                print comamnd
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:

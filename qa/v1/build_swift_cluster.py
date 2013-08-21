@@ -29,6 +29,10 @@ parser.add_argument('--os_distro', action="store", dest="os_distro",
                     required=False, default='precise',
                     help="Operating System Distribution to build OpenStack on")
 
+parser.add_argument('--build_rings', action="store_true", dest="build_rings",
+                    required=False, default=False,
+                    help="Automate the ring building after deployment?")
+
 parser.add_argument('--action', action="store", dest="action",
                     required=False, default="build",
                     help="Action to do for Open Stack (build/destroy/add)")
@@ -298,17 +302,22 @@ if results.action == "build":
     # Setup the disks and the swift rings on the cluster
     #####################################################################
 
-    print "#############################################################"
-    print "################# Setting up Swift Rings ####################"
-    print "#############################################################"
-
     # Gather the chef node objects for the storage nodes
     storage_nodes = []
     for node in swift_nodes:
         storage_nodes.append(rpcsqa.get_server_info(node))
 
-    # Build baby build (and cross fingers)
-    rpcsqa.build_swift_rings(management_node, storage_nodes, 3)
+    if results.build_rings:
+        print "#############################################################"
+        print "################## Building Swift Rings #####################"
+        print "#############################################################"
+        # Build baby build (and cross fingers)
+        rpcsqa.build_swift_rings(True, management_node, storage_nodes, 3)
+    else:
+        print "#############################################################"
+        print "## To build swift rings, log into {0} and run the following commands ##".format(management_node['ip'])
+        print "#############################################################"
+        rpcsqa.build_swift_rings(False, management_node, storage_nodes, 3)
 
     #####################################################################
     # Successful Setup, exit
