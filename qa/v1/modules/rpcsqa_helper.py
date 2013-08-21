@@ -417,8 +417,8 @@ class rpcsqa_helper:
         commands = ["su swiftops",
                     "dsh -g swift-storage -- sudo /usr/local/bin/swift-partition.sh sdb",
                     "dsh -g swift-storage -- sudo /usr/local/bin/swift-format.sh sdb1",
-                    "mkdir -p /opt/rcbops/swift/rings",
-                    "cd /opt/rcbops/swift/rings",
+                    "mkdir -p ~/swift/rings",
+                    "cd ~/swift/rings",
                     "git init .",
                     "echo \"backups\" > .gitignore",
                     "swift-ring-builder object.builder create {0} {1} {2}".format(part_power, replicas, min_part_hours),
@@ -462,7 +462,9 @@ class rpcsqa_helper:
                      "swift-ring-builder container.builder rebalance",
                      "swift-ring-builder account.builder rebalance",
                      "git remote add origin /srv/git/rings",
-                     "git add .",
+                     "git add ."
+                     "git config user.email \"swiftops@swiftops.com\"",
+                     "git config user.name \"swiftops\"",
                      "git commit -m \"initial checkin\"",
                      "git push origin master",
                      "dsh -g swift -- sudo /usr/local/bin/pull-rings.sh"]
