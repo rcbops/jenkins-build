@@ -229,6 +229,7 @@ def main():
                     chef_server = next(qa.node_search(query))
                     qa.bootstrap_chef(node, chef_server)
                     api = qa.remote_chef_client(environment)
+                    print "api: %s" % api.url
 
                 if 'run_list' in b:
                     # Reacquires node if using remote chef
