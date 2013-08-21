@@ -426,7 +426,21 @@ class rpcsqa_helper:
                     "swift-ring-builder account.builder create {0} {1} {2}".format(part_power, replicas, min_part_hours)]
 
         # Determine how many storage nodes we have and add them appropriatly
-        builders = ['object', 'container', 'account']
+        builders = [
+            {
+                "name": "object",
+                "port": 6000
+            },
+            {
+                "name": "container",
+                "port": 6001
+            },
+            {
+                "name": "account",
+                "port": 6002
+            }
+        ]
+
         for builder in builders:
             for index, node in enumerate(storage_nodes):
                 
@@ -436,7 +450,11 @@ class rpcsqa_helper:
                     num = 0
                 
                 # Add the line to command to build the object
-                commands.append("swift-ring-builder {0}.builder add z{1}-{2}:6000/sdb1 {3}".format(builder, num + 1, node['ip'], disk_weight))
+                commands.append("swift-ring-builder {0}.builder add z{1}-{2}:{3}/sdb1 {4}".format(builder['name'],
+                                                                                                  num + 1,
+                                                                                                  node['ip'],
+                                                                                                  builder['port'],
+                                                                                                  disk_weight))
                 num += 1
 
         # Finish the command list
@@ -453,7 +471,7 @@ class rpcsqa_helper:
             commands.append(item)
 
         # join all the commands into a single command, seperated by ";"
-        command = ';'.join(commands)
+        command = '; '.join(commands)
 
         # Run the command on the swift management node
         run = self.run_cmd_on_node(management_node['node'], command)
