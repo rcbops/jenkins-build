@@ -1,6 +1,7 @@
 import json
 import requests
 
+
 class razor_api:
 
     def __init__(self, rzrip, rzrport='8026'):
@@ -55,7 +56,7 @@ class razor_api:
 
     def models(self):
         """ This function returns the whole model json returned by Razor."""
-        
+
         # Call the Razor RESTful API to get a list of models
         headers = {'content-type': 'application/json'}
         r = requests.get(self.url + '/model', headers=headers)
@@ -68,11 +69,11 @@ class razor_api:
                 + str(r.status_code)
 
     def simple_models(self, uuid=None):
-        """ 
-        This returns a smaller, simpler set of information 
+        """
+        This returns a smaller, simpler set of information
         about the models returned by Razor.
         """
-        
+
         # Call the Razor RESTful API to get a list of models
         headers = {'content-type': 'application/json'}
 
@@ -92,12 +93,12 @@ class razor_api:
                     + str(r.status_code)
 
     def build_simple_model(self, razor_json):
-        """ 
-        This will return the current available 
+        """
+        This will return the current available
         model in a simple minimal info json
         """
-        
-        # loop through all the nodes that were returned and take the simple info from them
+
+        # loop through all the nodes and take the simple info from them
         for response in razor_json['response']:
             model = {'name': response['@name'],
                      'root_password': response['@root_password'],
@@ -110,15 +111,15 @@ class razor_api:
 
     def active_models(self, filter=None):
         """
-         This return the whole json returned 
+         This return the whole json returned
         by the Razor API for a single active model.
         """
-        
+
         if filter is None:
             url = self.url + '/active_model'
         else:
             url = self.url + '/active_model?label=%s' % filter
-            
+
         # make the request to get active models from Razor
         headers = {'content-type': 'application/json'}
         r = requests.get(url, headers=headers)
@@ -131,16 +132,16 @@ class razor_api:
                 + str(r.status_code)
 
     def simple_active_models(self, filter=None):
-        """ 
-        This will return all the active 
+        """
+        This will return all the active
         models with an easy to consume JSON
         """
         # make the request to get active models from Razor
-        
+
         am_content = self.active_models(filter)
 
         #print json.dumps(am_content, indent=4)
-        
+
         # Check the status code and return appropriately
         if 'response' in am_content.keys():
             active_models = {}
@@ -148,8 +149,8 @@ class razor_api:
 
                 # get info from razor about the active model
                 headers = {'content-type': 'application/json'}
-                r = requests.get(self.url + '/active_model/' 
-                    + response['@uuid'], headers=headers)
+                r = requests.get(self.url + '/active_model/'
+                                 + response['@uuid'], headers=headers)
                 single_am_content = json.loads(r.content)
                 #print json.dumps(single_am_content, indent=2)
                 active_models[response['@uuid']] = \
@@ -162,7 +163,7 @@ class razor_api:
 
     def build_simple_active_model(self, razor_json):
         """
-        This will return an active model JSON 
+        This will return an active model JSON
         that is simplified from the Razor API json
         """
 
@@ -173,39 +174,41 @@ class razor_api:
                 broker = item['@broker']['@name']
             else:
                 broker = None
-
+            model = item['@model']
+            node = model['@node']
             active_model = {'node_uuid': item['@node_uuid'],
                             'am_uuid': item['@uuid'],
-                            'description': item['@model']['@description'],
-                            'root_password': item['@model']['@root_password'],
-                            'current_state': item['@model']['@current_state'],
-                            'final_state': item['@model']['@final_state'],
+                            'description': model['@description'],
+                            'root_password': model['@root_password'],
+                            'current_state': model['@current_state'],
+                            'final_state': model['@final_state'],
                             'broker': broker,
-                            'bind_number': item['@model']['@counter'],
-                            'hostname_prefix': \
-                                item['@model']['@hostname_prefix'],
-                            'domain': item['@model']['@domainname']
+                            'bind_number': model['@counter'],
+                            'hostname_prefix':
+                            model['@hostname_prefix'],
+                            'domain': model['@domainname']
                             }
             try:
-                hdwnic_count = int(item['@model']['@node']\
-                    ['@attributes_hash']['mk_hw_nic_count'])
+                hdwnic_count = int(node['@attributes_hash']['mk_hw_nic_count'])
                 active_model['nic_count'] = hdwnic_count
                 # Get the active network interface ips
                 for i in range(0, hdwnic_count):
                     try:
-                        me = item['@model']['@node']\
-                        ['@attributes_hash']['macaddress_eth%d' % i]
-                        active_model['eth%d_mac' % i] = item['@model']['@node']['@attributes_hash']['macaddress_eth%d' % i]
+                        mac_eth_str = 'macaddress_eth%d' % i
+                        mac_eth = node['@attributes_hash'][mac_eth_str]
+                        active_model['eth%d_mac' % i] = mac_eth
                     except KeyError:
                         pass
-    
+
                     try:
-                        active_model['eth%d_ip' % i] = item['@model']['@node']['@attributes_hash']['ipaddress_eth%d' % i]
+                        eth_str = 'ipaddress_eth%d' % i
+                        eth_ip = node['@attributes_hash'][eth_str]
+                        active_model['eth%d_ip' % i] = eth_ip
                     except KeyError:
                         pass
             except:
                 print "Error getting nic count"
-                print "Model: %s " %  item['@model']
+                print "Model: %s " % model
         return active_model
 
     def active_ready(self, razor_json):
@@ -217,26 +220,27 @@ class razor_api:
 
         # step through the json and gather simplified information
         for item in razor_json:
-            if 'complete' in razor_json[item]['current_state']:
-                ready_server = {'description': razor_json[item]['description'],
-                                'node_uuid': razor_json[item]['node_uuid'],
-                                'am_uuid': razor_json[item]['am_uuid'],
-                                'root_passwd': razor_json[item]['root_password'],
-                                'broker': razor_json[item]['broker'],
-                                'bind_number': item['@model']['@counter'],
-                                'hostname_prefix': item['@model']['@hostname_prefix'],
-                                'domain': item['@model']['@domainname']
+            r_item = razor_json[item]
+            model = item['@model']
+            if 'complete' in r_item['current_state']:
+                ready_server = {'description': r_item['description'],
+                                'node_uuid': r_item['node_uuid'],
+                                'am_uuid': r_item['am_uuid'],
+                                'root_passwd': r_item['root_password'],
+                                'broker': r_item['broker'],
+                                'bind_number': model['@counter'],
+                                'hostname_prefix': model['@hostname_prefix'],
+                                'domain': model['@domainname']
                                 }
-                for x in range(0, razor_json[item]['nic_count']):
+                for x in range(0, r_item['nic_count']):
                     try:
-                        ready_server['eth%d_ip_addr' % x] = \
-                        razor_json[item]['eth%d_ip' % x]
+                        eth_ip = r_item['eth%d_ip' % x]
+                        ready_server['eth%d_ip_addr' % x] = eth_ip
                     except:
                         pass
-
                     try:
-                        ready_server['eth%d_mac' % x] = \
-                        razor_json[item]['eth%d_mac' % x]
+                        eth_mac = r_item['eth%d_mac' % x]
+                        ready_server['eth%d_mac' % x] = eth_mac
                     except:
                         pass
 
@@ -252,32 +256,45 @@ class razor_api:
         servers = []
         # step through the json and gather simplified information
         for item in razor_json:
-            if 'broker_success' in razor_json[item]['current_state']:
-                ready_server = {'description': razor_json[item]['description'],
-                                'node_uuid': razor_json[item]['node_uuid'],
-                                'am_uuid': razor_json[item]['am_uuid'],
-                                'root_passwd': razor_json[item]['root_password'],
-                                'broker': razor_json[item]['broker'],
-                                'bind_number': item['@model']['@counter'],
-                                'hostname_prefix': item['@model']['@hostname_prefix'],
-                                'domain': item['@model']['@domainname']
+            r_item = razor_json[item]
+            model = item['@model']
+            if 'broker_success' in r_item['current_state']:
+                ready_server = {'description': r_item['description'],
+                                'node_uuid': r_item['node_uuid'],
+                                'am_uuid': r_item['am_uuid'],
+                                'root_passwd': r_item['root_password'],
+                                'broker': r_item['broker'],
+                                'bind_number': model['@counter'],
+                                'hostname_prefix': model['@hostname_prefix'],
+                                'domain': model['@domainname']
                                 }
-                for x in range(0, razor_json[item]['nic_count']):
+                for x in range(0, r_item['nic_count']):
                     try:
-                        ready_server['eth%d_ip_addr' % x] = \
-                        razor_json[item]['eth%d_ip' % x]
+                        eth_ip = r_item['eth%d_ip' % x]
+                        ready_server['eth%d_ip_addr' % x] = eth_ip
                     except:
                         pass
-
                     try:
-                        ready_server['eth%d_mac' % x] = \
-                        razor_json[item]['eth%d_mac' % x]
+                        eth_mac = r_item['eth%d_mac' % x]
+                        ready_server['eth%d_mac' % x] = eth_mac
                     except:
                         pass
 
                 servers.append(ready_server)
 
         return servers
+
+    def remove_active_model(self, am_uuid):
+        """
+        This function will remove an active model from Razor.
+        """
+
+        # Call the Razor RESTful API to get a list of models
+        headers = {'content-type': 'application/json'}
+        r = requests.delete(
+            self.url + '/active_model/%s' % am_uuid, headers=headers)
+
+        return {'status': r.status_code, 'content': json.loads(r.content)}
 
     def remove_active_models(self, am_uuids):
         """
@@ -286,22 +303,9 @@ class razor_api:
 
         removed_servers = []
         for uuid in am_uuids:
-            removed_servers.append(remove_active_model(uuid))
+            removed_servers.append(self.remove_active_model(uuid))
 
         return removed_servers
-
-
-    def remove_active_model(self, am_uuid):
-        """
-        This function will remove an active model from Razor.
-        """
-        
-        # Call the Razor RESTful API to get a list of models
-        headers = {'content-type': 'application/json'}
-        r = requests.delete(
-            self.url + '/active_model/%s' % am_uuid, headers=headers)
-        
-        return {'status': r.status_code, 'content': json.loads(r.content)}
 
     def get_active_model_pass(self, am_uuid):
         """ This function will get an active models password """
