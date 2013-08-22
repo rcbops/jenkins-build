@@ -4,11 +4,7 @@ from cStringIO import StringIO
 from paramiko import SSHClient, AutoAddPolicy
 
 
-<<<<<<< Updated upstream
-class OSnode:
-=======
 class OSNode:
->>>>>>> Stashed changes
     def __init__(self, ip, user, password):
         self.ip = ip
         self.user = user
