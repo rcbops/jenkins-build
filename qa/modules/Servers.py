@@ -4,7 +4,7 @@ from cStringIO import StringIO
 from paramiko import SSHClient, AutoAddPolicy
 
 
-class PCNode:
+class OSnode:
     def __init__(self, ip, user, password):
         self.ip = ip
         self.user = user
@@ -41,15 +41,18 @@ class PCNode:
                             'error': error.getvalue()}
 
 
-class ProvisionedNode(PCNode):
+class ProvisionedNode(OSNode):
     pass
 
 
-class RazorNode(PCNode):
-    pass
+class RazorNode(ProvisionedNode):
+    def __init__(self, ip, user, password):
+        self.ip = ip
+        self.user = user
+        self.password = password
 
 
-class ChefNode(ProvisionedNode):
+class ChefNode(OSNode):
     def __init__(self, name, remote_api=None):
         self.name = name
         self.api = autoconfigure()
