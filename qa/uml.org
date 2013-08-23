@@ -1,0 +1,6 @@
+#+begin_src plantuml :file class_diag.png
+  OSNode *-- ConfigManager
+  OSNode *-- Provisioner
+  ConfigManager <|-- ChefCM
+  Provisioner <|-- RazorProvisioner
+#+end_src

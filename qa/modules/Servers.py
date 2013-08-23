@@ -95,7 +95,7 @@ class OSNode:
                     'exception': cpe,
                     'command': command}
 
-    def __repr__(self):
+    def __str__(self):
         return "Node: %s" % self.ip
 
     def teardown(self):
@@ -106,7 +106,7 @@ class OSCluster:
     def __init__(self, nodes):
         self.nodes = nodes
 
-    def __repr__(self):
+    def __str__(self):
         return "Node: %s" % self.ip
 
     def teardown(self):
@@ -121,7 +121,7 @@ class ChefOSNode(OSNode):
         node = Node(self.name, self.api)
         super(ChefOSNode, self).__init__(node['ipaddress'], user, password)
 
-    def __repr__(self):
+    def __str__(self):
         return "Chef Node: %s - %s" % (self.name, self.ip)
 
     def teardown(self):
@@ -131,14 +131,13 @@ class ChefOSNode(OSNode):
 
 
 class RazorOSNode(OSNode):
-    def __init__(self, uuid):
-        self.api = razor_api(self.ip)
+    def __init__(self, client, id):
+        self.client = client
+        self._id = id
 
     def teardown(self):
-        print "Tearing down: %s" % attrs['name']
-        am_uuid = attrs["razor_metadata"]['razor_active_model_uuid']
-        self.api.remove_active_model(am_uuid)
-        run = node.run_cmd("reboot 0")
+        self.client.remove_active_model(self._id)
+        run = self.run_cmd("reboot 0")
         if not run['success']:
-            raise Exception("Error rebooting: " % node)
+            raise Exception("Error rebooting: " % )
         time.sleep(15)
