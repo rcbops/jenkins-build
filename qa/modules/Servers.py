@@ -1,6 +1,5 @@
 import sys
 import time
-import razor_api
 from chef import Node, autoconfigure, Client
 from cStringIO import StringIO
 from paramiko import SSHClient, AutoAddPolicy
@@ -106,6 +105,17 @@ class OSCluster:
     def __init__(self, nodes):
         self.nodes = nodes
 
+
+class ProvisionedNode(OSNode):
+    pass
+
+
+class RazorNode(ProvisionedNode):
+    def __init__(self, ip, user, password):
+        self.ip = ip
+        self.user = user
+        self.password = password
+
     def __str__(self):
         return "Node: %s" % self.ip
 
@@ -116,6 +126,11 @@ class OSCluster:
 class ChefOSNode(OSNode):
     def __init__(self, ip, user, password, name, remote_api=None):
         self.chef_name = name
+
+
+class ChefNode(OSNode):
+    def __init__(self, name, remote_api=None):
+        self.name = name
         self.api = autoconfigure()
         self.remote_api = remote_api
         node = Node(self.name, self.api)
@@ -139,5 +154,5 @@ class RazorOSNode(OSNode):
         self.client.remove_active_model(self._id)
         run = self.run_cmd("reboot 0")
         if not run['success']:
-            raise Exception("Error rebooting: " % )
+            raise Exception("Error rebooting: " % self.__str__)
         time.sleep(15)
