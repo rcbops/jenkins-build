@@ -79,6 +79,17 @@ env = rpcsqa.prepare_environment(results.name,
                                  results.feature_set,
                                  results.branch)
 
+old_networks = [{
+    "num_networks": "1",
+    "bridge": "br0",
+    "label": "public",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4",
+    "bridge_dev": "em1",
+    "network_size": "254",
+    "ipv4_cidr": "172.31.0.0/24"
+}]
+
 # replace networks with older schema
 if results.branch in ["folsom", "v3.1.0", "v4.0.0"]:
     env_obj = Environment(env)
@@ -98,29 +109,6 @@ cookbooks = [
         "tag": results.repo_tag
     }
 ]
-
-old_networks = [{
-    "num_networks": "1",
-    "bridge": "br0",
-    "label": "public",
-    "dns1": "8.8.8.8",
-    "dns2": "8.8.4.4",
-    "bridge_dev": "em1",
-    "network_size": "254",
-    "ipv4_cidr": "172.31.0.0/24"
-}]
-
-new_networks = {
-    "public": {
-        "bridge": "br0",
-        "dns1": "8.8.8.8",
-        "dns2": "8.8.4.4",
-        "bridge_dev": "em1",
-        "network_size": "254",
-        "ipv4_cidr": "172.31.0.0/24",
-        "label": "public"
-    }
-}
 
 # Build a new cluster
 if results.action == "build":
