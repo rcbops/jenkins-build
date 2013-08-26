@@ -99,10 +99,9 @@ def main():
         features = ['default']
     computes = int(args.computes)
 
-    if args.branch in ["4.1.1"]:
-        branch = "grizzly"
-    if args.branch in ["4.1.1"]:
-        branch = "grizzly"
+    branch = "grizzly"
+    if args.branch in ["4.1.1", "4.1.0"]:
+        branch = "folsom"
 
     # Setup the helper class ( Chef )
     qa = rpcsqa_helper()
@@ -118,7 +117,8 @@ def main():
     env = qa.prepare_environment(args.name,
                                  args.os_distro,
                                  branch,
-                                 features)
+                                 features,
+                                 branch_tag)
 
     #####################
     #   GATHER NODES

@@ -55,7 +55,7 @@ class rpcsqa_helper:
             outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
-    def prepare_environment(self, name, os_distro, branch, features):
+    def prepare_environment(self, name, os_distro, branch, features, branch_tag=None):
         """ If the environment doesnt exist in chef, make it. """
         env = "%s-%s-%s-%s" % (name, os_distro, branch, "-".join(features))
         chef_env = Environment(env, api=self.chef)
@@ -75,7 +75,7 @@ class rpcsqa_helper:
                          "dns2": "8.8.4.4", "bridge_dev": "eth1",
                          "network_size": "254",
                          "ipv4_cidr": "172.31.0.0/24"}]
-        if results.branch in ["folsom", "v3.1.0", "v4.0.0"]:
+        if branch_tag in ["folsom", "v3.1.0", "v4.0.0"]:
             chef_env.override_attributes['nova']['networks'] = old_networks
         if os_distro == "centos":
             chef_env.override_attributes['nova']['networks']['public']['bridge_dev'] = "em1"
