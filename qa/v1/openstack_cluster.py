@@ -97,9 +97,12 @@ old_networks = [{
 
 # replace networks with older schema
 if results.branch in ["folsom", "v3.1.0", "v4.0.0"]:
+    print "reverting to old network schema"
     env_obj = Environment(env)
     env_obj.override_attributes['nova']['networks'] = old_networks
     env_obj.save()
+
+print Environment(env).override_attributes
 
 # Gather all the nodes for the os_distro
 all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
