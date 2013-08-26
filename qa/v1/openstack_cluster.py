@@ -79,13 +79,17 @@ env = rpcsqa.prepare_environment(results.name,
                                  results.feature_set,
                                  results.branch)
 
+if results.os_disto == "centos":
+    bridge_dev = "em1"
+else:
+    bridge_dev = "eth1"
 old_networks = [{
     "num_networks": "1",
     "bridge": "br0",
     "label": "public",
     "dns1": "8.8.8.8",
     "dns2": "8.8.4.4",
-    "bridge_dev": "em1",
+    "bridge_dev": bridge_dev,
     "network_size": "254",
     "ipv4_cidr": "172.31.0.0/24"
 }]
