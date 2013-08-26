@@ -79,10 +79,11 @@ env = rpcsqa.prepare_environment(results.name,
                                  results.feature_set,
                                  results.branch)
 
-if results.os_disto == "centos":
+if results.os_distro == "centos":
     bridge_dev = "em1"
 else:
     bridge_dev = "eth1"
+
 old_networks = [{
     "num_networks": "1",
     "bridge": "br0",
