@@ -6,7 +6,7 @@ from modules.rpcsqa_helper import *
 
 def _run_commands(qa, node, commands):
     print "#" * 70
-    print "Running {0} chef-client commands....".format(name)
+    print "Running {0} chef-client commands....".format(node.name)
     for command in commands:
         print "Running:  %s" % command
         #If its a string run on remote server
