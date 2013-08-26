@@ -4,14 +4,14 @@ import traceback
 from modules.rpcsqa_helper import *
 
 
-def _run_commands(qa, name, commands):
+def _run_commands(qa, node, commands):
     print "#" * 70
     print "Running {0} chef-client commands....".format(name)
     for command in commands:
         print "Running:  %s" % command
         #If its a string run on remote server
         if isinstance(command, str):
-            qa.run_command_on_node(name, command)
+            qa.run_command_on_node(node.name, command)
         if isinstance(command, dict):
             try:
                 func = command['function']
@@ -249,7 +249,7 @@ def main():
                         break
 
                 if 'post_commands' in b:
-                    _run_commands(qa, "post", b['post_commands'])
+                    _run_commands(qa, node, b['post_commands'])
 
         except Exception, e:
             print traceback.print_exc()
