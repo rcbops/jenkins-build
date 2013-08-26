@@ -6,12 +6,12 @@ from modules.rpcsqa_helper import *
 
 def _run_commands(qa, node, commands):
     print "#" * 70
-    print "Running {0} chef-client commands....".format(node.name)
+    print "Running {0} chef-client commands....".format(node)
     for command in commands:
         print "Running:  %s" % command
         #If its a string run on remote server
         if isinstance(command, str):
-            qa.run_command_on_node(node.name, command)
+            qa.run_command_on_node(node, command)
         if isinstance(command, dict):
             try:
                 func = command['function']
