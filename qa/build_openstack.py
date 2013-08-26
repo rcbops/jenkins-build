@@ -118,7 +118,7 @@ def main():
                                  args.os_distro,
                                  branch,
                                  features,
-                                 branch_tag)
+                                 args.branch)
 
     #####################
     #   GATHER NODES
