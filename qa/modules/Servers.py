@@ -1,71 +1,24 @@
-import sys
 import time
-from chef import Node, autoconfigure, Client
-from cStringIO import StringIO
-from paramiko import SSHClient, AutoAddPolicy
+from ssh_helper import run_cmd, scp_to, scp_from
+from chef import Node, Client
 from subprocess import check_call, CalledProcessError
 
 
 class OSNode:
-    def __init__(self, ip, user, password):
+    def __init__(self, ip, user, password,
+                 config_manager=None, provisioner=None):
         self.ip = ip
         self.user = user
         self.password = password
+        self.provisioner
+        self.config_manager
 
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
-        """
-        @param server_ip
-        @param user
-        @param password
-        @param remote_cmd
-        @return A map based on pass / fail run info
-        """
-        output = StringIO()
-        error = StringIO()
-        ssh = SSHClient()
-        ssh.set_missing_host_key_policy(AutoAddPolicy())
-        user = user or self.user
-        password = password or self.password
-        ssh.connect(self.ip, username=user, password=password)
-        stdin, stdout, stderr = ssh.exec_command(remote_cmd)
-        stdin.close()
-        for line in stdout.xreadlines():
-            if not quiet:
-                sys.stdout.write(line)
-                output.write(line)
-        for line in stderr.xreadlines():
-            sys.stdout.write(line)
-            error.write(line)
-            exit_status = stdout.channel.recv_exit_status()
-        return {'success': True if exit_status == 0 else False,
-                'return': output.getvalue(),
-                'exit_status': exit_status,
-                'error': error.getvalue()}
+        run_cmd(self.ip, remote_cmd=remote_cmd, user=user, password=password,
+                quiet=quiet)
 
     def scp_to(self, local_path, remote_path=""):
-        """
-        @param to_copy
-        @return A map based on pass / fail run info
-        """
-        command = ("sshpass -p %s scp "
-                   "-o Self.UserKnownHostsFile=/dev/null "
-                   "-o StrictHostKeyChecking=no "
-                   "-o LogLevel=quiet "
-                   "%s %s@%s:%s") % (self.password,
-                                     local_path,
-                                     self.user,
-                                     self.ip,
-                                     remote_path)
-        try:
-            ret = check_call(command, shell=True)
-            return {'success': True,
-                    'return': ret,
-                    'exception': None}
-        except CalledProcessError, cpe:
-            return {'success': False,
-                    'return': None,
-                    'exception': cpe,
-                    'command': command}
+        scp_to(self.ip, local_path, user=user, password=password, remote_path)
 
     def scp_from(self, remote_path, local_path=""):
         """
@@ -101,40 +54,45 @@ class OSNode:
         raise NotImplementedError
 
 
-class OSCluster:
-    def __init__(self, nodes):
-        self.nodes = nodes
-
-
-class ProvisionedNode(OSNode):
-    pass
-
-
-class RazorNode(ProvisionedNode):
-    def __init__(self, ip, user, password):
-        self.ip = ip
-        self.user = user
-        self.password = password
-
-    def __str__(self):
-        return "Node: %s" % self.ip
+class OSDeployment:
+    def __init__(self, name):
+        self.name
+        self.nodes = []
 
     def teardown(self):
-        map(super(OSCluster, self).teardown, next())
+        for node in self.nodes:
+            node.teardown()
 
 
-class ChefOSNode(OSNode):
-    def __init__(self, ip, user, password, name, remote_api=None):
-        self.chef_name = name
+class ChefRazorOSDeployment:
+    def __init__(self, chef, razor):
+        self.chef = chef
+        self.razor = razor
+
+    def create_node(self):
+        node = next(self.chef)
+        config_manager = ChefConfigManager(node.name, self.chef)
+        am_id = node.attributes['razor_metadata']['razor_active_model_uuid']
+        provisioner = RazorProvisioner(self.razor, am_id)
+        osnode = OSNode(ip, user, password, config_manager, provisioner)
+        self.nodes.append(osnode)
+        return osnode
 
 
-class ChefNode(OSNode):
-    def __init__(self, name, remote_api=None):
+class Provisioner():
+    def teardown(self):
+        raise NotImplementedError
+
+
+class ConfigManager():
+    def teardown(self):
+        raise NotImplementedError
+
+
+class ChefConfigManager(ConfigManager):
+    def __init__(self, name, chef):
         self.name = name
-        self.api = autoconfigure()
-        self.remote_api = remote_api
-        node = Node(self.name, self.api)
-        super(ChefOSNode, self).__init__(node['ipaddress'], user, password)
+        self.chef = chef
 
     def __str__(self):
         return "Chef Node: %s - %s" % (self.name, self.ip)
@@ -145,9 +103,9 @@ class ChefNode(OSNode):
         node.delete()
 
 
-class RazorOSNode(OSNode):
-    def __init__(self, client, id):
-        self.client = client
+class RazorProvisioner(Provisioner):
+    def __init__(self, razor, id):
+        self.razor = razor
         self._id = id
 
     def teardown(self):
