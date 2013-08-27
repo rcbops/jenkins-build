@@ -1474,7 +1474,7 @@ class rpcsqa_helper:
             print "Error copying %s from %s" % (item, chef_server_node)
             print run
             sys.exit(1)
-        admin_pem = run['runs'][0]['return']
+        admin_pem = run['return']
         remote_dict = {"client": "admin",
                        "key": admin_pem,
                        "url": "https://%s:4443" %
