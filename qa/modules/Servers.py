@@ -57,6 +57,8 @@ class ChefRazorOSDeployment:
         config_manager = ChefConfigManager(node.name, self.chef)
         am_id = node.attributes['razor_metadata']['razor_active_model_uuid']
         provisioner = RazorProvisioner(self.razor, am_id)
+        ip = node['ipaddress']
+        user = "root"
         password = provisioner.get_password()
         osnode = OSNode(ip, user, password, config_manager, provisioner)
         self.nodes.append(osnode)
