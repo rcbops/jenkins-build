@@ -14,38 +14,22 @@ class OSNode:
         self.config_manager
 
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
+        user = user or self.user
+        password = password or self.password
         run_cmd(self.ip, remote_cmd=remote_cmd, user=user, password=password,
                 quiet=quiet)
 
-    def scp_to(self, local_path, remote_path=""):
-        scp_to(self.ip, local_path, user=user, password=password, remote_path)
+    def scp_to(self, local_path, user=None, password=None, remote_path=""):
+        user = user or self.user
+        password = password or self.password
+        scp_to(self.ip, local_path, user=user, password=password,
+               remote_path=remote_path)
 
-    def scp_from(self, remote_path, local_path=""):
-        """
-        @param path_to_file: file to copy
-        @param copy_location: place on localhost to place file
-        """
-
-        command = ("sshpass -p %s scp "
-                   "-o Self.UserKnownHostsFile=/dev/null "
-                   "-o StrictHostKeyChecking=no "
-                   "-o LogLevel=quiet "
-                   "%s@%s:%s %s") % (self.password,
-                                     self.user,
-                                     self.ip,
-                                     remote_path,
-                                     local_path)
-
-        try:
-            ret = check_call(command, shell=True)
-            return {'success': True,
-                    'return': ret,
-                    'exception': None}
-        except CalledProcessError, cpe:
-            return {'success': False,
-                    'return': None,
-                    'exception': cpe,
-                    'command': command}
+    def scp_from(self, remote_path, user=None, password=None, local_path=""):
+        user = user or self.user
+        password = password or self.password
+        scp_to(self.ip, local_path, user=user, password=password,
+               remote_path=remote_path)
 
     def __str__(self):
         return "Node: %s" % self.ip
