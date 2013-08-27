@@ -1,4 +1,6 @@
 import sys
+import paramiko
+from cStringIO import StringIO
 from subprocess import check_call, CalledProcessError
 
 
@@ -17,7 +19,7 @@ def run_cmd(command):
                 'command': command}
 
 
-def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
+def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
     """
     @param server_ip
     @param user
@@ -25,21 +27,26 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd):
     @param remote_cmd
     @return A map based on pass / fail run info
     """
-    command = ("sshpass -p %s ssh "
-               "-o UserKnownHostsFile=/dev/null "
-               "-o StrictHostKeyChecking=no "
-               "-o LogLevel=quiet "
-               "-l %s %s '%s'") % (password,
-                                   user,
-                                   server_ip,
-                                   remote_cmd)
-    try:
-        ret = check_call(command, shell=True)
-        return {'success': True, 'return': ret, 'exception': None}
-    except CalledProcessError, cpe:
-        return {'success': False,
-                'return': None,
-                'exception': cpe}
+    output = StringIO()
+    error = StringIO()
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    ssh.connect(server_ip, username=user, password=password)
+    stdin, stdout, stderr = ssh.exec_command(remote_cmd)
+    stdin.close()
+    for line in stdout.xreadlines():
+        if not quiet:
+            sys.stdout.write(line)
+        output.write(line)
+    for line in stderr.xreadlines():
+        sys.stdout.write(line)
+        error.write(line)
+    exit_status = stdout.channel.recv_exit_status()
+    return {'success': True if exit_status == 0 else False,
+            'return': output.getvalue(),
+            'exit_status': exit_status,
+            'error': error.getvalue()}
 
 
 def run_remote_scp_cmd(server_ip, user, password, to_copy):
