@@ -1464,3 +1464,20 @@ class rpcsqa_helper:
         pem = StringIO(remote_dict['key'])
         remote_dict['key'] = rsa.Key(pem)
         return ChefAPI(**remote_dict)
+
+    def add_remote_chef_locally(self, chef_server_node, env):
+        print "Adding remote chef server credentials to local chef server"
+        chef_server_node = Node(chef_server_node, api=self.chef)
+        cmd = "cat ~/.chef/admin.pem"
+        run = self.run_command_on_node(chef_server_node, cmd)
+        if not run['success']:
+            print "Error copying %s from %s" % (item, chef_server_node)
+            print run
+            sys.exit(1)
+        admin_pem = run['runs'][0]['return']
+        remote_dict = {"client": "admin",
+                       "key": admin_pem,
+                       "url": "https://%s:4443" %
+                       chef_server_node['ipaddress']}
+        env.override_attributes['remote_chef'] = remote_dict
+        env.save()
