@@ -1,7 +1,6 @@
 import time
 from ssh_helper import run_cmd, scp_to, scp_from
 from chef import Node, Client
-from subprocess import check_call, CalledProcessError
 
 
 class OSNode:
@@ -28,8 +27,8 @@ class OSNode:
     def scp_from(self, remote_path, user=None, password=None, local_path=""):
         user = user or self.user
         password = password or self.password
-        scp_to(self.ip, local_path, user=user, password=password,
-               remote_path=remote_path)
+        scp_from(self.ip, remote_path, user=user, password=password,
+                 local_path=local_path)
 
     def __str__(self):
         return "Node: %s" % self.ip
@@ -58,6 +57,7 @@ class ChefRazorOSDeployment:
         config_manager = ChefConfigManager(node.name, self.chef)
         am_id = node.attributes['razor_metadata']['razor_active_model_uuid']
         provisioner = RazorProvisioner(self.razor, am_id)
+        password = provisioner.get_password()
         osnode = OSNode(ip, user, password, config_manager, provisioner)
         self.nodes.append(osnode)
         return osnode
@@ -98,3 +98,6 @@ class RazorProvisioner(Provisioner):
         if not run['success']:
             raise Exception("Error rebooting: " % self.__str__)
         time.sleep(15)
+
+    def get_password(self):
+        return self.razor.get_active_model_pass(self._id)['password']
