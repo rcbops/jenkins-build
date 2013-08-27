@@ -747,9 +747,9 @@ class rpcsqa_helper:
 
         # clone to cookbook
         if cookbook['tag']:
-            branch = cookbook['tag']:
+            branch = cookbook['tag']
         else:
-            branch = cookbook['branch']:
+            branch = cookbook['branch']
         to_run_list = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], branch)]
 
         # # if a tag was sent in, use the tagged cookbooks
