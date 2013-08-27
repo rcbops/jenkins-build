@@ -413,10 +413,29 @@ class rpcsqa_helper:
         @type num_rings Integer
         '''
 
+        # Run through the storage nodes and set up the disks
+        for node in storage_nodes:
+            commands = ["/usr/local/bin/swift-partition.sh sdb",
+                        "/usr/local/bin/swift-format.sh sdb1",
+                        "mkdir -p /srv/node/d1",
+                        "mount -t xfs -o noatime,nodiratime,logbufs=8 -L d1 /srv/node/d1",
+                        "chown -R swift:swift /srv/node"]
+
+            command = "; ".join(commands)
+
+            if build:
+                print "#" * 60
+                print "##### Configuring Disks on Storage Node: {0} #####".format(node)
+                print "#" * 60
+                run = self.run_cmd_on_node(node['node'], command)
+            else:
+                print "##### Info to setup drives for Swift on {0} #####".format(node)
+                print "##### Log into {0} and run the following commands: #####".format(node)
+                for command in commands:
+                    print command
+
         # Setup partitions on storage nodes, (must run as swiftops user)
         commands = ["su swiftops",
-                    "dsh -g swift-storage -- sudo /usr/local/bin/swift-partition.sh sdb",
-                    "dsh -g swift-storage -- sudo /usr/local/bin/swift-format.sh sdb1",
                     "mkdir -p ~/swift/rings",
                     "cd ~/swift/rings",
                     "git init .",
@@ -466,13 +485,16 @@ class rpcsqa_helper:
                      "git config user.email \"swiftops@swiftops.com\"",
                      "git config user.name \"swiftops\"",
                      "git commit -m \"initial checkin\"",
-                     "git push origin master",
-                     "dsh -g swift -- sudo /usr/local/bin/pull-rings.sh"]
+                     "git push origin master"]
 
         for item in temp_list:
             commands.append(item)
 
         if build:
+            print "#" * 60
+            print "##### Setting up swift rings for cluster #####"
+            print "#" * 60
+
             # join all the commands into a single command, seperated by ";"
             command = '; '.join(commands)
 
@@ -483,9 +505,29 @@ class rpcsqa_helper:
 
         else:
             # loop through and print each command for the user to run
+            print "#" * 60
             print "## Info to manually set up swift rings: ##"
-            for comamnd in commands:
-                print comamnd
+            print "#" * 60
+            for command in commands:
+                print command
+
+        for node in storage_nodes:
+            command = "/usr/local/bin/pull-rings.sh"
+            if build:
+                print "#" * 60
+                print "##### Pulling swift ring down storage node: {0} #####".format(node)
+                print "#" * 60
+                self.run_cmd_on_node(node['node'], command)
+            else:
+                print "#" * 60
+                print "##### Once rings are set up, pull them down on the storage nodes #####"
+                print "#" * 60
+                print "Run: {0} on node: {1}".format(command, node)
+
+        print "#" * 60
+        print "##### Done setting up swift rings #####"
+        print "#" * 60
+
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:

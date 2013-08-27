@@ -153,9 +153,9 @@ if results.action == "build":
     # Set up Chef Server
     #####################################################################
 
-    print "#############################################################"
+    print '#' * 61
     print "################## Setting up Chef Server ###################"
-    print "#############################################################"
+    print '#' * 61
     # Override the keystone attributes
     rpcsqa.set_environment_variables(env, keystone, 'swift-private-cloud', 'override')
 
@@ -173,9 +173,9 @@ if results.action == "build":
     rpcsqa.build_chef_server(chef_server)
 
     # Install Berkshelf , This is a convoluded mess, thanks ruby
-    print "#############################################################"
+    print '#' * 61
     print "################# Installing Berkshelf ######################"
-    print "#############################################################"
+    print '#' * 61
     rpcsqa.install_berkshelf(chef_server)
 
     # Install the proper cookbooks
@@ -209,9 +209,9 @@ if results.action == "build":
     # Build Swift Management (keystone)
     #####################################################################
 
-    print "#############################################################"
+    print '#' * 61
     print "############# Building Swift Management Node ################"
-    print "#############################################################"
+    print '#' * 61
 
     # Make keystone server
     rpcsqa.set_node_in_use(management_server, swift_roles['controller'])
@@ -235,9 +235,9 @@ if results.action == "build":
     # Build Swift Proxy
     #####################################################################
 
-    print "#############################################################"
+    print '#' * 61
     print "############### Building Swift Proxy Nodes ##################"
-    print "#############################################################"
+    print '#' * 61
 
     for proxy in swift_proxy:
         # Make Swift Proxy Node
@@ -262,9 +262,9 @@ if results.action == "build":
     # Build Swift Object Storage Boxes
     #####################################################################
 
-    print "#############################################################"
+    print '#' * 61
     print "############## Building Swift Storage Nodes #################"
-    print "#############################################################"
+    print '#' * 61
 
     for node in swift_nodes:
 
@@ -287,19 +287,19 @@ if results.action == "build":
                                 chef_config_file=config_file)
 
     #####################################################################
-    # Run chef on management server again
+    ############### Run chef on management server again #################
     #####################################################################
 
-    print "#############################################################"
+    print '#' * 61
     print "############### Finishing Swift Chef Setup ##################"
-    print "#############################################################"
+    print '#' * 61
     
     # Gather Chef node
     management_node = rpcsqa.get_server_info(management_server)
     rpcsqa.run_chef_client(management_node['node'])
 
     #####################################################################
-    # Setup the disks and the swift rings on the cluster
+    ######## Setup the disks and the swift rings on the cluster #########
     #####################################################################
 
     # Gather the chef node objects for the storage nodes
@@ -311,53 +311,57 @@ if results.action == "build":
         storage_nodes.append(rpcsqa.get_server_info(node))
 
     if results.build_rings:
-        print "#############################################################"
+        print '#' * 61
         print "################## Building Swift Rings #####################"
-        print "#############################################################"
+        print '#' * 61
         # Build baby build (and cross fingers)
         rpcsqa.build_swift_rings(True, management_node, storage_nodes, 3)
 
         #####################################################################
-        # Re run chef client on all the boxes post ring setup
+        ####### Re-run chef client on all the boxes post ring setup #########
         #####################################################################
 
-        print "#############################################################"
+        print '#' * 61
         print "######### Running Chef Client on Management Node ############"
-        print "#############################################################"
+        print '#' * 61
 
         rpcsqa.run_chef_client(management_node['node'])
 
-        print "#############################################################"
+        print '#' * 61
         print "########### Running Chef Client on Proxy Nodes ##############"
-        print "#############################################################"
+        print '#' * 61
         for node in proxy_nodes:
             rpcsqa.run_chef_client(node['node'])
 
-        print "#############################################################"
+        print '#' * 61
         print "########## Running Chef Client on Storage Nodes #############"
-        print "#############################################################"
+        print '#' * 61
         for node in storage_nodes:
             rpcsqa.run_chef_client(node['node'])
     else:
-        print "#############################################################"
-        print "## To build swift rings, log into {0} and run the following commands:".format(management_node['ip'])
+        print '#' * 61
+        print "## To build swift rings, please do the following ##"
         rpcsqa.build_swift_rings(False, management_node, storage_nodes, 3)
-        print "#############################################################"
+
+        print '#' * 61
         print "## Then run chef-client on all nodes in the following order: "
         print "## Management Node: {0}".format(rpcsqa.print_server_info(management_server))
+
         for proxy in swift_proxy:
             print "## Swift Proxy Server: {0} ##".format(rpcsqa.print_server_info(proxy))
+
         for storage in swift_nodes:
             print "## Swift Storage Server: {0} ##".format(rpcsqa.print_server_info(storage))
-        print "#############################################################"
+        
+        print '#' * 61
     
     #####################################################################
     # Successful Setup, exit
     #####################################################################
 
-    print "#############################################################"
+    print '#' * 61
     print "############# Swift Cluster Build Successful ################"
-    print "#############################################################"
+    print '#' * 61
 
     # print all servers info
     print "***********************************************************"
