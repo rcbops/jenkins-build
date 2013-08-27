@@ -35,11 +35,7 @@ chef_server = next(search)
 upgrades = "/opt/chef-upgrades"
 cookbooks = "%s/chef-cookbooks" % upgrades
 commands = ["mkdir -p %s" % upgrades,
-            "git clone https://github.com/rcbops/chef-cookbooks %s " % cookbooks,
-            "cd %s; git checkout %s" % (cookbooks, results.upgrade_branch),
-            "cd %s; git submodule init" % cookbooks,
-            "cd %s; git submodule sync" % cookbooks,
-            "cd %s; git submodule update" % cookbooks,
+            "git clone https://github.com/rcbops/chef-cookbooks -b %s --recursive %s " % (results.upgrade_branch, cookbooks),
             "knife cookbook upload -a -o %s/cookbooks" % cookbooks,
             "knife cookbook upload -a -o %s/cookbooks" % cookbooks,
             # "knife cookbook upload -a -o %s/cookbooks; knife cookbook upload --a -o %s/cookbooks" % cookbooks,
@@ -48,7 +44,26 @@ for command in commands:
     rpcsqa.run_cmd_on_node(node=chef_server, cmd=command)
 
 print "Editing environment to run package upgrades"
+if results.os_distro == "centos":
+    bridge_dev = "em1"
+else:
+    bridge_dev = "eth1"
+
+new_networks = {"public": {
+    "bridge": "br0",
+    "label": "public",
+    "dns1": "8.8.8.8",
+    "dns2": "8.8.4.4",
+    "bridge_dev": bridge_dev,
+    "network_size": "254",
+    "ipv4_cidr": "172.31.0.0/24"
+}}
+
 environment = Environment(env.name, api=remote_chef)
+if results.branch not in ["folsom", "v3.1.0", "v4.0.0"]:
+    print "upgrading to new network schema"
+    environment.override_attributes['nova']['networks'] = new_networks
+
 environment.override_attributes['osops']['do_package_upgrades'] = True
 environment.override_attributes['glance']['image_upload'] = False
 environment.save()
