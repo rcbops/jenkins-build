@@ -1353,44 +1353,17 @@ class rpcsqa_helper:
         remote_config_file = '%s/knife.rb' % chef_file_path
         return remote_config_file
 
-    def setup_remote_chef_environment(self, chef_server, chef_environment):
+    def setup_remote_chef_environment(self, environment):
         """
-        @summary This will copy the environment file and set it on the remote
-        chef server.
+        @summary Duplicates the local chef environment remotely
         """
-
-        # Gather chef server info
-        chef_server_node = Node(chef_server, api=self.chef)
-        chef_server_ip = chef_server_node['ipaddress']
-        chef_server_password = self.razor_password(chef_server_node)
-
-        environment_file = '/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments/%s.json' % chef_environment
-
-        run_scp = run_remote_scp_cmd(chef_server_ip,
-                                     'root',
-                                     chef_server_password,
-                                     environment_file)
-
-        if not run_scp['success']:
-            print "Failed to copy environment file to remote chef server"
-            print run_scp
-            sys.exit(1)
-
-        to_run_list = ['cp ~/%s.json /opt/rcbops' % chef_environment,
-                       'knife environment from file /opt/rcbops/%s.json' % chef_environment]
-
-        for cmd in to_run_list:
-            run_ssh = run_remote_ssh_cmd(chef_server_ip,
-                                         'root',
-                                         chef_server_password,
-                                         cmd)
-
-            if not run_ssh['success']:
-                print "Failed to run remote ssh command on server %s @ %s" % (chef_server, chef_server_ip)
-                print run_ssh
-                sys.exit(1)
-
-        print "Successfully set up remote chef environment %s on chef server %s @ %s" % (chef_environment, chef_server, chef_server_ip)
+        print "Putting environment onto remote chef server"
+        chef_environment = Environment(environment)
+        name = chef_environment.name
+        remote_api = self.remote_chef_client(chef_environment)
+        env = Environment(name, api=remote_api)
+        env.override_attributes = dict(chef_environment.override_attributes)
+        env.save()
 
     def setup_quantum_network(self, environment):
         '''
@@ -1524,3 +1497,29 @@ class rpcsqa_helper:
 
             # print message for debugging
             print "{0} successfully saved".format(file_name)
+
+    def remote_chef_client(self, env):
+        # RSAifying key
+        print "Create chef client for env: %s" % env.name
+        env = Environment(env.name)
+        remote_dict = dict(env.override_attributes['remote_chef'])
+        pem = StringIO(remote_dict['key'])
+        remote_dict['key'] = rsa.Key(pem)
+        return ChefAPI(**remote_dict)
+
+    def add_remote_chef_locally(self, chef_server_node, env):
+        print "Adding remote chef server credentials to local chef server"
+        chef_server_node = Node(chef_server_node, api=self.chef)
+        cmd = "cat ~/.chef/admin.pem"
+        run = self.run_cmd_on_node(node=chef_server_node, cmd=cmd)
+        if not run['success']:
+            print "Error copying %s from %s" % (item, chef_server_node)
+            print run
+            sys.exit(1)
+        admin_pem = run['return']
+        remote_dict = {"client": "admin",
+                       "key": admin_pem,
+                       "url": "https://%s:4443" %
+                       chef_server_node['ipaddress']}
+        env.override_attributes['remote_chef'] = remote_dict
+        env.save()

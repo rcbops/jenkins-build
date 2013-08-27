@@ -207,8 +207,11 @@ if results.action == "build":
                                      results.branch,
                                      results.repo_tag)
 
+            # Add remote chef credentials to local chef server
+            rpcsqa.add_remote_chef_locally(chef_server, env)
+
             # setup environment file to remote chef server
-            rpcsqa.setup_remote_chef_environment(chef_server, env)
+            rpcsqa.setup_remote_chef_environment(env)
             # Setup Remote Client
             config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
 
@@ -288,8 +291,11 @@ if results.action == "build":
             # Install the proper cookbooks
             rpcsqa.install_cookbooks(chef_server, cookbooks)
 
+            # Add remote chef credentials to local chef server
+            rpcsqa.add_remote_chef_locally(chef_server, env)
+
             # setup environment file to remote chef server
-            rpcsqa.setup_remote_chef_environment(chef_server, env)
+            rpcsqa.setup_remote_chef_environment(env)
 
             # Setup Remote Client
             config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
@@ -387,8 +393,11 @@ if results.action == "build":
             # Install the proper cookbooks
             rpcsqa.install_cookbooks(chef_server, cookbooks)
 
+            # Add remote chef credentials to local chef server
+            rpcsqa.add_remote_chef_locally(chef_server, env)
+
             # setup environment file to remote chef server
-            rpcsqa.setup_remote_chef_environment(chef_server, env)
+            rpcsqa.setup_remote_chef_environment(env)
 
             # Setup Remote Client
             config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
@@ -486,8 +495,11 @@ if results.action == "build":
             # Install the proper cookbooks
             rpcsqa.install_cookbooks(chef_server, cookbooks)
 
+            # Add remote chef credentials to local chef server
+            rpcsqa.add_remote_chef_locally(chef_server, env)
+
             # setup environment file to remote chef server
-            rpcsqa.setup_remote_chef_environment(chef_server, env)
+            rpcsqa.setup_remote_chef_environment(env)
 
             # Setup Remote Client
             config_file = rpcsqa.setup_remote_chef_client(chef_server, env)
