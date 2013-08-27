@@ -443,12 +443,12 @@ class rpcsqa_helper:
 
         for builder in builders:
             for index, node in enumerate(storage_nodes):
-                
-                # if the current index of the node is % num_rings = 0, 
+
+                # if the current index of the node is % num_rings = 0,
                 # reset num so we dont add anymore rings past num_rings
                 if index % num_rings is 0:
                     num = 0
-                
+
                 # Add the line to command to build the object
                 commands.append("swift-ring-builder {0}.builder add z{1}-{2}:{3}/sdb1 {4}".format(builder['name'],
                                                                                                   num + 1,
@@ -620,7 +620,7 @@ class rpcsqa_helper:
 
     def failed_ssh_command_exit(self, cmd, chef_node, error_message):
 
-        print "## Failed to run command: {0} on {1} ##".format(cmd, chef_node['name'])
+        print "## Failed to run command: {0} on {1} ##".format(cmd, chef_node.name)
         print "## Exited with exception {0}".format(error_message)
         print "## EXITING ##"
         sys.exit(1)
@@ -669,7 +669,7 @@ class rpcsqa_helper:
         # Gather node info
         node = Node(server, api=self.chef)
         return {'node': node,
-                'ip': node['ipaddress'], 
+                'ip': node['ipaddress'],
                 'password': self.razor_password(node),
                 'platform': node['platform']}
 
@@ -772,7 +772,7 @@ class rpcsqa_helper:
 
         for cmd in to_run_list:
             run = self.run_cmd_on_node(chef_server_node, cmd)
-            
+
             if not run['success']:
                 self.failed_ssh_command_exit(cmd, chef_server_node, run['exception'])
 
@@ -1384,7 +1384,7 @@ class rpcsqa_helper:
             print "Platform Family %s is not supported." \
                 % chef_node['platform_family']
             sys.exit(1)
-    
+
 
         # Setup OVS bridge on network and compute node
         print "Setting up OVS bridge and ports on Quantum / Compute Node(s)."
