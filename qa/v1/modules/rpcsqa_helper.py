@@ -746,13 +746,17 @@ class rpcsqa_helper:
         cookbook_name = cookbook['url'].split("/")[-1].split(".")[0]
 
         # clone to cookbook
-        to_run_list = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], cookbook['branch'])]
-
-        # if a tag was sent in, use the tagged cookbooks
-        if cookbook['tag'] is not None:
-            to_run_list.append('cd {0}/{1}; git checkout v{2}'.format(local_repo, cookbook_name, cookbook['tag']))
+        if cookbook['tag']:
+            branch = cookbook['tag']:
         else:
-            to_run_list.append('cd {0}/{1}; git checkout {2}'.format(local_repo, cookbook_name, cookbook['branch']))
+            branch = cookbook['branch']:
+        to_run_list = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], branch)]
+
+        # # if a tag was sent in, use the tagged cookbooks
+        # if cookbook['tag'] is not None:
+        #     to_run_list.append('cd {0}/{1}; git checkout v{2}'.format(local_repo, cookbook_name, cookbook['tag']))
+        # else:
+        #     to_run_list.append('cd {0}/{1}; git checkout {2}'.format(local_repo, cookbook_name, cookbook['branch']))
 
         # Stupid logic to see if the repo name contains "cookbooks", if it does then
         # we need to load from cookbooks repo, not the repo itself.
