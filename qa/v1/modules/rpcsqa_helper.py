@@ -1469,7 +1469,7 @@ class rpcsqa_helper:
         print "Adding remote chef server credentials to local chef server"
         chef_server_node = Node(chef_server_node, api=self.chef)
         cmd = "cat ~/.chef/admin.pem"
-        run = self.run_command_on_node(chef_server_node, cmd)
+        run = self.run_cmd_on_node(node=chef_server_node, cmd=cmd)
         if not run['success']:
             print "Error copying %s from %s" % (item, chef_server_node)
             print run
