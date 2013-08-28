@@ -832,7 +832,7 @@ class rpcsqa_helper:
 
         command = "; ".join(commands)
 
-        run = self.run_command_on_node(chef_server_node, command)
+        run = self.run_cmd_on_node(chef_server_node, command)
         if not run['success']:
             self.failed_ssh_command_exit(command, chef_server_node, run['error'])
 
