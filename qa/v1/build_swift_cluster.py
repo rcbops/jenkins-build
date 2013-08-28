@@ -315,7 +315,7 @@ if results.action == "build":
         print "################## Building Swift Rings #####################"
         print '#' * 61
         # Build baby build (and cross fingers)
-        rpcsqa.build_swift_rings(True, management_node, storage_nodes, 3)
+        rpcsqa.build_swift_rings(True, management_node, proxy_nodes, storage_nodes, 3)
 
         #####################################################################
         ####### Re-run chef client on all the boxes post ring setup #########
@@ -341,7 +341,7 @@ if results.action == "build":
     else:
         print '#' * 61
         print "## To build swift rings, please do the following ##"
-        rpcsqa.build_swift_rings(False, management_node, storage_nodes, 3)
+        rpcsqa.build_swift_rings(False, management_node, proxy_nodes, storage_nodes, 3)
 
         print '#' * 61
         print "## Then run chef-client on all nodes in the following order: "
@@ -352,7 +352,7 @@ if results.action == "build":
 
         for storage in swift_nodes:
             print "## Swift Storage Server: {0} ##".format(rpcsqa.print_server_info(storage))
-        
+
         print '#' * 61
     
     #####################################################################

@@ -401,19 +401,32 @@ class rpcsqa_helper:
                 print run1
                 sys.exit(1)
 
-    def build_swift_rings(self, build, management_node, storage_nodes, num_rings=3, part_power=10, replicas=3, min_part_hours=1, disk_weight=1000):
+    def build_swift_rings(self, build, management_node, proxy_nodes, storage_nodes, num_rings=3, part_power=10, replicas=3, min_part_hours=1, disk_weight=1000):
 
         '''
         @summary This method will build out the rings for a swift cluster
-        @param management_node The swift management server node object (chef)
+        @param build Automate the swift ring build? (only use with 1 disk per node)
+        @type build Boolean
+        @param management_node Swift management server node object (chef objects)
         @type management_node Object
-        @param storage_nodes The swift storage node objects (chef)
+        @param proxy_nodes Swift proxy nodes (chef objects)
+        @param storage_nodes Swift storage node objects (chef objects)
         @type storage List
-        @param num_rings The number of rings you want in your swift
+        @param num_rings Number of rings you want in your swift
         @type num_rings Integer
+        @param part_power Power of 2 to give the partitions in the balance of the rings
+        @type part_power Integer
+        @param replicas Number of replicas of each object to create and store across the ring
+        @type replicas Integer
+        @param min_part_hours Interval if time to try to rebalance objects across the ring
+        @type min_part_hours Integer
+        @param disk_weight Weight to assign the disk
+        @type disk_weight Integer
         '''
 
-        # Run through the storage nodes and set up the disks
+        #################################################################################
+        ############ Run through the storage nodes and set up the disks #################
+        #################################################################################
         for node in storage_nodes:
             commands = ["/usr/local/bin/swift-partition.sh sdb",
                         "/usr/local/bin/swift-format.sh sdb1",
@@ -421,20 +434,23 @@ class rpcsqa_helper:
                         "mount -t xfs -o noatime,nodiratime,logbufs=8 -L d1 /srv/node/d1",
                         "chown -R swift:swift /srv/node"]
 
-            command = "; ".join(commands)
-
             if build:
                 print "#" * 60
                 print "##### Configuring Disks on Storage Node: {0} #####".format(node)
                 print "#" * 60
+                command = "; ".join(commands)
                 run = self.run_cmd_on_node(node['node'], command)
+                if not run['success']:
+                    self.failed_ssh_command_exit(command, node['node'], run['exception'])
             else:
                 print "##### Info to setup drives for Swift on {0} #####".format(node)
                 print "##### Log into {0} and run the following commands: #####".format(node)
                 for command in commands:
                     print command
 
-        # Setup partitions on storage nodes, (must run as swiftops user)
+        #################################################################################
+        ######## Setup partitions on storage nodes, (must run as swiftops user) #########
+        #################################################################################
         commands = ["su swiftops",
                     "mkdir -p ~/swift/rings",
                     "cd ~/swift/rings",
@@ -477,18 +493,18 @@ class rpcsqa_helper:
                 num += 1
 
         # Finish the command list
-        temp_list = ["swift-ring-builder object.builder rebalance",
-                     "swift-ring-builder container.builder rebalance",
-                     "swift-ring-builder account.builder rebalance",
-                     "git remote add origin /srv/git/rings",
-                     "git add .",
-                     "git config user.email \"swiftops@swiftops.com\"",
-                     "git config user.name \"swiftops\"",
-                     "git commit -m \"initial checkin\"",
-                     "git push origin master"]
+        cmd_list = ["swift-ring-builder object.builder rebalance",
+                    "swift-ring-builder container.builder rebalance",
+                    "swift-ring-builder account.builder rebalance",
+                    "git remote add origin /srv/git/rings",
+                    "git add .",
+                    "git config user.email \"swiftops@swiftops.com\"",
+                    "git config user.name \"swiftops\"",
+                    "git commit -m \"initial checkin\"",
+                    "git push origin master"]
 
-        for item in temp_list:
-            commands.append(item)
+        for command in cmd_list:
+            commands.append(command)
 
         if build:
             print "#" * 60
@@ -506,23 +522,54 @@ class rpcsqa_helper:
         else:
             # loop through and print each command for the user to run
             print "#" * 60
-            print "## Info to manually set up swift rings: ##"
+            print "##### Info to manually set up swift rings: #####"
             print "#" * 60
             for command in commands:
                 print command
 
-        for node in storage_nodes:
-            command = "/usr/local/bin/pull-rings.sh"
+        ######################################################################################
+        ################## Time to distribute the ring to all the boxes ######################
+        ######################################################################################
+        command = "/usr/local/bin/pull-rings.sh"
+
+        print "#" * 60
+        print "##### PULL RING ONTO MANAGEMENT NODE #####"
+        if build:
+            print "##### Pulling Swift ring on Management Node #####"
+            print "#" * 60
+            run = self.run_cmd_on_node(management_node['node'], cmd, user, password)
+            if not run['success']:
+                self.failed_ssh_command_exit(command, management_node['node'], run['exception'])
+        else:
+            print "##### On the Management Node @ {0}, run the following command: #####".format(management_node['ip'])
+            print "##### {0} #####".format(command)
+            print "#" * 60
+
+        print "#" * 60
+        print "##### PULL RINGS ONTO PROXY NODES #####"
+        for node in proxy_nodes:
             if build:
+                print "##### Pulling swift ring down on proxy node: #####".format(node)
                 print "#" * 60
+                run = self.run_cmd_on_node(node['node'], command)
+                if not run['success']:
+                    self.failed_ssh_command_exit(command, node['node'], run['exception'])
+            else:
+                print "##### On node @ {0}, run the following command: #####".format(node['ip'])
+                print "##### {0} #####".format(command)
+
+        print "#" * 60
+        print "##### PULL RING ONTO STORAGE NODES #####"
+        for node in storage_nodes:
+            if build:
                 print "##### Pulling swift ring down storage node: {0} #####".format(node)
                 print "#" * 60
-                self.run_cmd_on_node(node['node'], command)
+                run = self.run_cmd_on_node(node['node'], command)
+                if not run['success']:
+                    self.failed_ssh_command_exit(command, node['node'], run['exception'])
             else:
-                print "#" * 60
-                print "##### Once rings are set up, pull them down on the storage nodes #####"
-                print "#" * 60
-                print "Run: {0} on node: {1}".format(command, node)
+                print "##### On node @ {0}, run the following command: #####".format(node['ip'])
+                print "##### {0} #####".format(command)
 
         print "#" * 60
         print "##### Done setting up swift rings #####"
