@@ -1,17 +1,20 @@
 import time
+import Roles
+from OSChef import OSChef
 from ssh_helper import run_cmd, scp_to, scp_from
 from chef import Node, Client
 
 
 class OSNode:
-    def __init__(self, ip, user, password,
+    def __init__(self, ip, user, password, role,
                  config_manager=None, provisioner=None):
         self.ip = ip
         self.user = user
         self.password = password
         self.provisioner = provisioner
         self.config_manager = config_manager
-        self.resources = []
+        self.role = role
+        self._cleanups = []
 
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
@@ -35,19 +38,7 @@ class OSNode:
         return "Node: %s" % self.ip
 
     def tearDown(self):
-        raise NotImplementedError
-
-
-class OSDeployment:
-    def __init__(self, name):
-        self.name
-        self.nodes = []
-        self._cleanups = []
-
-    def tearDown(self):
-        for node in self.nodes:
-            node.tearDown()
-        self.clean_up()
+        self.cleanUp()
 
     def cleanUp(self):
         for cleanup in self._cleanups:
@@ -58,22 +49,40 @@ class OSDeployment:
         self._cleanups.append((function, args, kwargs))
 
 
+class OSDeployment:
+    def __init__(self, name, features, config=None):
+        self.name
+        self.features = features
+        self.config = config
+        self.nodes = []
+
+    def tearDown(self):
+        for node in self.nodes:
+            node.tearDown()
+
+
 class ChefRazorOSDeployment(OSDeployment):
-    def __init__(self, name, chef, razor, remote_chef=None):
-        super(ChefRazorOSDeployment, self).__init__(name)
-        self.chef = chef
-        self.remote_chef = remote_chef
+    def __init__(self, name, features, chef, razor, config=None):
+        super(ChefRazorOSDeployment, self).__init__(name, features, config)
+        self.chef = OSChef()
         self.razor = razor
 
-    def createNode(self):
+    def build(self):
+        self.chef.prepare_environment(self.name,
+                                      self.config['os'],
+                                      self.config['cookbook-branch'],
+                                      self.features)
+        # todo
+
+    def createNode(self, role):
         node = next(self.chef)
         config_manager = ChefConfigManager(node.name, self.chef)
         am_id = node.attributes['razor_metadata']['razor_active_model_uuid']
         provisioner = RazorProvisioner(self.razor, am_id)
+        password = provisioner.getPassword()
         ip = node['ipaddress']
         user = "root"
-        password = provisioner.getPassword()
-        osnode = OSNode(ip, user, password, config_manager, provisioner)
+        osnode = OSNode(ip, user, password, role, config_manager, provisioner)
         osnode.addCleanup(osnode.run_cmd("reboot 0"))
         osnode.addCleanup(time.sleep(15))
         self.nodes.append(osnode)
@@ -91,18 +100,20 @@ class ConfigManager():
 
 
 class ChefConfigManager(ConfigManager):
-    def __init__(self, name, chef, remote_chef=None):
+    def __init__(self, name, chef):
         self.name = name
         self.chef = chef
-        self.remote_chef = remote_chef
 
     def __str__(self):
         return "Chef Node: %s - %s" % (self.name, self.ip)
 
     def tearDown(self):
         node = Node(self.name, self.api)
-        Client(self.name).delete()
         node.delete()
+        Client(self.name).delete()
+
+    def applyRole(role):
+        pass
 
 
 class RazorProvisioner(Provisioner):
