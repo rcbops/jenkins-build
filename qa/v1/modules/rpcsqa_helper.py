@@ -1,11 +1,11 @@
 import sys
 import time
-import StringIO
 import json
 from math import *
 from chef import *
 from chef_helper import *
 from server_helper import *
+from CStringIO import StringIO
 from razor_api import razor_api
 from subprocess import check_call, CalledProcessError
 
@@ -1108,7 +1108,7 @@ class rpcsqa_helper:
     def remote_chef_api(self, env):
         # RSAifying key
         remote_dict = env.override_attributes['remote_chef']
-        pem = StringIO.StringIO(remote_dict['key'])
+        pem = StringIO(remote_dict['key'])
         remote_dict['key'] = rsa.Key(pem)
         return ChefAPI(**remote_dict)
 
