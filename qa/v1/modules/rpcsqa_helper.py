@@ -41,7 +41,7 @@ class rpcsqa_helper:
 
         # install chef client and bootstrap
         command = 'knife bootstrap {0} -x root -P {1}'.format(chef_client_node['ipaddress'],
-                                                          self.razor_password(chef_client_node))
+                                                              self.razor_password(chef_client_node))
 
         run = self.run_cmd_on_node(chef_server_node, command)
         if not run['success']:
@@ -1372,7 +1372,7 @@ class rpcsqa_helper:
         run = self.run_cmd_on_node(chef_node, command)
         if not run['success']:
             self.failed_ssh_command_exit(comm, chef_node, run['error'])
-    
+
     def write_chef_env_to_file(self, environment, file_path='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments'):
         '''
         @summary writes the current chef environment to the correct file that it represents
