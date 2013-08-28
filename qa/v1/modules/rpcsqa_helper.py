@@ -427,11 +427,14 @@ class rpcsqa_helper:
         #################################################################################
         ############ Run through the storage nodes and set up the disks #################
         #################################################################################
+
+        disk = "sdb"
+        disk_label = "sdb1"
         for node in storage_nodes:
-            commands = ["/usr/local/bin/swift-partition.sh sdb",
-                        "/usr/local/bin/swift-format.sh sdb1",
+            commands = ["/usr/local/bin/swift-partition.sh {0}".format(disk),
+                        "/usr/local/bin/swift-format.sh {0}".format(disk_label),
                         "mkdir -p /srv/node/d1",
-                        "mount -t xfs -o noatime,nodiratime,logbufs=8 -L d1 /srv/node/d1",
+                        "mount -t xfs -o noatime,nodiratime,logbufs=8 -L {0} /srv/node/{0}".format(disk_label),
                         "chown -R swift:swift /srv/node"]
 
             if build:
@@ -485,10 +488,11 @@ class rpcsqa_helper:
                     num = 0
 
                 # Add the line to command to build the object
-                commands.append("swift-ring-builder {0}.builder add z{1}-{2}:{3}/sdb1 {4}".format(builder['name'],
+                commands.append("swift-ring-builder {0}.builder add z{1}-{2}:{3}/{4} {5}".format(builder['name'],
                                                                                                   num + 1,
                                                                                                   node['ip'],
                                                                                                   builder['port'],
+                                                                                                  disk_label,
                                                                                                   disk_weight))
                 num += 1
 
