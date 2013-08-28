@@ -5,7 +5,7 @@ from math import *
 from chef import *
 from chef_helper import *
 from server_helper import *
-from CStringIO import StringIO
+from cStringIO import StringIO
 from razor_api import razor_api
 from subprocess import check_call, CalledProcessError
 
