@@ -301,16 +301,13 @@ class rpcsqa_helper:
             sys.exit(1)
 
         # Run the install script
-        to_run_list = ['chmod u+x ~/install-chef-server.sh',
-                       './install-chef-server.sh']
-        for cmd in to_run_list:
-            ssh_run = run_remote_ssh_cmd(chef_server_ip,
-                                         'root',
-                                         chef_server_pass,
-                                         cmd)
-            if ssh_run['success']:
-                print "command: %s ran successfully on %s" % (cmd,
-                                                              chef_server_node)
+        commands = ['chmod u+x ~/install-chef-server.sh',
+                    './install-chef-server.sh']
+
+        command = "; ".join(commands)
+        run = self.run_cmd_on_node(chef_node, command)
+        if not run['success']:
+            self.failed_ssh_command_exit(command, chef_node, run['error'])
 
         self.install_git(chef_server_node)
 

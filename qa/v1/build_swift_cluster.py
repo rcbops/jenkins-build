@@ -93,7 +93,7 @@ if results.action == "build":
         cluster_size += 1
 
     # Collect the amount of servers we need for the swift install
-    print "## -- Checking to see if {0} are available -- ##".format(cluster_size)
+    print "## -- Checking to see if {0} nodes are available -- ##".format(cluster_size)
     rpcsqa.check_cluster_size(all_nodes, cluster_size)
 
     # Gather the nodes and set there environment
