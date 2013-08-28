@@ -9,8 +9,9 @@ class OSNode:
         self.ip = ip
         self.user = user
         self.password = password
-        self.provisioner
-        self.config_manager
+        self.provisioner = provisioner
+        self.config_manager = config_manager
+        self.resources = []
 
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
@@ -33,7 +34,7 @@ class OSNode:
     def __str__(self):
         return "Node: %s" % self.ip
 
-    def teardown(self):
+    def tearDown(self):
         raise NotImplementedError
 
 
@@ -41,49 +42,64 @@ class OSDeployment:
     def __init__(self, name):
         self.name
         self.nodes = []
+        self._cleanups = []
 
-    def teardown(self):
+    def tearDown(self):
         for node in self.nodes:
-            node.teardown()
+            node.tearDown()
+        self.clean_up()
+
+    def cleanUp(self):
+        for cleanup in self._cleanups:
+            function, args, kwargs = cleanup
+            function(*args, **kwargs)
+
+    def addCleanup(self, function, *args, **kwargs):
+        self._cleanups.append((function, args, kwargs))
 
 
-class ChefRazorOSDeployment:
-    def __init__(self, chef, razor):
+class ChefRazorOSDeployment(OSDeployment):
+    def __init__(self, name, chef, razor, remote_chef=None):
+        super(ChefRazorOSDeployment, self).__init__(name)
         self.chef = chef
+        self.remote_chef = remote_chef
         self.razor = razor
 
-    def create_node(self):
+    def createNode(self):
         node = next(self.chef)
         config_manager = ChefConfigManager(node.name, self.chef)
         am_id = node.attributes['razor_metadata']['razor_active_model_uuid']
         provisioner = RazorProvisioner(self.razor, am_id)
         ip = node['ipaddress']
         user = "root"
-        password = provisioner.get_password()
+        password = provisioner.getPassword()
         osnode = OSNode(ip, user, password, config_manager, provisioner)
+        osnode.addCleanup(osnode.run_cmd("reboot 0"))
+        osnode.addCleanup(time.sleep(15))
         self.nodes.append(osnode)
         return osnode
 
 
 class Provisioner():
-    def teardown(self):
+    def tearDown(self):
         raise NotImplementedError
 
 
 class ConfigManager():
-    def teardown(self):
+    def tearDown(self):
         raise NotImplementedError
 
 
 class ChefConfigManager(ConfigManager):
-    def __init__(self, name, chef):
+    def __init__(self, name, chef, remote_chef=None):
         self.name = name
         self.chef = chef
+        self.remote_chef = remote_chef
 
     def __str__(self):
         return "Chef Node: %s - %s" % (self.name, self.ip)
 
-    def teardown(self):
+    def tearDown(self):
         node = Node(self.name, self.api)
         Client(self.name).delete()
         node.delete()
@@ -94,12 +110,8 @@ class RazorProvisioner(Provisioner):
         self.razor = razor
         self._id = id
 
-    def teardown(self):
-        self.client.remove_active_model(self._id)
-        run = self.run_cmd("reboot 0")
-        if not run['success']:
-            raise Exception("Error rebooting: " % self.__str__)
-        time.sleep(15)
+    def tearDown(self):
+        self.razor.remove_active_model(self._id)
 
-    def get_password(self):
+    def getPassword(self):
         return self.razor.get_active_model_pass(self._id)['password']
