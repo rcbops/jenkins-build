@@ -188,7 +188,7 @@ if results.action == "build":
     command = ('mkdir -p .berkshelf; cd .berkshelf; echo "{\\"ssl\\":{\\"verify\\":false}}" > config.json')
     run = rpcsqa.run_cmd_on_node(chef_node['node'], command)
     if not run['success']:
-        rpcsqa.failed_ssh_command_exit(command, chef_node['node'], run['exception'])
+        rpcsqa.failed_ssh_command_exit(command, chef_node['node'], run['error'])
 
     # Run berkshelf on server
     command = ('cd /opt/rcbops/swift-private-cloud; '
@@ -197,7 +197,7 @@ if results.action == "build":
                'berks upload')
     run = rpcsqa.run_cmd_on_node(chef_node['node'], command)
     if not run['success']:
-        rpcsqa.failed_ssh_command_exit(command, chef_node['node'], run['exception'])
+        rpcsqa.failed_ssh_command_exit(command, chef_node['node'], run['error'])
 
     # setup environment file to remote chef server
     rpcsqa.setup_remote_chef_environment(env)
