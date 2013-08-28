@@ -64,7 +64,7 @@ new_networks = {"public": {
 }}
 
 environment = Environment(env.name, api=remote_chef)
-if results.branch not in ["folsom", "v3.1.0", "v4.0.0"]:
+if results.upgrade_branch not in ["folsom", "v3.1.0", "v4.0.0"]:
     print "upgrading to new network schema"
     environment.override_attributes['nova']['networks'] = new_networks
 
