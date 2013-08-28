@@ -1521,5 +1521,6 @@ class rpcsqa_helper:
                        "key": admin_pem,
                        "url": "https://%s:4443" %
                        chef_server_node['ipaddress']}
+        env = Environment(env)
         env.override_attributes['remote_chef'] = remote_dict
         env.save()
