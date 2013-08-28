@@ -675,7 +675,7 @@ class rpcsqa_helper:
         command = 'reboot 0'
         run = self.run_cmd_on_node(chef_node, command)
         if not run['success']:
-            self.failed_ssh_command_exit(command, chef_node, run['success'])
+            self.failed_ssh_command_exit(command, chef_node, run['error'])
 
         #Knife node remove; knife client remove
         Client(str(chef_node)).delete()
