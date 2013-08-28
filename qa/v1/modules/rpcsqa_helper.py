@@ -844,9 +844,9 @@ class rpcsqa_helper:
 
         # Install git and clone the other cookbook
         if chef_server_platform == 'ubuntu':
-            command = ['apt-get install git -y']
+            command = 'apt-get install git -y'
         elif chef_server_platform == 'centos' or chef_server_platform == 'redhat':
-            command = ['yum install git -y']
+            command = 'yum install git -y'
         else:
             print "Platform %s not supported" % chef_server_platform
             sys.exit(1)
@@ -1371,7 +1371,7 @@ class rpcsqa_helper:
         command = "; ".join(commands)
         run = self.run_cmd_on_node(chef_node, command)
         if not run['success']:
-            self.failed_ssh_command_exit(comm, chef_node, run['error'])
+            self.failed_ssh_command_exit(command, chef_node, run['error'])
 
     def write_chef_env_to_file(self, environment, file_path='/var/lib/jenkins/rcbops-qa/chef-cookbooks/environments'):
         '''
