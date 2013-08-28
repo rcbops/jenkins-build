@@ -675,7 +675,7 @@ class rpcsqa_helper:
         command = 'reboot 0'
         run = self.run_cmd_on_node(chef_node, command)
         if not run['success']:
-            self.failed_ssh_command_exit(command, chef_node, run['success'])
+            self.failed_ssh_command_exit(command, chef_node, run['error'])
 
         #Knife node remove; knife client remove
         Client(str(chef_node)).delete()
@@ -759,19 +759,19 @@ class rpcsqa_helper:
         gems = ['berkshelf', 'chef']
 
         # Install OS packages
-        self.install_packages(server_info, packages)
+        self.install_packages(server_info['node'], packages)
 
         # Install RVM
         run = self.run_cmd_on_node(server_info['node'], rvm_install)
 
         if not run['success']:
-            self.failed_ssh_command_exit(rvm_install, server_info['node'], run['exception'])
+            self.failed_ssh_command_exit(rvm_install, server_info['node'], run['error'])
 
         # Install RVM Ruby Versions
-        #self.install_rvm_versions(server_info, ruby_versions)
+        #self.install_rvm_versions(server_info['node'], ruby_versions)
 
         # Install Ruby Gems
-        self.install_ruby_gems(server_info, gems)
+        self.install_ruby_gems(server_info['node'], gems)
 
     def install_cookbooks(self, chef_server, cookbooks, local_repo='/opt/rcbops'):
         '''
@@ -855,10 +855,10 @@ class rpcsqa_helper:
         if not run['success']:
             self.failed_ssh_command_exit(command, chef_server_node, run['error'])
 
-    def install_packages(self, server, packages):
+    def install_packages(self, chef_node, packages):
 
         for package in packages:
-            self.install_package(server, package)
+            self.install_package(chef_node, package)
 
     def install_package(self, chef_node, package):
 
@@ -878,33 +878,33 @@ class rpcsqa_helper:
         # update after install
         self.update_node(chef_node['node'])
 
-    def install_ruby_gems(self, server, gems):
+    def install_ruby_gems(self, chef_node, gems):
 
         for gem in gems:
-            self.install_ruby_gem(server, gem)
+            self.install_ruby_gem(chef_node, gem)
 
-    def install_ruby_gem(self, server, gem):
+    def install_ruby_gem(self, chef_node, gem):
 
         command = 'source /usr/local/rvm/scripts/rvm; gem install --no-rdoc --no-ri {0}'.format(gem)
 
-        run = self.run_cmd_on_node(server['node'], command)
+        run = self.run_cmd_on_node(chef_node, command)
 
         if not run['success']:
-            self.failed_ssh_command_exit(command, server['node'], run['exception'])
+            self.failed_ssh_command_exit(command, chef_node, run['exception'])
 
-    def install_rvm_versions(self, server, versions):
+    def install_rvm_versions(self, chef_node, versions):
 
         for version in versions:
-            self.install_rvm_version(server, version)
+            self.install_rvm_version(chef_node, version)
 
-    def install_rvm_version(self, server, version):
+    def install_rvm_version(self, chef_node, version):
 
         command = 'source /usr/local/rvm/scripts/rvm; rvm install {0}'.format(version)
 
-        run = self.run_cmd_on_node(server['node'], command)
+        run = self.run_cmd_on_node(chef_node, command)
 
         if not run['success']:
-            self.failed_ssh_command_exit(command, server['node'], run['exception'])
+            self.failed_ssh_command_exit(command, chef_node, run['exception'])
 
     def install_server_vms(self, server, opencenter_server_ip, chef_server_ip, vm_bridge, vm_bridge_device):
         
