@@ -1424,9 +1424,7 @@ class rpcsqa_helper:
         cmd = "cat ~/.chef/admin.pem"
         run = self.run_cmd_on_node(node=chef_server_node, cmd=cmd)
         if not run['success']:
-            print "Error copying %s from %s" % (item, chef_server_node)
-            print run
-            sys.exit(1)
+            self.failed_ssh_command_exit(cmd, chef_server_node, run['error'])
         admin_pem = run['return']
         remote_dict = {"client": "admin",
                        "key": admin_pem,
