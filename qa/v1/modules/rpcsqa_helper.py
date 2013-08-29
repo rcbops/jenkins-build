@@ -431,7 +431,7 @@ class rpcsqa_helper:
                 command = "; ".join(commands)
                 run = self.run_cmd_on_node(storage_node['node'], command)
                 if not run['success']:
-                    self.failed_ssh_command_exit(command, storage_node['node'], run['exception'])
+                    self.failed_ssh_command_exit(command, storage_node['node'], run['error'])
             else:
                 print "##### Info to setup drives for Swift #####"
                 print "##### Log into root@{0} with pass: {1} and run the following commands: #####".format(storage_node['ip'], storage_node['password'])
@@ -508,7 +508,7 @@ class rpcsqa_helper:
             # Run the command on the swift management node
             run = self.run_cmd_on_node(management_node['node'], command)
             if not run['success']:
-                self.failed_ssh_command_exit(command, management_node['node'], run['exception'])
+                self.failed_ssh_command_exit(command, management_node['node'], run['error'])
 
         else:
             # loop through and print each command for the user to run
@@ -529,7 +529,7 @@ class rpcsqa_helper:
             print "##### Pulling Swift ring on Management Node #####"
             run = self.run_cmd_on_node(management_node['node'], cmd, user, password)
             if not run['success']:
-                self.failed_ssh_command_exit(command, management_node['node'], run['exception'])
+                self.failed_ssh_command_exit(command, management_node['node'], run['error'])
         else:
             print "##### On node root@{0} with pass: {1} and run the following command: #####".format(management_node['ip'], management_node['password'])
             print command
@@ -541,7 +541,7 @@ class rpcsqa_helper:
                 print "##### Pulling swift ring down on proxy node @ {0}: #####".format(proxy_node['ip'])
                 run = self.run_cmd_on_node(proxy_node['node'], command)
                 if not run['success']:
-                    self.failed_ssh_command_exit(command, proxy_node['node'], run['exception'])
+                    self.failed_ssh_command_exit(command, proxy_node['node'], run['error'])
             else:
                 print "##### On node root@{0} with pass: {1} and run the following command: #####".format(proxy_node['ip'], proxy_node['password'])
                 print command
@@ -553,7 +553,7 @@ class rpcsqa_helper:
                 print "##### Pulling swift ring down storage node: {0} #####".format(storage_node['ip'])
                 run = self.run_cmd_on_node(storage_node['node'], command)
                 if not run['success']:
-                    self.failed_ssh_command_exit(command, storage_node['node'], run['exception'])
+                    self.failed_ssh_command_exit(command, storage_node['node'], run['error'])
             else:
                 print "##### On node root@{0} with pass: {1} and run the following command: #####".format(storage_node['ip'], storage_node['password'])
                 print command
