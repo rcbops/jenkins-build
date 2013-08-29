@@ -363,5 +363,5 @@ if results.action == "build":
     #####################################################################
 
     print '#' * 60
-    print "############# Swift Cluster Build Successful ################"
+    print "############# Swift Cluster Build Successful ###############"
     print '#' * 60

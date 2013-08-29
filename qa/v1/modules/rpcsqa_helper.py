@@ -532,7 +532,7 @@ class rpcsqa_helper:
                 self.failed_ssh_command_exit(command, management_node['node'], run['exception'])
         else:
             print "##### On node root@{0} with pass: {1} and run the following command: #####".format(management_node['ip'], management_node['password'])
-            print "##### {0} #####".format(command)
+            print command
 
         print "#" * 60
         print "##### PULL RING ONTO PROXY NODES #####"
@@ -544,7 +544,7 @@ class rpcsqa_helper:
                     self.failed_ssh_command_exit(command, proxy_node['node'], run['exception'])
             else:
                 print "##### On node root@{0} with pass: {1} and run the following command: #####".format(proxy_node['ip'], proxy_node['password'])
-                print "##### {0} #####".format(command)
+                print command
 
         print "#" * 60
         print "##### PULL RING ONTO STORAGE NODES #####"
@@ -556,11 +556,10 @@ class rpcsqa_helper:
                     self.failed_ssh_command_exit(command, storage_node['node'], run['exception'])
             else:
                 print "##### On node root@{0} with pass: {1} and run the following command: #####".format(storage_node['ip'], storage_node['password'])
-                print "##### {0} #####".format(command)
+                print command
 
         print "#" * 60
         print "##### Done setting up swift rings #####"
-        print "#" * 60
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:
