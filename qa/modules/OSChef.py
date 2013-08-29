@@ -1,6 +1,7 @@
 import sys
 from time import sleep
-from chef import autoconfigure, Search
+from chef import autoconfigure, Search, Environment
+import environments
 
 
 class OSChef:
@@ -51,10 +52,12 @@ class OSChef:
             chef_env.create(env, api=self.chef)
 
         env_json = chef_env.to_dict()
-        env_json['override_attributes'].update(environments.base_env['override_attributes'])
+        override_attributes = environments.base_env['override_attributes']
+        env_json['override_attributes'].update(override_attributes)
         for feature in features:
             if feature in environments.__dict__:
-                env_json['override_attributes'].update(environments.__dict__[feature])
+                feature_attribs = environments.__dict__[feature]
+                env_json['override_attributes'].update(feature_attribs)
         chef_env.override_attributes.update(env_json['override_attributes'])
         chef_env.override_attributes['package_component'] = branch
         if os_distro == "centos":
