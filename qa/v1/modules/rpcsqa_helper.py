@@ -876,7 +876,7 @@ class rpcsqa_helper:
             self.failed_ssh_command_exit(command, chef_node, run['error'])
 
         # update after install
-        self.update_node(chef_node['node'])
+        self.update_node(chef_node)
 
     def install_ruby_gems(self, chef_node, gems):
 
