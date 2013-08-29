@@ -96,7 +96,7 @@ old_networks = [{
 }]
 
 # replace networks with older schema
-if results.branch in ["folsom", "v3.1.0", "v4.0.0"]:
+if results.branch in ["folsom", "3.1.0", "4.0.0"]:
     print "reverting to old network schema"
     env_obj = Environment(env)
     env_obj.override_attributes['nova']['networks'] = old_networks
