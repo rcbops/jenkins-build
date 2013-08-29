@@ -199,6 +199,9 @@ if results.action == "build":
     if not run['success']:
         rpcsqa.failed_ssh_command_exit(command, chef_node['node'], run['error'])
 
+    # Add remote chef credentials to local chef server
+    rpcsqa.add_remote_chef_locally(chef_server, env)
+
     # setup environment file to remote chef server
     rpcsqa.setup_remote_chef_environment(env)
 
