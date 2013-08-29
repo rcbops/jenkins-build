@@ -864,9 +864,9 @@ class rpcsqa_helper:
 
         # Install package
         if chef_node['platform'] == 'ubuntu':
-            command = ['apt-get install -y {0}'.format(package)]
+            command = 'apt-get install -y {0}'.format(package)
         elif chef_node['platform'] == 'centos' or chef_node['platform'] == 'redhat':
-            command = ['yum install -y {0}'.format(package)]
+            command = 'yum install -y {0}'.format(package)
         else:
             print "Platform %s not supported" % chef_node['platform']
             sys.exit(1)
