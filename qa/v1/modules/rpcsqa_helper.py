@@ -806,7 +806,7 @@ class rpcsqa_helper:
         cookbook_name = cookbook['url'].split("/")[-1].split(".")[0]
 
         # clone to cookbook
-        commands = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], cookbook['branch'])]
+        commands = ['cd {0}; git clone {1}'.format(local_repo, cookbook['url'])]
 
         # if a tag was sent in, use the tagged cookbooks
         if cookbook['tag'] is not None:
@@ -907,7 +907,7 @@ class rpcsqa_helper:
             self.failed_ssh_command_exit(command, chef_node, run['exception'])
 
     def install_server_vms(self, server, opencenter_server_ip, chef_server_ip, vm_bridge, vm_bridge_device):
-        
+
         chef_node = Node(server, api=self.chef)
 
         # Run vm setup script on controller node
