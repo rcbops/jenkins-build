@@ -13,14 +13,19 @@ parser.add_argument('--feature_set', action="store", dest="feature_set",
 parser.add_argument('--os_distro', action="store", dest="os_distro",
                     required=False, default='precise',
                     help="Operating System to use")
+parser.add_argument('--old_branch', action="store",
+                    dest="old_branch", required=False, default="grizzly",
+                    help="Use this to upgrade to a specific branch.")
 parser.add_argument('--upgrade_branch', action="store",
                     dest="upgrade_branch", required=False, default="v4.0.0",
                     help="Use this to upgrade to a specific branch.")
 results = parser.parse_args()
 
 rpcsqa = rpcsqa_helper()
-env = rpcsqa.cluster_environment(name=results.name, os_distro=results.os_distro,
-                                 branch="folsom", feature_set=results.feature_set)
+env = rpcsqa.cluster_environment(name=results.name,
+                                 os_distro=results.os_distro,
+                                 branch=results.old_branch,
+                                 feature_set=results.feature_set)
 remote_chef = rpcsqa.remote_chef_api(env)
 pprint(vars(remote_chef))
 
