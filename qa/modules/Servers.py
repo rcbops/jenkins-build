@@ -66,17 +66,15 @@ class ChefRazorOSDeployment(OSDeployment):
         super(ChefRazorOSDeployment, self).__init__(name, features, config)
         self.chef = OSChef()
         self.razor = razor
-
-    def build(self):
-        self.chef.prepare_environment(self.name,
-                                      self.config['os'],
-                                      self.config['cookbook-branch'],
-                                      self.features)
-        # todo
+        env = self.chef.prepare_environment(self.name, self.config['os'],
+                                            self.config['cookbook-branch'],
+                                            self.features)
+        self.environment = env
 
     def createNode(self, role):
         node = next(self.chef)
-        config_manager = ChefConfigManager(node.name, self.chef)
+        config_manager = ChefConfigManager(node.name, self.chef,
+                                           self.environment)
         am_id = node.attributes['razor_metadata']['razor_active_model_uuid']
         provisioner = RazorProvisioner(self.razor, am_id)
         password = provisioner.getPassword()
@@ -87,6 +85,9 @@ class ChefRazorOSDeployment(OSDeployment):
         osnode.addCleanup(time.sleep(15))
         self.nodes.append(osnode)
         return osnode
+
+    def searchRole(self, role):
+        query = "chef_environment:%s AND in_use:%s" % role
 
 
 class Provisioner():
@@ -100,9 +101,10 @@ class ConfigManager():
 
 
 class ChefConfigManager(ConfigManager):
-    def __init__(self, name, chef):
+    def __init__(self, name, chef, environment):
         self.name = name
         self.chef = chef
+        self.environment = environment
 
     def __str__(self):
         return "Chef Node: %s - %s" % (self.name, self.ip)

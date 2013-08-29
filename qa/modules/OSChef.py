@@ -64,3 +64,39 @@ class OSChef:
             chef_env.override_attributes['nova']['networks']['public']['bridge_dev'] = "em1"
         chef_env.save()
         return env
+
+    def build_chef_server(self, chef_node=None, cookbooks=None, env=None):
+        '''
+        This will build a chef server using the rcbops script and install git
+        '''
+
+        if not chef_node:
+            query = "chef_environment:%s AND in_use:chef_server" % env
+            chef_node = next(self.node_search(query))
+        self.remove_chef(chef_node)
+
+        install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
+
+        # SCP install script to chef_server node
+        scp_run = self.scp_to_node(chef_node, install_script)
+
+        if scp_run['success']:
+            print "Successfully copied chef server install script to chef_server node %s" % chef_node
+        else:
+            print "Failed to copy chef server install script to chef_server node %s" % chef_node
+            print scp_run
+            sys.exit(1)
+
+        # Run the install script
+        cmds = ['chmod u+x ~/install-chef-server.sh',
+                './install-chef-server.sh']
+        for cmd in cmds:
+            ssh_run = self.run_command_on_node(chef_node, cmd)
+            if ssh_run['success']:
+                print "command: %s ran successfully on %s" % (cmd, chef_node)
+
+        self.install_cookbooks(chef_node, cookbooks)
+        if env:
+            chef_env = Environment(env)
+            self.add_remote_chef_locally(chef_node, chef_env)
+            self.setup_remote_chef_environment(chef_env)
