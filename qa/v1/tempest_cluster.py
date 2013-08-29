@@ -158,7 +158,7 @@ exclude_flag = ' '.join('-e {0}'.format(x) for x in exclude_flags)
 
 command = ("export TEMPEST_CONFIG_DIR=/root; "
            "export TEMPEST_CONFIG=%s.conf; "
-           "python -u `which nosetests` %s %s tempest/tempest/tests/compute; " % (
+           "python -u `which nosetests` %s %s -a type=smoke tempest/tempest/tests; " % (
                env.name, xunit_flag, exclude_flag))
 qa.run_cmd_on_node(node=controller, cmd=command)
 
