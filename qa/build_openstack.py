@@ -222,6 +222,13 @@ def main():
         environment = Environment(env)
         api = qa.chef
         try:
+            #set in_use for all nodes first so that no one steals our nodes
+            for b in build:
+                node = Node(b['name'])
+                node.chef_environment = env
+                node['in_use'] = b['in_use']
+                node.save()
+
             for b in build:
                 print "Building: %s" % b
                 node = Node(b['name'])
