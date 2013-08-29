@@ -420,8 +420,8 @@ class rpcsqa_helper:
         for node in storage_nodes:
             commands = ["/usr/local/bin/swift-partition.sh {0}".format(disk),
                         "/usr/local/bin/swift-format.sh {0}".format(disk_label),
-                        "mkdir -p /srv/node/d1",
-                        "mount -t xfs -o noatime,nodiratime,logbufs=8 -L {0} /srv/node/{0}".format(disk_label),
+                        "mkdir -p /srv/node/{0}".format(disk_label),
+                        "mount -t xfs -o noatime,nodiratime,logbufs=8 /dev/{0} /srv/node/{0}".format(disk_label),
                         "chown -R swift:swift /srv/node"]
 
             if build:
