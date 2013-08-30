@@ -20,6 +20,7 @@ base_env = {
                           "dns2": "8.8.4.4", "bridge_dev": "eth1", "network_size": "254", "ipv4_cidr": "172.31.0.0/24", 
                           "label":"public"}}
         },
+        "horizon": {"theme": "default"},
         "osops": {"apply_patches": True},
         "developer_mode": False,
         "osops_networks": {"management": "198.101.133.0/24", "nova": "198.101.133.0/24", "public": "198.101.133.0/24"},
