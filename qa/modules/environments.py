@@ -61,13 +61,14 @@ openldap = {
 
 
 ha = { "vips": {
+          "mysql-db": "198.101.133.154",
+          "rabbitmq-queue": "198.101.133.155",
           "cinder-api": "198.101.133.156", "glance-api": "198.101.133.156",
           "glance-registry": "198.101.133.156", "horizon-dash": "198.101.133.156",
           "horizon-dash_ssl": "198.101.133.156", "keystone-admin-api": "198.101.133.156",
           "keystone-internal-api": "198.101.133.156", "keystone-service-api": "198.101.133.156",
-          "mysql-db": "198.101.133.154", "nova-api": "198.101.133.156",
-          "nova-ec2-public": "198.101.133.156", "nova-novnc-proxy": "198.101.133.156",
-          "nova-xvpvnc-proxy": "198.101.133.156", "rabbitmq-queue": "198.101.133.155",
+          "nova-api": "198.101.133.156", "nova-ec2-public": "198.101.133.156", 
+          "nova-novnc-proxy": "198.101.133.156", "nova-xvpvnc-proxy": "198.101.133.156", 
           "swift-proxy": "198.101.133.156",
           "config": {
             "198.101.133.154": { "vrid": 10, "network": "public" },
