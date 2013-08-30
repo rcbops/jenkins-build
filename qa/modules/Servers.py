@@ -1,3 +1,4 @@
+import sys
 import time
 from Provisioners import RazorProvisioner
 from ConfigManagers import ChefConfigManager
@@ -47,6 +48,73 @@ class OSNode:
 
     def add_cleanup(self, function, *args, **kwargs):
         self._cleanups.append((function, args, kwargs))
+
+
+class OSChefNode(OSNode):
+    def __init__(self, ip, user, password, role,
+                 config_manager=None, provisioner=None):
+        super(OSChefNode, self).__init__(ip, user, password, role,
+                                         config_manager=None, provisioner=None)
+
+    def install_chef_server(self):
+        install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
+
+        # SCP install script to chef_server node
+        scp_run = self.scp_to(install_script)
+
+        if scp_run['success']:
+            print "Sent chef server install to %s" % self
+        else:
+            print "Failed send chef server install to %s" % self
+            sys.exit(1)
+
+        # Run the install script
+        cmds = ['chmod u+x ~/install-chef-server.sh',
+                './install-chef-server.sh']
+        for cmd in cmds:
+            ssh_run = self.run_cmd(cmd)
+            if ssh_run['success']:
+                print "Installed Chef Server on %s" % self
+        self.install_cookbook(url, branch)
+
+    def install_cookbook(self, url, branch, local_repo='/opt/rcbops'):
+        '''
+        @summary: Install cookbooks
+        @param url git url of cookbook
+        @type url String
+        @param branch git branch of cookbook
+        @type branch String
+        @param local_repo Location to place cookbooks
+        @type String
+        '''
+        # Make directory that the cookbooks will live in
+        command = 'mkdir -p {0}'.format(local_repo)
+        self.run_cmd(command)
+
+        # Pulling the url apart to get the name of the cookbooks
+        cookbook_name = url.split("/")[-1].split(".")[0]
+
+        # clone to cookbook
+        commands = ['cd {0}; git clone {1}'.format(local_repo, url)]
+        commands.append('cd {0}/{1}; git checkout {2}'.format(local_repo,
+                                                              cookbook_name,
+                                                              branch))
+
+        commands.append('cd {0}/{1}; '
+                        'git submodule init; '
+                        'git submodule sync; '
+                        'git submodule update'.format(local_repo,
+                                                      cookbook_name))
+        cookbook_path = '{0}/{1}/cookbooks'.format(local_repo, cookbook_name)
+        upload = 'knife cookbook upload --all --cookbook-path {0}'.format(cookbook_path)
+        commands.append(upload)
+
+        # Append role load to run list
+        role_path = '{0}/{1}/roles/*.rb'.format(local_repo, cookbook_name)
+        commands.append('knife role from file {0}'.format(role_path))
+        command = "; ".join(commands)
+
+        self.run_cmd(command)
 
 
 class OSDeployment:
