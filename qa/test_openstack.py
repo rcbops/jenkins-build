@@ -35,3 +35,8 @@ else:
 
     print "Running chef-client"
     chef_client = qa.run_chef_client(controller, num_times=1, log_level=args.log_level)
+
+    commands = [ "cd /opt/tempest", 
+                 "python tools/install_venv.py",
+                 "nosetests tempest/tests/identity" ]
+    qa.run_command_on_node(controller, commands.join(" && "))
