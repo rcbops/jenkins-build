@@ -38,5 +38,6 @@ else:
 
     commands = [ "cd /opt/tempest", 
                  "python tools/install_venv.py",
+                 "source .venv/bin/activate",
                  "nosetests tempest/tests/identity" ]
     qa.run_command_on_node(controller, " && ".join(commands))

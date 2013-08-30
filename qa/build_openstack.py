@@ -230,6 +230,7 @@ def main():
                 node.save()
 
             for b in build:
+                print "#" * 70
                 print "Building: %s" % b
                 node = Node(b['name'])
                 node.chef_environment = env
