@@ -151,7 +151,7 @@ file = '%s-%s.xunit' % (
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
 
-exclude_flags = ["volume", "rescue"]  # Volumes
+exclude_flags = ["volume", "rescue", "boto"]  # Volumes
 if results.feature_set != "glance-cf":
     exclude_flags.append("image")
 exclude_flag = ' '.join('-e {0}'.format(x) for x in exclude_flags)
