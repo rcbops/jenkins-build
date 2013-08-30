@@ -95,9 +95,9 @@ else:
 # Getting precise image id
 url = "http://%s:5000/v2.0" % ip
 print "##### URL: %s #####" % url
-compute = client.Client(username,
-                        password,
-                        tenant,
+compute = client.Client(cluster['admin_username'],
+                        cluster['admin_password'],
+                        cluster['admin_tenant'],
                         url,
                         service_type="compute")
 precise_id = (i.id for i in compute.images.list() if i.name == "precise-image")
@@ -124,7 +124,7 @@ print "## Setting up tempest on chef server ##"
 if results.os_distro == "precise":
     packages = "apt-get install python-pip libmysqlclient-dev libxml2-dev libxslt1-dev python2.7-dev libpq-dev git -y"
 else:
-    packages = "yum install python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel git -y; easy_install pip"
+    packages = "yum install python-setuptools python-setuptools-devel python-pip python-lxml gcc python-devel openssl-devel mysql-devel postgresql-devel git -y; easy_install pip"
 commands = [packages,
             "rm -rf tempest",
             "git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % (results.tempest_version),
