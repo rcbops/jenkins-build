@@ -21,11 +21,11 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
     ssh.connect(server_ip, username=user, password=password)
     stdin, stdout, stderr = ssh.exec_command(remote_cmd)
     stdin.close()
-    for line in stdout.xreadlines():
+    for line in stdout:
         if not quiet:
             sys.stdout.write(line)
         output.write(line)
-    for line in stderr.xreadlines():
+    for line in stderr:
         sys.stdout.write(line)
         error.write(line)
     exit_status = stdout.channel.recv_exit_status()
