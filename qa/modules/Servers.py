@@ -1,8 +1,8 @@
 import time
-import Roles
+from Provisioners import RazorProvisioner
+from ConfigManagers import ChefConfigManager
 from OSChef import OSChef
 from ssh_helper import run_cmd, scp_to, scp_from
-from chef import Node, Client
 
 
 class OSNode:
@@ -37,15 +37,15 @@ class OSNode:
     def __str__(self):
         return "Node: %s" % self.ip
 
-    def tearDown(self):
-        self.cleanUp()
+    def tear_down(self):
+        self.clean_up()
 
-    def cleanUp(self):
+    def clean_up(self):
         for cleanup in self._cleanups:
             function, args, kwargs = cleanup
             function(*args, **kwargs)
 
-    def addCleanup(self, function, *args, **kwargs):
+    def add_cleanup(self, function, *args, **kwargs):
         self._cleanups.append((function, args, kwargs))
 
 
@@ -56,9 +56,15 @@ class OSDeployment:
         self.config = config
         self.nodes = []
 
-    def tearDown(self):
+    def tear_down(self):
         for node in self.nodes:
-            node.tearDown()
+            node.tear_down()
+
+    def create_node(role):
+        raise NotImplementedError
+
+    def provision(self):
+        self.create_node(role)
 
 
 class ChefRazorOSDeployment(OSDeployment):
@@ -71,60 +77,21 @@ class ChefRazorOSDeployment(OSDeployment):
                                             self.features)
         self.environment = env
 
-    def createNode(self, role):
+    def create_node(self, role):
         node = next(self.chef)
         config_manager = ChefConfigManager(node.name, self.chef,
                                            self.environment)
         am_id = node.attributes['razor_metadata']['razor_active_model_uuid']
         provisioner = RazorProvisioner(self.razor, am_id)
-        password = provisioner.getPassword()
+        password = provisioner.get_password()
         ip = node['ipaddress']
         user = "root"
         osnode = OSNode(ip, user, password, role, config_manager, provisioner)
-        osnode.addCleanup(osnode.run_cmd("reboot 0"))
-        osnode.addCleanup(time.sleep(15))
+        osnode.add_cleanup(osnode.run_cmd("reboot 0"))
+        osnode.add_cleanup(time.sleep(15))
         self.nodes.append(osnode)
         return osnode
 
     def searchRole(self, role):
-        query = "chef_environment:%s AND in_use:%s" % role
-
-
-class Provisioner():
-    def tearDown(self):
-        raise NotImplementedError
-
-
-class ConfigManager():
-    def tearDown(self):
-        raise NotImplementedError
-
-
-class ChefConfigManager(ConfigManager):
-    def __init__(self, name, chef, environment):
-        self.name = name
-        self.chef = chef
-        self.environment = environment
-
-    def __str__(self):
-        return "Chef Node: %s - %s" % (self.name, self.ip)
-
-    def tearDown(self):
-        node = Node(self.name, self.api)
-        node.delete()
-        Client(self.name).delete()
-
-    def applyRole(role):
-        pass
-
-
-class RazorProvisioner(Provisioner):
-    def __init__(self, razor, id):
-        self.razor = razor
-        self._id = id
-
-    def tearDown(self):
-        self.razor.remove_active_model(self._id)
-
-    def getPassword(self):
-        return self.razor.get_active_model_pass(self._id)['password']
+        query = "chef_environment:%s AND in_use:%s" % (self.environment, role)
+        return self.chef.node_search(query=query)

@@ -1,6 +1,6 @@
 import sys
 from time import sleep
-from chef import autoconfigure, Search, Environment
+from chef import autoconfigure, Search, Environment, Node, Client
 import environments
 
 
@@ -65,6 +65,12 @@ class OSChef:
         chef_env.save()
         return env
 
+    def set_run_list(self, name, run_list):
+        api = self.remote_api or self.api
+        node = Node(name, api=api)
+        node['run_list'] = run_list
+        node.save()
+
     def build_chef_server(self, chef_node=None, cookbooks=None, env=None):
         '''
         This will build a chef server using the rcbops script and install git
@@ -100,3 +106,8 @@ class OSChef:
             chef_env = Environment(env)
             self.add_remote_chef_locally(chef_node, chef_env)
             self.setup_remote_chef_environment(chef_env)
+
+    def delte_client_node(self, name):
+        node = Node(self.name, self.api)
+        node.delete()
+        Client(self.name).delete()
