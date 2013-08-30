@@ -130,7 +130,8 @@ commands = [packages,
             "git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % (results.tempest_version),
             "easy_install -U distribute",
             "pip install -r tempest/tools/pip-requires",
-            "pip install -r tempest/tools/test-requires"]
+            "pip install -r tempest/tools/test-requires"
+            "pip install nose-progressive"]
 for command in commands:
     qa.run_cmd_on_node(node=controller, cmd=command)
 
@@ -151,14 +152,14 @@ file = '%s-%s.xunit' % (
     env.name)
 xunit_flag = '--with-xunit --xunit-file=%s' % file
 
-exclude_flags = ["volume", "rescue", "boto"]  # Volumes
+exclude_flags = ["volume", "rescue"]  # Volumes
 if results.feature_set != "glance-cf":
     exclude_flags.append("image")
 exclude_flag = ' '.join('-e {0}'.format(x) for x in exclude_flags)
 
 command = ("export TEMPEST_CONFIG_DIR=/root; "
            "export TEMPEST_CONFIG=%s.conf; "
-           "python -u `which nosetests` %s %s -a type=smoke tempest/tempest/tests; " % (
+           "python -u `which nosetests` --with-progressive %s %s -a type=smoke tempest/tempest/tests; " % (
                env.name, xunit_flag, exclude_flag))
 qa.run_cmd_on_node(node=controller, cmd=command)
 
