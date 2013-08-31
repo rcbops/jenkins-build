@@ -130,7 +130,7 @@ commands = [packages,
             "git clone https://github.com/openstack/tempest.git -b stable/%s --recursive" % (results.tempest_version),
             "easy_install -U distribute",
             "pip install -r tempest/tools/pip-requires",
-            "pip install -r tempest/tools/test-requires"
+            "pip install -r tempest/tools/test-requires",
             "pip install nose-progressive"]
 for command in commands:
     qa.run_cmd_on_node(node=controller, cmd=command)
