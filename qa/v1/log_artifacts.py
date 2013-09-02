@@ -96,9 +96,12 @@ for node in nodes:
 
     chef_cmd = "echo 'Not a Chef Server'"
     if 'chef' in role:
-        chef_cmd = ('for i in `knife node list`;'
-                    'do knife node show $i -l >> {0}/{1}/$i.knife;'
-                    'done'.format(node_name, misc_path))
+        chef_cmd = "; ".join('for i in `knife node list`;'
+                             'do knife node show $i -l >> {0}/{1}/$i.knife;'
+                             'done'.format(node_name, misc_path),
+                             'for i in `knife environment list`;'
+                             'do knife environment show $i -l >> {0}/{1}/$i.knife;'
+                             'done'.format(node_name, misc_path))
 
     tar_cmd = "tar -czf %s.tar.gz %s" % (node_name, node_name)
 
