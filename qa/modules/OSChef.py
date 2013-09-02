@@ -65,6 +65,11 @@ class OSChef:
         chef_env.save()
         return env
 
+    def set_in_use(self, name, use):
+        node = Node(name, api=self.api)
+        node['in_use'] = use
+        node.save()
+
     def set_run_list(self, name, run_list):
         api = self.remote_api or self.api
         node = Node(name, api=api)

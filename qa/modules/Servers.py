@@ -1,12 +1,13 @@
 import sys
 import time
+import OS_Roles as Roles
+from OSChef import OSChef
 from Provisioners import RazorProvisioner
 from ConfigManagers import ChefConfigManager
-from OSChef import OSChef
 from ssh_helper import run_cmd, scp_to, scp_from
 
 
-class OSNode:
+class OSNode(object):
     def __init__(self, ip, user, password, role,
                  config_manager=None, provisioner=None):
         self.ip = ip
@@ -117,7 +118,7 @@ class OSChefNode(OSNode):
         self.run_cmd(command)
 
 
-class OSDeployment:
+class OSDeployment(object):
     def __init__(self, name, features, config=None):
         self.name
         self.features = features
@@ -132,7 +133,14 @@ class OSDeployment:
         raise NotImplementedError
 
     def provision(self):
-        self.create_node(role)
+        if self.features['openldap']:
+            self.create_node(Roles.DirectoryServer)
+        if self.features['quantum']:
+            self.create_node(Roles.DirectoryServer)
+        if self.features['ha']:
+            self.create_node(Roles.DirectoryServer)
+        for i in xrange(self.config['computes']):
+            self.create_node(Roles.Compute)
 
 
 class ChefRazorOSDeployment(OSDeployment):
@@ -140,21 +148,19 @@ class ChefRazorOSDeployment(OSDeployment):
         super(ChefRazorOSDeployment, self).__init__(name, features, config)
         self.chef = OSChef()
         self.razor = razor
-        env = self.chef.prepare_environment(self.name, self.config['os'],
-                                            self.config['cookbook-branch'],
-                                            self.features)
-        self.environment = env
 
     def create_node(self, role):
         node = next(self.chef)
         config_manager = ChefConfigManager(node.name, self.chef,
                                            self.environment)
+        config_manager.set_in_use()
         am_id = node.attributes['razor_metadata']['razor_active_model_uuid']
         provisioner = RazorProvisioner(self.razor, am_id)
         password = provisioner.get_password()
         ip = node['ipaddress']
         user = "root"
-        osnode = OSNode(ip, user, password, role, config_manager, provisioner)
+        osnode = OSChefNode(ip, user, password, role, config_manager,
+                            provisioner)
         osnode.add_cleanup(osnode.run_cmd("reboot 0"))
         osnode.add_cleanup(time.sleep(15))
         self.nodes.append(osnode)
@@ -163,3 +169,8 @@ class ChefRazorOSDeployment(OSDeployment):
     def searchRole(self, role):
         query = "chef_environment:%s AND in_use:%s" % (self.environment, role)
         return self.chef.node_search(query=query)
+
+    def provision(self):
+        if self.features['remote_chef']:
+            self.create_node(Roles.ChefServer)
+        super(ChefRazorOSDeployment, self).provision()

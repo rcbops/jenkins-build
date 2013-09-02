@@ -17,6 +17,11 @@ class ChefConfigManager(ConfigManager):
     def __init__(self, name, chef, environment):
         self.name = name
         self.chef = chef
+        self.env = self.chef.prepare_environment(self.name,
+                                                 self.config['os'],
+                                                 self.config['cookbook-branch'],
+                                                 self.features)
+
         self.environment = environment
 
     def __str__(self):
@@ -27,3 +32,6 @@ class ChefConfigManager(ConfigManager):
 
     def apply_role(self, name, role):
         self.chef.set_run_list(self.run_lists[role])
+
+    def in_use(self):
+        self.chef.set_in_use(self.name, use)
