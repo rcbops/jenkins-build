@@ -102,8 +102,6 @@ if results.branch in ["folsom"] or results.repo_tag in ["3.1.0", "4.0.0"]:
     env_obj.override_attributes['nova']['networks'] = old_networks
     env_obj.save()
 
-print Environment(env).override_attributes
-
 # Gather all the nodes for the os_distro
 all_nodes = rpcsqa.gather_all_nodes(results.os_distro)
 
