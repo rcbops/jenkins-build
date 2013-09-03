@@ -120,7 +120,10 @@ else:
     env = local_env
     api = qa.chef
 env_dict = env.to_dict()
-env_dict['override_attributes']['glance']['api']['swift_store_key'] = "key"
-env_dict['override_attributes']['glance']['api']['swift_store_user'] = "user"
+try:
+    env_dict['override_attributes']['glance']['api']['swift_store_key'] = "key"
+    env_dict['override_attributes']['glance']['api']['swift_store_user'] = "user"
+except KeyError:
+    pass
 with open("environment.txt", "w") as f:
     pprint(env_dict, f)
