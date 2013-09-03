@@ -1,5 +1,6 @@
 import sys
 import argparse
+from pprint import pprint
 from modules.rpcsqa_helper import rpcsqa_helper
 from modules.server_helper import run_cmd
 
@@ -96,12 +97,9 @@ for node in nodes:
 
     chef_cmd = "echo 'Not a Chef Server'"
     if 'chef' in role:
-        chef_cmd = "; ".join(['for i in `knife node list`;'
-                              'do knife node show $i -l >> {0}/{1}/$i.knife;'
-                              'done'.format(node_name, misc_path),
-                              'for i in `knife environment list`;'
-                              'do knife environment show $i -l >> {0}/{1}/$i.knife;'
-                              'done'.format(node_name, misc_path)])
+        chef_cmd = ('for i in `knife node list`;'
+                    'do knife node show $i -l >> {0}/{1}/$i.knife;'
+                    'done'.format(node_name, misc_path))
 
     tar_cmd = "tar -czf %s.tar.gz %s" % (node_name, node_name)
 
@@ -113,3 +111,16 @@ for node in nodes:
     qa.run_cmd_on_node(node, cmd)
 
     qa.scp_from_node(node, path="%s.tar.gz" % node_name, destination=".")
+
+# log environment
+if 'remote_chef' in local_env.override_attributes:
+    api = qa.remote_chef_api(local_env)
+    env = qa.cluster_environment(chef_api=api, **env_dict)
+else:
+    env = local_env
+    api = qa.chef
+env_dict = env.to_dict()
+env_dict['override_attributes']['glance']['api']['swift_store_key'] = "key"
+env_dict['override_attributes']['glance']['api']['swift_store_user'] = "user"
+with open("environment.txt", "w") as f:
+    pprint(env_dict, f)
