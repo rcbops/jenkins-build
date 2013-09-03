@@ -1010,8 +1010,8 @@ class rpcsqa_helper:
         return "%s - %s" % (chef_node, chef_node['ipaddress'])
 
     def razor_password(self, chef_node):
-        chef_node = Node(chef_node.name, api=self.chef)
-        metadata = chef_node.attributes['razor_metadata'].to_dict()
+        node = Node(chef_node.name, api=self.chef)
+        metadata = node.attributes['razor_metadata'].to_dict()
         uuid = metadata['razor_active_model_uuid']
         return self.razor.get_active_model_pass(uuid)['password']
 
