@@ -161,23 +161,24 @@ def main():
         # These builds would be nice as a class
         build = []
         try:
-            if args.remote_chef:
-                post_commands = [{'function': qa.build_chef_server,
-                                  'kwargs': {'cookbooks': cookbooks,
-                                             'env': env}}]
-                build.append({'name': nodes.pop(),
-                              'in_use': 'chef_server',
-                              'post_commands': post_commands})
 
             if args.openldap:
                 role = 'role[qa-openldap-%s]' % args.os_distro
                 post_commands = ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
                                  {'function': qa.update_openldap_environment, 'kwargs': {'env': env}}]
                 build.append({'name': nodes.pop(),
-                              'in_use': 'directory_server',
+                              'in_use': 'openldap',
                               'run_list': [role],
                               'post_commands': post_commands
                               })
+
+            if args.remote_chef:                
+                post_commands = [{'function': qa.build_chef_server,
+                                  'kwargs': {'cookbooks': cookbooks,
+                                             'env': env}}]
+                build.append({'name': nodes.pop(),
+                              'in_use': 'chef_server',
+                              'post_commands': post_commands})
 
             if args.quantum:
                 build.append({'name': nodes.pop(),
@@ -237,7 +238,7 @@ def main():
                 node['in_use'] = b['in_use']
                 node.save()
 
-                if args.remote_chef and not b['in_use'] is "chef_server":
+                if args.remote_chef and not b['in_use'] in ["chef_server","openldap"]:
                     qa.remove_chef(node)
                     query = "chef_environment:%s AND in_use:chef_server" % env
                     chef_server = next(qa.node_search(query))
