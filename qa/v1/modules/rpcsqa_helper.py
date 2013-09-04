@@ -1290,7 +1290,7 @@ class rpcsqa_helper:
         if controller_node['platform_family'] == "debian":
             phy_dev = "eth1"
         elif controller_node['platform_family'] == "rhel":
-            phy_dev = "em1"
+            phy_dev = "em2"
         else:
             print "Platform Family %s is not supported." \
                 % chef_node['platform_family']
