@@ -166,7 +166,7 @@ do
             echo "  -p   The package component for OpenStack (i.e. folsom, grizzly, etc). REQUIRED" >&2
             echo "  -d   The operating system distribution that OpenStack will be built on (i.e. precise, centos, redhat). REQUIRED" >&2
             echo "  -f   The feature set of OpenStack to build (i.e. glance-cf, keystone-ldap, etc). REQUIRED" >&2
-            echo "  -t   The CSS theme to use on Horizon"
+            echo "  -t   The CSS theme to use on Horizon. (Rackspace, default) REQUIRED" >&2 
             exit
             ;;
     esac
