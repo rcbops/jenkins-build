@@ -195,15 +195,19 @@ def main():
                               'in_use': 'single-controller',
                               'run_list': ['role[ha-controller1]']})
 
-            #If no nodes left, run controller as compute
-            if not nodes:
-                build[-1]['run_list'] = build[-1]['run_list'] + ['role[single-compute]']
-
+            
             #Compute with whatever is left
+            num_computes = 0
             for n in xrange(computes):
                 build.append({'name': qa.get_razor_node(args.os_distro, env),
                               'in_use': 'single-compute',
                               'run_list': ['role[single-compute]']})
+                num_computes += 1
+            
+            #If no nodes left, run controller as compute
+            if num_computes == 0:
+                build[-1]['run_list'] = build[-1]['run_list'] + ['role[single-compute]']
+
 
         except IndexError, e:
             print "*** Error: Not enough nodes for your setup"
@@ -225,7 +229,10 @@ def main():
                 print "#" * 70
                 print "Building: %s" % b
                 node = Node(b['name'])
-
+                node.chef_environment = env
+                node['in_use'] = b['in_use']
+                node.save()
+                
                 if args.remote_chef and not b['in_use'] in ["chef_server","openldap"]:
                     qa.remove_chef(node)
                     query = "chef_environment:%s AND in_use:chef_server" % env

@@ -141,9 +141,8 @@ class rpcsqa_helper:
         # Take a node from the default environment that has its network interfaces set.
         for node in nodes:
             is_default = node.chef_environment == "_default"
-            is_equal = node.chef_environment == environment
             iface_in_run_list = "recipe[network-interfaces]" in node.run_list
-            if ((is_default or is_equal) and iface_in_run_list):
+            if (is_default and iface_in_run_list):
                 node.chef_environment = environment
                 node['in_use'] = 0
                 node.save()
