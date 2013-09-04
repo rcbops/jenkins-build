@@ -382,7 +382,7 @@ if results.action == "build":
             sys.exit(0)
 
         # Build OpenStack cluster with quantum networking
-        elif results.quantum:
+        elif results.neutron:
             chef_server = openstack_list[0]
             controller = openstack_list[1]
             computes = openstack_list[3:]
