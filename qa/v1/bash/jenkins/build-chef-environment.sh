@@ -26,6 +26,7 @@ function build_default() {
     echo "Replacing template values with real values..."
     result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
 
     # build chef environment
     build_chef_environment
@@ -40,6 +41,7 @@ function build_ha() {
     echo "Replacing template values with real values..."
     result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
 
     # build chef environment
     build_chef_environment
@@ -60,6 +62,7 @@ function build_glance_cf() {
     result=`sed -i 's/<TENANT_ID>/'${TENANT_ID}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<TENANT_NAME>/'${TENANT_NAME}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<TENANT_PASSWORD>/'${TENANT_PASSWORD}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
 
     # build chef environment
     build_chef_environment
@@ -81,6 +84,7 @@ function build_keystone_ldap() {
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<LDAP_IP>/'${LDAP_IP}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<LDAP_ADMIN_PASS>/'${LDAP_ADMIN_PASS}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
 
     # build chef environment
     build_chef_environment
@@ -95,6 +99,7 @@ function build_nova_quantum() {
     echo "Replacing template values with real values..."
     result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
 
     # build chef environment
     build_chef_environment
@@ -129,6 +134,7 @@ function build_opencenter() {
     echo "Replacing template values with real values..."
     result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
 
     # build chef environment
     build_chef_environment
@@ -137,11 +143,11 @@ function build_opencenter() {
 #BEGIN SCRIPT
 
 if [[ "$#" -eq 0 ]]; then
-    echo "Usage: $0 [-h help] -n name -p package_component -d os_distro -f feature_set" >&2
+    echo "Usage: $0 [-h help] -n name -p package_component -d os_distro -f feature_set -t theme" >&2
     exit
 fi
 
-while getopts "n:p:d:f:h" OPTION;
+while getopts "n:p:d:f:t:h" OPTION;
 do
     case $OPTION in
         n)  NAME=$OPTARG
@@ -152,12 +158,15 @@ do
             ;;
         f)  FEATURE_SET=$OPTARG
             ;;
+        t)  THEME=$OPTARG
+            ;;
         h)  echo "Usage: $0" >&2
             echo "  -h   Return this help information" >&2
             echo "  -n   The name to prepend to the environment (i.e. test, yourname, etc)"
             echo "  -p   The package component for OpenStack (i.e. folsom, grizzly, etc). REQUIRED" >&2
             echo "  -d   The operating system distribution that OpenStack will be built on (i.e. precise, centos, redhat). REQUIRED" >&2
             echo "  -f   The feature set of OpenStack to build (i.e. glance-cf, keystone-ldap, etc). REQUIRED" >&2
+            echo "  -t   The CSS theme to use on Horizon"
             exit
             ;;
     esac

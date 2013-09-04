@@ -213,7 +213,7 @@ class rpcsqa_helper:
                     print run1
                     sys.exit(1)
 
-    def build_controller(self, controller_node, environment=None, ha_num=0, remote=False, chef_config_file=None):
+    def build_controller(self, controller_node, environment=None, ha_num=0, neutron=False, remote=False, chef_config_file=None):
         '''
         @summary: This will build out a controller node based on location.
         if remote, use a passed config file to build a chef_helper class and
@@ -224,11 +224,17 @@ class rpcsqa_helper:
             print "Making %s the ha-controller%s node" % (controller_node,
                                                           ha_num)
             chef_node['in_use'] = "ha-controller%s" % ha_num
-            chef_node.run_list = ["role[ha-controller%s]" % ha_num]
+            if neutron:
+                chef_node.run_list = ["role[ha-controller{0}".format(ha_num), "role[single-network-node]"]
+            else:
+                chef_node.run_list = ["role[ha-controller%s]" % ha_num]
         else:
             print "Making %s the controller node" % controller_node
             chef_node['in_use'] = "controller"
-            chef_node.run_list = ["role[single-controller]"]
+            if neutron:
+                chef_node.run_list["role[single-controller]", "role[single-network-node]"]
+            else:
+                chef_node.run_list = ["role[single-controller]"]
         chef_node.save()
 
         # If remote is set, then we are building with a remote chef server
@@ -1269,58 +1275,55 @@ class rpcsqa_helper:
         env.override_attributes = dict(chef_environment.override_attributes)
         env.save()
 
-    def setup_quantum_network(self, environment):
+    def setup_neutron_network(self, environment, ha=False):
         '''
         This function will build the quantum network on the cluster with the name of the parameter
         @param environment: The clusters environment name
         @type environment: String
         '''
 
-        # Find the Controller node info
         controller_query = 'chef_environment:%s AND in_use:controller' % environment
-        controller_node = next(self.node_search(controller_query, self.chef))
-
-        # Find the Quantum node info
-        quantum_query = 'chef_environment:%s AND in_use:quantum' % environment
-        quantum_node = next(self.node_search(quantum_query, self.chef))
-        # Find the Compute node info
         compute_query = 'chef_environment:%s AND in_use:compute' % environment
-        compute_node = next(self.node_search(compute_query, self.chef))
 
-        if controller_node['platform_family'] == "debian":
+        if "precise" in environment:
             phy_dev = "eth1"
-        elif controller_node['platform_family'] == "rhel":
-            phy_dev = "em2"
         else:
-            print "Platform Family %s is not supported." \
-                % chef_node['platform_family']
-            sys.exit(1)
-
+            phy_dev = "em2"
 
         # Setup OVS bridge on network and compute node
         print "Setting up OVS bridge and ports on Quantum / Compute Node(s)."
-        to_run_list = ['ip a f {0}'.format(phy_dev),
+        commands = ['ip a f {0}'.format(phy_dev),
                        'ovs-vsctl add-port br-{0} {0}'.format(phy_dev)]
+        command = "; ".join(commands)
 
-        for command in to_run_list:
-            # Run command on quantum node
-            quantum_run = self.run_cmd_on_node(quantum_node, command)
-            if not quantum_run['success']:
-                self.failed_ssh_command_exit(command, quan, quantum_run['error'])
+        # Setup bridge and ports on controllers
+        for controller_node in self.node_search(controller_query, self.chef):
+            # Run command on controller
+            controller_run = self.run_cmd_on_node(controller_node, command)
+            if not controller_run['success']:
+                self.failed_ssh_command_exit(command, controller_node, controller_run['error'])
 
+        # Setup ports and bridges on computes
+        for compute_node in self.node_search(compute_query, self.chef):
             # Run command on compute node
             compute_run = self.run_cmd_on_node(compute_node, command)
             if not compute_run['success']:
                 self.failed_ssh_command_exit(command, compute_node, compute_run['error'])
 
         print "Adding Quantum Network."
-        to_run_list = ["source openrc admin; quantum net-create --provider:physical_network=ph-{0} --provider:network_type=flat flattest".format(phy_dev)]
-        if phy_dev == 'eth1':
-            to_run_list.append("source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.129,end=10.0.0.190 flattest 10.0.0.128/26")
-        else:
-            to_run_list.append("source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.193,end=10.0.0.254 flattest 10.0.0.192/26")
+        commands = ["source openrc admin",
+                    "quantum net-create --provider:physical_network=ph-{0} --provider:network_type=flat flattest".format(phy_dev)]
 
-        for command in to_run_list:
+        # Need to be able to run both centos and precise tests so chop up subnet
+        if phy_dev == 'eth1':
+            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.129,end=10.0.0.190 flattest 10.0.0.128/26")
+        else:
+            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.193,end=10.0.0.254 flattest 10.0.0.192/26")
+
+         # Setup bridge and ports on controllers
+        command = "; ".join(commands)
+        for controller_node in self.node_search(controller_query, self.chef):
+            # Run command on controller
             controller_run = self.run_cmd_on_node(controller_node, command)
             if not controller_run['success']:
                 self.failed_ssh_command_exit(command, controller_node, controller_run['error'])

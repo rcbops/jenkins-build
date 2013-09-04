@@ -30,9 +30,9 @@ parser.add_argument('--ha_enabled', action='store_true', dest='ha_enabled',
                     required=False, default=False,
                     help="Do you want to HA this environment?")
 
-parser.add_argument('--quantum', action='store_true', dest='quantum',
+parser.add_argument('--neutron', action='store_true', dest='neutron',
                     required=False, default=False,
-                    help="Do you want quantum networking")
+                    help="Do you want neutron networking")
 
 parser.add_argument('--dir_service', action='store_true', dest='dir_service',
                     required=False, default=False,
@@ -80,26 +80,39 @@ env = rpcsqa.prepare_environment(results.name,
                                  results.branch)
 
 if results.os_distro == "centos":
-    bridge_dev = "em1"
+    bridge_dev = "em2"
 else:
     bridge_dev = "eth1"
 
-old_networks = [{
-    "num_networks": "1",
-    "bridge": "br0",
-    "label": "public",
-    "dns1": "8.8.8.8",
-    "dns2": "8.8.4.4",
-    "bridge_dev": bridge_dev,
-    "network_size": "254",
-    "ipv4_cidr": "172.31.0.0/24"
-}]
+# replace networks with older schema for non neutron builds
+if (results.branch in ["folsom"] or results.repo_tag in ["3.1.0", "4.0.0"]) and results.neutron is False:
 
-# replace networks with older schema
-if results.branch in ["folsom"] or results.repo_tag in ["3.1.0", "4.0.0"]:
+    old_networks = [{
+        "num_networks": "1",
+        "bridge": "br0",
+        "label": "public",
+        "dns1": "8.8.8.8",
+        "dns2": "8.8.4.4",
+        "bridge_dev": bridge_dev,
+        "network_size": "254",
+        "ipv4_cidr": "172.31.0.0/24"
+    }]
+
     print "reverting to old network schema"
     env_obj = Environment(env)
     env_obj.override_attributes['nova']['networks'] = old_networks
+    env_obj.save()
+
+# If we have a HA Environment with neutron networking,
+# set the env properly
+if results.ha and results.neutron:
+
+    neutron_network = {"provider": "quantum"}
+
+    print "Setting HA network to neutron"
+    env_obj = Environment(env)
+    env_obj.override_attributes['nova']['networks'] = neutron
+    env_obj.override_attributes['nova'].pop("networks", None)
     env_obj.save()
 
 # Gather all the nodes for the os_distro
@@ -124,8 +137,8 @@ if results.action == "build":
 
     # If either HA is enabled or Dir Service is enabled and the cluster
     # size is < 3, set the cluster size to 3
-    if (results.dir_service or results.ha_enabled or results.quantum) and cluster_size < 3:
-        print "Either HA / Directory Service / Quantum was requested, resizing cluster to 3."
+    if (results.dir_service or results.ha_enabled) and cluster_size < 3:
+        print "Either HA / Directory Service was requested, resizing cluster to 3."
         cluster_size = 3
 
     # If remote_chef is enabled, add one to the cluster size
@@ -249,6 +262,7 @@ if results.action == "build":
                 rpcsqa.print_server_info(controller))
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
+            sys.exit(0)
 
         # Build OpenStack HA cluster
         elif results.ha_enabled:
@@ -303,26 +317,32 @@ if results.action == "build":
             ###################################################################
 
             # Make the controllers
+            
             # Need to prep centos boxes
             if results.os_distro == 'centos':
                 rpcsqa.prepare_server(ha_controller_1)
+
             rpcsqa.set_node_in_use(ha_controller_1, 'controller')
             rpcsqa.remove_chef(ha_controller_1)
             rpcsqa.bootstrap_chef(ha_controller_1, chef_server)
             rpcsqa.build_controller(ha_controller_1,
                                     environment=env,
                                     ha_num=1,
+                                    neutron=results.neutron,
                                     remote=True,
                                     chef_config_file=config_file)
+            
             # Need to prep centos boxes
             if results.os_distro == 'centos':
                 rpcsqa.prepare_server(ha_controller_2)
+
             rpcsqa.set_node_in_use(ha_controller_2, 'controller')
             rpcsqa.remove_chef(ha_controller_2)
             rpcsqa.bootstrap_chef(ha_controller_2, chef_server)
             rpcsqa.build_controller(ha_controller_2,
                                     environment=env,
                                     ha_num=2,
+                                    neutron=results.neutron,
                                     remote=True,
                                     chef_config_file=config_file)
 
@@ -346,6 +366,10 @@ if results.action == "build":
                                      remote=results.remote_chef,
                                      chef_config_file=config_file)
 
+            # If Neutron enabled, setup network
+            if results.neutron:
+                rpcsqa.setups_neutron_network(env, results.ha_enabled)
+
             # print all servers info
             print "***********************************************************"
             print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
@@ -355,19 +379,18 @@ if results.action == "build":
                 rpcsqa.print_server_info(ha_controller_2))
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
+            sys.exit(0)
 
         # Build OpenStack cluster with quantum networking
         elif results.quantum:
             chef_server = openstack_list[0]
             controller = openstack_list[1]
-            quantum = openstack_list[2]
             computes = openstack_list[3:]
 
             # print all servers info
             print "***********************************************************"
             print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
             print "Controller %s" % rpcsqa.print_server_info(controller)
-            print "Quantum %s" % rpcsqa.print_server_info(quantum)
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
 
@@ -415,22 +438,9 @@ if results.action == "build":
             rpcsqa.bootstrap_chef(controller, chef_server)
             rpcsqa.build_controller(controller,
                                     env,
+                                    neutron=results.neutron,
                                     remote=results.remote_chef,
                                     chef_config_file=config_file)
-
-            # Make Quantum Node
-            rpcsqa.set_node_in_use(quantum, 'quantum')
-
-            # Need to prep centos boxes
-            if results.os_distro == 'centos':
-                rpcsqa.prepare_server(quantum)
-
-            rpcsqa.remove_chef(quantum)
-            rpcsqa.bootstrap_chef(quantum, chef_server)
-            rpcsqa.build_quantum_network_node(quantum,
-                                              env,
-                                              remote=results.remote_chef,
-                                              chef_config_file=config_file)
 
             # Make computes
             for compute in computes:
@@ -448,15 +458,15 @@ if results.action == "build":
                                      chef_config_file=config_file)
 
             # Setup the Quantum Network
-            rpcsqa.setup_quantum_network(env)
+            rpcsqa.setups_neutron_network(env)
 
             # print all servers info
             print "***********************************************************"
             print "Chef Server: %s" % rpcsqa.print_server_info(chef_server)
             print "Controller %s" % rpcsqa.print_server_info(controller)
-            print "Quantum %s" % rpcsqa.print_server_info(quantum)
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
+            sys.exit(0)
 
         # Build base OpenStack cluster
         else:
@@ -541,8 +551,49 @@ if results.action == "build":
             print "Controller: %s" % rpcsqa.print_server_info(controller)
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
+            sys.exit(0)
 
-    # NON REMOTE CHEF SERVER BUILDS
+# We want to add more nodes to the environment
+elif results.action == 'add':
+
+    # make sure there is a controller
+    if rpcsqa.environment_has_controller(env):
+
+        # make sure we have enough nodes
+        rpcsqa.check_cluster_size(all_nodes, cluster_size)
+
+        # set all nodes to compute in the requested environment
+        computes = rpcsqa.gather_nodes(all_nodes, env, cluster_size)
+
+        # If there were no nodes available, exit
+        if not computes:
+            print "No nodes available..."
+            sys.exit(1)
+
+        # Build out the computes
+        rpcsqa.build_computes(computes)
+        rpcsqa.print_computes_info(computes)
+
+    else:
+        print "Chef Environment %s doesnt have a controller, cant take action %s" % (env, results.action)
+        sys.exit(1)
+
+# Destroy the enviornment (teardown cluster, free up nodes)
+elif results.action == 'destroy':
+    print "Destroying environment: %s" % env
+    rpcsqa.cleanup_environment(env)
+    Environment(env, api=rpcsqa.chef).delete()
+
+# Bad action, try again
+else:
+    print "Action %s is not supported..." % results.action
+    sys.exit(1)
+
+
+# Old Code that we no longer use but dont want to delete
+'''
+
+# NON REMOTE CHEF SERVER BUILDS
     else:
 
         if results.dir_service:
@@ -629,39 +680,4 @@ if results.action == "build":
             print "Controller: %s" % rpcsqa.print_server_info(controller)
             rpcsqa.print_computes_info(computes)
             print "***********************************************************"
-
-# We want to add more nodes to the environment
-elif results.action == 'add':
-
-    # make sure there is a controller
-    if rpcsqa.environment_has_controller(env):
-
-        # make sure we have enough nodes
-        rpcsqa.check_cluster_size(all_nodes, cluster_size)
-
-        # set all nodes to compute in the requested environment
-        computes = rpcsqa.gather_nodes(all_nodes, env, cluster_size)
-
-        # If there were no nodes available, exit
-        if not computes:
-            print "No nodes available..."
-            sys.exit(1)
-
-        # Build out the computes
-        rpcsqa.build_computes(computes)
-        rpcsqa.print_computes_info(computes)
-
-    else:
-        print "Chef Environment %s doesnt have a controller, cant take action %s" % (env, results.action)
-        sys.exit(1)
-
-# Destroy the enviornment (teardown cluster, free up nodes)
-elif results.action == 'destroy':
-    print "Destroying environment: %s" % env
-    rpcsqa.cleanup_environment(env)
-    Environment(env, api=rpcsqa.chef).delete()
-
-# Bad action, try again
-else:
-    print "Action %s is not supported..." % results.action
-    sys.exit(1)
+'''
