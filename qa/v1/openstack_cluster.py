@@ -105,7 +105,7 @@ if (results.branch in ["folsom"] or results.repo_tag in ["3.1.0", "4.0.0"]) and 
 
 # If we have a HA Environment with neutron networking,
 # set the env properly
-if results.ha and results.neutron:
+if results.ha_enabled and results.neutron:
 
     neutron_network = {"provider": "quantum"}
 
