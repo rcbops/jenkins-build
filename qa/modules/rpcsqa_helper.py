@@ -144,7 +144,7 @@ class rpcsqa_helper:
             is_equal = node.chef_environment == environment
             iface_in_run_list = "recipe[network-interfaces]" in node.run_list
             if ((is_default or is_equal) and iface_in_run_list):
-                node.chef_environment = env
+                node.chef_environment = environment
                 node['in_use'] = 0
                 node.save()
                 return node.name
