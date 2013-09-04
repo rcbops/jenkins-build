@@ -55,7 +55,7 @@ class rpcsqa_helper:
             outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
-    def prepare_environment(self, name, os_distro, branch, features, branch_tag=None):
+    def prepare_environment(self, name, os_distro, branch, features, theme="default", branch_tag=None):
         """ If the environment doesnt exist in chef, make it. """
         env = "%s-%s-%s-%s" % (name, os_distro, branch, "-".join(features))
         chef_env = Environment(env, api=self.chef)
@@ -70,16 +70,20 @@ class rpcsqa_helper:
                 env_json['override_attributes'].update(environments.__dict__[feature])
         chef_env.override_attributes.update(env_json['override_attributes'])
         chef_env.override_attributes['package_component'] = branch
+        
         old_networks = [{"num_networks": "1", "bridge": "br0",
                          "label": "public", "dns1": "8.8.8.8",
                          "dns2": "8.8.4.4", "bridge_dev": "eth1",
                          "network_size": "254",
                          "ipv4_cidr": "172.31.0.0/24"}]
+        
         if branch_tag in ["folsom", "v3.1.0", "v4.0.0"]:
             chef_env.override_attributes['nova']['networks'] = old_networks
-            chef_env.override_attributes['nova']['networks'][0]['bridge_dev'] = "em1"
-        elif os_distro == "centos":
-            chef_env.override_attributes['nova']['networks']['public']['bridge_dev'] = "em1"
+            if os_distro == "centos":
+                chef_env.override_attributes['nova']['networks'][0]['bridge_dev'] = "em2"
+        else:
+            if os_distro == "centos":
+                chef_env.override_attributes['nova']['networks']['public']['bridge_dev'] = "em2"
         chef_env.save()
         return env
 

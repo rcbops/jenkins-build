@@ -385,7 +385,7 @@ if results.action == "build":
         elif results.neutron:
             chef_server = openstack_list[0]
             controller = openstack_list[1]
-            computes = openstack_list[3:]
+            computes = openstack_list[2:]
 
             # print all servers info
             print "***********************************************************"
