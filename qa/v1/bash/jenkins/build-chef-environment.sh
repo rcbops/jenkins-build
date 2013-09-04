@@ -84,7 +84,7 @@ function build_keystone_ldap() {
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<LDAP_IP>/'${LDAP_IP}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<LDAP_ADMIN_PASS>/'${LDAP_ADMIN_PASS}'/g' $ENVIRONMENT_FILENAME`
-    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME`
 
     # build chef environment
     build_chef_environment
