@@ -142,59 +142,56 @@ def main():
             print "Cleaning up old environment (deleting nodes) "
             # Clean up the current running environment (delete old servers)
             qa.cleanup_environment(env)
-
-            print "Gather nodes..."
-            nodes = qa.gather_razor_nodes(args.os_distro, env)
-
         except Exception, e:
             print e
             qa.cleanup_environment(env)
             sys.exit(1)
 
+
     #####################
     #   BUILD
     #####################
-    if nodes is None:
-        print "You have no nodes!"
-        sys.exit(1)
-    else:
+
         # These builds would be nice as a class
         build = []
         try:
 
             if args.openldap:
-                role = 'role[qa-openldap-%s]' % args.os_distro
+                node = qa.get_razor_node(args.os_distro, env)
                 post_commands = ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
                                  {'function': qa.update_openldap_environment, 'kwargs': {'env': env}}]
-                build.append({'name': nodes.pop(),
+                build.append({'name': node,
                               'in_use': 'openldap',
-                              'run_list': [role],
+                              'run_list': ['role[qa-openldap-%s]' % args.os_distro],
                               'post_commands': post_commands
                               })
 
-            if args.remote_chef:                
+            if args.remote_chef:    
+                node = qa.get_razor_node(args.os_distro, env)
+
                 post_commands = [{'function': qa.build_chef_server,
-                                  'kwargs': {'cookbooks': cookbooks,
-                                             'env': env}}]
-                build.append({'name': nodes.pop(),
+                                  'kwargs': {'cookbooks': cookbooks, 'env': env}}]
+
+                build.append({'name': node,
                               'in_use': 'chef_server',
                               'post_commands': post_commands})
 
             if args.quantum:
-                build.append({'name': nodes.pop(),
+                node = qa.get_razor_node(args.os_distro, env)                
+                build.append({'name': node,
                               'in_use': 'quantum',
                               'run_list': ['role[single-network-node]']})
 
             #Controller
             if args.ha:
-                build.append({'name': nodes.pop(),
+                build.append({'name': qa.get_razor_node(args.os_distro, env),
                               'in_use': 'ha_controller1',
                               'run_list': ['role[ha-controller1]']})
-                build.append({'name': nodes.pop(),
+                build.append({'name': qa.get_razor_node(args.os_distro, env),
                               'in_use': 'ha_controller2',
                               'run_list': ['role[ha-controller2]']})
             else:
-                build.append({'name': nodes.pop(),
+                build.append({'name': qa.get_razor_node(args.os_distro, env),
                               'in_use': 'single-controller',
                               'run_list': ['role[ha-controller1]']})
 
@@ -204,7 +201,7 @@ def main():
 
             #Compute with whatever is left
             for n in xrange(computes):
-                build.append({'name': nodes.pop(),
+                build.append({'name': qa.get_razor_node(args.os_distro, env),
                               'in_use': 'single-compute',
                               'run_list': ['role[single-compute]']})
 
@@ -223,20 +220,11 @@ def main():
         environment = Environment(env)
         api = qa.chef
         try:
-            #set in_use for all nodes first so that no one steals our nodes
-            for b in build:
-                node = Node(b['name'])
-                node.chef_environment = env
-                node['in_use'] = b['in_use']
-                node.save()
 
             for b in build:
                 print "#" * 70
                 print "Building: %s" % b
                 node = Node(b['name'])
-                node.chef_environment = env
-                node['in_use'] = b['in_use']
-                node.save()
 
                 if args.remote_chef and not b['in_use'] in ["chef_server","openldap"]:
                     qa.remove_chef(node)
