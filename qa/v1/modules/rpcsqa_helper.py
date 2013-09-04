@@ -220,19 +220,18 @@ class rpcsqa_helper:
         build with that class, otherwise build with the current chef config
         '''
         chef_node = Node(controller_node, api=self.chef)
+        chef_node['in_use'] = "controller"
         if not ha_num == 0:
             print "Making %s the ha-controller%s node" % (controller_node,
                                                           ha_num)
-            chef_node['in_use'] = "ha-controller%s" % ha_num
             if neutron:
                 chef_node.run_list = ["role[ha-controller{0}".format(ha_num), "role[single-network-node]"]
             else:
                 chef_node.run_list = ["role[ha-controller%s]" % ha_num]
         else:
             print "Making %s the controller node" % controller_node
-            chef_node['in_use'] = "controller"
             if neutron:
-                chef_node.run_list["role[single-controller]", "role[single-network-node]"]
+                chef_node.run_list = ["role[single-controller]", "role[single-network-node]"]
             else:
                 chef_node.run_list = ["role[single-controller]"]
         chef_node.save()
