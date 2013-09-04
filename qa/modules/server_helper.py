@@ -25,7 +25,8 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
     f = chan.makefile()
     chan.exec_command(remote_cmd)
     for line in f:
-        sys.stdout.write(line)
+        if not quiet:
+            sys.stdout.write(line)
         output.write(line)
     exit_status = chan.recv_exit_status()
 
