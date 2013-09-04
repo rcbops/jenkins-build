@@ -26,7 +26,7 @@ function build_default() {
     echo "Replacing template values with real values..."
     result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
-    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME`
 
     # build chef environment
     build_chef_environment
@@ -41,7 +41,7 @@ function build_ha() {
     echo "Replacing template values with real values..."
     result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
-    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME`
 
     # build chef environment
     build_chef_environment
@@ -62,7 +62,7 @@ function build_glance_cf() {
     result=`sed -i 's/<TENANT_ID>/'${TENANT_ID}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<TENANT_NAME>/'${TENANT_NAME}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<TENANT_PASSWORD>/'${TENANT_PASSWORD}'/g' $ENVIRONMENT_FILENAME`
-    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME`
 
     # build chef environment
     build_chef_environment
@@ -99,7 +99,7 @@ function build_nova_quantum() {
     echo "Replacing template values with real values..."
     result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
-    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME`
 
     # build chef environment
     build_chef_environment
@@ -134,7 +134,7 @@ function build_opencenter() {
     echo "Replacing template values with real values..."
     result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
-    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME`
 
     # build chef environment
     build_chef_environment
