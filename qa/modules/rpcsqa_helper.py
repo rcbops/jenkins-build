@@ -136,19 +136,19 @@ class rpcsqa_helper:
                     for index, run in enumerate(run_chef_client['runs']):
                         print "Run %s: %s" % (index+1, run)
 
-    def gather_razor_nodes(self, os, environment):
-        ret_nodes = []
-        query = "name:qa-%s-pool*" % os
-        nodes = self.node_search(query)
+    def get_razor_node(self, os, environment):
+        nodes = self.node_search("name:qa-%s-pool*" % os)
         # Take a node from the default environment that has its network interfaces set.
         for node in nodes:
             is_default = node.chef_environment == "_default"
             is_equal = node.chef_environment == environment
             iface_in_run_list = "recipe[network-interfaces]" in node.run_list
             if ((is_default or is_equal) and iface_in_run_list):
-                ret_nodes.append(node.name)
-                print "Taking node: %s" % node.name
-        return ret_nodes
+                node.chef_environment = environment
+                node['in_use'] = 0
+                node.save()
+                return node.name
+        raise Exception("No more nodes!!")
 
     def remove_broker_fail(self, policy):
         active_models = self.razor.simple_active_models(policy)
