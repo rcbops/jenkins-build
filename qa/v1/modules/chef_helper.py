@@ -58,8 +58,7 @@ class chef_helper:
             print run1
             sys.exit(1)
 
-    def build_controller(self, controller_node, environment,
-                         user, password, ha_num=0):
+    def build_controller(self, controller_node, environment, user, password, ha_num=0, neutron=False):
         '''
         @summary: Builds a controller node
         @param controller_node: The node to build as a controller
@@ -72,19 +71,20 @@ class chef_helper:
         @type password: String
         '''
 
-        # Gather node info
         chef_node = Node(controller_node, api=self.chef)
-
+        chef_node['in_use'] = "controller"
         if not ha_num == 0:
-            print "Making %s the ha-controller%s node" % (controller_node, ha_num)
-            chef_node['in_use'] = "ha-controller%s" % ha_num
-            chef_node.run_list = ["role[ha-controller%s]" % ha_num]
+            print "Making {0} the ha-controller{1} node".format(controller_node, ha_num)
+            if neutron:
+                chef_node.run_list = ["role[ha-controller{0}]".format(ha_num), "role[single-network-node]"]
+            else:
+                chef_node.run_list = ["role[ha-controller{0}]".format(ha_num)]
         else:
-            print "Making %s the controller node" % controller_node
-            chef_node['in_use'] = "controller"
-            chef_node.run_list = ["role[single-controller]"]
-
-        # Save Node
+            print "Making {0} the controller node".format(controller_node)
+            if neutron:
+                chef_node.run_list = ["role[single-controller]", "role[single-network-node]"]
+            else:
+                chef_node.run_list = ["role[single-controller]"]
         chef_node.save()
 
         # Set the environment

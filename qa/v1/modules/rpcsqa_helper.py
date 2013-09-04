@@ -242,7 +242,8 @@ class rpcsqa_helper:
                                          environment,
                                          'root',
                                          self.razor_password(chef_node),
-                                         ha_num)
+                                         ha_num,
+                                         neutron)
         else:
             print "Updating server...this may take some time"
             self.update_node(chef_node)
