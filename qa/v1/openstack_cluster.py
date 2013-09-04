@@ -368,7 +368,7 @@ if results.action == "build":
 
             # If Neutron enabled, setup network
             if results.neutron:
-                rpcsqa.setups_neutron_network(env, results.ha_enabled)
+                rpcsqa.setup_neutron_network(env, results.ha_enabled)
 
             # print all servers info
             print "***********************************************************"
@@ -458,7 +458,7 @@ if results.action == "build":
                                      chef_config_file=config_file)
 
             # Setup the Quantum Network
-            rpcsqa.setups_neutron_network(env)
+            rpcsqa.setup_neutron_network(env)
 
             # print all servers info
             print "***********************************************************"
