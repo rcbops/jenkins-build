@@ -205,7 +205,7 @@ def main():
                 num_computes += 1
             
             #If no nodes left, run controller as compute
-            if num_nodes == 0:
+            if num_computes == 0:
                 build[-1]['run_list'] = build[-1]['run_list'] + ['role[single-compute]']
 
 
