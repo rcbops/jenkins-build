@@ -111,7 +111,7 @@ if results.ha_enabled and results.neutron:
 
     print "Setting HA network to neutron"
     env_obj = Environment(env)
-    env_obj.override_attributes['nova']['networks'] = neutron
+    env_obj.override_attributes['nova']['network'] = neutron_network
     env_obj.override_attributes['nova'].pop("networks", None)
     env_obj.save()
 
