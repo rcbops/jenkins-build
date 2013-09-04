@@ -17,22 +17,33 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
     error = StringIO()
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
     ssh.connect(server_ip, username=user, password=password)
-    stdin, stdout, stderr = ssh.exec_command(remote_cmd)
-    stdin.close()
-    for line in stdout:
-        if not quiet:
-            sys.stdout.write(line)
-        output.write(line)
-    for line in stderr:
+        
+    tran = ssh.get_transport()
+    chan = tran.open_session()
+    chan.get_pty()
+    f = chan.makefile()
+    chan.exec_command(remote_cmd)
+    for line in f:
         sys.stdout.write(line)
-        error.write(line)
-    exit_status = stdout.channel.recv_exit_status()
+        output.write(line)
+    exit_status = chan.recv_exit_status()
+
+    #stdin, stdout, stderr = ssh.exec_command(remote_cmd)
+    #stdin.close()
+
+    #for i, line in enumerate(stdout):
+    #    if not quiet:
+    #        print "%s: %s" % (i, line)
+    #    output.write(line)
+    #for i, line in enumerate(stderr):
+    #    print "%s: %s" % (i, line)
+    #    error.write(line)
+    #exit_status = chan.recv_exit_status()
+    
     return {'success': True if exit_status == 0 else False,
             'return': output.getvalue(),
-            'exit_status': exit_status,
-            'error': error.getvalue()}
+            'exit_status': exit_status}
 
 
 def run_remote_scp_cmd(server_ip, user, password, to_copy):
