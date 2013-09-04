@@ -229,7 +229,10 @@ def main():
                 print "#" * 70
                 print "Building: %s" % b
                 node = Node(b['name'])
-
+                node.chef_environment = env
+                node['in_use'] = b['in_use']
+                node.save()
+                
                 if args.remote_chef and not b['in_use'] in ["chef_server","openldap"]:
                     qa.remove_chef(node)
                     query = "chef_environment:%s AND in_use:chef_server" % env
