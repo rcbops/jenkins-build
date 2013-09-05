@@ -929,18 +929,23 @@ class rpcsqa_helper:
         search = Search("node", api=api).query(query)
         return (Node(n['name'], api=api) for n in search)
 
-    def ping_check_vm(self, ip_address):
+    def ping_check_cluster(self, environment):
+        
+        # Gather all the nodes in the environment
+        query = "chef_environment:{0}".format(env)
+
+        online = True
+        for node in self.node_search(query, self.api):
+            online = self.ping_check_ip(node['ipaddress'])
+            if online is False:
+                return online
+
+        return online
+
+    def ping_check_node(self, node):
+        ip_address = node['ipaddress']
         command = "ping -c 5 %s" % ip_address
-        try:
-            ret = check_call(command, shell=True)
-            return {'success': True,
-                    'return': ret,
-                    'exception': None}
-        except CalledProcessError, cpe:
-            return {'success': False,
-                    'return': None,
-                    'exception': cpe,
-                    'command': command}
+        return run_cmd(command)
 
     def prepare_environment(self, name, os_distro, feature_set, branch=None):
         # Gather the nodes for the requested os_distro
@@ -1068,6 +1073,22 @@ class rpcsqa_helper:
                                   'root',
                                   user_pass,
                                   'chef-client')
+
+    def reboot_cluster(self, environment):
+
+        # Gather all the nodes in the environment
+        query = "chef_environment:{0}".format(env)
+
+        for node in self.node_search(query, self.api):
+            online = self.ping_check_node(node)
+            if online is True:
+                self.reboot_node(node)
+
+    def reboot_node(self, chef_node):
+        command = 'reboot 0'
+        run = self.run_cmd_on_node(chef_node, command)
+        if not run['success']:
+            self.failed_ssh_command_exit(command, chef_node, run['error'])
 
     def remove_chef(self, server):
         """
