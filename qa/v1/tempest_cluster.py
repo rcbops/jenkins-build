@@ -3,6 +3,7 @@ import argh
 import time
 from pprint import pprint
 from string import Template
+from chef import Environment
 from novaclient.v1_1 import client
 from modules.rpcsqa_helper import rpcsqa_helper
 
@@ -12,75 +13,15 @@ qa = rpcsqa_helper()
 def main(name="autotest", os="precise", feature_set="glance-cf",
          environment_branch="grizzly", tempest_version="grizzly",
          keystone_admin_pass="ostackdemo", jenkins_build=None):
-    if feature_set == "ha":
-        query = "chef_environment:%s-%s-%s-ha AND in_use:*controller*" % \
-                (name, os, environment_branch)
-        controllers = qa.node_search(query=query)
-        print query
-        disabled_controller = None
-        for controller in controllers:
-            if disabled_controller:
-                enable_controller(disabled_controller)
-            disable_controller(controller)
-            disabled_controller = controller
-            test(name, os, feature_set, environment_branch, tempest_version,
-                 keystone_admin_pass)
-    else:
-        test(name, os, feature_set, environment_branch, tempest_version,
-             keystone_admin_pass, jenkins_build)
-
-
-def disable_controller(node):
-    if 'precise' in node.name:
-        command = ("for i in {monit,keystone,nova-api-ec2,"
-                   "nova-api-os-compute,nova-cert,nova-consoleauth,"
-                   "nova-novncproxy,nova-scheduler,glance-api,"
-                   "glance-registry,cinder-api,cinder-scheduler,keepalived,"
-                   "haproxy}; do service $i stop; done")
-    if 'centos' in node.name:
-        command = ("for i in {monit,openstack-keystone,openstack-nova-api-ec2,"
-                   "openstack-nova-api-os-compute,openstack-nova-cert,"
-                   "openstack-nova-consoleauth,openstack-nova-novncproxy,"
-                   "openstack-nova-scheduler,openstack-glance-api,"
-                   "openstack-glance-registry,openstack-cinder-api,"
-                   "openstack-cinder-scheduler,keepalived,haproxy}; "
-                   "do service $i stop; done")
-    qa.run_cmd_on_node(node=node, cmd=command)
-
-
-def enable_controller(node):
-    if 'precise' in node.name:
-        command = ("for i in {monit,keystone,nova-api-ec2,"
-                   "nova-api-os-compute,nova-cert,nova-consoleauth,"
-                   "nova-novncproxy,nova-scheduler,glance-api,"
-                   "glance-registry,cinder-api,cinder-scheduler,keepalived,"
-                   "haproxy}; do service $i start; done")
-    if 'centos' in node.name:
-        command = ("for i in {monit,openstack-keystone,openstack-nova-api-ec2,"
-                   "openstack-nova-api-os-compute,openstack-nova-cert,"
-                   "openstack-nova-consoleauth,openstack-nova-novncproxy,"
-                   "openstack-nova-scheduler,openstack-glance-api,"
-                   "openstack-glance-registry,openstack-cinder-api,"
-                   "openstack-cinder-scheduler,keepalived,haproxy}; "
-                   "do service $i start; done")
-    qa.run_cmd_on_node(node=node, cmd=command)
-
-
-def test(name="autotest", os="precise", feature_set="glance-cf",
-         environment_branch="grizzly", tempest_version="grizzly",
-         keystone_admin_pass="ostackdemo", jenkins_build=None):
-    # Get cluster's environment
-    env_dict = {"name": name,
-                "os_distro": os,
-                "feature_set": feature_set,
-                "branch": environment_branch}
-    local_env = qa.cluster_environment(**env_dict)
+    local_env = qa.cluster_environment(name=name, os_distro=os,
+                                       feature_set=feature_set,
+                                       branch=environment_branch)
     if not local_env.exists:
         print "Error: Environment %s doesn't exist" % local_env.name
         sys.exit(1)
     if 'remote_chef' in local_env.override_attributes:
         api = qa.remote_chef_api(local_env)
-        env = qa.cluster_environment(chef_api=api, **env_dict)
+        env = Environment(local_env.name, api=api)
     else:
         env = local_env
         api = qa.chef
@@ -146,7 +87,7 @@ def test(name="autotest", os="precise", feature_set="glance-cf",
     pprint(cluster)
 
     # Write the config
-    jenkins_build = jenkins_build or "/var/lib/jenkins/jenkins-build"
+    jenkins_build = jenkins_build
     tempest_dir = "%s/qa/metadata/tempest/config" % jenkins_build
     sample_path = "%s/base_%s.conf" % (tempest_dir, tempest_version)
     with open(sample_path) as f:
@@ -163,7 +104,7 @@ def test(name="autotest", os="precise", feature_set="glance-cf",
     print "## Setting up tempest on chef server ##"
     if os == "precise":
         packages = ("apt-get install python-pip python-setuptools "
-                    "libmysqlclient-dev libxml2-dev libxslt1-dev"
+                    "libmysqlclient-dev libxml2-dev libxslt1-dev "
                     "python2.7-dev libpq-dev git -y")
     else:
         packages = ("yum install python-setuptools python-setuptools-devel "
@@ -208,10 +149,59 @@ def test(name="autotest", os="precise", feature_set="glance-cf",
                "python -u `which nosetests` --with-progressive %s %s "
                "-a type=smoke tempest/tempest/tests; " % (
                    env.name, xunit_flag, exclude_flag))
-    qa.run_cmd_on_node(node=controller, cmd=command)
 
-    # Transfer xunit file to jenkins workspace
-    print "## Transfering xunit file ##"
+    # run tests
+    qa.run_cmd_on_node(node=controller, cmd=command)
     qa.scp_from_node(node=controller, path=file, destination=".")
+
+    if feature_set == "ha":
+        query = "chef_environment:%s-%s-%s-ha AND in_use:*controller*" % \
+                (name, os, environment_branch)
+        controllers = qa.node_search(query=query)
+        print query
+        disabled_controller = None
+        for node in controllers:
+            if disabled_controller:
+                enable_controller(disabled_controller)
+            disable_controller(node)
+            disabled_controller = node
+            qa.run_cmd_on_node(node=controller, cmd=command)
+            qa.scp_from_node(node=controller, path=file, destination=".")
+
+
+def disable_controller(node):
+    if 'precise' in node.name:
+        command = ("for i in {monit,keystone,nova-api-ec2,"
+                   "nova-api-os-compute,nova-cert,nova-consoleauth,"
+                   "nova-novncproxy,nova-scheduler,glance-api,"
+                   "glance-registry,cinder-api,cinder-scheduler,keepalived,"
+                   "haproxy}; do service $i stop; done")
+    if 'centos' in node.name:
+        command = ("for i in {monit,openstack-keystone,openstack-nova-api-ec2,"
+                   "openstack-nova-api-os-compute,openstack-nova-cert,"
+                   "openstack-nova-consoleauth,openstack-nova-novncproxy,"
+                   "openstack-nova-scheduler,openstack-glance-api,"
+                   "openstack-glance-registry,openstack-cinder-api,"
+                   "openstack-cinder-scheduler,keepalived,haproxy}; "
+                   "do service $i stop; done")
+    qa.run_cmd_on_node(node=node, cmd=command)
+
+
+def enable_controller(node):
+    if 'precise' in node.name:
+        command = ("for i in {monit,keystone,nova-api-ec2,"
+                   "nova-api-os-compute,nova-cert,nova-consoleauth,"
+                   "nova-novncproxy,nova-scheduler,glance-api,"
+                   "glance-registry,cinder-api,cinder-scheduler,keepalived,"
+                   "haproxy}; do service $i start; done")
+    if 'centos' in node.name:
+        command = ("for i in {monit,openstack-keystone,openstack-nova-api-ec2,"
+                   "openstack-nova-api-os-compute,openstack-nova-cert,"
+                   "openstack-nova-consoleauth,openstack-nova-novncproxy,"
+                   "openstack-nova-scheduler,openstack-glance-api,"
+                   "openstack-glance-registry,openstack-cinder-api,"
+                   "openstack-cinder-scheduler,keepalived,haproxy}; "
+                   "do service $i start; done")
+    qa.run_cmd_on_node(node=node, cmd=command)
 
 argh.dispatch_command(main)
