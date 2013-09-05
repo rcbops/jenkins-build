@@ -73,7 +73,7 @@ log_path = "logs"
 # run_cmd("rm -rf %s; mkdir -p %s" % (log_path, log_path))
 run_cmd("rm *.tar.gz")
 for node in nodes:
-    role = node.attributes['in_use']
+    role = str(node.attributes['in_use'])
     if role in roles:
         roles[role] = roles[role] + 1
     else:
