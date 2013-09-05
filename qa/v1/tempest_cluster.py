@@ -87,7 +87,7 @@ def main(name="autotest", os="precise", feature_set="glance-cf",
     pprint(cluster)
 
     # Write the config
-    jenkins_build = jenkins_build
+    jenkins_build = jenkins_build or "/var/lib/jenkins/jenkins-build"
     tempest_dir = "%s/qa/metadata/tempest/config" % jenkins_build
     sample_path = "%s/base_%s.conf" % (tempest_dir, tempest_version)
     with open(sample_path) as f:
