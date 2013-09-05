@@ -111,8 +111,14 @@ if results.ha_enabled and results.neutron:
 
     print "Setting HA network to neutron"
     env_obj = Environment(env)
+
+    # Change the nova network attribute to be neutron
     env_obj.override_attributes['nova']['network'] = neutron_network
+    
+    # Remove the networks attribute
     env_obj.override_attributes['nova'].pop("networks", None)
+    
+    # Save node
     env_obj.save()
 
 # Gather all the nodes for the os_distro
