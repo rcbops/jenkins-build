@@ -27,16 +27,16 @@ elif len(search) > 1: print "Found too many controllers (what?!) "
 else:        
     controller = Node(search[0]['name'],api=qa.chef)
 
-    print "Adding tempest to controller run_list"
     if 'recipe[tempest]' not in controller.run_list:
+        print "Adding tempest to controller run_list"
         controller.run_list.append('recipe[tempest]')
-    print controller.run_list
-    controller.save()
-
-    print "Running chef-client"
-    chef_client = qa.run_chef_client(controller, num_times=1, log_level=args.log_level)
-
+        controller.save()
+        print "Running chef-client"
+        chef_client = qa.run_chef_client(controller, num_times=1, log_level=args.log_level)
+    
     commands = [ "cd /opt/tempest", 
                  "python tools/install_venv.py",
-                 "tools/with_venv.sh nosetests tempest/tests/identity" ]
+                 "tools/with_venv.sh nosetests tempest/tests/identity",
+                 "tools/with_venv.sh nosetests tempest/tests/compute"
+                  ]
     qa.run_command_on_node(controller, "; ".join(commands))
