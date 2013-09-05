@@ -1165,10 +1165,7 @@ class rpcsqa_helper:
         # Edit the controller in our chef
         chef_node = Node(node, api=self.chef)
         chef_node['in_use'] = role
-        node_ip = chef_node['ipaddress']
         chef_node.save()
-
-        return node_ip
 
     def set_nodes_environment(self, chef_node, environment):
         print "Nodes environment is %s, trying to set to %s" % (
