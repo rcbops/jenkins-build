@@ -138,7 +138,20 @@ def main(name="autotest", os="precise", feature_set="glance-cf",
                       time.gmtime()),
         env.name)
     xunit_flag = '--with-xunit --xunit-file=%s' % file
-
+    feature_map = {"glance-cf": ["compute/images", "images"],
+                   "glance-local": ["compute/images", "images"],
+                   "keystone-ldap": ["compute/admin",
+                                     "compute/security_groups",
+                                     "compute/test_authorization.py",
+                                     "identity"],
+                   "keystone-mysql": ["compute/admin",
+                                      "compute/security_groups",
+                                      "compute/test_authorization.py",
+                                      "identity"],
+                   "neutron": ["network"],
+                   "cinder-local": ["compute/volumes", "volume"],
+                   "swift": ["object_storage"]
+    }
     exclude_flags = ["volume", "rescue"]  # Volumes
     if feature_set != "glance-cf":
         exclude_flags.append("image")
@@ -171,37 +184,15 @@ def main(name="autotest", os="precise", feature_set="glance-cf",
 
 def disable_controller(node):
     if 'precise' in node.name:
-        command = ("for i in {monit,keystone,nova-api-ec2,"
-                   "nova-api-os-compute,nova-cert,nova-consoleauth,"
-                   "nova-novncproxy,nova-scheduler,glance-api,"
-                   "glance-registry,cinder-api,cinder-scheduler,keepalived,"
-                   "haproxy}; do service $i stop; done")
-    if 'centos' in node.name:
-        command = ("for i in {monit,openstack-keystone,openstack-nova-api-ec2,"
-                   "openstack-nova-api-os-compute,openstack-nova-cert,"
-                   "openstack-nova-consoleauth,openstack-nova-novncproxy,"
-                   "openstack-nova-scheduler,openstack-glance-api,"
-                   "openstack-glance-registry,openstack-cinder-api,"
-                   "openstack-cinder-scheduler,keepalived,haproxy}; "
-                   "do service $i stop; done")
+        command = ("for i in {monit,rabbitmq-server,mysql,haproxy}; "
+                   "do service $i stop; done; sleep 30; "
+                   "service keepalived stop")
     qa.run_cmd_on_node(node=node, cmd=command)
 
 
 def enable_controller(node):
-    if 'precise' in node.name:
-        command = ("for i in {monit,keystone,nova-api-ec2,"
-                   "nova-api-os-compute,nova-cert,nova-consoleauth,"
-                   "nova-novncproxy,nova-scheduler,glance-api,"
-                   "glance-registry,cinder-api,cinder-scheduler,keepalived,"
-                   "haproxy}; do service $i start; done")
-    if 'centos' in node.name:
-        command = ("for i in {monit,openstack-keystone,openstack-nova-api-ec2,"
-                   "openstack-nova-api-os-compute,openstack-nova-cert,"
-                   "openstack-nova-consoleauth,openstack-nova-novncproxy,"
-                   "openstack-nova-scheduler,openstack-glance-api,"
-                   "openstack-glance-registry,openstack-cinder-api,"
-                   "openstack-cinder-scheduler,keepalived,haproxy}; "
-                   "do service $i start; done")
+    command = ("for i in {monit,rabbitmq-server,mysql,haproxy,"
+               "keepalived}; do service $i start; done")
     qa.run_cmd_on_node(node=node, cmd=command)
 
 argh.dispatch_command(main)
