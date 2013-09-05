@@ -1164,7 +1164,7 @@ class rpcsqa_helper:
     def set_node_in_use(self, node, role):
         # Edit the controller in our chef
         chef_node = Node(node, api=self.chef)
-        chef_node['in_use'] = '%s' % role
+        chef_node['in_use'] = role
         node_ip = chef_node['ipaddress']
         chef_node.save()
 
