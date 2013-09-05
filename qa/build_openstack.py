@@ -160,10 +160,11 @@ def main():
                 node = qa.get_razor_node(args.os_distro, env)
                 post_commands = ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
                                  {'function': qa.update_openldap_environment, 'kwargs': {'env': env}}]
-                build.append({'name': node,
+                build.append({'name': node.name,
                               'in_use': 'openldap',
                               'run_list': ['role[qa-openldap-%s]' % args.os_distro],
-                              'post_commands': post_commands
+                              'post_commands': post_commands,
+                              'ip': node['ipaddress']
                               })
 
             if args.remote_chef:    
@@ -172,26 +173,35 @@ def main():
                 post_commands = [{'function': qa.build_chef_server,
                                   'kwargs': {'cookbooks': cookbooks, 'env': env}}]
 
-                build.append({'name': node,
+                build.append({'name': node.name,
+                              'ip': node['ipaddress'],
                               'in_use': 'chef_server',
                               'post_commands': post_commands})
 
             if args.quantum:
                 node = qa.get_razor_node(args.os_distro, env)                
-                build.append({'name': node,
+                build.append({'name': node.name,
+                              'ip': node['ipaddress'],
                               'in_use': 'quantum',
                               'run_list': ['role[single-network-node]']})
 
             #Controller
             if args.ha:
-                build.append({'name': qa.get_razor_node(args.os_distro, env),
+                node = qa.get_razor_node(args.os_distro, env)
+                build.append({'name': node.name,
+                              'ip': node['ipaddress'],
                               'in_use': 'ha_controller1',
                               'run_list': ['role[ha-controller1]']})
-                build.append({'name': qa.get_razor_node(args.os_distro, env),
+
+                node = qa.get_razor_node(args.os_distro, env)
+                build.append({'name': node.name,
+                              'ip': node['ipaddress'],
                               'in_use': 'ha_controller2',
                               'run_list': ['role[ha-controller2]']})
             else:
-                build.append({'name': qa.get_razor_node(args.os_distro, env),
+                node = qa.get_razor_node(args.os_distro, env)
+                build.append({'name': node.name,
+                              'ip': node['ipaddress'],
                               'in_use': 'single-controller',
                               'run_list': ['role[ha-controller1]']})
 
@@ -199,7 +209,9 @@ def main():
             #Compute with whatever is left
             num_computes = 0
             for n in xrange(computes):
-                build.append({'name': qa.get_razor_node(args.os_distro, env),
+                node = qa.get_razor_node(args.os_distro, env)
+                build.append({'name':  node.name,
+                              'ip': node['ipaddress'],
                               'in_use': 'single-compute',
                               'run_list': ['role[single-compute]']})
                 num_computes += 1
