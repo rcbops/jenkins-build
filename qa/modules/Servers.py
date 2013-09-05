@@ -58,7 +58,8 @@ class OSChefNode(OSNode):
                                          config_manager=None, provisioner=None)
 
     def install_chef_server(self):
-        install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
+        install_script = ("/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/"
+                          "install-chef-server.sh")
 
         # SCP install script to chef_server node
         scp_run = self.scp_to(install_script)
@@ -76,7 +77,8 @@ class OSChefNode(OSNode):
             ssh_run = self.run_cmd(cmd)
             if ssh_run['success']:
                 print "Installed Chef Server on %s" % self
-        self.install_cookbook(url, branch)
+        self.install_cookbook(self.config.cookbook_url,
+                              self.config.cookbook_branch)
 
     def install_cookbook(self, url, branch, local_repo='/opt/rcbops'):
         '''
@@ -107,7 +109,8 @@ class OSChefNode(OSNode):
                         'git submodule update'.format(local_repo,
                                                       cookbook_name))
         cookbook_path = '{0}/{1}/cookbooks'.format(local_repo, cookbook_name)
-        upload = 'knife cookbook upload --all --cookbook-path {0}'.format(cookbook_path)
+        upload = ('knife cookbook upload --all '
+                  '--cookbook-path {0}'.format(cookbook_path))
         commands.append(upload)
 
         # Append role load to run list
