@@ -136,6 +136,7 @@ class OSDeployment(object):
         raise NotImplementedError
 
     def provision(self):
+        """ Provisions nodes for each desired feature """
         if self.features['openldap']:
             self.create_node(Roles.DirectoryServer)
         if self.features['quantum']:
@@ -153,6 +154,7 @@ class ChefRazorOSDeployment(OSDeployment):
         self.razor = razor
 
     def create_node(self, role):
+        """ Creates a node """
         node = next(self.chef)
         config_manager = ChefConfigManager(node.name, self.chef,
                                            self.environment)
@@ -170,10 +172,13 @@ class ChefRazorOSDeployment(OSDeployment):
         return osnode
 
     def searchRole(self, role):
+        """ Returns nodes the have the desired role """
         query = "chef_environment:%s AND in_use:%s" % (self.environment, role)
-        return self.chef.node_search(query=query)
+        chef_nodes = (node.name for node in self.chef.node_search(query=query))
+        return (osnode for osnode in self.nodes if chef_nodes)
 
     def provision(self):
+        """ Creates remote chef node then provisions roles """
         if self.features['remote_chef']:
             self.create_node(Roles.ChefServer)
         super(ChefRazorOSDeployment, self).provision()
