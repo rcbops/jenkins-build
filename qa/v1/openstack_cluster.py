@@ -71,7 +71,8 @@ if results.repo_tag is not None:
         results.repo_tag = None
 
 # Remove broker fails for qa-%os_distro-pool
-rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
+if results.action == 'build':
+    rpcsqa.remove_broker_fail("qa-%s-pool" % results.os_distro)
 
 # Prepare environment
 env = rpcsqa.prepare_environment(results.name,
