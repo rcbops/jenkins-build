@@ -1054,8 +1054,8 @@ class rpcsqa_helper:
                     print run
 
     def run_cmd_on_node(self, node=None, cmd=None, user=None, password=None):
-        user = user if user else "root"
-        password = password if password else self.razor_password(node)
+        user = user or "root"
+        password = password or self.razor_password(node)
         ip = node['ipaddress']
         print "### Running: %s ###" % cmd
         print "### On: %s - %s ###" % (node.name, ip)
@@ -1117,9 +1117,9 @@ class rpcsqa_helper:
                 env = Environment(e['name'])
                 env.delete()
 
-    def scp_from_node(self, node=None, path=None, destination=None):
-        user = "root"
-        password = self.razor_password(node)
+    def scp_from_node(self, node=None, path=None, destination=None, user=None, password=None):
+        user = user or "root"
+        password = password or self.razor_password(node)
         ip = node['ipaddress']
         get_file_from_server(ip, user, password, path, destination)
 
