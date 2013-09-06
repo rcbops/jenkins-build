@@ -189,10 +189,9 @@ def main(name="autotest", os="precise", feature_set="glance-cf",
 
 
 def disable_controller(node):
-    if 'precise' in node.name:
-        command = ("for i in {monit,rabbitmq-server,mysql,haproxy}; "
-                   "do service $i stop; done; sleep 30; "
-                   "service keepalived stop")
+    command = ("for i in {monit,rabbitmq-server,mysql,haproxy}; "
+               "do service $i stop; done; sleep 30; "
+               "service keepalived stop")
     qa.run_cmd_on_node(node=node, cmd=command)
 
 
