@@ -165,13 +165,13 @@ def main(name="autotest", os="precise", feature_set="glance-cf",
 
     # run tests
     qa.run_cmd_on_node(node=controller, cmd=command)
-    try:
-        for i in xrange(10):
+    for i in xrange(10):
+        try:
             qa.scp_from_node(node=controller, path=file, destination=".")
             break
-    except KeyError:
-        print "Razor key error, trying again"
-        continue
+        except KeyError:
+            print "Razor key error, trying again"
+            continue
 
     if feature_set == "ha":
         query = "chef_environment:%s-%s-%s-ha AND in_use:*controller*" % \
