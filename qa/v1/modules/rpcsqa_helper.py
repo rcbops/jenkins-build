@@ -571,7 +571,10 @@ class rpcsqa_helper:
             print "*****************************************************"
             print "Not enough nodes for the cluster_size given: %s " % size
             print "*****************************************************"
-            sys.exit(1)
+            
+            return False
+
+        return True
 
     def cleanup_environment(self, chef_environment):
         """

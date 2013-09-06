@@ -156,7 +156,14 @@ if results.action == "build":
     print "Cluster size is %i." % cluster_size
 
     # Collect the amount of servers we need for the openstack install
-    rpcsqa.check_cluster_size(all_nodes, cluster_size)
+    enough_nodes = rpcsqa.check_cluster_size(all_nodes, cluster_size)
+    if enough_nodes is False:
+        print "*****************************************************"
+        print "Not enough nodes for the cluster_size given: {0}".format(cluster_size)
+        print "*****************************************************"
+        rpcsqa.cleanup_environment(env)
+        sys.exit(1)
+
 
     # Gather the nodes and set there environment
     openstack_list = rpcsqa.gather_size_nodes(results.os_distro,
