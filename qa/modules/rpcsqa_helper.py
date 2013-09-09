@@ -70,13 +70,13 @@ class rpcsqa_helper:
                 env_json['override_attributes'].update(environments.__dict__[feature])
         chef_env.override_attributes.update(env_json['override_attributes'])
         chef_env.override_attributes['package_component'] = branch
-        
+
         old_networks = [{"num_networks": "1", "bridge": "br0",
                          "label": "public", "dns1": "8.8.8.8",
                          "dns2": "8.8.4.4", "bridge_dev": "eth1",
                          "network_size": "254",
                          "ipv4_cidr": "172.31.0.0/24"}]
-        
+
         if branch_tag in ["folsom", "v3.1.0", "v4.0.0"]:
             chef_env.override_attributes['nova']['networks'] = old_networks
             if os_distro == "centos":
@@ -101,12 +101,20 @@ class rpcsqa_helper:
                 n.chef_environment = "_default"
                 n.save()
 
-    def run_command_on_node(self, node, command, num_times=1, quiet=False):
+    def run_command_on_node(self, node, command, num_times=1, quiet=False,
+                            private=False):
         chef_node = Node(node.name, api=self.chef)
         runs = []
         success = True
+        if private:
+            iface = "eth0" if "precise" in node.name else "em1"
+            addrs = node['network']['interfaces'][iface]['addresses']
+            for addr in addrs.keys():
+                if addrs[addr]['family'] is "inet":
+                    ip = addr
+        else:
+            ip = node['ipaddress']
         for i in xrange(0, num_times):
-            ip = chef_node['ipaddress']
             user_pass = self.razor_password(chef_node)
             run = run_remote_ssh_cmd(ip, 'root', user_pass, command, quiet)
             if run['success'] is False:
