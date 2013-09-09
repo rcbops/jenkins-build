@@ -503,7 +503,7 @@ if results.action == "build":
                 # Computes
                 for compute in computes:
                     print "## Running chef-client on {0} after reboot ##".format(compute)
-                    rpscqa.run_chef_client(rpcsqa.get_server_info(compute)['node'])
+                    rpcsqa.run_chef_client(rpcsqa.get_server_info(compute)['node'])
 
             # Setup the Quantum Network
             print "## Setting up neutron network ##"
