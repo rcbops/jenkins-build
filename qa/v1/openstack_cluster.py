@@ -475,20 +475,20 @@ if results.action == "build":
             # chef client on all boxes, then setup networking
             if results.os_distro == 'centos':
                 
+                print "## OS is Centos, need to reboot cluster for kernel upgrades ##"
                 # Reboot all nodes
                 rpcsqa.reboot_cluster(env)
                 
                 # Logic to reboot and wait for online status to be true
                 sleep_in_minutes = 5
-                online = False
-                while online is False:
+                while rpcsqa.ping_check_cluster(env)['offline'] is True:
                     # Wait for nodes to come back online
-                    print "Current cluster online status: {0}".format(str(online))
-                    print "Sleeping for {0} minutes".format(str(sleep_in_minutes))
+                    print "## Current cluster online status: Offline ##"
+                    print "## Sleeping for {0} minutes ##".format(str(sleep_in_minutes))
                     time.sleep(sleep_in_minutes * 60)
                     # subtract 1 each time, to prevent retarded loops
                     sleep_in_minutes -= 1
-                    online = rpcsqa.ping_check_cluster(env)
+                    offline = rpcsqa.ping_check_cluster(env)
 
                     if sleep_in_minutes == 0:
                         print "## -- Failed to reboot cluster after 8 minutes -- ##"
@@ -497,14 +497,16 @@ if results.action == "build":
 
                 # run chef client on all the nodes
                 # Controller
-                print "Running chef-client on {0} after reboot".format(controller) 
+                print "## Current cluster status is: Online ##"
+                print "## Running chef-client on {0} after reboot ##".format(controller) 
                 rpcsqa.run_chef_client(rpcsqa.get_server_info(controller)['node'])
                 # Computes
                 for compute in computes:
-                    print "Running chef-client on {0} after reboot".format(compute)
+                    print "## Running chef-client on {0} after reboot ##".format(compute)
                     rpscqa.run_chef_client(rpcsqa.get_server_info(compute)['node'])
 
             # Setup the Quantum Network
+            print "## Setting up neutron network ##"
             rpcsqa.setup_neutron_network(env)
 
             # print all servers info

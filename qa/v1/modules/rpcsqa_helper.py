@@ -933,18 +933,21 @@ class rpcsqa_helper:
         # Gather all the nodes in the environment
         query = "chef_environment:{0}".format(env)
 
-        online = True
+        online = False
+        offline = False
         for node in self.node_search(query, self.chef):
-            online = self.ping_check_ip(node['ipaddress'])
-            if online is False:
-                return online
+            if self.ping_check_node(node) is False:
+                offline = True
+            else:
+                online = True
 
-        return online
+        return {"online": online, "offline": offline}
 
     def ping_check_node(self, node):
         ip_address = node['ipaddress']
         command = "ping -c 3 %s" % ip_address
-        return run_cmd(command)
+        run = run_cmd(command)
+        return run['success']
 
     def prepare_environment(self, name, os_distro, feature_set, branch=None):
         # Gather the nodes for the requested os_distro
@@ -1079,8 +1082,7 @@ class rpcsqa_helper:
         query = "chef_environment:{0}".format(environment)
 
         for node in self.node_search(query, self.chef):
-            online = self.ping_check_node(node)
-            if online is True:
+            if self.ping_check_node(node) is True:
                 self.reboot_node(node)
 
     def reboot_node(self, chef_node):
