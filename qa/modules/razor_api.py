@@ -2,13 +2,11 @@ import json
 import requests
 
 
-class razor_api:
+class Razor:
 
-    def __init__(self, rzrip, rzrport='8026'):
+    def __init__(self, url=None):
         """ Initilizer for razor_api class"""
-        self.ip = rzrip
-        self.port = rzrport
-        self.url = 'http://' + rzrip + ':' + rzrport + '/razor/api'
+        self.url = url
 
     def __repr__(self):
         """ Print out current instnace of razor_api"""

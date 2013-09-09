@@ -1,12 +1,19 @@
 import sys
 from time import sleep
-from chef import autoconfigure, Search, Environment, Node, Client
+from modules.OSConfig import OSConfig as config
+from chef import autoconfigure, Search, Environment, Node, Client,\
+    from_config_file
 import environments
 
 
 class OSChef:
     def __init__(self, api=None, remote_api=None):
-        self.api = api or autoconfigure()
+        if not api:
+            if 'knife_file' in config['chef']:
+                api = from_config_file(config['chef']['knife_file'])
+            else:
+                api = autoconfigure()
+        self.api = api
         self.remote_api = remote_api
 
     def node_search(self, query=None, api=None, tries=10):
@@ -77,42 +84,18 @@ class OSChef:
         node.save()
 
     def build_chef_server(self, chef_node=None, cookbooks=None, env=None):
-        '''
-        This will build a chef server using the rcbops script and install git
-        '''
-
+        """
+        
+        """
         if not chef_node:
             query = "chef_environment:%s AND in_use:chef_server" % env
             chef_node = next(self.node_search(query))
         self.remove_chef(chef_node)
 
-        install_script = '/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/install-chef-server.sh'
+        chef_env = Environment(env)
+        self.add_remote_chef_locally(chef_node, chef_env)
+        self.setup_remote_chef_environment(chef_env)
 
-        # SCP install script to chef_server node
-        scp_run = self.scp_to_node(chef_node, install_script)
-
-        if scp_run['success']:
-            print "Successfully copied chef server install script to chef_server node %s" % chef_node
-        else:
-            print "Failed to copy chef server install script to chef_server node %s" % chef_node
-            print scp_run
-            sys.exit(1)
-
-        # Run the install script
-        cmds = ['chmod u+x ~/install-chef-server.sh',
-                './install-chef-server.sh']
-        for cmd in cmds:
-            ssh_run = self.run_command_on_node(chef_node, cmd)
-            if ssh_run['success']:
-                print "command: %s ran successfully on %s" % (cmd, chef_node)
-
-        self.install_cookbooks(chef_node, cookbooks)
-        if env:
-            chef_env = Environment(env)
-            self.add_remote_chef_locally(chef_node, chef_env)
-            self.setup_remote_chef_environment(chef_env)
-
-    def delte_client_node(self, name):
-        node = Node(self.name, self.api)
-        node.delete()
-        Client(self.name).delete()
+    def delete_client_node(self, name):
+        Node(name, self.api)delete()
+        Client(name, self.api).delete()

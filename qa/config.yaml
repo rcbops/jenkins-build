@@ -1,0 +1,11 @@
+chef:
+  # knife_file: "~/.chef"
+  coobook_git_url: "https://github.com/rcbops/chef-cookbooks.git"
+  coobooks_git_branch: grizzly
+  server_script: "https://raw.github.com/rcbops/jenkins-build/master/qa/bash/jenkins/install-chef-server.sh"
+razor:
+  url: "http://198.101.133.3:8026/razor/api"
+features:
+  - ha
+  - glance-cf
+computes: 1

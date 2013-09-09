@@ -1,8 +1,13 @@
-import sys
+from modules.OSConfig import OSConfig as config
 from ssh_helper import run_cmd, scp_to, scp_from
 
 
 class OSNode(object):
+    """
+    A individual computation entity to deploy a part OpenStack onto
+
+    Provides 
+    """
     def __init__(self, ip, user, password, role,
                  config_manager=None, provisioner=None):
         self.ip = ip
@@ -35,7 +40,7 @@ class OSNode(object):
         return "Node: %s" % self.ip
 
     def tear_down(self):
-        self.clean_up()
+        raise NotImplementedError
 
     def clean_up(self):
         for cleanup in self._cleanups:
@@ -53,29 +58,17 @@ class OSChefNode(OSNode):
                                          config_manager=None, provisioner=None)
 
     def install_chef_server(self):
-        install_script = ("/var/lib/jenkins/jenkins-build/qa/v1/bash/jenkins/"
-                          "install-chef-server.sh")
+        """
+        Installs a chef server onto node
+        """
+        cmd = 'curl {0} | bash'.format(config['chef']['server_script'])
+        ssh_run = self.run_cmd(cmd)
+        if ssh_run['success']:
+            print "Installed Chef Server on %s" % self
+        self.install_cookbooks(config['cookbook_git_url'],
+                               config['cookbook_git_branch'])
 
-        # SCP install script to chef_server node
-        scp_run = self.scp_to(install_script)
-
-        if scp_run['success']:
-            print "Sent chef server install to %s" % self
-        else:
-            print "Failed send chef server install to %s" % self
-            sys.exit(1)
-
-        # Run the install script
-        cmds = ['chmod u+x ~/install-chef-server.sh',
-                './install-chef-server.sh']
-        for cmd in cmds:
-            ssh_run = self.run_cmd(cmd)
-            if ssh_run['success']:
-                print "Installed Chef Server on %s" % self
-        self.install_cookbook(self.config.cookbook_url,
-                              self.config.cookbook_branch)
-
-    def install_cookbook(self, url, branch, local_repo='/opt/rcbops'):
+    def install_cookbooks(self, url, branch, local_repo='/opt/rcbops'):
         '''
         @summary: Install cookbooks
         @param url git url of cookbook

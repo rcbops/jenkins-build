@@ -1,0 +1,49 @@
+* Environment
+  Your dc
+  - provisioners
+  - destroy()
+  - __iter__()
+  - __str__
+
+** Deployment
+   A single deployment of OpenStack
+   - destroy()
+   - provision()
+   - make_node()
+   - with_role()
+   - __iter__()
+
+*** Node
+    A individual computation entity to deploy a part OpenStack onto
+    - destroy()
+    - cmds()
+
+**** OSRazorNode
+     Operations that can be run on a razor node
+     - destroy()
+
+**** OSChefNode
+     Operations that can be run on a chef node
+     - destroy()
+     - install_chef_server
+     - install_cookbooks
+
+**** OSCloudNode
+     Operations that can be run on a cloud node
+     - destroy()
+
+* Builds
+  Map role -> run_list
+  run chefy stuff
+  run ssh stuff
+
+* Current
+  1. Get config
+  2. Generate Environment
+  3. Provision nodes
+  4. Build remote chef
+  5. Build(ing) nodes
+     1. remove_chef
+     2. bootstrap
+     3. assume role
+  6. Post build

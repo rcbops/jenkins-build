@@ -14,15 +14,13 @@ class ChefConfigManager(ConfigManager):
     run_lists[OS_Roles.HAController1] = ['role[ha-controller1]']
     run_lists[OS_Roles.HAController2] = ['role[ha-controller2]']
 
-    def __init__(self, name, chef, environment):
+    def __init__(self, name, chef, features):
         self.name = name
         self.chef = chef
         self.env = self.chef.prepare_environment(self.name,
                                                  self.config['os'],
                                                  self.config['cookbook-branch'],
                                                  self.features)
-
-        self.environment = environment
 
     def __str__(self):
         return "Chef Node: %s - %s" % (self.name, self.ip)

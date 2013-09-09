@@ -1,11 +1,13 @@
 from time import sleep
 from ssh_helper import run_cmd
 from razor_api import razor_api
+from modules.OSConfig import OSConfig as config
 
 
 class OSRazor:
-    def __init__(self, ip):
-        self.api = razor_api(ip)
+    def __init__(self, url=None):
+        url = url or config['razor']['url']
+        self.api = razor_api(url)
 
     def razor_password(self, id):
         return self.api.get_active_model_pass(id)['password']
