@@ -1076,7 +1076,7 @@ class rpcsqa_helper:
     def reboot_cluster(self, environment):
 
         # Gather all the nodes in the environment
-        query = "chef_environment:{0}".format(env)
+        query = "chef_environment:{0}".format(environment)
 
         for node in self.node_search(query, self.api):
             online = self.ping_check_node(node)
