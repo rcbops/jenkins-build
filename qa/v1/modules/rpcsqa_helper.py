@@ -943,7 +943,7 @@ class rpcsqa_helper:
 
     def ping_check_node(self, node):
         ip_address = node['ipaddress']
-        command = "ping -c 5 %s" % ip_address
+        command = "ping -c 3 %s" % ip_address
         return run_cmd(command)
 
     def prepare_environment(self, name, os_distro, feature_set, branch=None):
