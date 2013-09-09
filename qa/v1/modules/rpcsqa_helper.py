@@ -1078,7 +1078,7 @@ class rpcsqa_helper:
         # Gather all the nodes in the environment
         query = "chef_environment:{0}".format(environment)
 
-        for node in self.node_search(query, self.api):
+        for node in self.node_search(query, self.chef):
             online = self.ping_check_node(node)
             if online is True:
                 self.reboot_node(node)
