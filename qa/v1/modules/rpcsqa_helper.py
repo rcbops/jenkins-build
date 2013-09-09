@@ -934,7 +934,7 @@ class rpcsqa_helper:
         query = "chef_environment:{0}".format(env)
 
         online = True
-        for node in self.node_search(query, self.api):
+        for node in self.node_search(query, self.chef):
             online = self.ping_check_ip(node['ipaddress'])
             if online is False:
                 return online
