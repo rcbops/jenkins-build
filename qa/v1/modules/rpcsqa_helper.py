@@ -931,7 +931,7 @@ class rpcsqa_helper:
     def ping_check_cluster(self, environment):
         
         # Gather all the nodes in the environment
-        query = "chef_environment:{0}".format(env)
+        query = "chef_environment:{0}".format(environment)
 
         online = False
         offline = False
