@@ -568,10 +568,6 @@ class rpcsqa_helper:
 
     def check_cluster_size(self, chef_nodes, size):
         if len(chef_nodes) < size:
-            print "*****************************************************"
-            print "Not enough nodes for the cluster_size given: %s " % size
-            print "*****************************************************"
-            
             return False
 
         return True
