@@ -936,10 +936,12 @@ class rpcsqa_helper:
         online = False
         offline = False
         for node in self.node_search(query, self.chef):
-            if self.ping_check_node(node) is False:
-                offline = True
-            else:
-                online = True
+            # Dont need to check the chef server
+            if not node['in_use'] == 'chef-server':
+                if self.ping_check_node(node) is False:
+                    offline = True
+                else:
+                    online = True
 
         return {"online": online, "offline": offline}
 
@@ -1082,8 +1084,10 @@ class rpcsqa_helper:
         query = "chef_environment:{0}".format(environment)
 
         for node in self.node_search(query, self.chef):
-            if self.ping_check_node(node) is True:
-                self.reboot_node(node)
+            # dont need to reboot chef server
+            if not node['in_use'] == 'chef-server':
+                if self.ping_check_node(node) is True:
+                    self.reboot_node(node)
 
     def reboot_node(self, chef_node):
         command = 'reboot 0'
