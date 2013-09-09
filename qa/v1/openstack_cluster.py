@@ -488,7 +488,6 @@ if results.action == "build":
                     time.sleep(sleep_in_minutes * 60)
                     # subtract 1 each time, to prevent retarded loops
                     sleep_in_minutes -= 1
-                    offline = rpcsqa.ping_check_cluster(env)
 
                     if sleep_in_minutes == 0:
                         print "## -- Failed to reboot cluster after 8 minutes -- ##"
