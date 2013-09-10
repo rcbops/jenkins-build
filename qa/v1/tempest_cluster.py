@@ -173,31 +173,31 @@ def main(name="autotest", os="precise", feature_set="glance-cf",
             print "Razor key error, trying again"
             continue
 
-    if feature_set == "ha":
-        query = "chef_environment:%s-%s-%s-ha AND in_use:*controller*" % \
-                (name, os, environment_branch)
-        controllers = qa.node_search(query=query)
-        print query
-        disabled_controller = None
-        for node in controllers:
-            if disabled_controller:
-                enable_controller(disabled_controller)
-            disable_controller(node)
-            disabled_controller = node
-            qa.run_cmd_on_node(node=controller, cmd=command)
-            qa.scp_from_node(node=controller, path=file, destination=".")
+#     if feature_set == "ha":
+#         query = "chef_environment:%s-%s-%s-ha AND in_use:*controller*" % \
+#                 (name, os, environment_branch)
+#         controllers = qa.node_search(query=query)
+#         print query
+#         disabled_controller = None
+#         for node in controllers:
+#             if disabled_controller:
+#                 enable_controller(disabled_controller)
+#             disable_controller(node)
+#             disabled_controller = node
+#             qa.run_cmd_on_node(node=controller, cmd=command)
+#             qa.scp_from_node(node=controller, path=file, destination=".")
 
 
-def disable_controller(node):
-    command = ("for i in {monit,rabbitmq-server,mysql,haproxy}; "
-               "do service $i stop; done; sleep 30; "
-               "service keepalived stop")
-    qa.run_cmd_on_node(node=node, cmd=command)
+# def disable_controller(node):
+#     command = ("for i in {monit,rabbitmq-server,mysql,haproxy}; "
+#                "do service $i stop; done; sleep 30; "
+#                "service keepalived stop")
+#     qa.run_cmd_on_node(node=node, cmd=command)
 
 
-def enable_controller(node):
-    command = ("for i in {monit,rabbitmq-server,mysql,haproxy,"
-               "keepalived}; do service $i start; done")
-    qa.run_cmd_on_node(node=node, cmd=command)
+# def enable_controller(node):
+#     command = ("for i in {monit,rabbitmq-server,mysql,haproxy,"
+#                "keepalived}; do service $i start; done")
+#     qa.run_cmd_on_node(node=node, cmd=command)
 
 argh.dispatch_command(main)
