@@ -26,6 +26,34 @@ class rpcsqa_helper:
 
         return outl
 
+    def bring_up_cluster_default_routes(self, environment, device='eth0'):
+        '''
+        This will bring up a clusters default routes on the given device
+        '''
+
+        # Gather all the nodes in the environment
+        query = "chef_environment:{0}".format(environment)
+
+        for node in self.node_search(query, self.chef):
+            # dont need to reboot chef server
+            if not node['in_use'] == 'chef-server':
+                self.bring_up_dev_route(node, device)
+
+    def bring_up_dev_route(self, node, device='eth1'):
+        '''
+        This will bring up a given devices route to be the default
+        '''
+
+        if node['platform_family'] == 'rhel':
+            command = "/etc/sysconfig/network-scripts/ifup-routes {0}".format(device)
+        else:
+            raise NotImplementedError
+
+        run = self.run_cmd_on_node(node, command)
+        if not run['success']:
+            self.failed_ssh_command_exit(command, node, run['error'])
+
+
     def bootstrap_chef(self, client_node, server_node):
         '''
         @summary: installes chef client on a node and bootstraps it to chef_server

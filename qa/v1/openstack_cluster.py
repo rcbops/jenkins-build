@@ -406,6 +406,9 @@ if results.action == "build":
                 # run chef client on all the nodes
                 print "## Current cluster status is: Online ##"
 
+                # bring up the routes
+                rpcsqa.bring_up_cluster_default_routes(env, 'em1')
+
                 # Controller 1
                 print "## Running chef-client on {0} after reboot ##".format(ha_controller_1) 
                 rpcsqa.run_chef_client(rpcsqa.get_server_info(ha_controller_1)['node'])
