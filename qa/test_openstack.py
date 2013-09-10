@@ -26,13 +26,13 @@ qa = rpcsqa_helper(razor_ip=args.razor_ip)
 def disable_controller(node):
     iface = "eth0" if "precise" in node.name else "em1"
     command = ("ifdown {0}".format(iface))
-    qa.run_cmd_on_node(node=node, cmd=command, private=True)
+    qa.run_cmd_on_node(node, command, private=True)
 
 
 def enable_controller(node):
     iface = "eth0" if "precise" in node.name else "em1"
     command = ("ifup {0}".format(iface))
-    qa.run_cmd_on_node(node=node, cmd=command, private=True)
+    qa.run_cmd_on_node(node, command, private=True)
 
 
 def test(node, env):
