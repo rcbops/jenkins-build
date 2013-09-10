@@ -380,6 +380,45 @@ if results.action == "build":
                                      remote=results.remote_chef,
                                      chef_config_file=config_file)
 
+            # Do to kernel issues on 6.4, need to reboot all servers and rerun
+            # chef client on all boxes, then setup networking
+            if results.os_distro == 'centos':
+                
+                print "## OS is Centos, need to reboot cluster for kernel upgrades ##"
+                # Reboot all nodes
+                rpcsqa.reboot_cluster(env)
+                
+                # Logic to reboot and wait for online status to be true
+                sleep_in_minutes = 5
+                while rpcsqa.ping_check_cluster(env)['offline'] is True:
+                    # Wait for nodes to come back online
+                    print "## Current cluster online status: Offline ##"
+                    print "## Sleeping for {0} minutes ##".format(str(sleep_in_minutes))
+                    time.sleep(sleep_in_minutes * 60)
+                    # subtract 1 each time, to prevent retarded loops
+                    sleep_in_minutes -= 1
+
+                    if sleep_in_minutes == 0:
+                        print "## -- Failed to reboot cluster after 8 minutes -- ##"
+                        print "## -- Please manually check -- ##"
+                        sys.exit(1)
+
+                # run chef client on all the nodes
+                print "## Current cluster status is: Online ##"
+
+                # Controller 1
+                print "## Running chef-client on {0} after reboot ##".format(ha_controller_1) 
+                rpcsqa.run_chef_client(rpcsqa.get_server_info(ha_controller_1)['node'])
+                
+                # Controller 2
+                print "## Running chef-client on {0} after reboot ##".format(ha_controller_2) 
+                rpcsqa.run_chef_client(rpcsqa.get_server_info(ha_controller_2)['node'])
+
+                # Computes
+                for compute in computes:
+                    print "## Running chef-client on {0} after reboot ##".format(compute)
+                    rpcsqa.run_chef_client(rpcsqa.get_server_info(compute)['node'])
+
             # If Neutron enabled, setup network
             if results.neutron:
                 rpcsqa.setup_neutron_network(env, results.ha_enabled)

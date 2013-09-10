@@ -1345,10 +1345,19 @@ class rpcsqa_helper:
          # Setup bridge and ports on controllers
         command = "; ".join(commands)
         for controller_node in self.node_search(controller_query, self.chef):
-            # Run command on controller
-            controller_run = self.run_cmd_on_node(controller_node, command)
-            if not controller_run['success']:
-                self.failed_ssh_command_exit(command, controller_node, controller_run['error'])
+            # Only need to setup on controller 1 in HA
+            if ha is True:
+                if 'ha-controller1' in str(controller_node.run_list):
+                    controller_run = self.run_cmd_on_node(controller_node, command)
+                    if not controller_run['success']:
+                        self.failed_ssh_command_exit(command, controller_node, controller_run['error'])
+                else:
+                    print "Dont need to setup network on {0}, it has role ha-controller2".format(controller_node)
+            else:
+                # Run command on controller
+                controller_run = self.run_cmd_on_node(controller_node, command)
+                if not controller_run['success']:
+                    self.failed_ssh_command_exit(command, controller_node, controller_run['error'])
 
         print "Quantum Network setup on cluster %s." % environment
 
