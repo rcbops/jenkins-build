@@ -224,7 +224,6 @@ class rpcsqa_helper:
 
     def remote_chef_client(self, env):
         # RSAifying key
-        print "Create chef client for env: %s" % env.name
         env = Environment(env.name)
         remote_dict = dict(env.override_attributes['remote_chef'])
         pem = StringIO(remote_dict['key'])
@@ -400,3 +399,33 @@ class rpcsqa_helper:
 
         if ssh_run['success']:
             print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
+
+    def disable_controller(self, node):
+        iface = "eth0" if "precise" in node.name else "em1"
+        command = ("ifdown {0}".format(iface))
+        self.run_cmd_on_node(node, command, private=True)
+
+    def enable_controller(self, node):
+        iface = "eth0" if "precise" in node.name else "em1"
+        command = ("ifup {0}".format(iface))
+        self.run_cmd_on_node(node, command, private=True)
+
+    def test(self, node, env):
+        xunit_file = '%s-%s.xunit' % (time.strftime("%Y-%m-%d-%H:%M:%S",
+                                                    time.gmtime()),
+                                      env)
+        xunit_flag = '--with-xunit --xunit-file=%s' % xunit_file
+        commands = ["cd /opt/tempest",
+                    "python tools/install_venv.py",
+                    ("tools/with_venv.sh nosetests "
+                     "--attr=type=smoke %s") % xunit_flag]
+        self.run_command_on_node(node, "; ".join(commands))
+        self.scp_from_node(node=node, path=xunit_file, destination=".")
+
+    def update_tempest_cookbook(self, env):
+        cmds = ["cd /opt/rcbops/chef-cookbooks/cookbooks/tempest",
+                "git pull origin master",
+                "knife cookbook upload -a -o /opt/rcbops/chef-cookbooks/cookbooks"]
+        query = "chef_environment:{0} AND in_use:chef_server".format(env.name)
+        chef_server = next(self.node_search(query))
+        self.run_command_on_node(chef_server, "; ".join(cmds))
