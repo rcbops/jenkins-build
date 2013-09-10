@@ -929,7 +929,7 @@ class rpcsqa_helper:
         return (Node(n['name'], api=api) for n in search)
 
     def ping_check_cluster(self, environment):
-        
+
         # Gather all the nodes in the environment
         query = "chef_environment:{0}".format(environment)
 
@@ -1057,10 +1057,16 @@ class rpcsqa_helper:
                     print "!!## -- Trouble removing broker fail -- ##!!"
                     print run
 
-    def run_cmd_on_node(self, node=None, cmd=None, user=None, password=None):
+    def run_cmd_on_node(self, node=None, cmd=None, user=None, password=None,
+                        private=False):
         user = user or "root"
         password = password or self.razor_password(node)
-        ip = node['ipaddress']
+        if private:
+            iface = "eth1" if "precise" in node.name else "em2"
+            print node['network']['interfaces']
+            ip = str(node['network']['interfaces'][iface]['addresses'].keys()[0])
+        else:
+            ip = node['ipaddress']
         print "### Running: %s ###" % cmd
         print "### On: %s - %s ###" % (node.name, ip)
         return run_remote_ssh_cmd(ip, user, password, cmd)

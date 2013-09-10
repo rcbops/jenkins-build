@@ -1,42 +1,46 @@
-import argparse, json
-from modules.rpcsqa_helper import rpcsqa_helper
-from chef import Search, Node
+#!/usr/bin/env python
+
 import sys
+import time
+import argh
+from chef import Environment
+from modules.rpcsqa_helper import rpcsqa_helper
 
-# Parse arguments from the cmd line
-parser = argparse.ArgumentParser()
-parser.add_argument('--env', action="store", dest="environment",
-                    required=False, default="autotest-precise-grizzly-openldap",
-                    help="Name for the openstack chef environment")
-parser.add_argument('--razor_ip', action="store", dest="razor_ip",
-                    default="198.101.133.3",
-                    help="IP for the Razor server")
 
-parser.add_argument('--log_level', action="store", dest="log_level", 
-                            default="error", required=False,
-                            help="Log level for chef client runs.")
+def main(environment="autotest-precise-grizzly-openldap",
+         razor_ip="198.101.133.3", log_level="error"):
+    qa = rpcsqa_helper(razor_ip=razor_ip)
+    env = Environment(environment)
+    if 'remote_chef' in env.override_attributes:
+        api = qa.remote_chef_client(env)
+        env = Environment(environment, api=api)
+        qa.update_tempest_cookbook(env)
+    else:
+        api = qa.chef
+    query = ("chef_environment:{0} AND "
+             "(run_list:*ha-controller* OR "
+             "run_list:*single-controller*)").format(environment)
+    controllers = list(qa.node_search(query))
+    if not controllers:
+        print "No controllers in environment"
+        sys.exit(1)
 
-args = parser.parse_args()
-
-qa = rpcsqa_helper(razor_ip=args.razor_ip)
-
-search = Search("node", api=qa.chef).query("chef_environment:%s AND (roles:single-controller OR roles:ha-controller1)" % args.environment)
-
-if len(search) < 1: print "Could not find controller"
-elif len(search) > 1: print "Found too many controllers (what?!) "
-else:        
-    controller = Node(search[0]['name'],api=qa.chef)
-
-    if 'recipe[tempest]' not in controller.run_list:
-        print "Adding tempest to controller run_list"
-        controller.run_list.append('recipe[tempest]')
-        controller.save()
+    for controller in controllers:
+        if 'recipe[tempest]' not in controller.run_list:
+            print "Adding tempest to controller run_list"
+            controller.run_list.append('recipe[tempest]')
+            controller.save()
         print "Running chef-client"
-        chef_client = qa.run_chef_client(controller, num_times=1, log_level=args.log_level)
-    
-    commands = [ "cd /opt/tempest", 
-                 "python tools/install_venv.py",
-                 "tools/with_venv.sh nosetests tempest/tests/identity",
-                 "tools/with_venv.sh nosetests tempest/tests/compute"
-                  ]
-    qa.run_command_on_node(controller, "; ".join(commands))
+        qa.run_chef_client(controller, num_times=2,
+                           log_level=log_level)
+
+    qa.test(controllers[0], environment)
+
+    if controllers > 1:
+        for i, controller in enumerate(controllers):
+            qa.disable_controller(controller)
+            time.sleep(180)
+            qa.test(controller[0], environment)
+            qa.enable_controller(controller)
+
+argh.dispatch_command(main)

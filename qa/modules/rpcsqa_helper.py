@@ -70,13 +70,13 @@ class rpcsqa_helper:
                 env_json['override_attributes'].update(environments.__dict__[feature])
         chef_env.override_attributes.update(env_json['override_attributes'])
         chef_env.override_attributes['package_component'] = branch
-        
+
         old_networks = [{"num_networks": "1", "bridge": "br0",
                          "label": "public", "dns1": "8.8.8.8",
                          "dns2": "8.8.4.4", "bridge_dev": "eth1",
                          "network_size": "254",
                          "ipv4_cidr": "172.31.0.0/24"}]
-        
+
         if branch_tag in ["folsom", "v3.1.0", "v4.0.0"]:
             chef_env.override_attributes['nova']['networks'] = old_networks
             if os_distro == "centos":
@@ -101,12 +101,20 @@ class rpcsqa_helper:
                 n.chef_environment = "_default"
                 n.save()
 
-    def run_command_on_node(self, node, command, num_times=1, quiet=False):
+    def run_command_on_node(self, node, command, num_times=1, quiet=False,
+                            private=False):
         chef_node = Node(node.name, api=self.chef)
         runs = []
         success = True
+        if private:
+            iface = "eth0" if "precise" in node.name else "em1"
+            addrs = node['network']['interfaces'][iface]['addresses']
+            for addr in addrs.keys():
+                if addrs[addr]['family'] is "inet":
+                    ip = addr
+        else:
+            ip = node['ipaddress']
         for i in xrange(0, num_times):
-            ip = chef_node['ipaddress']
             user_pass = self.razor_password(chef_node)
             run = run_remote_ssh_cmd(ip, 'root', user_pass, command, quiet)
             if run['success'] is False:
@@ -216,7 +224,6 @@ class rpcsqa_helper:
 
     def remote_chef_client(self, env):
         # RSAifying key
-        print "Create chef client for env: %s" % env.name
         env = Environment(env.name)
         remote_dict = dict(env.override_attributes['remote_chef'])
         pem = StringIO(remote_dict['key'])
@@ -392,3 +399,33 @@ class rpcsqa_helper:
 
         if ssh_run['success']:
             print "Successfully bootstraped chef-client on %s to chef-server on %s" % (client_node, server_node)
+
+    def disable_controller(self, node):
+        iface = "eth0" if "precise" in node.name else "em1"
+        command = ("ifdown {0}".format(iface))
+        self.run_cmd_on_node(node, command, private=True)
+
+    def enable_controller(self, node):
+        iface = "eth0" if "precise" in node.name else "em1"
+        command = ("ifup {0}".format(iface))
+        self.run_cmd_on_node(node, command, private=True)
+
+    def test(self, node, env):
+        xunit_file = '%s-%s.xunit' % (time.strftime("%Y-%m-%d-%H:%M:%S",
+                                                    time.gmtime()),
+                                      env)
+        xunit_flag = '--with-xunit --xunit-file=%s' % xunit_file
+        commands = ["cd /opt/tempest",
+                    "python tools/install_venv.py",
+                    ("tools/with_venv.sh nosetests "
+                     "--attr=type=smoke %s") % xunit_flag]
+        self.run_command_on_node(node, "; ".join(commands))
+        self.scp_from_node(node=node, path=xunit_file, destination=".")
+
+    def update_tempest_cookbook(self, env):
+        cmds = ["cd /opt/rcbops/chef-cookbooks/cookbooks/tempest",
+                "git pull origin master",
+                "knife cookbook upload -a -o /opt/rcbops/chef-cookbooks/cookbooks"]
+        query = "chef_environment:{0} AND in_use:chef_server".format(env.name)
+        chef_server = next(self.node_search(query))
+        self.run_command_on_node(chef_server, "; ".join(cmds))
