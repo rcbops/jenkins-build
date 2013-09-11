@@ -20,7 +20,7 @@ def main(environment="autotest-precise-grizzly-openldap",
     query = ("chef_environment:{0} AND "
              "(run_list:*ha-controller* OR "
              "run_list:*single-controller*)").format(environment)
-    controllers = list(qa.node_search(query))
+    controllers = list(qa.node_search(query, api=api))
     if not controllers:
         print "No controllers in environment"
         sys.exit(1)
