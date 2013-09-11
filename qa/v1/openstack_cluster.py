@@ -407,7 +407,9 @@ if results.action == "build":
                 print "## Current cluster status is: Online ##"
 
                 # bring up the routes
-                rpcsqa.bring_up_cluster_default_routes(env, 'em1')
+                nic_dev = 'em1'
+                print "## Bringing up cluster routes on {0} ##".format(nic_dev)
+                rpcsqa.bring_up_cluster_default_routes(env, nic_dev)
 
                 # Controller 1
                 print "## Running chef-client on {0} after reboot ##".format(ha_controller_1) 
