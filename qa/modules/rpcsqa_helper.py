@@ -426,6 +426,6 @@ class rpcsqa_helper:
         cmds = ["cd /opt/rcbops/chef-cookbooks/cookbooks/tempest",
                 "git pull origin master",
                 "knife cookbook upload -a -o /opt/rcbops/chef-cookbooks/cookbooks"]
-        query = "chef_environment:{0} AND in_use:chef_server".format(env.name)
+        query = "chef_environment:{0} AND in_use:chef-server".format(env.name)
         chef_server = next(self.node_search(query))
         self.run_command_on_node(chef_server, "; ".join(cmds))
