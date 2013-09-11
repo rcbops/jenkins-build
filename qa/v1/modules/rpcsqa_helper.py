@@ -51,7 +51,7 @@ class rpcsqa_helper:
         else:
             raise NotImplementedError
 
-        command = "; ".join(commands`)
+        command = "; ".join(commands)
 
         run = self.run_cmd_on_node(node, command)
         if not run['success']:
