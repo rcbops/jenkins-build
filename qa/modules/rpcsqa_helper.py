@@ -72,19 +72,22 @@ class rpcsqa_helper:
         chef_env.override_attributes.update(env_json['override_attributes'])
         chef_env.override_attributes['package_component'] = branch
 
-        old_networks = [{"num_networks": "1", "bridge": "br0",
-                         "label": "public", "dns1": "8.8.8.8",
-                         "dns2": "8.8.4.4", "bridge_dev": "eth1",
-                         "network_size": "254",
-                         "ipv4_cidr": "172.31.0.0/24"}]
-
-        if branch_tag in ["folsom", "v3.1.0", "v4.0.0"]:
-            chef_env.override_attributes['nova']['networks'] = old_networks
-            if os_distro == "centos":
-                chef_env.override_attributes['nova']['networks'][0]['bridge_dev'] = "em2"
+        if 'neutron' in features:
+            chef_env.override_attributes['nova'].pop("networks", None)
         else:
-            if os_distro == "centos":
-                chef_env.override_attributes['nova']['networks']['public']['bridge_dev'] = "em2"
+            old_networks = [{"num_networks": "1", "bridge": "br0",
+                             "label": "public", "dns1": "8.8.8.8",
+                             "dns2": "8.8.4.4", "bridge_dev": "eth1",
+                             "network_size": "254",
+                             "ipv4_cidr": "172.31.0.0/24"}]
+
+            if branch_tag in ["folsom", "v3.1.0", "v4.0.0"]:
+                chef_env.override_attributes['nova']['networks'] = old_networks
+                if os_distro == "centos":
+                    chef_env.override_attributes['nova']['networks'][0]['bridge_dev'] = "em2"
+            else:
+                if os_distro == "centos":
+                    chef_env.override_attributes['nova']['networks']['public']['bridge_dev'] = "em2"
         chef_env.save()
         return env
 
