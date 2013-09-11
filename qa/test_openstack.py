@@ -37,11 +37,11 @@ def main(environment="autotest-precise-grizzly-glance-cf",
             qa.run_command_on_node(controller, cmd)
     qa.test(controllers[0], environment)
 
-    if len(controllers) > 1:
-        for i, controller in enumerate(controllers):
-            qa.disable_controller(controller)
-            time.sleep(180)
-            qa.test(controller[0], environment)
-            qa.enable_controller(controller)
+    # if len(controllers) > 1:
+    #     for i, controller in enumerate(controllers):
+    #         qa.disable_controller(controller)
+    #         time.sleep(180)
+    #         qa.test(controller[0], environment)
+    #         qa.enable_controller(controller)
 
 argh.dispatch_command(main)
