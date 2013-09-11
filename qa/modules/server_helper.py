@@ -2,7 +2,21 @@ import sys
 import paramiko
 from cStringIO import StringIO
 from subprocess import check_call, CalledProcessError
-import os
+
+
+def run_cmd(command):
+    """
+    @param cmd
+    @return A map based on pass / fail run info
+    """
+    try:
+        ret = check_call(command, shell=True)
+        return {'success': True, 'return': ret, 'exception': None}
+    except CalledProcessError, cpe:
+        return {'success': False,
+                'return': None,
+                'exception': cpe,
+                'command': command}
 
 
 def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
@@ -61,7 +75,8 @@ def run_remote_scp_cmd(server_ip, user, password, to_copy):
                 'command': command}
 
 
-def get_file_from_server(server_ip, user, password, path_to_file, copy_location):
+def get_file_from_server(server_ip, user, password, path_to_file,
+                         copy_location):
     """
     @param server_ip: The servers ip to get file from
     @param user: remote server user
