@@ -668,7 +668,8 @@ class rpcsqa_helper:
 
     def disable_iptables(self, chef_node, logfile="STDOUT"):
         commands = ['/sbin/iptables -F',
-                    '/etc/init.d/iptables save']
+                    '/etc/init.d/iptables save',
+                    '/sbin/iptables -L']
         command = "; ".join(commands)
         run = self.run_cmd_on_node(chef_node, command)
         if not run['success']:
