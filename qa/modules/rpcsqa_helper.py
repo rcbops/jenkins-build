@@ -1,6 +1,7 @@
 import sys
 import json
 import time
+import itertools
 from cStringIO import StringIO
 from chef import *
 from server_helper import *
@@ -412,15 +413,33 @@ class rpcsqa_helper:
         self.run_command_on_node(node, command, private=True)
 
     def test(self, node, env):
+        feature_map = {"glance-cf": ["compute/images", "image"],
+                       "glance-local": ["compute/images", "image"],
+                       "keystone-ldap": ["compute/admin",
+                                         "compute/security_groups",
+                                         "compute/test_authorization.py",
+                                         "identity"],
+                       "keystone-mysql": ["compute/admin",
+                                          "compute/security_groups",
+                                          "compute/test_authorization.py",
+                                          "identity"],
+                       "neutron": ["network"],
+                       "cinder-local": ["compute/volumes", "volume"],
+                       "swift": ["object_storage"]}
+        featured = filter(lambda x: x in env, feature_map.keys())
+        test_list = (feature_map[f] for f in featured)
+        tests = list(itertools.chain.from_iterable(test_list))
+        test_paths = map(lambda x: "tempest/tests/" + x, tests)
+
         xunit_file = '%s-%s.xunit' % (time.strftime("%Y-%m-%d-%H:%M:%S",
                                                     time.gmtime()),
                                       env)
         xunit_flag = '--with-xunit --xunit-file=%s' % xunit_file
         tempest_dir = "/opt/tempest"
         commands = ["cd %s" % tempest_dir,
-                    "python tools/install_venv.py",
                     ("tools/with_venv.sh nosetests "
-                     "--attr=type=smoke %s") % xunit_flag]
+                     "%s %s") % (xunit_flag,
+                                 " ".join(test_paths))]
         self.run_command_on_node(node, "; ".join(commands))
         xunit_path = tempest_dir + "/" + xunit_file
         self.scp_from_node(node=node, path=xunit_path, destination=".")
