@@ -1372,13 +1372,13 @@ class rpcsqa_helper:
 
         print "Adding Quantum Network."
         commands = ["source openrc admin",
-                    "quantum net-create --provider:physical_network=ph-{0} --provider:network_type=flat flattest".format(phy_dev)]
+                    "quantum net-create flattest".format(phy_dev)]
 
         # Need to be able to run both centos and precise tests so chop up subnet
         if phy_dev == 'eth1':
-            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.129,end=10.0.0.190 flattest 10.0.0.0/24")
+            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway flattest 10.0.0.0/24")
         else:
-            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.193,end=10.0.0.254 flattest 10.0.0.0/24")
+            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway flattest 10.0.0.0/24")
 
          # Setup bridge and ports on controllers
         command = "; ".join(commands)
