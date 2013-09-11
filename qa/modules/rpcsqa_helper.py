@@ -106,14 +106,7 @@ class rpcsqa_helper:
         chef_node = Node(node.name, api=self.chef)
         runs = []
         success = True
-        if private:
-            iface = "eth0" if "precise" in node.name else "em1"
-            addrs = node['network']['interfaces'][iface]['addresses']
-            for addr in addrs.keys():
-                if addrs[addr]['family'] is "inet":
-                    ip = addr
-        else:
-            ip = node['ipaddress']
+        ip = private_ip(node) if private else node['ipaddress']
         for i in xrange(0, num_times):
             user_pass = self.razor_password(chef_node)
             run = run_remote_ssh_cmd(ip, 'root', user_pass, command, quiet)
@@ -122,7 +115,15 @@ class rpcsqa_helper:
             runs.append(run)
         return {'success': success, 'runs': runs}
 
-    def run_chef_client(self, chef_node, num_times=1, log_level='error', quiet=False):
+    def private_ip(node):
+        iface = "eth0" if "precise" in node.name else "em1"
+        addrs = node['network']['interfaces'][iface]['addresses']
+        for addr in addrs.keys():
+            if addrs[addr]['family'] is "inet":
+                return addr
+
+    def run_chef_client(self, chef_node, num_times=1, log_level='error',
+                        quiet=False):
         # log level can be (debug, info, warn, error, fatal)
         return self.run_command_on_node(chef_node,
                                         'chef-client -l %s' % log_level,
@@ -403,12 +404,12 @@ class rpcsqa_helper:
     def disable_controller(self, node):
         iface = "eth0" if "precise" in node.name else "em1"
         command = ("ifdown {0}".format(iface))
-        self.run_cmd_on_node(node, command, private=True)
+        self.run_command_on_node(node, command, private=True)
 
     def enable_controller(self, node):
         iface = "eth0" if "precise" in node.name else "em1"
         command = ("ifup {0}".format(iface))
-        self.run_cmd_on_node(node, command, private=True)
+        self.run_command_on_node(node, command, private=True)
 
     def test(self, node, env):
         xunit_file = '%s-%s.xunit' % (time.strftime("%Y-%m-%d-%H:%M:%S",
@@ -426,6 +427,6 @@ class rpcsqa_helper:
         cmds = ["cd /opt/rcbops/chef-cookbooks/cookbooks/tempest",
                 "git pull origin master",
                 "knife cookbook upload -a -o /opt/rcbops/chef-cookbooks/cookbooks"]
-        query = "chef_environment:{0} AND in_use:chef_server".format(env.name)
+        query = "chef_environment:{0} AND in_use:chef-server".format(env.name)
         chef_server = next(self.node_search(query))
         self.run_command_on_node(chef_server, "; ".join(cmds))
