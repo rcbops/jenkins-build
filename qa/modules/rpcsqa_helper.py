@@ -403,12 +403,12 @@ class rpcsqa_helper:
     def disable_controller(self, node):
         iface = "eth0" if "precise" in node.name else "em1"
         command = ("ifdown {0}".format(iface))
-        self.run_cmd_on_node(node, command, private=True)
+        self.run_command_on_node(node, command, private=True)
 
     def enable_controller(self, node):
         iface = "eth0" if "precise" in node.name else "em1"
         command = ("ifup {0}".format(iface))
-        self.run_cmd_on_node(node, command, private=True)
+        self.run_command_on_node(node, command, private=True)
 
     def test(self, node, env):
         xunit_file = '%s-%s.xunit' % (time.strftime("%Y-%m-%d-%H:%M:%S",
