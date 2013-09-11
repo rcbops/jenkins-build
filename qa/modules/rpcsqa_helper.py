@@ -106,7 +106,7 @@ class rpcsqa_helper:
         chef_node = Node(node.name, api=self.chef)
         runs = []
         success = True
-        ip = private_ip(node) if private else node['ipaddress']
+        ip = self.private_ip(node) if private else node['ipaddress']
         for i in xrange(0, num_times):
             user_pass = self.razor_password(chef_node)
             run = run_remote_ssh_cmd(ip, 'root', user_pass, command, quiet)
@@ -115,7 +115,7 @@ class rpcsqa_helper:
             runs.append(run)
         return {'success': success, 'runs': runs}
 
-    def private_ip(node):
+    def private_ip(self, node):
         iface = "eth0" if "precise" in node.name else "em1"
         addrs = node['network']['interfaces'][iface]['addresses']
         for addr in addrs.keys():
@@ -416,12 +416,14 @@ class rpcsqa_helper:
                                                     time.gmtime()),
                                       env)
         xunit_flag = '--with-xunit --xunit-file=%s' % xunit_file
-        commands = ["cd /opt/tempest",
+        tempest_dir = "/opt/tempest"
+        commands = ["cd %s" % tempest_dir,
                     "python tools/install_venv.py",
                     ("tools/with_venv.sh nosetests "
                      "--attr=type=smoke %s") % xunit_flag]
         self.run_command_on_node(node, "; ".join(commands))
-        self.scp_from_node(node=node, path=xunit_file, destination=".")
+        xunit_path = tempest_dir + "/" + xunit_file
+        self.scp_from_node(node=node, path=xunit_path, destination=".")
 
     def update_tempest_cookbook(self, env):
         cmds = ["cd /opt/rcbops/chef-cookbooks/cookbooks/tempest",

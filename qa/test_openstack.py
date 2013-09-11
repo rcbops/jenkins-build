@@ -36,7 +36,7 @@ def main(environment="autotest-precise-grizzly-openldap",
 
     qa.test(controllers[0], environment)
 
-    if controllers > 1:
+    if len(controllers) > 1:
         for i, controller in enumerate(controllers):
             qa.disable_controller(controller)
             time.sleep(180)
