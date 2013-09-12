@@ -413,7 +413,8 @@ class rpcsqa_helper:
         self.run_command_on_node(node, command, private=True)
 
     def test(self, node, env):
-        feature_map = {"glance-cf": ["compute/images", "image"],
+        feature_map = {"default": ["compute", "identity"],
+                       "glance-cf": ["compute/images", "image"],
                        "glance-local": ["compute/images", "image"],
                        "keystone-ldap": ["compute/admin",
                                          "compute/security_groups",
@@ -430,19 +431,20 @@ class rpcsqa_helper:
         test_list = (feature_map[f] for f in featured)
         tests = list(itertools.chain.from_iterable(test_list))
         test_paths = map(lambda x: "tempest/tests/" + x, tests)
-
-        xunit_file = '%s-%s.xunit' % (time.strftime("%Y-%m-%d-%H:%M:%S",
-                                                    time.gmtime()),
-                                      env)
+        xunit_file = '%s.xml' % env
         xunit_flag = '--with-xunit --xunit-file=%s' % xunit_file
-        tempest_dir = "/opt/tempest"
-        commands = ["cd %s" % tempest_dir,
-                    ("tools/with_venv.sh nosetests "
-                     "%s %s") % (xunit_flag,
-                                 " ".join(test_paths))]
-        self.run_command_on_node(node, "; ".join(commands))
+        tempest_dir = "/opt/tempest/"
+        command = ("{0}tools/with_venv.sh nosetests -w "
+                   "{0} {1} {2}".format(tempest_dir, xunit_flag,
+                                        " ".join(test_paths)))
+        self.run_command_on_node(node, command)
         xunit_path = tempest_dir + "/" + xunit_file
+        run_cmd("rm *.xunit")
         self.scp_from_node(node=node, path=xunit_path, destination=".")
+        if "default" not in env:
+            'smoke.xml'
+            self.scp_from_node(node=node, path=xunit_path, destination=".")
+        timestamp = time.strftime("%Y-%m-%d-%H:%M:%S", time.gmtime())
 
     def update_tempest_cookbook(self, env):
         cmds = ["cd /opt/rcbops/chef-cookbooks/cookbooks/tempest",
