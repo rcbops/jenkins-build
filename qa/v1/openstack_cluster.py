@@ -109,7 +109,7 @@ if (results.branch in ["folsom"] or results.repo_tag in ["3.1.0", "4.0.0"]) and 
 if results.ha_enabled and results.neutron:
 
     neutron_network = {"provider": "quantum"}
-    quantum_network = { "ovs": { "network_type": "gre"}}
+    quantum_network = {"ovs": { "network_type": "gre"}}
 
     print "Setting HA network to neutron"
     env_obj = Environment(env)
