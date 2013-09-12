@@ -1376,9 +1376,9 @@ class rpcsqa_helper:
 
         # Need to be able to run both centos and precise tests so chop up subnet
         if phy_dev == 'eth1':
-            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway flattest 10.0.0.0/24")
+            commands.append("quantum subnet-create --name testnet --no-gateway flattest 10.0.0.0/24")
         else:
-            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway flattest 10.0.0.0/24")
+            commands.append("quantum subnet-create --name testnet --no-gateway flattest 10.0.0.0/24")
 
          # Setup bridge and ports on controllers
         command = "; ".join(commands)
