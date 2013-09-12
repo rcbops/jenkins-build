@@ -44,10 +44,14 @@ class rpcsqa_helper:
         This will bring up a given devices route to be the default
         '''
 
+        commands = ['ip r f exact 0/0']
+
         if node['platform_family'] == 'rhel':
-            command = "/etc/sysconfig/network-scripts/ifup-routes {0}".format(device)
+            commands.append("/etc/sysconfig/network-scripts/ifup-routes {0}".format(device))
         else:
             raise NotImplementedError
+
+        command = "; ".join(commands)
 
         run = self.run_cmd_on_node(node, command)
         if not run['success']:
@@ -1349,7 +1353,7 @@ class rpcsqa_helper:
         # Setup OVS bridge on network and compute node
         print "Setting up OVS bridge and ports on Quantum / Compute Node(s)."
         commands = ['ip a f {0}'.format(phy_dev),
-                       'ovs-vsctl add-port br-{0} {0}'.format(phy_dev)]
+                    'ovs-vsctl add-port br-{0} {0}'.format(phy_dev)]
         command = "; ".join(commands)
 
         # Setup bridge and ports on controllers
@@ -1368,13 +1372,13 @@ class rpcsqa_helper:
 
         print "Adding Quantum Network."
         commands = ["source openrc admin",
-                    "quantum net-create --provider:physical_network=ph-{0} --provider:network_type=flat flattest".format(phy_dev)]
+                    "quantum net-create flattest".format(phy_dev)]
 
         # Need to be able to run both centos and precise tests so chop up subnet
         if phy_dev == 'eth1':
-            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.129,end=10.0.0.190 flattest 10.0.0.128/26")
+            commands.append("quantum subnet-create --name testnet --no-gateway flattest 10.0.0.0/24")
         else:
-            commands.append("source openrc admin; quantum subnet-create --name testnet --no-gateway --host-route destination=0.0.0.0/0,nexthop=10.0.0.1 --allocation-pool start=10.0.0.193,end=10.0.0.254 flattest 10.0.0.192/26")
+            commands.append("quantum subnet-create --name testnet --no-gateway flattest 10.0.0.0/24")
 
          # Setup bridge and ports on controllers
         command = "; ".join(commands)

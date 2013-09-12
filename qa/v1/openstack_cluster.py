@@ -109,12 +109,14 @@ if (results.branch in ["folsom"] or results.repo_tag in ["3.1.0", "4.0.0"]) and 
 if results.ha_enabled and results.neutron:
 
     neutron_network = {"provider": "quantum"}
+    quantum_network = {"ovs": {"network_type": "gre"}}
 
     print "Setting HA network to neutron"
     env_obj = Environment(env)
 
     # Change the nova network attribute to be neutron
     env_obj.override_attributes['nova']['network'] = neutron_network
+    env_obj.override_attributes['quantum'] = quantum_network
     
     # Remove the networks attribute
     env_obj.override_attributes['nova'].pop("networks", None)
