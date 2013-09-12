@@ -28,6 +28,8 @@ base_env = {
     }
 }
 
+neutron = {"nova": {"network": {"provider": "quantum", "apply_patches": True }}}
+
 openldap = {
     "keystone": {
         "debug": "True",

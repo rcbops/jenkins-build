@@ -65,9 +65,9 @@ def main():
                         required=False, default=False,
                         help="Do you want to HA this environment?")
 
-    parser.add_argument('--quantum', action='store_true', dest='quantum',
+    parser.add_argument('--neutron', action='store_true', dest='neutron',
                         required=False, default=False,
-                        help="Do you want quantum networking")
+                        help="Do you want neutron networking")
 
     parser.add_argument('--openldap', action='store_true', dest='openldap',
                         required=False, default=False,
@@ -93,7 +93,7 @@ def main():
 
     # Save the parsed arguments
     args = parser.parse_args()
-    feature_list = ['openldap', 'quantum', 'ha']
+    feature_list = ['openldap', 'neutron', 'ha']
     features = [x for x in feature_list if args.__dict__[x] is True]
     if features == []:
         features = ['default']
@@ -119,6 +119,7 @@ def main():
                                  branch,
                                  features,
                                  args.branch)
+    print json.dumps(Environment(env).override_attributes, indent=4)
 
     #####################
     #   GATHER NODES
@@ -178,11 +179,11 @@ def main():
                               'in_use': 'chef_server',
                               'post_commands': post_commands})
 
-            if args.quantum:
+            if args.neutron:
                 node = qa.get_razor_node(args.os_distro, env)                
                 build.append({'name': node.name,
                               'ip': node['ipaddress'],
-                              'in_use': 'quantum',
+                              'in_use': 'neutron',
                               'run_list': ['role[single-network-node]']})
 
             #Controller
