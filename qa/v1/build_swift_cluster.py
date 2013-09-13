@@ -191,10 +191,11 @@ if results.action == "build":
         rpcsqa.failed_ssh_command_exit(command, chef_node['node'], run['error'])
 
     # Run berkshelf on server
-    command = ('cd /opt/rcbops/swift-private-cloud; '
-               'source /usr/local/rvm/scripts/rvm; '
-               'berks install; '
-               'berks upload')
+    commands = ['cd /opt/rcbops/swift-private-cloud',
+                'source /usr/local/rvm/scripts/rvm',
+                'berks install',
+                'berks upload']
+    command = "; ".join(commands)
     run = rpcsqa.run_cmd_on_node(chef_node['node'], command)
     if not run['success']:
         rpcsqa.failed_ssh_command_exit(command, chef_node['node'], run['error'])
