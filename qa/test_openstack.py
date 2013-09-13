@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 
+"""
+Openstack tests
+"""
+
 import sys
-import time
 import argh
 from chef import Environment
 from modules.rpcsqa_helper import rpcsqa_helper
 
 
-def main(environment="autotest-precise-grizzly-glance-cf",
+def tempest(environment="autotest-precise-grizzly-glance-cf",
          razor_ip="198.101.133.3", log_level="error"):
+    """
+    Tests and openstack cluster with tempest
+    """
     qa = rpcsqa_helper(razor_ip=razor_ip)
     env = Environment(environment)
     if 'remote_chef' in env.override_attributes:
         api = qa.remote_chef_client(env)
         env = Environment(environment, api=api)
-        qa.update_tempest_cookbook(env)
     else:
         api = qa.chef
     query = ("chef_environment:{0} AND "
@@ -30,6 +35,8 @@ def main(environment="autotest-precise-grizzly-glance-cf",
             print "Adding tempest to controller run_list"
             controller.run_list.append('recipe[tempest]')
             controller.save()
+            print "Updating tempest cookbooks"
+            qa.update_tempest_cookbook(env)
             print "Running chef-client"
             qa.run_chef_client(controller, num_times=2,
                                log_level=log_level)
@@ -44,4 +51,4 @@ def main(environment="autotest-precise-grizzly-glance-cf",
     #         qa.test(controller[0], environment)
     #         qa.enable_controller(controller)
 
-argh.dispatch_command(main)
+argh.dispatch_command(tempest)
