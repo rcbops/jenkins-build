@@ -13,7 +13,7 @@ from modules.rpcsqa_helper import rpcsqa_helper
 def tempest(environment="autotest-precise-grizzly-glance-cf",
          razor_ip="198.101.133.3", log_level="error"):
     """
-    Tests and openstack cluster with tempest
+    Tests an openstack cluster with tempest
     """
     qa = rpcsqa_helper(razor_ip=razor_ip)
     env = Environment(environment)
@@ -42,7 +42,7 @@ def tempest(environment="autotest-precise-grizzly-glance-cf",
                                log_level=log_level)
             cmd = "python /opt/tempest/tools/install_venv.py"
             qa.run_command_on_node(controller, cmd)
-    qa.test(controllers[0], environment)
+    qa.feature_test(controllers[0], environment)
 
     # if len(controllers) > 1:
     #     for i, controller in enumerate(controllers):
