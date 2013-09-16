@@ -2,11 +2,12 @@ import sys
 import json
 import time
 import itertools
-from cStringIO import StringIO
 from chef import *
+import environments
+from glob import glob
 from server_helper import *
 from razor_api import razor_api
-import environments
+from xml.etree import ElementTree
 
 
 class rpcsqa_helper:
@@ -113,6 +114,7 @@ class rpcsqa_helper:
         ip = self.private_ip(node) if private else node['ipaddress']
         for i in xrange(0, num_times):
             user_pass = self.razor_password(chef_node)
+            print "On {0}, Running: {1}".format(node.name, command)
             run = run_remote_ssh_cmd(ip, 'root', user_pass, command, quiet)
             if run['success'] is False:
                 success = False
@@ -231,8 +233,6 @@ class rpcsqa_helper:
         # RSAifying key
         env = Environment(env.name)
         remote_dict = dict(env.override_attributes['remote_chef'])
-        pem = StringIO(remote_dict['key'])
-        remote_dict['key'] = rsa.Key(pem)
         return ChefAPI(**remote_dict)
 
     def remove_chef(self, chef_node):
@@ -415,8 +415,9 @@ class rpcsqa_helper:
         command = ("ifup {0}".format(iface))
         self.run_command_on_node(node, command, private=True)
 
-    def test(self, node, env):
-        feature_map = {"glance-cf": ["compute/images", "image"],
+    def feature_test(self, node, env):
+        feature_map = {"default": ["compute", "identity"],
+                       "glance-cf": ["compute/images", "image"],
                        "glance-local": ["compute/images", "image"],
                        "keystone-ldap": ["compute/admin",
                                          "compute/security_groups",
@@ -432,20 +433,38 @@ class rpcsqa_helper:
         featured = filter(lambda x: x in env, feature_map.keys())
         test_list = (feature_map[f] for f in featured)
         tests = list(itertools.chain.from_iterable(test_list))
-        test_paths = map(lambda x: "tempest/tests/" + x, tests)
+        rm_xml = "rm -f *.xml"
+        self.run_command_on_node(node, rm_xml)
+        run_cmd(rm_xml)
+        self.run_tests(node, env, tests)
+        if "default" not in env:
+            smoke_tag = ["type=smoke"]
+            self.run_tests(node, "smoke", tags=smoke_tag)
+        self.xunit_merge()
 
-        xunit_file = '%s-%s.xunit' % (time.strftime("%Y-%m-%d-%H:%M:%S",
-                                                    time.gmtime()),
-                                      env)
+
+    def run_tests(self, node, name, tests=None, tags=None):
+        """
+        Runs tests with optional tags, transfers results to current dir
+        @param tests: Name for the tests
+        @type tests: String
+        @param tests: Test locations to run as strings
+        @type tests: Iterable
+        @param tag: Tags to run
+        @type tag: Iterable
+        """
+        xunit_file = "{0}.xml".format(name)
         xunit_flag = '--with-xunit --xunit-file=%s' % xunit_file
-        tempest_dir = "/opt/tempest"
-        commands = ["cd %s" % tempest_dir,
-                    ("tools/with_venv.sh nosetests "
-                     "%s %s") % (xunit_flag,
-                                 " ".join(test_paths))]
-        self.run_command_on_node(node, "; ".join(commands))
-        xunit_path = tempest_dir + "/" + xunit_file
-        self.scp_from_node(node=node, path=xunit_path, destination=".")
+        tempest_dir = "/opt/tempest/"
+        tag_arg = "-a " + " -a ".join(tags) if tags else ""
+        paths = " ".join(tests) if tests else ""
+        command = ("{0}tools/with_venv.sh nosetests -w "
+                   "{0}tempest/tests {1} {2} {3}".format(tempest_dir,
+                                                         xunit_flag,
+                                                         tag_arg,
+                                                         paths))
+        self.run_command_on_node(node, command)
+        self.scp_from_node(node=node, path=xunit_file, destination=".")
 
     def update_tempest_cookbook(self, env):
         cmds = ["cd /opt/rcbops/chef-cookbooks/cookbooks/tempest",
@@ -453,4 +472,23 @@ class rpcsqa_helper:
                 "knife cookbook upload -a -o /opt/rcbops/chef-cookbooks/cookbooks"]
         query = "chef_environment:{0} AND in_use:chef-server".format(env.name)
         chef_server = next(self.node_search(query))
-        self.run_command_on_node(chef_server, "; ".join(cmds))
+        self.run_command_on_node(chef_server, "; ".join(cmds))['success']
+
+    def xunit_merge(self, path="."):
+        files = glob(path +"/*.xml")
+        tree = None
+        attrs = ["failures", "tests", "errors", "skip"]
+        for file in files:
+            data = ElementTree.parse(file).getroot()
+            for testcase in data.iter('testsuite'):
+                if tree is None:
+                    tree = data
+                    insertion_point = tree
+                else:
+                    for attr in attrs:
+                        tree.attrib[attr] = str(int(tree.attrib[attr]) +
+                                                int(data.attrib[attr]))
+                    insertion_point.extend(testcase)
+        if tree is not None:
+            with open("results.xunit", "w") as f:
+                f.write(ElementTree.tostring(tree))
