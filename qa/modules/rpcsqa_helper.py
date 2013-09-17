@@ -417,6 +417,7 @@ class rpcsqa_helper:
 
     def feature_test(self, node, env):
         feature_map = {"default": ["compute", "identity"],
+                       "ha": ["compute", "identity"],
                        "glance-cf": ["compute/images", "image"],
                        "glance-local": ["compute/images", "image"],
                        "keystone-ldap": ["compute/admin",
