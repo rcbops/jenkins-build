@@ -5,16 +5,12 @@ from ssh_helper import run_cmd, scp_to, scp_from
 class OSNode(object):
     """
     A individual computation entity to deploy a part OpenStack onto
-
-    Provides 
+    Provides server related functions
     """
-    def __init__(self, ip, user, password, role,
-                 config_manager=None, provisioner=None):
+    def __init__(self, ip, user, password, role):
         self.ip = ip
         self.user = user
         self.password = password
-        self.provisioner = provisioner
-        self.config_manager = config_manager
         self.role = role
         self._cleanups = []
 
@@ -39,7 +35,7 @@ class OSNode(object):
     def __str__(self):
         return "Node: %s" % self.ip
 
-    def tear_down(self):
+    def destroy(self):
         raise NotImplementedError
 
     def clean_up(self):
@@ -52,10 +48,15 @@ class OSNode(object):
 
 
 class OSChefNode(OSNode):
+    """
+    A chef entity
+    Provides chef related server fuctions
+    """
     def __init__(self, ip, user, password, role,
                  config_manager=None, provisioner=None):
-        super(OSChefNode, self).__init__(ip, user, password, role,
-                                         config_manager=None, provisioner=None)
+        super(OSChefNode, self).__init__(ip, user, password, role)
+        self.provisioner = provisioner
+        self.config_manager = config_manager
 
     def install_chef_server(self):
         """
@@ -70,7 +71,7 @@ class OSChefNode(OSNode):
 
     def install_cookbooks(self, url, branch, local_repo='/opt/rcbops'):
         '''
-        @summary: Install cookbooks
+        Install cookbooks onto chef server
         @param url git url of cookbook
         @type url String
         @param branch git branch of cookbook

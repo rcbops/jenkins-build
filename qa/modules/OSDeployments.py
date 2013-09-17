@@ -15,10 +15,10 @@ class OSDeployment(object):
         self.features = features
         self.nodes = []
 
-    def tear_down(self):
-        """ Tears down OpenStack deployment """
+    def destroy(self):
+        """ Destroys an OpenStack deployment """
         for node in self.nodes:
-            node.tear_down()
+            node.destroy()
 
     def create_node(self, role):
         """ Abstract node creation method """

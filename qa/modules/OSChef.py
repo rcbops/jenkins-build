@@ -85,7 +85,7 @@ class OSChef:
 
     def build_chef_server(self, chef_node=None, cookbooks=None, env=None):
         """
-        
+
         """
         if not chef_node:
             query = "chef_environment:%s AND in_use:chef_server" % env
@@ -96,6 +96,6 @@ class OSChef:
         self.add_remote_chef_locally(chef_node, chef_env)
         self.setup_remote_chef_environment(chef_env)
 
-    def delete_client_node(self, name):
-        Node(name, self.api)delete()
+    def destroy(self, name):
+        Node(name, self.api).delete()
         Client(name, self.api).delete()
