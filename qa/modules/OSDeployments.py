@@ -16,6 +16,9 @@ class OSDeployment(object):
         self.features = features
         self.nodes = []
 
+    def __iter__(self):
+        return self.nodes
+
     def destroy(self):
         """ Destroys an OpenStack deployment """
         for node in self.nodes:
