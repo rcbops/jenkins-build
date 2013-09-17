@@ -30,12 +30,19 @@ def run_remote_ssh_cmd(server_ip, user, password, remote_cmd, quiet=False):
     output = StringIO()
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server_ip, username=user, password=password)
+    try:
+        ssh.connect(server_ip, username=user, password=password)
 
-    chan = ssh.get_transport().open_session()
-    chan.get_pty()
-    f = chan.makefile()
-    chan.exec_command(remote_cmd)
+        chan = ssh.get_transport().open_session()
+        chan.get_pty()
+        f = chan.makefile()
+        chan.exec_command(remote_cmd)
+    except Exception as e:
+        return {'success': False,
+                'return': "",
+                'exit_status': -1,
+                'error': e.message}
+
     for line in f:
         if not quiet:
             sys.stdout.write(line)
