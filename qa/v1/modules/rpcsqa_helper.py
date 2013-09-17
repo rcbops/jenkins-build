@@ -1077,7 +1077,8 @@ class rpcsqa_helper:
         for active in active_models:
             data = active_models[active]
             if 'broker_fail' in data['current_state']:
-                print "!!## -- Removing active model  (broker_fail) -- ##!!"
+                print ("!!## -- Removing active model"
+                       "(broker_fail) - %s -- ##!!" % active)
                 user_pass = self.razor.get_active_model_pass(
                     data['am_uuid'])['password']
                 ip = data['eth1_ip']
