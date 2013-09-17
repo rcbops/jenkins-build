@@ -10,8 +10,9 @@ from modules.OSNodes import OSChefNode
 
 class OSDeployment(object):
     """Base for OpenStack deployments"""
-    def __init__(self, name, features):
+    def __init__(self, name, os, branch, features):
         self.name = name
+        self.os = os
         self.features = features
         self.nodes = []
 
@@ -37,18 +38,20 @@ class OSDeployment(object):
 
 
 class ChefRazorOSDeployment(OSDeployment):
-    """Deployment mechinisms specific to deployment using:
+    """
+    Deployment mechinisms specific to deployment using:
     Puppet's Razor as provisioner and
     Opscode's Chef as configuration management
     """
-    def __init__(self, name, features, chef, razor):
-        super(ChefRazorOSDeployment, self).__init__(name, features)
+    def __init__(self, name, os, branch, features, chef, razor):
+        super(ChefRazorOSDeployment, self).__init__(name, os, branch, features)
         self.chef = chef
         self.razor = razor
+        self.environment = None
 
     def create_node(self, role):
         """Creates a node with chef cm and razor provisioner"""
-        node = next(self.chef)
+        node = self.chef.free_node(self.os)
         config_manager = ChefConfigManager(node.name, self.chef,
                                            self.features)
         config_manager.set_in_use()
@@ -72,6 +75,14 @@ class ChefRazorOSDeployment(OSDeployment):
 
     def provision(self):
         """Creates remote chef node then provisions roles"""
+        self.environment = self.chef.prepare_environment(self.name,
+                                                         self.os,
+                                                         self.os_version,
+                                                         self.features)
         if self.features['remote_chef']:
             self.create_node(Roles.ChefServer)
         super(ChefRazorOSDeployment, self).provision()
+
+    def destroy(self):
+        super(ChefRazorOSDeployment, self).destroy()
+        self.chef.destroy_environment(self.environment)

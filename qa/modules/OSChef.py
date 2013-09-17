@@ -7,6 +7,9 @@ import environments
 
 
 class OSChef:
+    """
+    Provides node related chef-operations for OpenStack deployments
+    """
     def __init__(self, api=None, remote_api=None):
         if not api:
             if 'knife_file' in config['chef']:
@@ -25,12 +28,11 @@ class OSChef:
             tries = tries - 1
         return (n.object for n in search)
 
-    # Python 3 compatibility
-    def __next__(self):
-        return self.next()
-
-    def next(self):
-        in_image_pool = "name:qa-%s-pool*" % self.image
+    def free_node(self, image):
+        """
+        Provides a free node from
+        """
+        in_image_pool = "name:qa-%s-pool*" % image
         is_default_environment = "chef_environment:_default"
         is_ifaced = """run_list:recipe\[network-interfaces\]"""
         query = "%s AND %s AND %s" % (in_image_pool,
@@ -72,6 +74,9 @@ class OSChef:
         chef_env.save()
         return env
 
+    def destroy_environment(self, name):
+        Environment(name, api=self.api).delete()
+
     def set_in_use(self, name, use):
         node = Node(name, api=self.api)
         node['in_use'] = use
@@ -96,6 +101,6 @@ class OSChef:
         self.add_remote_chef_locally(chef_node, chef_env)
         self.setup_remote_chef_environment(chef_env)
 
-    def destroy(self, name):
+    def destroy_node(self, name):
         Node(name, self.api).delete()
         Client(name, self.api).delete()

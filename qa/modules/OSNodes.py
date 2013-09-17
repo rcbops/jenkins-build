@@ -108,3 +108,9 @@ class OSChefNode(OSNode):
         command = "; ".join(commands)
 
         self.run_cmd(command)
+
+class OSRazorNode(OSNode):
+    pass
+
+class OSRazorChefNode(OSChefNode, OSRazorNode):
+    pass

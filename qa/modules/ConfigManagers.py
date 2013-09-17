@@ -7,6 +7,9 @@ class ConfigManager():
 
 
 class ChefConfigManager(ConfigManager):
+    """
+
+    """
     run_lists = []
     run_lists[OS_Roles.ChefServer] = ''
     run_lists[OS_Roles.SingleController] = ['role[ha-controller1]']
