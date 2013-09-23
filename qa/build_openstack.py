@@ -1,28 +1,6 @@
 #! /usr/bin/env python
 import argparse
-import traceback
 from modules.rpcsqa_helper import *
-
-
-def _run_commands(qa, node, commands):
-    print "#" * 70
-    print "Running {0} chef-client commands....".format(node)
-    for command in commands:
-        print "Running:  %s" % command
-        #If its a string run on remote server
-        if isinstance(command, str):
-            qa.run_command_on_node(node, command)
-        if isinstance(command, dict):
-            try:
-                func = command['function']
-                func(**command['kwargs'])
-            except:
-                print traceback.print_exc()
-                sys.exit(1)
-        #elif function run the function
-        elif hasattr(command, '__call__'):
-            command()
-    print "#" * 70
 
 
 def main():
@@ -69,6 +47,10 @@ def main():
                         required=False, default=False,
                         help="Do you want neutron networking")
 
+    parser.add_argument('--glance', action='store_true', dest='glance',
+                        required=False, default=False,
+                        help="Do you want glance in cloudfiles")
+
     parser.add_argument('--openldap', action='store_true', dest='openldap',
                         required=False, default=False,
                         help="Do you want openldap keystone?")
@@ -93,7 +75,7 @@ def main():
 
     # Save the parsed arguments
     args = parser.parse_args()
-    feature_list = ['openldap', 'neutron', 'ha']
+    feature_list = ['openldap', 'neutron', 'ha', 'glance']
     features = [x for x in feature_list if args.__dict__[x] is True]
     if features == []:
         features = ['default']
@@ -168,7 +150,7 @@ def main():
                               'ip': node['ipaddress']
                               })
 
-            if args.remote_chef:    
+            if args.remote_chef:
                 node = qa.get_razor_node(args.os_distro, env)
 
                 post_commands = [{'function': qa.build_chef_server,
@@ -180,7 +162,7 @@ def main():
                               'post_commands': post_commands})
 
             if args.neutron:
-                node = qa.get_razor_node(args.os_distro, env)                
+                node = qa.get_razor_node(args.os_distro, env)
                 build.append({'name': node.name,
                               'ip': node['ipaddress'],
                               'in_use': 'neutron',
@@ -188,11 +170,13 @@ def main():
 
             #Controller
             if args.ha:
+                pre_commands = [{'function': qa.prepare_cinder, 'kwargs': {'node': node, 'api': api}}]
                 node = qa.get_razor_node(args.os_distro, env)
                 build.append({'name': node.name,
                               'ip': node['ipaddress'],
                               'in_use': 'ha_controller1',
-                              'run_list': ['role[ha-controller1]']})
+                              'pre_commands': pre_commands,
+                              'run_list': ['role[ha-controller1]', 'role[cinder-all]']})
 
                 node = qa.get_razor_node(args.os_distro, env)
                 build.append({'name': node.name,
@@ -200,13 +184,15 @@ def main():
                               'in_use': 'ha_controller2',
                               'run_list': ['role[ha-controller2]']})
             else:
+                pre_commands = [{'function': qa.prepare_cinder, 'kwargs': {'node': node, 'api': api}}]
                 node = qa.get_razor_node(args.os_distro, env)
                 build.append({'name': node.name,
                               'ip': node['ipaddress'],
                               'in_use': 'single-controller',
-                              'run_list': ['role[ha-controller1]']})
+                              'pre_commands': pre_commands,
+                              'run_list': ['role[ha-controller1]', 'role[cinder-all]']})
 
-            
+
             #Compute with whatever is left
             num_computes = 0
             for n in xrange(computes):
@@ -216,7 +202,7 @@ def main():
                               'in_use': 'single-compute',
                               'run_list': ['role[single-compute]']})
                 num_computes += 1
-            
+
             #If no nodes left, run controller as compute
             if num_computes == 0:
                 build[-1]['run_list'] = build[-1]['run_list'] + ['role[single-compute]']
@@ -245,7 +231,7 @@ def main():
                 node.chef_environment = env
                 node['in_use'] = b['in_use']
                 node.save()
-                
+
                 if args.remote_chef and not b['in_use'] in ["chef_server","openldap"]:
                     qa.remove_chef(node)
                     query = "chef_environment:%s AND in_use:chef_server" % env
@@ -253,6 +239,9 @@ def main():
                     qa.bootstrap_chef(node, chef_server)
                     api = qa.remote_chef_client(environment)
                     print "api: %s" % api.url
+
+                if 'pre_commands' in b:
+                    _run_commands(qa, node, b['pre_commands'])
 
                 if 'run_list' in b:
                     # Reacquires node if using remote chef

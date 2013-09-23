@@ -1,3 +1,5 @@
+import json
+from os.path import expanduser
 #Environments and features in json
 
 base_env = {
@@ -17,7 +19,7 @@ base_env = {
         "nova": {
             "apply_patches": True,
             "networks": {"public": {"num_networks": "1", "bridge": "br0", "label": "public", "dns1": "8.8.8.8",
-                          "dns2": "8.8.4.4", "bridge_dev": "eth1", "network_size": "254", "ipv4_cidr": "172.31.0.0/24", 
+                          "dns2": "8.8.4.4", "bridge_dev": "eth1", "network_size": "254", "ipv4_cidr": "172.31.0.0/24",
                           "label":"public"}}
         },
         "horizon": {"theme": "default"},
@@ -70,8 +72,8 @@ ha = { "vips": {
           "glance-registry": "198.101.133.156", "horizon-dash": "198.101.133.156",
           "horizon-dash_ssl": "198.101.133.156", "keystone-admin-api": "198.101.133.156",
           "keystone-internal-api": "198.101.133.156", "keystone-service-api": "198.101.133.156",
-          "nova-api": "198.101.133.156", "nova-ec2-public": "198.101.133.156", 
-          "nova-novnc-proxy": "198.101.133.156", "nova-xvpvnc-proxy": "198.101.133.156", 
+          "nova-api": "198.101.133.156", "nova-ec2-public": "198.101.133.156",
+          "nova-novnc-proxy": "198.101.133.156", "nova-xvpvnc-proxy": "198.101.133.156",
           "swift-proxy": "198.101.133.156",
           "config": {
             "198.101.133.154": { "vrid": 10, "network": "public" },
@@ -80,6 +82,31 @@ ha = { "vips": {
           }
         }
     }
+
+glance = {
+    "glance": {
+        "api": {
+            "default_store": "swift",
+            "swift_store_auth_version": "2",
+            "swift_store_auth_address": "https://identity.api.rackspacecloud.com/v2.0"
+        },
+      "services": {
+          "api": {"path": ""},
+          "admin-api": {"path": ""},
+          "internal-api": {"path": ""},
+          "registry": {"path": ""}
+      },
+      "image_upload": True,
+        "images": [
+            "cirros",
+            "precise"
+        ]
+    }
+}
+
+with open(expanduser("~/source_files/cloud_files_auth.json")) as f:
+    data = json.load(f)
+    glance['glance']['api'].update(data)
 
 
 """

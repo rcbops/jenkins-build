@@ -217,9 +217,6 @@ class rpcsqa_helper:
         query = "chef_environment:%s" % environment
         return self.node_search(query, api)
 
-    def find_controller(self, environment):
-        pass
-
     def razor_password(self, chef_node):
         try:
             chef_node = Node(chef_node.name, api=self.chef)
@@ -493,3 +490,15 @@ class rpcsqa_helper:
         if tree is not None:
             with open("results.xunit", "w") as f:
                 f.write(ElementTree.tostring(tree))
+
+    def prepare_cinder(self, node, api):
+        cmds = ["vg=`vgdisplay 2> /dev/null | grep vg | awk '{print $3}'`",
+                ("for i in `lvdisplay 2> /dev/null | grep 'LV Name' | grep lv"
+                 " | awk '{print $3}'`; do lvremove $i; done"),
+                "vgreduce $vg --removemissing"]
+        self.run_command_on_node(node, "; ".join(cmds))
+        cmd = "vgdisplay 2> /dev/null | grep vg | awk '{print $3}'"
+        ret = self.run_command_on_node(node, "; ".join(cmds))['runs'][0]
+        volume_group = ret['return']
+        env = Environment(node.chef_environment, api=api)
+        env.override_attributes["cinder"]["storage"]["lvm"]["volume_group"] = volume_group
