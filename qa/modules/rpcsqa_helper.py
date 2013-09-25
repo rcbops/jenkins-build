@@ -232,10 +232,11 @@ class rpcsqa_helper:
         remote_dict = dict(env.override_attributes['remote_chef'])
         return ChefAPI(**remote_dict)
 
-    def remove_chef(self, chef_node):
+    def remove_chef(self, name):
         """
         @param chef_node
         """
+        chef_node = Node(name)
         print "removing chef on %s..." % chef_node
         if chef_node['platform_family'] == "debian":
             command = "apt-get remove --purge -y chef; rm -rf /etc/chef"
@@ -259,7 +260,7 @@ class rpcsqa_helper:
         if not chef_node:
             query = "chef_environment:%s AND in_use:chef_server" % env
             chef_node = next(self.node_search(query))
-        self.remove_chef(chef_node)
+        self.remove_chef(chef_node.name)
 
         install_chef_script = "https://raw.github.com/rcbops/jenkins-build/master/qa/bash/jenkins/install-chef-server.sh"
 
@@ -498,7 +499,7 @@ class rpcsqa_helper:
                 "vgreduce $vg --removemissing"]
         self.run_command_on_node(node, "; ".join(cmds))
         cmd = "vgdisplay 2> /dev/null | grep vg | awk '{print $3}'"
-        ret = self.run_command_on_node(node, "; ".join(cmds))['runs'][0]
+        ret = self.run_command_on_node(node, cmd)['runs'][0]
         volume_group = ret['return']
         env = Environment(node.chef_environment, api=api)
         env.override_attributes["cinder"]["storage"]["lvm"]["volume_group"] = volume_group
