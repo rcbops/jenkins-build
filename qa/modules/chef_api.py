@@ -5,3 +5,12 @@ class chef_api:
     def __init__(self, local=None, remote=None):
 	self.local = local or autoconfigure()
 	self.remote = remote
+	self.api = remote or local
+
+    def __setattr__(self, item, value):
+	"""
+	Keep api current with which to use
+	"""
+	self.__dict__[item] = value
+	if item == "remote":
+	    self.api = self.remote
