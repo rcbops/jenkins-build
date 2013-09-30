@@ -2,9 +2,9 @@
 openstack Build objects
 """
 import sys
+import commands as _commands
 import traceback
 from chef import Node
-from commands import *
 from chef_api import chef_api
 
 
@@ -100,7 +100,7 @@ class ChefBuild(Build):
                 self.qa.run_command_on_node(Node(self.name), command)
             if isinstance(command, dict):
                 try:
-                    func = getattr(self, command['function'])
+                    func = getattr(_commands, command['function'])
                     kwargs = self._map_kwargs(command['kwargs'])
                     func(**kwargs)
                 except:
@@ -194,7 +194,7 @@ class ChefDeploymentBuild(DeploymentBuild):
                 self.qa.run_command_on_node(Node(node), command)
             if isinstance(command, dict):
                 try:
-                    func = getattr(self, command['function'])
+                    func = getattr(_commands, command['function'])
                     kwargs = self._map_kwargs(command['kwargs'])
                     func(**kwargs)
                 except:
