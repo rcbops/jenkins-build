@@ -77,7 +77,7 @@ class ChefBuild(Build):
         self.environment = env
         self.run_list = self._run_list_map(role)
         self.api = api or chef_api()
-        self.cookbooks = self.cookbook_branch(self.role)
+        self.cookbooks = self.cookbook_branch(branch)
 
     def _run_list_map(self, role):
         return {
