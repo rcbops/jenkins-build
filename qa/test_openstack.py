@@ -18,7 +18,7 @@ def tempest(environment="autotest-precise-grizzly-glance-cf",
     qa = rpcsqa_helper(razor_ip=razor_ip)
     env = Environment(environment)
     if 'remote_chef' in env.override_attributes:
-        api = qa.remote_chef_client(env)
+        api = qa.remote_chef_client(environment)
         env = Environment(environment, api=api)
     else:
         api = qa.chef

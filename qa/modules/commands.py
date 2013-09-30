@@ -134,7 +134,7 @@ def setup_remote_chef_environment(self, chef_environment):
     """
     print "Putting environment onto remote chef server"
     name = chef_environment.name
-    remote_api = self.remote_chef_client(chef_environment)
+    remote_api = self.remote_chef_client(name)
     env = Environment(name, api=remote_api)
     env.override_attributes = dict(chef_environment.override_attributes)
     env.save()

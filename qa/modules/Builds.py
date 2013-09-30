@@ -49,27 +49,19 @@ class Build(object):
         self.status = "Postconfigure"
         self._run_commands(self.post_commands)
 
-    def _run_commands(self, node, commands):
-        for command in commands:
-            #If its a string run on remote server
-            if isinstance(command, str):
-                self.qa.run_command_on_node(node, command)
-            if isinstance(command, dict):
-                try:
-                    func = getattr(self, command['function'])
-                    kwargs = self._map_kwargs(command['kwargs'])
-                    func(**kwargs)
-                except:
-                    print traceback.print_exc()
-                    sys.exit(1)
-            #elif function run the function
-            elif hasattr(command, '__call__'):
-                command()
+    def _run_commands(self, commands):
+        raise NotImplementedError
 
     def _map_kwargs(self, kwargs):
         for key in kwargs.keys():
             kwargs[key] = getattr(self, kwargs[key])
         return kwargs
+
+    def __str__(self):
+        return ("Build: {0} - Role: {1} - "
+                "pre: {2} - post {3}").format(self.name, self.role,
+                                              self.pre_commands,
+                                              self.post_commands)
 
 
 class ChefBuild(Build):
@@ -97,13 +89,30 @@ class ChefBuild(Build):
         self.qa.remove_chef(self.name)
         self.qa.bootstrap_chef(self.name, self.api.server)
 
+    def _run_commands(self, commands):
+        for command in commands:
+            #If its a string run on remote server
+            if isinstance(command, str):
+                self.qa.run_command_on_node(Node(self.name), command)
+            if isinstance(command, dict):
+                try:
+                    func = getattr(self, command['function'])
+                    kwargs = self._map_kwargs(command['kwargs'])
+                    func(**kwargs)
+                except:
+                    print traceback.print_exc()
+                    sys.exit(1)
+            #elif function run the function
+            elif hasattr(command, '__call__'):
+                command()
+
     def preconfigure(self):
         self.status = "Preconfigure"
         node = Node(self.name)
         node['in_use'] = self.role
         node.chef_environment = self.environment
         node.save()
-        if self.chef.remote and not self.role in ["chef_server", "openldap"]:
+        if self.api.remote and not self.role in ["chef_server", "openldap"]:
             self.bootstrap()
         super(ChefBuild, self).preconfigure()
         if self.role is "chef_server":
@@ -146,17 +155,18 @@ class DeploymentBuild(Build):
         self.pre_commands = pre_commands
         self.post_commands = post_commands
 
-    def __iter__(self):
-        return self.builds
-
     def build(self):
         self.preconfigure()
-        for build in self:
+        for build in self.builds:
             build.build()
         self.postconfigure()
 
     def append(self, item):
         self.builds.append(item)
+
+    def __str__(self):
+        deployment = "Deployment: {0}\n".format(self.name)
+        return deployment + "\n".join(str(build) for build in self.builds)
 
 
 class ChefDeploymentBuild(DeploymentBuild):
@@ -172,8 +182,27 @@ class ChefDeploymentBuild(DeploymentBuild):
         self.is_remote = is_remote
         self.api = chef_api()
 
+    def _run_commands(self, commands):
+        for command in commands:
+            #If its a string run on remote server
+            if isinstance(command, (str, str)):
+                node, command = command
+                self.qa.run_command_on_node(Node(node), command)
+            if isinstance(command, dict):
+                try:
+                    func = getattr(self, command['function'])
+                    kwargs = self._map_kwargs(command['kwargs'])
+                    func(**kwargs)
+                except:
+                    print traceback.print_exc()
+                    sys.exit(1)
+            #elif function run the function
+            elif hasattr(command, '__call__'):
+                command()
+
     def preconfigure(self):
         if self.is_remote:
-            chef_server = next(b.name for b in self if b.role == "chef_server")
+            chef_server = next(b.name for b in self.builds
+                               if b.role == "chef_server")
             self.api.server = chef_server
-        super(ChefDeploymentBuild, self).preconfigure()
+            super(ChefDeploymentBuild, self).preconfigure()
