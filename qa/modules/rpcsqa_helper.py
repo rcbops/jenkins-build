@@ -382,7 +382,12 @@ class rpcsqa_helper:
         ret = self.run_command_on_node(node, cmd)['runs'][0]
         volume_group = ret['return']
         env = Environment(node.chef_environment, api=api.api)
-        env.override_attributes["cinder"]["storage"]["lvm"]["volume_group"] = volume_group
+        cinder = {"cinder":
+                  {"storage":
+                   {"lvm":
+                    {"volume_group": volume_group}}}}
+        env.override_attributes.update(cinder)
+        env.save()
 
     def remove_chef(self, name):
         """
