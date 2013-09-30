@@ -82,10 +82,10 @@ class ChefBuild(Build):
     def _run_list_map(self, role):
         return {
             "chef_server": [],
-            "compute": ['role[single-compute]', 'role[cinder_all]'],
-            "directory_server": ['role[qa_openldap]'],
-            "controller1": ['role[ha_controller1]', 'role[cinder_all]'],
-            "controller2": ['role[ha_controller2]']
+            "compute": ['role[single-compute]', 'role[cinder-all]'],
+            "directory_server": ['role[qa-openldap]'],
+            "controller1": ['role[ha-controller1]', 'role[cinder-all]'],
+            "controller2": ['role[ha-controller2]']
         }[role]
 
     def bootstrap(self):
