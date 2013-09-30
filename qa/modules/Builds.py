@@ -20,8 +20,8 @@ class Build(object):
     Base openstack Build object
     """
 
-    def __init__(self, name, role, qa, branch, pre_commands=None,
-                 post_commands=None):
+    def __init__(self, name, role, qa, branch, pre_commands=[],
+                 post_commands=[]):
         self.name = name
         self.role = role
         self.qa = qa
@@ -70,7 +70,7 @@ class ChefBuild(Build):
     """
 
     def __init__(self, name, role, qa, branch, env, api=None,
-                 pre_commands=None, post_commands=None):
+                 pre_commands=[], post_commands=[]):
         super(ChefBuild, self).__init__(name, role, qa, branch,
                                         pre_commands=pre_commands,
                                         post_commands=post_commands)
