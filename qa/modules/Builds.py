@@ -10,10 +10,10 @@ from chef_api import chef_api
 
 class Builds():
     chef_server = "chef_server"
-    single_controller = "chef_server"
+    compute = "compute"
     directory_server = "directory_server"
-    ha_controller1 = "ha_controller1"
-    ha_controller2 = "ha_controller2"
+    controller1 = "controller1"
+    controller2 = "controller2"
 
 
 class Build(object):
@@ -21,10 +21,11 @@ class Build(object):
     Base openstack Build object
     """
 
-    def __init__(self, name, role, qa, pre_commands=[], post_commands=[]):
+    def __init__(self, name, role, qa, branch, pre_commands=[], post_commands=[]):
         self.name = name
         self.role = role
         self.qa = qa
+        self.branch = branch
         self.pre_commands = pre_commands
         self.post_commands = post_commands
         self.status = "Prebuild"
@@ -72,21 +73,24 @@ class Build(object):
 
 
 class ChefBuild(Build):
+    """
+    Base openstack Build object using chef
+    """
 
-    def __init__(self, name, role, qa, env, api, pre_commands=[],
-                 post_commands=[]):
-        super(ChefBuild, self).__init__(name, role, qa)
+    def __init__(self, name, role, qa, branch, env, api=None, pre_commands=[], post_commands=[]):
+        super(ChefBuild, self).__init__(name, role, qa, branch, pre_commands=[], post_commands=[])
         self.environment = env
-        self.run_list = self.run_list_map(role)
-        self.api = api
+        self.run_list = self._run_list_map(role)
+        self.api = api or chef_api()
+        self.cookbooks = self.cookbook_branch(self.role)
 
-    def _run_list_map(role):
+    def _run_list_map(self, role):
         return {
             "chef_server": [],
-            "single_controller": ['role[ha_controller1]', 'role[cinder_all]'],
+            "compute": ['role[single-compute]', 'role[cinder_all]'],
             "directory_server": ['role[qa_openldap]'],
-            "ha_controller1": ['role[ha_controller1]', 'role[cinder_all]'],
-            "ha_controller2": ['role[ha_controller2]']
+            "controller1": ['role[ha_controller1]', 'role[cinder_all]'],
+            "controller2": ['role[ha_controller2]']
         }[role]
 
     def bootstrap(self):
@@ -121,6 +125,14 @@ class ChefBuild(Build):
                 print "chef_client run failed"
                 self.status = "Failure"
                 raise Exception
+
+    def cookbook_branch(self, branch):
+        return [
+            {
+                "url": "https://github.com/rcbops/chef-cookbooks.git",
+                "branch": branch
+            }
+        ]
 
 
 class DeploymentBuild(Build):

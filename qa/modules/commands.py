@@ -40,7 +40,8 @@ def build_chef_server(self, chef_node=None, cookbooks=None, env=None):
         self.add_remote_chef_locally(chef_node, chef_env)
         self.setup_remote_chef_environment(chef_env)
 
-def prepare_cinder(self, node, api):
+def prepare_cinder(self, name, api):
+    node = Node(name, api=api.api)
     cmds = ["vg=`vgdisplay 2> /dev/null | grep vg | awk '{print $3}'`",
             ("for i in `lvdisplay 2> /dev/null | grep 'LV Name' | grep lv"
              " | awk '{print $3}'`; do lvremove $i; done"),
@@ -49,7 +50,7 @@ def prepare_cinder(self, node, api):
     cmd = "vgdisplay 2> /dev/null | grep vg | awk '{print $3}'"
     ret = self.run_command_on_node(node, cmd)['runs'][0]
     volume_group = ret['return']
-    env = Environment(node.chef_environment, api=api)
+    env = Environment(node.chef_environment, api=api.api)
     env.override_attributes["cinder"]["storage"]["lvm"]["volume_group"] = volume_group
 
 def remove_chef(self, name):

@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import argparse
+import traceback
 from modules.rpcsqa_helper import *
 from modules.Builds import ChefBuild, ChefDeploymentBuild, Builds
 
@@ -89,13 +90,6 @@ def main():
     # Setup the helper class ( Chef )
     qa = rpcsqa_helper()
 
-    cookbooks = [
-	{
-	    "url": "https://github.com/rcbops/chef-cookbooks.git",
-	    "branch": args.branch
-	}
-    ]
-
     #Prepare environment
     env = qa.prepare_environment(args.name,
 				 args.os_distro,
@@ -136,42 +130,57 @@ def main():
     #   BUILD
     #####################
 
-	# These builds would be nice as a class
 	print "Building"
 	build = ChefDeploymentBuild(env, is_remote=args.remote_chef)
 	try:
 	    if args.openldap:
 		node = qa.get_razor_node(args.os_distro, env)
 		post_commands = ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
-				 {'function': "update_openldap_environment", 'kwargs': {'env': env}}]
-		build.append(ChefBuild(node.name, 'openldap', qa, env, post_commands=post_commands))
+				 {'function': "update_openldap_environment",
+				  'kwargs': {'env': 'environment'}}]
+		build.append(ChefBuild(node.name, Builds.directory_server, qa,
+				       args.branch, env,
+				       post_commands=post_commands))
 
 	    if args.remote_chef:
 		node = qa.get_razor_node(args.os_distro, env)
-		post_commands = [{'function': build_chef_server,
-				  'kwargs': {'cookbooks': cookbooks, 'env': env}}]
-		build.append(ChefBuild(node.name, 'chef_server', qa, env, post_commands=post_commands))
+		pre_commands = [{'function': "build_chef_server",
+				  'kwargs': {'cookbooks': 'cookbooks',
+					     'env': 'environment'}}]
+		build.append(ChefBuild(node.name, Builds.chef_server, qa,
+				       args.branch, env,
+				       pre_commands=pre_commands))
 
 	    if args.neutron:
 		node = qa.get_razor_node(args.os_distro, env)
-		build.append(ChefBuild(node.name, 'neutron', qa, env, post_commands=post_commands))
+		build.append(ChefBuild(node.name, Builds.neutron, qa,
+				       args.branch, env,
+				       post_commands=post_commands))
 
 	    if args.ha:
-		pre_commands = [{'function': prepare_cinder, 'kwargs': {'node': node, 'api': api}}]
+		pre_commands = [{'function': "prepare_cinder",
+				 'kwargs': {'name': 'name', 'api': 'api'}}]
 		node = qa.get_razor_node(args.os_distro, env)
-		build.append(ChefBuild(node.name, 'ha_controller1', qa, env, pre_commands=pre_commands))
+		build.append(ChefBuild(node.name, Builds.controller1, qa,
+				       args.branch, env,
+				       pre_commands=pre_commands))
 
 		node = qa.get_razor_node(args.os_distro, env)
-		build.append(ChefBuild(node.name, 'ha_controller2', qa, env))
+		build.append(ChefBuild(node.name, Builds.controller2, qa,
+				       args.branch, env))
 
 	    else:
-		pre_commands = [{'function': prepare_cinder, 'kwargs': {'node': node, 'api': api}}]
+		pre_commands = [{'function': "prepare_cinder",
+				 'kwargs': {'name': 'name', 'api': 'api'}}]
 		node = qa.get_razor_node(args.os_distro, env)
-		build.append(ChefBuild(node.name, Builds, qa, env, pre_commands=pre_commands))
+		build.append(ChefBuild(node.name, Builds.controller1, qa,
+				       args.branch, env,
+				       pre_commands=pre_commands))
 
 	    for n in xrange(computes):
 		node = qa.get_razor_node(args.os_distro, env)
-		build.append(ChefBuild(node.name, Builds.single_controller, qa, env))
+		build.append(ChefBuild(node.name, Builds.compute, qa,
+				       args.branch, env))
 
 	except IndexError, e:
 	    print "*** Error: Not enough nodes for your setup"
