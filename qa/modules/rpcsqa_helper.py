@@ -344,7 +344,7 @@ class rpcsqa_helper:
             else:
                 raise Exception("Couldn't find ldap server: %s" % ldap_name)
 
-    def build_chef_server(self, chef_node=None, cookbooks=None, env=None):
+    def build_chef_server(self, chef_node=None, cookbooks=None, env=None, api=api):
         '''
         This will build a chef server using the rcbops script and install git
         '''
@@ -369,6 +369,8 @@ class rpcsqa_helper:
             chef_env = Environment(env)
             self.add_remote_chef_locally(chef_node, chef_env)
             self.setup_remote_chef_environment(chef_env)
+            if api:
+                api.remote = self.remote_chef_client(self.environment)
 
     def prepare_cinder(self, name, api):
         node = Node(name, api=api.api)

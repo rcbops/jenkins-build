@@ -89,6 +89,7 @@ class ChefBuild(Build):
         }[role]
 
     def bootstrap(self):
+        print "Bootstrapping: " + str(self)
         self.qa.remove_chef(self.name)
         self.qa.bootstrap_chef(self.name, self.api.server)
 
@@ -118,15 +119,12 @@ class ChefBuild(Build):
     def preconfigure(self):
         self.status = "Preconfigure"
         self.set_node(self.api.local)
+        print "Preconfigure: " + str(self) + "\n" + str(self.api)
         if self.api.remote and not self.role in [Builds.chef_server,
                                                  Builds.directory_server]:
             self.bootstrap()
-        self.set_node(self.api.remote)
+            self.set_node(self.api.remote)
         super(ChefBuild, self).preconfigure()
-        if self.role is Builds.chef_server:
-            # This should be done in the chef_server build
-            self.api.remote = self\
-                    .qa.remote_chef_client(self.environment)
 
     def apply_role(self):
         node = Node(self.name, api=self.api.api)
