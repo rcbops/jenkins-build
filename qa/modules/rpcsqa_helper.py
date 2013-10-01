@@ -373,10 +373,10 @@ class rpcsqa_helper:
 
     def prepare_cinder(self, name, api):
         node = Node(name, api=api.api)
-        cmds = [("vg=`pvdisplay | grep unknown -A 1 | grep VG | "
-                "awk '{print $3}'`",)
-                ("for i in `lvdisplay | grep 'LV Name' | grep $vg "
-                 "| awk '{print $3}'`; do lvremove $i; done"),
+        cmds = ["vg=`pvdisplay | grep unknown -A 1 | grep VG | "
+                "awk '{print $3}'`",
+                "for i in `lvdisplay | grep 'LV Name' | grep $vg "
+                "| awk '{print $3}'`; do lvremove $i; done",
                 "vgreduce $vg --removemissing"]
         self.run_command_on_node(node, "; ".join(cmds))
         cmd = "vgdisplay 2> /dev/null | grep pool | awk '{print $3}'"
