@@ -1,5 +1,4 @@
 import sys
-import json
 import time
 import itertools
 from chef import *

@@ -109,14 +109,18 @@ class ChefBuild(Build):
             elif hasattr(command, '__call__'):
                 command()
 
-    def preconfigure(self):
-        self.status = "Preconfigure"
-        node = Node(self.name)
+    def set_node(self, api):
+        node = Node(self.name, api=api)
         node['in_use'] = self.role
         node.chef_environment = self.environment
         node.save()
+
+    def preconfigure(self):
+        self.status = "Preconfigure"
+        self.set_node(self.api.local)
         if self.api.remote and not self.role in ["chef_server", "openldap"]:
             self.bootstrap()
+        self.set_node(self.api.remote)
         super(ChefBuild, self).preconfigure()
         if self.role is "chef_server":
             # This should be done in the chef_server build

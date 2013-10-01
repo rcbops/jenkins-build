@@ -11,7 +11,7 @@ from modules.rpcsqa_helper import rpcsqa_helper
 
 
 def tempest(environment="autotest-precise-grizzly-glance-cf",
-         razor_ip="198.101.133.3", log_level="error"):
+            razor_ip="198.101.133.3", log_level="error"):
     """
     Tests an openstack cluster with tempest
     """
