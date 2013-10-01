@@ -1,6 +1,7 @@
 """
 openstack Build objects
 """
+
 import sys
 import traceback
 from chef import Node

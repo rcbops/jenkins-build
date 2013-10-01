@@ -494,7 +494,7 @@ class rpcsqa_helper:
         env.override_attributes['remote_chef'] = remote_dict
         env.save()
 
-    def bootstrap_chef(self, client_node, server_node):
+    def bootstrap_chef(self, name, server_node):
         '''
         @summary: installs chef client on a node and bootstraps it to chef_server
         @param node: node to install chef client on
@@ -504,7 +504,7 @@ class rpcsqa_helper:
         '''
 
         # install chef client and bootstrap
-        client_node = Node(client_node.name)
+        client_node = Node(name)
         chef_client_ip = client_node['ipaddress']
         chef_client_password = self.razor_password(client_node)
         cmd = 'knife bootstrap %s -x root -P %s' % (chef_client_ip,
