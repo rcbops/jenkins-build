@@ -1,28 +1,9 @@
 #! /usr/bin/env python
+import json
 import argparse
 import traceback
 from modules.rpcsqa_helper import *
-
-
-def _run_commands(qa, node, commands):
-    print "#" * 70
-    print "Running {0} chef-client commands....".format(node)
-    for command in commands:
-        print "Running:  %s" % command
-        #If its a string run on remote server
-        if isinstance(command, str):
-            qa.run_command_on_node(node, command)
-        if isinstance(command, dict):
-            try:
-                func = command['function']
-                func(**command['kwargs'])
-            except:
-                print traceback.print_exc()
-                sys.exit(1)
-        #elif function run the function
-        elif hasattr(command, '__call__'):
-            command()
-    print "#" * 70
+from modules.Builds import ChefBuild, ChefDeploymentBuild, Builds
 
 
 def main():
@@ -69,6 +50,10 @@ def main():
                         required=False, default=False,
                         help="Do you want neutron networking")
 
+    parser.add_argument('--glance', action='store_true', dest='glance',
+                        required=False, default=False,
+                        help="Do you want glance in cloudfiles")
+
     parser.add_argument('--openldap', action='store_true', dest='openldap',
                         required=False, default=False,
                         help="Do you want openldap keystone?")
@@ -93,7 +78,7 @@ def main():
 
     # Save the parsed arguments
     args = parser.parse_args()
-    feature_list = ['openldap', 'neutron', 'ha']
+    feature_list = ['openldap', 'neutron', 'ha', 'glance']
     features = [x for x in feature_list if args.__dict__[x] is True]
     if features == []:
         features = ['default']
@@ -105,13 +90,6 @@ def main():
 
     # Setup the helper class ( Chef )
     qa = rpcsqa_helper()
-
-    cookbooks = [
-        {
-            "url": "https://github.com/rcbops/chef-cookbooks.git",
-            "branch": args.branch
-        }
-    ]
 
     #Prepare environment
     env = qa.prepare_environment(args.name,
@@ -153,74 +131,56 @@ def main():
     #   BUILD
     #####################
 
-        # These builds would be nice as a class
-        build = []
+        build = ChefDeploymentBuild(env, is_remote=args.remote_chef)
         try:
-
             if args.openldap:
                 node = qa.get_razor_node(args.os_distro, env)
                 post_commands = ['ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif',
-                                 {'function': qa.update_openldap_environment, 'kwargs': {'env': env}}]
-                build.append({'name': node.name,
-                              'in_use': 'openldap',
-                              'run_list': ['role[qa-openldap-%s]' % args.os_distro],
-                              'post_commands': post_commands,
-                              'ip': node['ipaddress']
-                              })
+                                 {'function': "update_openldap_environment",
+                                  'kwargs': {'env': 'environment'}}]
+                build.append(ChefBuild(node.name, Builds.directory_server, qa,
+                                       args.branch, env,
+                                       post_commands=post_commands))
 
-            if args.remote_chef:    
+            if args.remote_chef:
                 node = qa.get_razor_node(args.os_distro, env)
-
-                post_commands = [{'function': qa.build_chef_server,
-                                  'kwargs': {'cookbooks': cookbooks, 'env': env}}]
-
-                build.append({'name': node.name,
-                              'ip': node['ipaddress'],
-                              'in_use': 'chef_server',
-                              'post_commands': post_commands})
+                pre_commands = [{'function': "build_chef_server",
+                                  'kwargs': {'cookbooks': 'cookbooks',
+                                             'env': 'environment'}}]
+                build.append(ChefBuild(node.name, Builds.chef_server, qa,
+                                       args.branch, env,
+                                       pre_commands=pre_commands))
 
             if args.neutron:
-                node = qa.get_razor_node(args.os_distro, env)                
-                build.append({'name': node.name,
-                              'ip': node['ipaddress'],
-                              'in_use': 'neutron',
-                              'run_list': ['role[single-network-node]']})
+                node = qa.get_razor_node(args.os_distro, env)
+                build.append(ChefBuild(node.name, Builds.neutron, qa,
+                                       args.branch, env,
+                                       post_commands=post_commands))
 
-            #Controller
             if args.ha:
+                pre_commands = [{'function': "prepare_cinder",
+                                 'kwargs': {'name': 'name', 'api': 'api'}}]
                 node = qa.get_razor_node(args.os_distro, env)
-                build.append({'name': node.name,
-                              'ip': node['ipaddress'],
-                              'in_use': 'ha_controller1',
-                              'run_list': ['role[ha-controller1]']})
+                build.append(ChefBuild(node.name, Builds.controller1, qa,
+                                       args.branch, env,
+                                       pre_commands=pre_commands))
 
                 node = qa.get_razor_node(args.os_distro, env)
-                build.append({'name': node.name,
-                              'ip': node['ipaddress'],
-                              'in_use': 'ha_controller2',
-                              'run_list': ['role[ha-controller2]']})
+                build.append(ChefBuild(node.name, Builds.controller2, qa,
+                                       args.branch, env))
+
             else:
+                pre_commands = [{'function': "prepare_cinder",
+                                 'kwargs': {'name': 'name', 'api': 'api'}}]
                 node = qa.get_razor_node(args.os_distro, env)
-                build.append({'name': node.name,
-                              'ip': node['ipaddress'],
-                              'in_use': 'single-controller',
-                              'run_list': ['role[ha-controller1]']})
+                build.append(ChefBuild(node.name, Builds.controller1, qa,
+                                       args.branch, env,
+                                       pre_commands=pre_commands))
 
-            
-            #Compute with whatever is left
-            num_computes = 0
             for n in xrange(computes):
                 node = qa.get_razor_node(args.os_distro, env)
-                build.append({'name':  node.name,
-                              'ip': node['ipaddress'],
-                              'in_use': 'single-compute',
-                              'run_list': ['role[single-compute]']})
-                num_computes += 1
-            
-            #If no nodes left, run controller as compute
-            if num_computes == 0:
-                build[-1]['run_list'] = build[-1]['run_list'] + ['role[single-compute]']
-
+                build.append(ChefBuild(node.name, Builds.compute, qa,
+                                       args.branch, env))
 
         except IndexError, e:
             print "*** Error: Not enough nodes for your setup"
@@ -228,51 +188,12 @@ def main():
             qa.delete_environment(env)
             sys.exit(1)
 
-        #Build out cluster
-        print "Going to build.....%s" % json.dumps(build,
-                                                   indent=4,
-                                                   default=lambda o: o.__name__)
         print "#" * 70
         success = True
-        environment = Environment(env)
-        api = qa.chef
+
         try:
-
-            for b in build:
-                print "#" * 70
-                print "Building: %s" % b
-                node = Node(b['name'])
-                node.chef_environment = env
-                node['in_use'] = b['in_use']
-                node.save()
-                
-                if args.remote_chef and not b['in_use'] in ["chef_server","openldap"]:
-                    qa.remove_chef(node)
-                    query = "chef_environment:%s AND in_use:chef_server" % env
-                    chef_server = next(qa.node_search(query))
-                    qa.bootstrap_chef(node, chef_server)
-                    api = qa.remote_chef_client(environment)
-                    print "api: %s" % api.url
-
-                if 'run_list' in b:
-                    # Reacquires node if using remote chef
-                    node = Node(node.name, api=api)
-                    node.run_list = b['run_list']
-                    node.chef_environment = env
-                    node.save()
-                    print "Running chef client for %s" % node
-                    print node.run_list
-                    chef_client = qa.run_chef_client(node,
-                                                     num_times=2,
-                                                     log_level=args.log_level)
-                    if not chef_client['success']:
-                        print "chef-client run failed"
-                        success = False
-                        break
-
-                if 'post_commands' in b:
-                    _run_commands(qa, node, b['post_commands'])
-
+            print str(build)
+            build.build()
         except Exception, e:
             print traceback.print_exc()
             sys.exit(1)
@@ -280,10 +201,6 @@ def main():
     if success:
         print "Welcome to the cloud..."
         print env
-        print "Your cloud:   %s" % json.dumps(build,
-                                              indent=4,
-                                              default=lambda o: o.__name__)
-        print "#" * 70
     else:
         print "Sorry....no cloud for you...."
 
