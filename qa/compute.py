@@ -10,7 +10,7 @@ from modules.Builds import ChefBuild, ChefDeploymentBuild, Builds
 
 @argh.arg('-f', "--features", nargs="+", type=str)
 def build(name="autotest", os="precise", branch="4.1.2", computes=1,
-          remote_chef=True, razor_ip="198.101.133.3", features=[]):
+          remote_chef=False, razor_ip="198.101.133.3", features=[]):
     features = features or ['default']
     branch_name = "grizzly"
     if branch in ["3.0.0", "3.0.1", "3.1.0", "folsom"]:
