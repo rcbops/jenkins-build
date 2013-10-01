@@ -3,7 +3,7 @@ import sys
 import json
 import argh
 import traceback
-from rpcsqa_helper import rpcsqa_helper
+from modules.rpcsqa_helper import rpcsqa_helper
 from chef import Environment
 from modules.Builds import ChefBuild, ChefDeploymentBuild, Builds
 
