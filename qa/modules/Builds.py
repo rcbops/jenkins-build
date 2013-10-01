@@ -81,11 +81,11 @@ class ChefBuild(Build):
 
     def _run_list_map(self, role):
         return {
-            "chef_server": [],
-            "compute": ['role[single-compute]'],
-            "directory_server": ['role[qa-openldap]'],
-            "controller1": ['role[ha-controller1]', 'role[cinder-all]'],
-            "controller2": ['role[ha-controller2]']
+            Builds.chef_server: [],
+            Builds.compute: ['role[single-compute]'],
+            Builds.directory_server: ['role[qa-openldap]'],
+            Builds.controller1: ['role[ha-controller1]', 'role[cinder-all]'],
+            Builds.controller2: ['role[ha-controller2]']
         }[role]
 
     def bootstrap(self):
@@ -118,11 +118,12 @@ class ChefBuild(Build):
     def preconfigure(self):
         self.status = "Preconfigure"
         self.set_node(self.api.local)
-        if self.api.remote and not self.role in ["chef_server", "openldap"]:
+        if self.api.remote and not self.role in [Builds.chef_server,
+                                                 Builds.directory_server]:
             self.bootstrap()
         self.set_node(self.api.remote)
         super(ChefBuild, self).preconfigure()
-        if self.role is "chef_server":
+        if self.role is Builds.chef_server:
             # This should be done in the chef_server build
             self.api.remote = self\
                     .qa.remote_chef_client(self.environment)
@@ -210,6 +211,6 @@ class ChefDeploymentBuild(DeploymentBuild):
     def preconfigure(self):
         if self.is_remote:
             chef_server = next(b.name for b in self.builds
-                               if b.role == "chef_server")
+                               if b.role == Builds.chef_server)
             self.api.server = chef_server
             super(ChefDeploymentBuild, self).preconfigure()
