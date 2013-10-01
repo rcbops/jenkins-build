@@ -370,7 +370,7 @@ class rpcsqa_helper:
             self.add_remote_chef_locally(chef_node, chef_env)
             self.setup_remote_chef_environment(chef_env)
             if api:
-                api.remote = self.remote_chef_client(self.environment)
+                api.remote = self.remote_chef_client(env)
 
     def prepare_cinder(self, name, api):
         node = Node(name, api=api.api)
