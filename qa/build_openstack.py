@@ -139,7 +139,7 @@ def main():
                                  {'function': "update_openldap_environment",
                                   'kwargs': {'env': 'environment'}}]
                 build.append(ChefBuild(node.name, Builds.directory_server, qa,
-                                       args.branch, env,
+                                       args.branch, env, api=build.api,
                                        post_commands=post_commands))
 
             if args.remote_chef:
@@ -148,13 +148,13 @@ def main():
                                   'kwargs': {'cookbooks': 'cookbooks',
                                              'env': 'environment'}}]
                 build.append(ChefBuild(node.name, Builds.chef_server, qa,
-                                       args.branch, env,
+                                       args.branch, env, api=build.api,
                                        pre_commands=pre_commands))
 
             if args.neutron:
                 node = qa.get_razor_node(args.os_distro, env)
                 build.append(ChefBuild(node.name, Builds.neutron, qa,
-                                       args.branch, env,
+                                       args.branch, env, api=build.api,
                                        post_commands=post_commands))
 
             if args.ha:
@@ -162,25 +162,25 @@ def main():
                                  'kwargs': {'name': 'name', 'api': 'api'}}]
                 node = qa.get_razor_node(args.os_distro, env)
                 build.append(ChefBuild(node.name, Builds.controller1, qa,
-                                       args.branch, env,
+                                       args.branch, env, api=build.api,
                                        pre_commands=pre_commands))
 
                 node = qa.get_razor_node(args.os_distro, env)
                 build.append(ChefBuild(node.name, Builds.controller2, qa,
-                                       args.branch, env))
+                                       args.branch, env, api=build.api))
 
             else:
                 pre_commands = [{'function': "prepare_cinder",
                                  'kwargs': {'name': 'name', 'api': 'api'}}]
                 node = qa.get_razor_node(args.os_distro, env)
                 build.append(ChefBuild(node.name, Builds.controller1, qa,
-                                       args.branch, env,
+                                       args.branch, env, api=build.api,
                                        pre_commands=pre_commands))
 
             for n in xrange(computes):
                 node = qa.get_razor_node(args.os_distro, env)
                 build.append(ChefBuild(node.name, Builds.compute, qa,
-                                       args.branch, env))
+                                       args.branch, env, api=build.api))
 
         except IndexError, e:
             print "*** Error: Not enough nodes for your setup"
