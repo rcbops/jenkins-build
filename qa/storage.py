@@ -5,17 +5,18 @@ from modules.rpcsqa_helper import rpcsqa_helper
 from modules.chef_helper import chef_helper
 from modules.swift_helper import swift_helper
 
+@argh.arg('-f', "--features", nargs="+", type=str)
 def build(name='autotest', branch='grizzly', tag=None,
           cluster_size=4, os_distro='precise', build_rings=False,
-          remote_chef=True, razor_ip='198.101.133.3'):
+          remote_chef=True, razor_ip='198.101.133.3', features=[]):
 
     # Setup the helper class ( Chef / Razor )
     rpcsqa = rpcsqa_helper(razor_ip)
 
     # Have to add check for empty string due to Jenkins parameters
-    if repo_tag is not None:
-        if repo_tag == "None":
-            repo_tag = None
+    if tag is not None:
+        if tag == "None":
+            tag = None
 
     # Remove broker fails for qa-%os_distro-pool
     print "## -- Removing Broker Fails from Razor for qa-{0}-pool -- ##".format(
@@ -26,7 +27,7 @@ def build(name='autotest', branch='grizzly', tag=None,
     print "## -- Preparing chef environment -- ##"
     env = rpcsqa.prepare_environment(name,
                                      os_distro,
-                                     feature_set,
+                                     features,
                                      branch)
 
     # Gather all the nodes for the os_distro
@@ -87,7 +88,7 @@ def build(name='autotest', branch='grizzly', tag=None,
         {
             "url": "https://github.com/rcbops-cookbooks/swift-private-cloud.git",
             "branch": "master",
-            "tag": repo_tag
+            "tag": tag
         }
     ]
 
