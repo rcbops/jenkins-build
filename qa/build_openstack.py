@@ -146,7 +146,8 @@ def main():
                 node = qa.get_razor_node(args.os_distro, env)
                 pre_commands = [{'function': "build_chef_server",
                                   'kwargs': {'cookbooks': 'cookbooks',
-                                             'env': 'environment'}}]
+                                             'env': 'environment',
+                                             'api': 'api'}}]
                 build.append(ChefBuild(node.name, Builds.chef_server, qa,
                                        args.branch, env, api=build.api,
                                        pre_commands=pre_commands))
