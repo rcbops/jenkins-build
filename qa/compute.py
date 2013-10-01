@@ -43,7 +43,6 @@ def build(name="autotest", os="precise", branch="4.1.2", computes=1,
         qa.cleanup_environment(env)
         sys.exit(1)
 
-
     #####################
     #   BUILD
     #####################
@@ -123,7 +122,7 @@ def build(name="autotest", os="precise", branch="4.1.2", computes=1,
         print "Welcome to the cloud..."
         print str(build)
     else:
-        print "Sorry....no cloud for you...."
+        print "!!## -- Failed to build OpenStack Cloud -- ##!!"
 
 @argh.arg('-f', "--features", nargs="+", type=str)
 def destroy(name="autotest", os="precise", branch="grizzly",
