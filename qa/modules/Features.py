@@ -31,6 +31,8 @@ class Feature(object):
     def post_configure(self):
         raise NotImplementedError
 
+    def _remove_chef(self):
+        raise NotImplementedError
 
 class ChefServer(Feature):
     """ Represents a chef server
@@ -47,23 +49,14 @@ class ChefServer(Feature):
                                  './{0}'.format(self.iscript_name)
                                 ]
 
-
-    def update_environment(self):
-        raise NotImplementedError
-
     def pre_configure(self):
-        raise NotImplementedError
+        self._remove_chef()
 
     def apply_feature(self):
-        self._remove_chef()
         self._install()
-        self._install_cookbooks()
     
     def post_configure(self):
-        raise NotImplementedError
-
-    def _remove_chef(self):
-        raise NotImplementedError
+        self._install_cookbooks()
 
     def _install(self):
         raise NotImplementedError
@@ -76,7 +69,9 @@ class HighAvailability(Feature):
     """
 
     def __init__(self, number):
+        super(HighAvailability, self).__init__()
         self.number = number
+        self.environment = self.config['environments']['ha']
 
     def update_environment(self):
         raise NotImplementedError
@@ -96,7 +91,8 @@ class Neutron(Feature):
     """
 
     def __init__(self):
-        raise NotImplementedError
+        super(Neutron, self).__init__()
+        self.environment = self.config['environments']['neutron']
 
     def update_environment(self):
         raise NotImplementedError
@@ -116,7 +112,9 @@ class OpenLDAP(Feature):
     """
 
     def __init__(self):
-        raise NotImplementedError
+        super(OpenLDAP, self).__init__()
+        self.environment = self.config['environment']['ldap']
+        self.ldapadd_cmd = 'ldapadd -x -D "cn=admin,dc=rcb,dc=me -wostackdemo -f /root/base.ldif'
 
     def update_environment(self):
         raise NotImplementedError
@@ -128,6 +126,9 @@ class OpenLDAP(Feature):
         raise NotImplementedError
     
     def post_configure(self):
+        self._ldap_add()
+
+    def _ldap_add(self):
         raise NotImplementedError
 
 
@@ -136,7 +137,8 @@ class GlanceCF(Feature):
     """
 
     def __init__(self):
-        raise NotImplementedError
+        super(GlanceCF, self).__init__()
+        self.environment = self.config['environment']['glance']
 
     def update_environment(self):
         raise NotImplementedError
@@ -156,7 +158,8 @@ class Swift(Feature):
     """
 
     def __init__(self):
-        raise NotImplementedError
+        super(Swift, self).__init__()
+        self.environment = self.config['environment']['swift']
 
     def update_environment(self):
         raise NotImplementedError
