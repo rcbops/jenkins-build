@@ -1,0 +1,66 @@
+chef:
+  server_script: https://raw.github.com/rcbops/jenkins-build/master/qa/bash/jenkins/install-chef-server.sh
+
+razor:
+  ip: 198.101.133.3
+
+rcbops:
+  git:
+    url: https://github.com/rcbops/chef-cookbooks.git
+    # branch: grizzly
+    branches:
+      havana:
+        - havana
+      grizzly:
+        - grizzly
+        - v4.1.2
+        - v4.1.1
+        - v4.1.0
+        - v4.0.0
+      folsom:
+        - folsom
+        - v3.0.0
+        - v3.0.1
+        - v3.1.0
+  builds:
+    chef_server:
+      run_list: []
+    compute:
+      run_list: ['role[single-compute]']
+    directory_server:
+      run_list: ['role[qa-openldap]']
+    controller1:
+      run_list: ['role[ha-controller1]', 'role[cinder-all]']
+    controller2:
+      run_list: ['role[ha-controller2]']
+
+tests:
+  default:
+    - compute
+    - identity
+  ha:
+    - compute
+    - identity
+  glance-cf:
+    - compute/images
+    - image
+  glance-local:
+    - compute/images
+    - image
+  keystone-ldap:
+    - compute/admin
+    - compute/security_groups
+    - compute/test_authorization.py
+    - identity
+  keystone-mysql:
+    - compute/admin
+    - compute/security_groups
+    - compute/test_authorization.py
+    - identity
+  neutron:
+    - network
+  cinder-local:
+    - compute/volumes
+    - volume
+  swift:
+    - object_storage

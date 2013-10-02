@@ -5,20 +5,18 @@ from chef import *
 import environments
 from glob import glob
 from server_helper import *
-from razor_api import razor_api
+from modules.Config import Config
+from modules.razor_api import razor_api
 from xml.etree import ElementTree
 
 
 class rpcsqa_helper:
 
-    def __init__(self, razor_ip=''):
-        self.razor = razor_api(razor_ip)
+    def __init__(self):
+        self.config = Config()
+        self.razor = razor_api(self.config['razor']['ip'])
         self.chef = autoconfigure()
         self.chef.set_default()
-
-    def enable_razor(self, razor_ip=''):
-        if razor_ip != '':
-            self.razor = razor_api(razor_ip)
 
     def enable_public_cloud(self, username, api_key):
         import pyrax
@@ -252,21 +250,7 @@ class rpcsqa_helper:
         self.run_command_on_node(node, command, private=True)
 
     def feature_test(self, node, env):
-        feature_map = {"default": ["compute", "identity"],
-                       "ha": ["compute", "identity"],
-                       "glance-cf": ["compute/images", "image"],
-                       "glance-local": ["compute/images", "image"],
-                       "keystone-ldap": ["compute/admin",
-                                         "compute/security_groups",
-                                         "compute/test_authorization.py",
-                                         "identity"],
-                       "keystone-mysql": ["compute/admin",
-                                          "compute/security_groups",
-                                          "compute/test_authorization.py",
-                                          "identity"],
-                       "neutron": ["network"],
-                       "cinder-local": ["compute/volumes", "volume"],
-                       "swift": ["object_storage"]}
+        feature_map = self.config['tests']
         featured = filter(lambda x: x in env, feature_map.keys())
         test_list = (feature_map[f] for f in featured)
         tests = list(itertools.chain.from_iterable(test_list))
@@ -344,7 +328,8 @@ class rpcsqa_helper:
             else:
                 raise Exception("Couldn't find ldap server: %s" % ldap_name)
 
-    def build_chef_server(self, chef_node=None, cookbooks=None, env=None, api=api):
+    def build_chef_server(self, chef_node=None, env=None, branch=None,
+                          api=None):
         '''
         This will build a chef server using the rcbops script and install git
         '''
@@ -353,10 +338,10 @@ class rpcsqa_helper:
             chef_node = next(self.node_search(query))
         self.remove_chef(chef_node.name)
 
-        install_chef_script = "https://raw.github.com/rcbops/jenkins-build/master/qa/bash/jenkins/install-chef-server.sh"
+        script = self.config['chef']['server_script']
 
         # Run the install script
-        cmds = ['curl %s >> install-chef-server.sh' % install_chef_script,
+        cmds = ['curl %s >> install-chef-server.sh' % script,
                 'chmod u+x ~/install-chef-server.sh',
                 './install-chef-server.sh']
         for cmd in cmds:
@@ -364,7 +349,9 @@ class rpcsqa_helper:
             if ssh_run['success']:
                 print "command: %s ran successfully on %s" % (cmd, chef_node)
 
-        self.install_cookbooks(chef_node, cookbooks)
+        self.install_cookbooks(chef_node,
+                               self.config['rcbops']['git']['url'],
+                               branch)
         if env:
             chef_env = Environment(env)
             self.add_remote_chef_locally(chef_node, chef_env)
@@ -412,15 +399,18 @@ class rpcsqa_helper:
             print "Failed to remove chef on %s" % chef_node
             sys.exit(1)
 
-    def install_cookbooks(self, chef_node, cookbooks, local_repo='/opt/rcbops'):
+    def install_cookbooks(self, chef_server, url, branch,
+                          path='/opt/rcbops'):
         '''
-        @summary: This will pull the cookbooks down for git that you pass in cookbooks
+        Installs cookbooks from git
         @param chef_server: The node that the chef server is installed on
         @type chef_server: String
-        @param cookbooks A List of cookbook repos in dict form {url: 'asdf', branch: 'asdf'}
-        @type cookbooks dict
-        @param local_repo The location to place the cookbooks i.e. '/opt/rcbops'
-        @type String
+        @param url: URL for git repo
+        @type url str
+        @param branch: Branch to checkout
+        @type branch str
+        @param path location to clone repo
+        @type str
         '''
         # Make directory that the cookbooks will live in
         command = 'mkdir -p {0}'.format(local_repo)
@@ -430,18 +420,16 @@ class rpcsqa_helper:
             print run_cmd
             sys.exit(1)
 
-        for cookbook in cookbooks:
-            self.install_cookbook(chef_node, cookbook, local_repo)
-
-    def install_cookbook(self, chef_node, cookbook, local_repo):
         # clone to cookbook
-        cmds = ['cd {0}; git clone {1} -b {2} --recursive'.format(local_repo, cookbook['url'], cookbook['branch'])]
+        cmds = ['cd {0}; git clone {1} --recursive'.format(local_repo, url)]
 
-        cmds.append('cd /opt/rcbops/chef-cookbooks; git checkout %s' % cookbook['branch'])
+        cmds.append(('cd {0}/chef-cookbooks; '
+                    'git checkout {1}').format(local_repo,
+                                               branch))
 
         # Since we are installing from git, the urls are pretty much constant
         # Pulling the url apart to get the name of the cookbooks
-        cookbook_name = cookbook['url'].split("/")[-1].split(".")[0]
+        cookbook_name = url.split("/")[-1].split(".")[0]
 
         # Stupid logic to see if the repo name contains "cookbooks", if it does then
         # we need to load from cookbooks repo, not the repo itself.

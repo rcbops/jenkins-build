@@ -10,7 +10,7 @@ from modules.Builds import ChefBuild, ChefDeploymentBuild, Builds
 
 @argh.arg('-f', "--features", nargs="+", type=str)
 def build(name="autotest", os="precise", branch="4.1.2", computes=1,
-          remote_chef=False, razor_ip="198.101.133.3", features=[]):
+          remote_chef=False, features=[]):
     features = features or ['default']
     branch_name = "grizzly"
     if branch in ["3.0.0", "3.0.1", "3.1.0", "folsom"]:
@@ -27,8 +27,6 @@ def build(name="autotest", os="precise", branch="4.1.2", computes=1,
                                  branch)
     print json.dumps(Environment(env).override_attributes, indent=4)
 
-    qa.enable_razor(razor_ip)
-    print "Starting baremetal...."
     print "Removing broker fails"
     qa.remove_broker_fail("qa-%s-pool" % os)
     print "Interfacing nodes that need it"
@@ -61,7 +59,7 @@ def build(name="autotest", os="precise", branch="4.1.2", computes=1,
         if remote_chef:
             node = qa.get_razor_node(os, env)
             pre_commands = [{'function': "build_chef_server",
-                             'kwargs': {'cookbooks': 'cookbooks',
+                             'kwargs': {'branch': 'branch',
                                         'env': 'environment',
                                         'api': 'api'}}]
             build.append(ChefBuild(node.name, Builds.chef_server, qa,
@@ -138,11 +136,11 @@ def destroy(name="autotest", os="precise", branch="grizzly",
 
 
 def test(environment="autotest-precise-grizzly-glance-cf",
-         razor_ip="198.101.133.3", log_level="error"):
+         log_level="error"):
     """
     Tests an openstack cluster with tempest
     """
-    qa = rpcsqa_helper(razor_ip=razor_ip)
+    qa = rpcsqa_helper()
     env = Environment(environment)
     if 'remote_chef' in env.override_attributes:
         api = qa.remote_chef_client(environment)

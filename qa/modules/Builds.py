@@ -1,5 +1,5 @@
 """
-openstack Build objects
+Openstack Build objects
 """
 
 import sys
@@ -76,18 +76,8 @@ class ChefBuild(Build):
                                         pre_commands=pre_commands,
                                         post_commands=post_commands)
         self.environment = env
-        self.run_list = self._run_list_map(role)
+        self.run_list = self.qa.config['chef']['builds'][role]['run_list']
         self.api = api
-        self.cookbooks = self.cookbook_branch(branch)
-
-    def _run_list_map(self, role):
-        return {
-            Builds.chef_server: [],
-            Builds.compute: ['role[single-compute]'],
-            Builds.directory_server: ['role[qa-openldap]'],
-            Builds.controller1: ['role[ha-controller1]', 'role[cinder-all]'],
-            Builds.controller2: ['role[ha-controller2]']
-        }[role]
 
     def bootstrap(self):
         print "Bootstrapping: " + str(self)
@@ -129,7 +119,7 @@ class ChefBuild(Build):
 
     def apply_role(self):
         node = Node(self.name, api=self.api.api)
-        node.run_list = self._run_list_map(self.role)
+        node.run_list = self.run_list
         node.chef_environment = self.environment
         node.save()
 
@@ -141,14 +131,6 @@ class ChefBuild(Build):
                 print "chef_client run failed"
                 self.status = "Failure"
                 raise Exception
-
-    def cookbook_branch(self, branch):
-        return [
-            {
-                "url": "https://github.com/rcbops/chef-cookbooks.git",
-                "branch": branch
-            }
-        ]
 
 
 class DeploymentBuild(Build):
