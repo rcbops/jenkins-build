@@ -76,7 +76,7 @@ class ChefBuild(Build):
                                         pre_commands=pre_commands,
                                         post_commands=post_commands)
         self.environment = env
-        self.run_list = self.qa.config['chef']['builds'][role]['run_list']
+        self.run_list = self.qa.config['rcbops']['builds'][role]['run_list']
         self.api = api
 
     def bootstrap(self):
