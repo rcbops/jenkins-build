@@ -413,7 +413,7 @@ class rpcsqa_helper:
         @type str
         '''
         # Make directory that the cookbooks will live in
-        command = 'mkdir -p {0}'.format(local_repo)
+        command = 'mkdir -p {0}'.format(path)
         run_cmd = self.run_command_on_node(chef_node, command)
         if not run_cmd['success']:
             print "Command: %s failed to run on %s" % (command, chef_node)
@@ -421,10 +421,10 @@ class rpcsqa_helper:
             sys.exit(1)
 
         # clone to cookbook
-        cmds = ['cd {0}; git clone {1} --recursive'.format(local_repo, url)]
+        cmds = ['cd {0}; git clone {1} --recursive'.format(path, url)]
 
         cmds.append(('cd {0}/chef-cookbooks; '
-                    'git checkout {1}').format(local_repo,
+                    'git checkout {1}').format(path,
                                                branch))
 
         # Since we are installing from git, the urls are pretty much constant
@@ -440,12 +440,12 @@ class rpcsqa_helper:
                         'git submodule init;'
                         'git submodule sync;'
                         'git submodule update')
-            cmds.append('knife cookbook upload --all --cookbook-path {0}/{1}/cookbooks'.format(local_repo, cookbook_name))
+            cmds.append('knife cookbook upload --all --cookbook-path {0}/{1}/cookbooks'.format(path, cookbook_name))
         else:
-            cmds = ['knife cookbook upload --all --cookbook-path {0}/{1}'.format(local_repo, cookbook_name)]
+            cmds = ['knife cookbook upload --all --cookbook-path {0}/{1}'.format(path, cookbook_name)]
 
         # Append role load to run list
-        cmds.append('knife role from file {0}/{1}/roles/*.rb'.format(local_repo, cookbook_name))
+        cmds.append('knife role from file {0}/{1}/roles/*.rb'.format(path, cookbook_name))
 
         for cmd in cmds:
             run_cmd = self.run_command_on_node(chef_node, cmd)
