@@ -414,9 +414,9 @@ class rpcsqa_helper:
         '''
         # Make directory that the cookbooks will live in
         command = 'mkdir -p {0}'.format(path)
-        run_cmd = self.run_command_on_node(chef_node, command)
+        run_cmd = self.run_command_on_node(chef_server, command)
         if not run_cmd['success']:
-            print "Command: %s failed to run on %s" % (command, chef_node)
+            print "Command: %s failed to run on %s" % (command, chef_server)
             print run_cmd
             sys.exit(1)
 
@@ -448,9 +448,9 @@ class rpcsqa_helper:
         cmds.append('knife role from file {0}/{1}/roles/*.rb'.format(path, cookbook_name))
 
         for cmd in cmds:
-            run_cmd = self.run_command_on_node(chef_node, cmd)
+            run_cmd = self.run_command_on_node(chef_server, cmd)
             if not run_cmd['success']:
-                print "Command: %s failed to run on %s" % (cmd, chef_node)
+                print "Command: %s failed to run on %s" % (cmd, chef_server)
                 print run_cmd
                 sys.exit(1)
 
