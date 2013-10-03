@@ -56,7 +56,8 @@ class ChefServer(Feature):
         self._install_cookbooks()
 
     def _install(self):
-        raise NotImplementedError
+        cmd = self.install_commands.join(";")
+        return cmd
 
     def _install_cookbooks(self):
         raise NotImplementedError
