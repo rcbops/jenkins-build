@@ -1,0 +1,114 @@
+precise-default:
+  name: default
+  os: precise
+  nodes:
+    - [chef-server]
+    - [controller1, glance-cf, cinder-local]
+    - [compute]
+
+centos-default:
+  name: default
+  os: centos
+  features:
+  nodes:
+    - [chef-server]
+    - [controller1]
+    - [compute]
+
+precise-ha:
+  name: ha
+  os: precise
+  features:
+    - glance-cf
+    - ha
+  nodes:
+    - [chef-server]
+    - [controller1]
+    - [controller2]
+    - [compute]
+
+centos-ha:
+  name: ha
+  os: centos
+  features:
+    - glance-cf
+    - ha
+  nodes:
+    - [chef-server]
+    - [controller1]
+    - [controller2]
+    - [compute]
+
+precise-ldap:
+  name: ldap
+  os: precise
+  features:
+    - ldap
+  nodes:
+    - [directory-server]
+    - [chef-server]
+    - [controller1]
+    - [compute]
+
+centos-ldap:
+  name: ldap
+  os: centos
+  features:
+    - ldap
+  nodes:
+    - [directory-server]
+    - [chef-server]
+    - [controller1]
+    - [compute]
+
+precise-swift:
+  name: swift
+  os: precise
+  features:
+    - swift
+  nodes:
+    - [chef-server]
+    - [controller1]
+    - [proxy1]
+    - [proxy2]
+    - [storage1]
+    - [storage2]
+    - [storage3]
+
+centos-swift:
+  name: swift
+  os: centos
+  features:
+    - swift
+  nodes:
+    - [chef-server]
+    - [controller1]
+    - [proxy1]
+    - [proxy2]
+    - [storage1]
+    - [storage2]
+    - [storage3]
+
+precise-neutron:
+  name: neutron
+  os: precise
+  features:
+    - neutron
+    - ha
+  nodes:
+    - [chef-server]
+    - [controller1, neutron]
+    - [controller2, neutron]
+    - [compute]
+
+centos-neutron:
+  name: neutron
+  os: centos
+  features:
+    - neutron
+    - ha
+  nodes:
+    - [chef-server]
+    - [controller1, neutron]
+    - [controller2, neutron]
+    - [compute]
