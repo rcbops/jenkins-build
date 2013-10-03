@@ -2,8 +2,6 @@
 OpenStack Features
 """
 
-from Config import Config
-
 class Feature(object):
     """ Represents a OpenStack Feature
     """
@@ -28,8 +26,21 @@ class Feature(object):
     def post_configure(self):
         raise NotImplementedError
 
-    def _remove_chef(self):
-        raise NotImplementedError
+    @classmethod
+    def remove_chef(cls, node):
+        """ Removes chef from the given node
+        """
+
+        if node.os == "precise":
+            commands = ["apt-get remove --purge -y chef",
+                        "rm -rf /etc/chef"]
+        if node.os in ["centos", "rhel"]:
+            commands = ["yum remove -y chef",
+                        "rm -rf /etc/chef /var/chef"]
+
+        command = commands.join("; ")
+
+        node.run_cmd(command)
 
 class ChefServer(Feature):
     """ Represents a chef server
@@ -46,21 +57,57 @@ class ChefServer(Feature):
                                  './{0}'.format(self.iscript_name)
                                 ]
 
-    def pre_configure(self):
-        self._remove_chef()
+    def _pre_configure(self, node):
+        self._remove_chef(node)
 
-    def apply_feature(self):
-        self._install()
+    def _apply_feature(self, node):
+        self.install()
     
-    def post_configure(self):
-        self._install_cookbooks()
+    def _post_configure(self, node):
+        self.install_cookbooks()
 
-    def _install(self):
-        cmd = self.install_commands.join(";")
-        return cmd
+    def _install(self, node):
+        """ Installs chef server on the given node
+        """
 
-    def _install_cookbooks(self):
-        raise NotImplementedError
+        command = self.install_commands.join("; ")
+        node.run_cmd(command)
+
+    def _install_cookbooks(self, node):
+        """ Installs cookbooks on node
+        """
+        
+        cookbook_url = self.config['rcbops'][node.product]['git']['url']
+        cookbook_branch = node.branch
+        cookbook_name = cookbook_url.split("/")[-1].split(".")[0]
+        install_dir = self.config['chef']['server']['install_dir']
+
+        commands = ["mkdir -p {0}".format(install_dir),
+                    "cd {0}".format(install_dir),
+                    "git clone {0} --recursive".format(cookbook_url),
+                    "cd {0}/cookbooks".format(cookbook_url),
+                    "git checkout {0}".format(cookbook_branch)]
+
+        if 'cookbooks' in cookbook_name:
+             # add submodule stuff to list
+            commands.append('cd /opt/rcbops/chef-cookbooks')
+            commands.append('git submodule init')
+            commands.append('git submodule sync')
+            commands.append('git submodule update')
+            commands.append('knife cookbook upload --all --cookbook-path'
+                            '{0}/{1}/cookbooks'.format(install_dir,
+                                                       cookbook_name))
+        else:
+            commands.append('knife cookbook upload --all'
+                            ' --cookbook-path {0}/{1}'.format(install_dir,
+                                                              cookbook_name))
+
+        commands.append('knife role from file {0}/{1}/roles/*.rb'.format(
+            install_dir, cookbook_name))
+
+        command = commands.join("; ")
+
+        node.run_cmd(command)
 
 class HighAvailability(Feature):
     """ Represents a highly available cluster
