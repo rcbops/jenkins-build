@@ -1,3 +1,6 @@
+from server_helper import ssh_cmd, scp_to, scp_from
+
+
 class Node(object):
     """
     A individual computation entity to deploy a part OpenStack onto
@@ -8,11 +11,12 @@ class Node(object):
         self.user = user
         self.password = password
         self.features = features
+        self._cleanups = []
 
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
         password = password or self.password
-        run_cmd(self.ip, remote_cmd=remote_cmd, user=user, password=password,
+        ssh_cmd(self.ip, remote_cmd=remote_cmd, user=user, password=password,
                 quiet=quiet)
 
     def scp_to(self, local_path, user=None, password=None, remote_path=""):
@@ -41,27 +45,38 @@ class Node(object):
     def add_cleanup(self, function, *args, **kwargs):
         self._cleanups.append((function, args, kwargs))
 
-class OSChefNode(OSNode):
+
+class ChefNode(Node):
     """
     A chef entity
     Provides chef related server fuctions
     """
-    def __init__(self, ip, user, password, role,
-                 config_manager=None, provisioner=None):
-        super(OSChefNode, self).__init__(ip, user, password, role)
-        self.provisioner = provisioner
-        self.config_manager = config_manager
+    def __init__(self, name, api, qa, branch, features=[]):
+        self.name = name
+        self.api = api
+        self.qa = qa
+        self.branch = branch
+        self._cleanups = []
+
+    def __getattr__(self, item):
+        map = {'ip': Node(self.name)['ipaddress'],
+               'user': Node(self.name)['current_user'],
+               'password': self.qa.razor_password(self.name)}
+        if item in map.keys():
+            return map[item]
+        else:
+            return self.__dict__[item]
 
     def install_chef_server(self):
         """
         Installs a chef server onto node
         """
-        cmd = 'curl {0} | bash'.format(config['chef']['server_script'])
+        cmd = 'curl {0} | bash'.format(self.qa.config['chef']['server_script'])
         ssh_run = self.run_cmd(cmd)
         if ssh_run['success']:
             print "Installed Chef Server on %s" % self
-        self.install_cookbooks(config['cookbook_git_url'],
-                               config['cookbook_git_branch'])
+        self.install_cookbooks(self.qa.config['rcbops']['git']['url'],
+                               self.branch)
 
     def install_cookbooks(self, url, branch, local_repo='/opt/rcbops'):
         '''
