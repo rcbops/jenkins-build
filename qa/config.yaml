@@ -4,9 +4,10 @@ chef:
 razor:
   ip: 198.101.133.3
 environments:
-    default:
-        package_component: "grizzly"
-        keystone:
+    package_component:
+        default: "grizzly"
+    keystone:
+        default:
             admin_user: "admin"
             users:
                 demo:
@@ -19,13 +20,16 @@ environments:
                         admin: ["admin", "demo"]
                     password: "ostackdemo"
             tenants: ["admin", "service", "demo"]
-        monitoring:
+    monitoring:
+        default:
             metric_provider: "collectd"
             procmon_provider: "monit"
-        mysql:
+    mysql:
+        default:
             root_network_acl: "%"
             allow_remote_root: true
-        nova:
+    nova:
+        default:
             apply_patches: true
             networks:
                 public:
@@ -36,20 +40,24 @@ environments:
                     network_size: "254"
                     ipv4_cidr: "172.32.0.0/24"
                     label: "public"
-        osops:
+    osops:
+        default:
             apply_patches: true
-        horizon:
+    horizon:
+        default:
             theme: "default"
-        developer_mode: false
-        osops_networks:
+    developer_mode: 
+        default: false
+    osops_networks:
+        default:
             management: "198.101.133.0/24"
             nova: "198.101.133.0/24"
             public: "198.101.133.0/24"
-        glance:
+    glance:
+        default:
             image_upload: true
             images: ["cirros", "precise"]
-    glance-cf:
-        glance:
+        cf:
             api:
                 default_store: "swift"
                 swift_store_user: "<Tenant_Id>:<Tenant_Name>"
