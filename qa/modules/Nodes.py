@@ -6,10 +6,11 @@ class Node(object):
     A individual computation entity to deploy a part OpenStack onto
     Provides server related functions
     """
-    def __init__(self, ip, user, password, features=[]):
+    def __init__(self, ip, user, password, os, features=[]):
         self.ip = ip
         self.user = user
         self.password = password
+        self.os = os
         self.features = features
         self._cleanups = []
 
@@ -74,8 +75,9 @@ class ChefNode(Node):
     A chef entity
     Provides chef related server fuctions
     """
-    def __init__(self, name, api, qa, branch, features=[]):
+    def __init__(self, name, os, api, qa, branch, features=[]):
         self.name = name
+        self.os = os
         self.api = api
         self.qa = qa
         self.branch = branch
