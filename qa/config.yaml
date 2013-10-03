@@ -5,36 +5,6 @@ chef:
 razor:
   ip: 198.101.133.3
 
-rcbops:
-    compute:
-        git:
-            url: https://github.com/rcbops/chef-cookbooks.git
-            branches:
-                havana:
-                    tags:
-                        - v4.2.0
-                grizzly:
-                    tags:
-                        - v4.1.2
-                        - v4.1.1
-                        - v4.1.0
-                        - v4.0.0
-                folsom:
-                    tags:
-                        - v3.0.0
-                        - v3.0.1
-                        - v3.1.0
-        chef_server:
-            run_list: []
-        compute:
-            run_list: ['role[single-compute]']
-        directory_server:
-            run_list: ['role[qa-openldap]']
-        controller1:
-            run_list: ['role[ha-controller1]', 'role[cinder-all]']
-        controller2:
-            run_list: ['role[ha-controller2]']
-
 environments:
     ha:
         vips:
@@ -68,6 +38,37 @@ environments:
             network:
                 provider: "quantum"
                 apply_patches: True
+
+rcbops:
+    compute:
+        git:
+            url: https://github.com/rcbops/chef-cookbooks.git
+            branches:
+                havana:
+                    tags:
+                        - v4.2.0
+                grizzly:
+                    tags:
+                        - v4.1.2
+                        - v4.1.1
+                        - v4.1.0
+                        - v4.0.0
+                folsom:
+                    tags:
+                        - v3.0.0
+                        - v3.0.1
+                        - v3.1.0
+        chef_server:
+            run_list: []
+        compute:
+            run_list: ['role[single-compute]']
+        directory_server:
+            run_list: ['role[qa-openldap]']
+        controller1:
+            run_list: ['role[ha-controller1]', 'role[cinder-all]']
+        controller2:
+            run_list: ['role[ha-controller2]']
+
     storage:
         git:
             url: "https://github.com/rcbops-cookbooks/swift-private-cloud.git"

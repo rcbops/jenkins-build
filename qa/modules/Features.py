@@ -73,8 +73,8 @@ class HighAvailability(Feature):
         self.number = number
         self.environment = self.config['environments']['ha']
 
-    def update_environment(self):
-        raise NotImplementedError
+    def get_environment(self):
+        return self.environment
 
     def pre_configure(self):
         raise NotImplementedError
