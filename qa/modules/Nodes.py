@@ -18,8 +18,8 @@ class Node(object):
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
         password = password or self.password
-        return ssh_cmd(self.ip, remote_cmd=remote_cmd, user=user, password=password,
-                       quiet=quiet)
+        return ssh_cmd(self.ip, remote_cmd=remote_cmd, user=user,
+                       password=password, quiet=quiet)
 
     def scp_to(self, local_path, user=None, password=None, remote_path=""):
         user = user or self.user
