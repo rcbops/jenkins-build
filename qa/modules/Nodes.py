@@ -18,20 +18,20 @@ class Node(object):
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
         password = password or self.password
-        ssh_cmd(self.ip, remote_cmd=remote_cmd, user=user, password=password,
-                quiet=quiet)
+        return ssh_cmd(self.ip, remote_cmd=remote_cmd, user=user, password=password,
+                       quiet=quiet)
 
     def scp_to(self, local_path, user=None, password=None, remote_path=""):
         user = user or self.user
         password = password or self.password
-        scp_to(self.ip, local_path, user=user, password=password,
-               remote_path=remote_path)
+        return scp_to(self.ip, local_path, user=user, password=password,
+                      remote_path=remote_path)
 
     def scp_from(self, remote_path, user=None, password=None, local_path=""):
         user = user or self.user
         password = password or self.password
-        scp_from(self.ip, remote_path, user=user, password=password,
-                 local_path=local_path)
+        return scp_from(self.ip, remote_path, user=user, password=password,
+                        local_path=local_path)
 
     def update_environment(self):
         """Updates environment for each feature"""

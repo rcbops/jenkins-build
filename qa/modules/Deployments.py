@@ -1,3 +1,8 @@
+"""
+OpenStack deployments
+"""
+
+
 class Deployment(object):
     """Base for OpenStack deployments"""
     def __init__(self, name, os, branch, features):
@@ -28,6 +33,7 @@ class Deployment(object):
             self.create_node(Roles.DirectoryServer)
         for _ in xrange(config['computes']):
             self.create_node(Roles.Compute)
+
 
 class ChefRazorOSDeployment(OSDeployment):
     """

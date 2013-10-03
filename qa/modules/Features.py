@@ -17,14 +17,14 @@ class Feature(object):
             outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
-    def pre_configure(self):
-        raise NotImplementedError
+    def _pre_configure(self):
+        pass
 
-    def apply_feature(self):
-        raise NotImplementedError
+    def _apply_feature(self):
+        pass
 
-    def post_configure(self):
-        raise NotImplementedError
+    def _post_configure(self):
+        pass
 
     @classmethod
     def remove_chef(cls, node):
@@ -119,6 +119,7 @@ class HighAvailability(Feature):
         self.environment = self.config['environments']['ha']
 
     def pre_configure(self):
+        self._prepare_cinder(node)
         raise NotImplementedError
 
     def apply_feature(self):
