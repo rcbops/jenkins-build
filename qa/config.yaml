@@ -7,7 +7,49 @@ razor:
 
 environments:
     default:
-
+        package_component: "grizzly"
+        keystone:
+            admin_user: "admin"
+            users:
+                demo:
+                    roles:
+                        member: "demo"
+                    default_tenant: "demo"
+                    password: "ostackdemo"
+                admin:
+                    roles:
+                        admin: ["admin", "demo"]
+                    password: "ostackdemo"
+            tenants: ["admin", "service", "demo"]
+        monitoring:
+            metric_provider: "collectd"
+            procmon_provider: "monit"
+        mysql:
+            root_network_acl: "%"
+            allow_remote_root: true
+        nova:
+            apply_patches: true
+            networks:
+                public:
+                    bridge: "br0"
+                    dns1: "8.8.8.8"
+                    dns2: "8.8.4.4"
+                    bridge_dev: "eth0"
+                    network_size: "254"
+                    ipv4_cidr: "172.32.0.0/24"
+                    label: "public"
+        osops:
+            apply_patches: true
+        horizon:
+            theme: "default"
+        developer_mode: false
+        osops_networks:
+            management: "198.101.133.0/24"
+            nova: "198.101.133.0/24"
+            public: "198.101.133.0/24"
+        glance:
+            image_upload: true
+            images: ["cirros", "precise"]
     ha:
         precise:
             vips:
