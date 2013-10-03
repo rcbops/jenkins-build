@@ -19,10 +19,6 @@ class Feature(object):
             outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
-    def update_environment(self, key, value):
-        if hasattr(self.environment, key):
-            self.environment[key] = value
-
     def pre_configure(self):
         raise NotImplementedError
 
