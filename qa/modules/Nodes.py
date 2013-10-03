@@ -6,11 +6,12 @@ class Node(object):
     A individual computation entity to deploy a part OpenStack onto
     Provides server related functions
     """
-    def __init__(self, ip, user, password, os, features=[]):
+    def __init__(self, ip, user, password, os, product, features=[]):
         self.ip = ip
         self.user = user
         self.password = password
         self.os = os
+        self.product
         self.features = features
         self._cleanups = []
 
@@ -34,19 +35,23 @@ class Node(object):
 
     def update_environment(self):
         """Updates environment for each feature"""
-        (feature.update_environment() for feature in self.features)
+        for feature in self.features:
+            feature.update_environment(self)
 
     def pre_configure(self):
         """Pre configures node for each feature"""
-        (feature.pre_configure() for feature in self.features)
+        for feature in self.features:
+            feature.pre_configure(self)
 
     def apply_feature(self):
         """Applies each feature"""
-        (feature.apply_feature() for feature in self.features)
+        for feature in self.features:
+            feature.apply_feature(self)
 
     def post_configure(self):
         """Post configures node for each feature"""
-        (feature.post_configure() for feature in self.features)
+        for feature in self.features:
+            feature.post_configure(self)
 
     def build(self):
         """Runs build steps for node's features"""
@@ -75,9 +80,10 @@ class ChefNode(Node):
     A chef entity
     Provides chef related server fuctions
     """
-    def __init__(self, name, os, api, qa, branch, features=[]):
+    def __init__(self, name, os, product, api, qa, branch, features=[]):
         self.name = name
         self.os = os
+        self.product = product
         self.api = api
         self.qa = qa
         self.branch = branch
@@ -95,54 +101,3 @@ class ChefNode(Node):
             return map[item]
         else:
             return self.__dict__[item]
-
-    def install_chef_server(self):
-        """
-        Installs a chef server onto node
-        """
-        cmd = 'curl {0} | bash'.format(self.qa.config['chef']['server_script'])
-        ssh_run = self.run_cmd(cmd)
-        if ssh_run['success']:
-            print "Installed Chef Server on %s" % self
-        self.install_cookbooks(self.qa.config['rcbops']['git']['url'],
-                               self.branch)
-
-    def install_cookbooks(self, url, branch, local_repo='/opt/rcbops'):
-        '''
-        Install cookbooks onto chef server
-        @param url git url of cookbook
-        @type url String
-        @param branch git branch of cookbook
-        @type branch String
-        @param local_repo Location to place cookbooks
-        @type String
-        '''
-        # Make directory that the cookbooks will live in
-        command = 'mkdir -p {0}'.format(local_repo)
-        self.run_cmd(command)
-
-        # Pulling the url apart to get the name of the cookbooks
-        cookbook_name = url.split("/")[-1].split(".")[0]
-
-        # clone to cookbook
-        commands = ['cd {0}; git clone {1}'.format(local_repo, url)]
-        commands.append('cd {0}/{1}; git checkout {2}'.format(local_repo,
-                                                              cookbook_name,
-                                                              branch))
-
-        commands.append('cd {0}/{1}; '
-                        'git submodule init; '
-                        'git submodule sync; '
-                        'git submodule update'.format(local_repo,
-                                                      cookbook_name))
-        cookbook_path = '{0}/{1}/cookbooks'.format(local_repo, cookbook_name)
-        upload = ('knife cookbook upload --all '
-                  '--cookbook-path {0}'.format(cookbook_path))
-        commands.append(upload)
-
-        # Append role load to run list
-        role_path = '{0}/{1}/roles/*.rb'.format(local_repo, cookbook_name)
-        commands.append('knife role from file {0}'.format(role_path))
-        command = "; ".join(commands)
-
-        self.run_cmd(command)
