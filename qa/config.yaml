@@ -1,10 +1,8 @@
 chef:
   server: 
     install_script: https://raw.github.com/rcbops/jenkins-build/master/qa/bash/jenkins/install-chef-server.sh
-
 razor:
   ip: 198.101.133.3
-
 environments:
     default:
         package_component: "grizzly"
@@ -48,6 +46,25 @@ environments:
             nova: "198.101.133.0/24"
             public: "198.101.133.0/24"
         glance:
+            image_upload: true
+            images: ["cirros", "precise"]
+    glance-cf:
+        glance:
+            api:
+                default_store: "swift"
+                swift_store_user: "<Tenant_Id>:<Tenant_Name>"
+                swift_store_key: "<Tenant_Password>"
+                swift_store_auth_version: "2"
+                swift_store_auth_address: "https://identity.api.rackspacecloud.com/v2.0"
+            services:
+                api:
+                    path: ""
+                admin-api:
+                    path: ""
+                internal-api:
+                    path: ""
+                registry:
+                    path: ""
             image_upload: true
             images: ["cirros", "precise"]
     ha:
@@ -110,7 +127,19 @@ environments:
             network:
                 provider: "quantum"
                 apply_patches: True
-
+    swift-private-cloud:
+        network:
+            management: ""
+            exnet: ""
+        swift_common:
+           swift_hash_prefix: ""
+           swift_hash_suffix: ""
+        dispersion:
+            dis_key: "secrete"
+        keystone: 
+           swift_admin_url: ""
+           swift_public_url: ""
+           swift_internal_url: ""
 rcbops:
     compute:
         git:
@@ -140,7 +169,6 @@ rcbops:
             run_list: ['role[ha-controller1]', 'role[cinder-all]']
         controller2:
             run_list: ['role[ha-controller2]']
-
     storage:
         git:
             url: "https://github.com/rcbops-cookbooks/swift-private-cloud.git"
@@ -156,7 +184,6 @@ rcbops:
             roles: ['role[spc-starter-proxy]']
         storage:
             roles: ['role[spc-starter-storage]']
-
 tests:
   default:
     - compute
