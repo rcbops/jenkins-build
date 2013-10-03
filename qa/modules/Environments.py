@@ -2,6 +2,8 @@
 OpenStack Environments
 """
 
+from chef import Environment as ChefEnvironment
+
 class Environment(dict):
 
     def __init__(self, name, description):
@@ -10,22 +12,36 @@ class Environment(dict):
 
 class Chef(Environment):
 
-    def __init__(self, name, description, default={}, override={}):
+    def __init__(self, name, local_api, remote_api=None, 
+                 description=None, default={}, override={}):
         super(Chef, self).__init__(name, description)
         self.cookbook_versions = {}
         self.json_class = "Chef::Environment"
         self.chef_type = "environment"
         self.default_attributes = default
         self.override_attributes = override
+        self.local_api = local_api
+        self.remote_api = remote_api
 
     def _add_override_attr(self, key, value):
         self.override_attributes[key] = value
+        self.save()
 
     def _add_default_attr(self, key, value):
         self.default_attributes[key] = value
+        self.save()
 
     def _del_override_attr(self, key, value):
         del self.override_attributes[key]
+        self.save()
 
     def _del_default_attr(self, key, value):
         del self.default_attributes[key]
+        self.save()
+
+    def save(self):
+        env = ChefEnvironment.create(self.name, api=self.local_api)
+        env.attributes = self.__dict__
+        env.save(self.local_api)
+        if self.remote_api:
+            env.save(self.remote_api)
