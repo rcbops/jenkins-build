@@ -19,8 +19,9 @@ class Feature(object):
             outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
-    def update_environment(self):
-        raise NotImplementedError
+    def update_environment(self, key, value):
+        if hasattr(self.environment, key):
+            self.environment[key] = value
 
     def pre_configure(self):
         raise NotImplementedError
@@ -73,9 +74,6 @@ class HighAvailability(Feature):
         self.number = number
         self.environment = self.config['environments']['ha']
 
-    def get_environment(self):
-        return self.environment
-
     def pre_configure(self):
         raise NotImplementedError
 
@@ -93,9 +91,6 @@ class Neutron(Feature):
     def __init__(self):
         super(Neutron, self).__init__()
         self.environment = self.config['environments']['neutron']
-
-    def update_environment(self):
-        raise NotImplementedError
 
     def pre_configure(self):
         raise NotImplementedError
@@ -115,9 +110,6 @@ class OpenLDAP(Feature):
         super(OpenLDAP, self).__init__()
         self.environment = self.config['environment']['ldap']
         self.ldapadd_cmd = 'ldapadd -x -D "cn=admin,dc=rcb,dc=me -wostackdemo -f /root/base.ldif'
-
-    def update_environment(self):
-        raise NotImplementedError
 
     def pre_configure(self):
         raise NotImplementedError
@@ -140,9 +132,6 @@ class GlanceCF(Feature):
         super(GlanceCF, self).__init__()
         self.environment = self.config['environment']['glance']
 
-    def update_environment(self):
-        raise NotImplementedError
-
     def pre_configure(self):
         raise NotImplementedError
 
@@ -160,9 +149,6 @@ class Swift(Feature):
     def __init__(self):
         super(Swift, self).__init__()
         self.environment = self.config['environment']['swift']
-
-    def update_environment(self):
-        raise NotImplementedError
 
     def pre_configure(self):
         raise NotImplementedError
