@@ -1,10 +1,154 @@
 chef:
   server: 
     install_script: https://raw.github.com/rcbops/jenkins-build/master/qa/bash/jenkins/install-chef-server.sh
-
+    install_dir: /opt/rcbops
 razor:
   ip: 198.101.133.3
-
+environments:
+    package_component:
+        default: "grizzly"
+    keystone:
+        default:
+            admin_user: "admin"
+            users:
+                demo:
+                    roles:
+                        member: "demo"
+                    default_tenant: "demo"
+                    password: "ostackdemo"
+                admin:
+                    roles:
+                        admin: ["admin", "demo"]
+                    password: "ostackdemo"
+            tenants: ["admin", "service", "demo"]
+    monitoring:
+        default:
+            metric_provider: "collectd"
+            procmon_provider: "monit"
+    mysql:
+        default:
+            root_network_acl: "%"
+            allow_remote_root: true
+    nova:
+        default:
+            apply_patches: true
+            networks:
+                public:
+                    bridge: "br0"
+                    dns1: "8.8.8.8"
+                    dns2: "8.8.4.4"
+                    bridge_dev: "eth0"
+                    network_size: "254"
+                    ipv4_cidr: "172.32.0.0/24"
+                    label: "public"
+    osops:
+        default:
+            apply_patches: true
+    horizon:
+        default:
+            theme: "default"
+    developer_mode: 
+        default: false
+    osops_networks:
+        default:
+            management: "198.101.133.0/24"
+            nova: "198.101.133.0/24"
+            public: "198.101.133.0/24"
+    glance:
+        default:
+            image_upload: true
+            images: ["cirros", "precise"]
+        cf:
+            api:
+                default_store: "swift"
+                swift_store_user: "<Tenant_Id>:<Tenant_Name>"
+                swift_store_key: "<Tenant_Password>"
+                swift_store_auth_version: "2"
+                swift_store_auth_address: "https://identity.api.rackspacecloud.com/v2.0"
+            services:
+                api:
+                    path: ""
+                admin-api:
+                    path: ""
+                internal-api:
+                    path: ""
+                registry:
+                    path: ""
+            image_upload: true
+            images: ["cirros", "precise"]
+    ha:
+        precise:
+            vips:
+                mysql-db: "198.101.133.154"
+                rabbitmq-queue: "198.101.133.155"
+                cinder-api: "198.101.133.156"
+                glance-api: "198.101.133.156"
+                glance-registry: "198.101.133.156"
+                horizon-dash: "198.101.133.156"
+                horizon-dash_ssl: "198.101.133.156"
+                keystone-admin-api: "198.101.133.156"
+                keystone-internal-api: "198.101.133.156"
+                keystone-service-api: "198.101.133.156"
+                nova-api: "198.101.133.156"
+                nova-ec2-public: "198.101.133.156"
+                nova-novnc-proxy: "198.101.133.156"
+                nova-xvpvnc-proxy: "198.101.133.156"
+                swift-proxy: "198.101.133.156"
+                config:
+                    198.101.133.154:
+                        vrid: 10
+                        network: "public"
+                    198.101.133.155:
+                        vrid: 11
+                        network: "public"
+                    198.101.133.156:
+                        vrid: 12
+                        network: "public"
+        centos:
+            vips:
+                mysql-db: "198.101.133.157"
+                rabbitmq-queue: "198.101.133.158"
+                cinder-api: "198.101.133.159"
+                glance-api: "198.101.133.159"
+                glance-registry: "198.101.133.159"
+                horizon-dash: "198.101.133.159"
+                horizon-dash_ssl: "198.101.133.159"
+                keystone-admin-api: "198.101.133.159"
+                keystone-internal-api: "198.101.133.159"
+                keystone-service-api: "198.101.133.159"
+                nova-api: "198.101.133.159"
+                nova-ec2-public: "198.101.133.159"
+                nova-novnc-proxy: "198.101.133.159"
+                nova-xvpvnc-proxy: "198.101.133.159"
+                swift-proxy: "198.101.133.159"
+                config:
+                    198.101.133.157:
+                        vrid: 14
+                        network: "public"
+                    198.101.133.158:
+                        vrid: 15
+                        network: "public"
+                    198.101.133.159:
+                        vrid: 16
+                        network: "public"
+    neutron:
+        nova:
+            network:
+                provider: "quantum"
+                apply_patches: True
+    swift-private-cloud:
+        network:
+            management: ""
+            exnet: ""
+        swift_common:
+           swift_hash_prefix: ""
+           swift_hash_suffix: ""
+        dispersion:
+            dis_key: "secrete"
+        keystone: 
+           swift_admin_url: ""
+           swift_public_url: ""
+           swift_internal_url: ""
 rcbops:
     compute:
         git:
@@ -34,7 +178,6 @@ rcbops:
             run_list: ['role[ha-controller1]', 'role[cinder-all]']
         controller2:
             run_list: ['role[ha-controller2]']
-
     storage:
         git:
             url: "https://github.com/rcbops-cookbooks/swift-private-cloud.git"
@@ -50,7 +193,6 @@ rcbops:
             roles: ['role[spc-starter-proxy]']
         storage:
             roles: ['role[spc-starter-storage]']
-
 tests:
   default:
     - compute
