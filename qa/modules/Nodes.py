@@ -31,6 +31,29 @@ class Node(object):
         scp_from(self.ip, remote_path, user=user, password=password,
                  local_path=local_path)
 
+    def update_environment(self):
+        """Updates environment for each feature"""
+        (feature.update_environment() for feature in self.features)
+
+    def pre_configure(self):
+        """Pre configures node for each feature"""
+        (feature.pre_configure() for feature in self.features)
+
+    def apply_feature(self):
+        """Applies each feature"""
+        (feature.apply_feature() for feature in self.features)
+
+    def post_configure(self):
+        """Post configures node for each feature"""
+        (feature.post_configure() for feature in self.features)
+
+    def build(self):
+        """Runs build steps for node's features"""
+        self.update_environment()
+        self.pre_configure()
+        self.apply_feature()
+        self.pre_configure()
+
     def __str__(self):
         return "Node: %s" % self.ip
 
@@ -56,9 +79,13 @@ class ChefNode(Node):
         self.api = api
         self.qa = qa
         self.branch = branch
+        self.features = features
         self._cleanups = []
 
     def __getattr__(self, item):
+        """
+        Gets ip, user, and password from provisioners
+        """
         map = {'ip': Node(self.name)['ipaddress'],
                'user': Node(self.name)['current_user'],
                'password': self.qa.razor_password(self.name)}
