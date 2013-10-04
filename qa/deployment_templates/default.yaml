@@ -1,18 +1,23 @@
 precise-default:
   name: default
   os: precise
+  features:
+    - glance-cf
+    - cinder-local
   nodes:
     - [chef-server]
-    - [controller1, glance-cf, cinder-local]
+    - [controller1, cinder-local]
     - [compute]
 
 centos-default:
   name: default
   os: centos
   features:
+    - glance-cf
+    - cinder-local
   nodes:
     - [chef-server]
-    - [controller1]
+    - [controller1, cinder-local]
     - [compute]
 
 precise-ha:
