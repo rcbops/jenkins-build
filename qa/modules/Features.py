@@ -111,10 +111,11 @@ class ChefServer(Feature):
 
     def apply_feature(self, node):
         self._install(node)
-    
-    def post_configure(self, node):
         self._install_cookbooks(node)
         self.set_up_remote(node)
+    
+    def post_configure(self, deployment):
+        pass
 
     def _install(self, node):
         """ Installs chef server on the given node
@@ -214,6 +215,9 @@ class HighAvailability(Feature):
     def apply_feature(self, node):
         self.run_chef_client(node)
 
+    def post_configure(self, deployment):
+        pass
+
 
 class Neutron(Feature):
     """ Represents a neutron network cluster
@@ -226,13 +230,13 @@ class Neutron(Feature):
     def update_environment(self, node):
         node.environment._add_override_attr('neutron', self.environment)
 
-    def pre_configure(self):
+    def pre_configure(self, node):
         raise NotImplementedError
 
     def apply_feature(self, node):
         self.run_chef_client(node)
     
-    def post_configure(self):
+    def post_configure(self, deployment):
         raise NotImplementedError
 
 
@@ -248,14 +252,15 @@ class OpenLDAP(Feature):
     def update_environment(self, node):
         node.environment._add_override_attr('ldap', self.environment)
 
-    def pre_configure(self):
+    def pre_configure(self, node):
         raise NotImplementedError
 
     def apply_feature(self, node):
         self.run_chef_client(node)
+        self._ldap_add(node)
     
-    def post_configure(self):
-        self._ldap_add()
+    def post_configure(self, deployment):
+        raise NotImplementedError
 
     def _ldap_add(self):
         raise NotImplementedError
@@ -272,13 +277,13 @@ class GlanceCF(Feature):
     def update_environment(self, node):
         node.environment._add_override_attr('glance', self.environment)
 
-    def pre_configure(self):
+    def pre_configure(self, node):
         raise NotImplementedError
 
-    def apply_feature(self):
-        raise NotImplementedError
+    def apply_feature(self, node):
+        self.run_chef_client(node)
     
-    def post_configure(self):
+    def post_configure(self, deployment):
         raise NotImplementedError
 
 
@@ -293,13 +298,13 @@ class Swift(Feature):
     def update_environment(self, node):
         node.environment._add_override_attr('swift', self.environment)
 
-    def pre_configure(self):
+    def pre_configure(self, node):
         raise NotImplementedError
 
-    def apply_feature(self):
-        raise NotImplementedError
+    def apply_feature(self, node):
+        self.run_chef_client(node)
     
-    def post_configure(self):
+    def post_configure(self, deployment):
         raise NotImplementedError
 
 class Remote(Feature):
@@ -309,9 +314,15 @@ class Remote(Feature):
     def __init__(self, node):
         super(Remote, self).__init__()
 
+    def pre_configure(self, node):
+        pass
+
     def apply_feature(self, node):
         self.remove_chef(node)
         self._bootstrap_chef(node)
+
+    def post_configure(self, deployment):
+        pass
 
     def _bootstrap_chef(self, node):
         """ Bootstraps the node to a chef server
