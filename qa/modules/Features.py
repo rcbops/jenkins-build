@@ -2,7 +2,7 @@
 OpenStack Features
 """
 
-from chef import ChefAPI
+from chef import ChefAPI, Node
 
 class Feature(object):
     """ Represents a OpenStack Feature
@@ -88,7 +88,7 @@ class Feature(object):
     def set_run_list(cls, node):
         """ Sets the nodes run list based on the Feature
         """
-
+        raise NotImplementedError
 
 
 class ChefServer(Feature):
@@ -311,4 +311,21 @@ class Remote(Feature):
 
     def apply_feature(self, node):
         self.remove_chef(node)
-        self.bootstrap_chef(node)
+        self._bootstrap_chef(node)
+
+    def _bootstrap_chef(self, node):
+        """ Bootstraps the node to a chef server
+        """
+
+        # I need the ability to get a node instance based on name
+        # I think deployments need to have a list of all the nodes
+        # in the deployment so i can search through them for my
+        # chef server node obkect so i can use its run_cmd
+
+        # Gather the info for the chef server
+        chef_server_node = node.deployment.nodes['chef_server']
+
+        command = 'knife bootstrap {0} -s root -p {1}'.format(chef_server_node.ip,
+                                                              node.password)
+
+        chef_server_node.run_cmd(command)
