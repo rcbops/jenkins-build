@@ -2,6 +2,8 @@
 OpenStack Features
 """
 
+from chef import ChefAPI
+
 class Feature(object):
     """ Represents a OpenStack Feature
     """
@@ -103,6 +105,7 @@ class ChefServer(Feature):
     
     def _post_configure(self, node):
         self._install_cookbooks(node)
+        self.set_up_remote(node)
 
     def _install(self, node):
         """ Installs chef server on the given node
@@ -147,6 +150,42 @@ class ChefServer(Feature):
 
         return node.run_cmd(command)
 
+    def _set_up_remote(self, node):
+        """ Sets up and saves a remote api and dict to the nodes
+            environment
+        """
+
+        remote_chef = {
+            "client": "admin",
+            "key": self._get_admin_pem(node),
+            "url": "https://{0}:4443".format(node.ip)
+        }
+
+        # set the remote chef server name
+        setattr(self.node.environment.chef_server_name,
+                node.name)
+
+        # save the remote dict
+        self.node.environment._add_override_attr('remote_chef', remote_chef)
+
+        # set the remote api
+        setattr(self.node.environment.remote_api,
+                self._set_remote_chef_api(remote_chef))
+
+    def _remote_chef_api(self, chef_api_dict):
+        """ Builds a remote chef API object
+        """
+
+        return ChefAPI(**chef_api_dict)
+
+    def _get_admin_pem(self, node):
+        """ Gets the admin pem from the chef server
+        """
+
+        command = 'cat ~/.chef/admin.pem'
+        return node.run_cmd(command)['return']
+
+
 class HighAvailability(Feature):
     """ Represents a highly available cluster
     """
@@ -157,6 +196,8 @@ class HighAvailability(Feature):
         self.environment = self.config['environments']['ha']
 
     def _pre_configure(self, node):
+        self.remove_chef(node)
+        self.bootstrap_chef(node)
         self.prepare_cinder(node)
 
     def _apply_feature(self, node):
@@ -237,3 +278,14 @@ class Swift(Feature):
     
     def post_configure(self):
         raise NotImplementedError
+
+class Remote(Feature):
+    """ Represents the deployment having a remote chef server
+    """
+
+    def __init__(self, node):
+        super(Remote, self).__init__()
+
+    def apply_feature(self, node):
+        self.remove_chef(node)
+        self.bootstrap_chef(chef_server_node, node)
