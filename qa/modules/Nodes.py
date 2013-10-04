@@ -90,11 +90,19 @@ class ChefRazorNode(Node):
         self.os = os
         self.product = product
         self.environment = environment
-        self.api = api
-        self.qa = qa
+        self.razor = provisioner
         self.branch = branch
         self.features = features
         self._cleanups = []
+
+    def _password(self, chef_node):
+        try:
+            chef_node = CNode(chef_node.name, api=self.chef)
+            uuid = chef_node.attributes['razor_metadata'][
+                'razor_active_model_uuid']
+        except:
+            raise Exception("Couldn't find razor_metadata/password")
+        return self.razor.get_active_model_pass(uuid)['password']
 
     def __getattr__(self, item):
         """
@@ -102,7 +110,7 @@ class ChefRazorNode(Node):
         """
         map = {'ip': Node(self.name)['ipaddress'],
                'user': Node(self.name)['current_user'],
-               'password': self.qa.razor_password(self.name)}
+               'password': self._password()}
         if item in map.keys():
             return map[item]
         else:
@@ -111,7 +119,7 @@ class ChefRazorNode(Node):
     def destroy(self):
         cnode = CNode(self.name)
         active_model = cnode['razor_metadata']['razor_active_model_uuid']
-        self.qa.razor.remove_active_model(active_model)
+        self.razor.remove_active_model(active_model)
         self.run_cmd("reboot 0")
         CClient(self.name).delete()
         cnode.delete()
