@@ -196,8 +196,6 @@ class HighAvailability(Feature):
         self.environment = self.config['environments']['ha']
 
     def _pre_configure(self, node):
-        self.remove_chef(node)
-        self.bootstrap_chef(node)
         self.prepare_cinder(node)
 
     def _apply_feature(self, node):
@@ -288,4 +286,4 @@ class Remote(Feature):
 
     def apply_feature(self, node):
         self.remove_chef(node)
-        self.bootstrap_chef(chef_server_node, node)
+        self.bootstrap_chef(node)
