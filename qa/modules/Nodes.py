@@ -97,10 +97,10 @@ class ChefRazorNode(Node):
 
     def _password(self, chef_node):
         try:
-            chef_node = Node(chef_node.name, api=self.chef)
-            uuid = chef_node.attributes['razor_metadata']['razor_active_model_uuid']
+            chef_node = CNode(chef_node.name, api=self.chef)
+            uuid = chef_node.attributes['razor_metadata'][
+                'razor_active_model_uuid']
         except:
-            print dict(chef_node.attributes)
             raise Exception("Couldn't find razor_metadata/password")
         return self.razor.get_active_model_pass(uuid)['password']
 
@@ -110,7 +110,7 @@ class ChefRazorNode(Node):
         """
         map = {'ip': Node(self.name)['ipaddress'],
                'user': Node(self.name)['current_user'],
-               'password': self.qa.razor_password(self.name)}
+               'password': self._password()}
         if item in map.keys():
             return map[item]
         else:
