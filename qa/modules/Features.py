@@ -19,16 +19,16 @@ class Feature(object):
             outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
-    def _update_environment(self):
+    def update_environment(self):
         pass
 
-    def _pre_configure(self):
+    def pre_configure(self):
         pass
 
-    def _apply_feature(self):
+    def apply_feature(self):
         pass
 
-    def _post_configure(self):
+    def post_configure(self):
         pass
 
     @classmethod
@@ -106,13 +106,13 @@ class ChefServer(Feature):
                                  './{0}'.format(self.iscript_name)
                                 ]
 
-    def _pre_configure(self, node):
+    def pre_configure(self, node):
         self.remove_chef(node)
 
-    def _apply_feature(self, node):
+    def apply_feature(self, node):
         self._install(node)
     
-    def _post_configure(self, node):
+    def post_configure(self, node):
         self._install_cookbooks(node)
         self.set_up_remote(node)
 
@@ -204,14 +204,14 @@ class HighAvailability(Feature):
         self.number = number
         self.environment = self.config['environments']['ha']
 
-    def _update_environment(self, node):
+    def update_environment(self, node):
         node.environment._add_override_attr('ha', self.environment)
 
-    def _pre_configure(self, node):
+    def pre_configure(self, node):
         self.set_run_list(node)
         self.prepare_cinder(node)
 
-    def _apply_feature(self, node):
+    def apply_feature(self, node):
         self.run_chef_client(node)
 
 
@@ -223,7 +223,7 @@ class Neutron(Feature):
         super(Neutron, self).__init__()
         self.environment = self.config['environments']['neutron']
 
-    def _update_environment(self, node):
+    def update_environment(self, node):
         node.environment._add_override_attr('neutron', self.environment)
 
     def pre_configure(self):
@@ -245,7 +245,7 @@ class OpenLDAP(Feature):
         self.environment = self.config['environment']['ldap']
         self.ldapadd_cmd = 'ldapadd -x -D "cn=admin,dc=rcb,dc=me -wostackdemo -f /root/base.ldif'
 
-    def _update_environment(self, node):
+    def update_environment(self, node):
         node.environment._add_override_attr('ldap', self.environment)
 
     def pre_configure(self):
@@ -269,7 +269,7 @@ class GlanceCF(Feature):
         super(GlanceCF, self).__init__()
         self.environment = self.config['environment']['glance']
 
-    def _update_environment(self, node):
+    def update_environment(self, node):
         node.environment._add_override_attr('glance', self.environment)
 
     def pre_configure(self):
@@ -290,7 +290,7 @@ class Swift(Feature):
         super(Swift, self).__init__()
         self.environment = self.config['environment']['swift']
 
-    def _update_environment(self, node):
+    def update_environment(self, node):
         node.environment._add_override_attr('swift', self.environment)
 
     def pre_configure(self):
