@@ -21,4 +21,5 @@ class Template(object):
     @classmethod
     def fromfile(cls, path, name, branch):
         config = Config(path)[name]
-        cls(config['name'], config['os'], config['features'])
+        cls(config['name'], config['os'], config['branch'],
+            config['features'])
