@@ -19,6 +19,9 @@ class Feature(object):
             outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
+    def _update_environment(self):
+        pass
+
     def _pre_configure(self):
         pass
 
@@ -80,6 +83,12 @@ class Feature(object):
         """
 
         return node.run_cmd('chef-client', quiet=True)
+
+    @classmethod
+    def set_run_list(cls, node):
+        """ Sets the nodes run list based on the Feature
+        """
+
 
 
 class ChefServer(Feature):
@@ -195,7 +204,11 @@ class HighAvailability(Feature):
         self.number = number
         self.environment = self.config['environments']['ha']
 
+    def _update_environment(self, node):
+        node.environment._add_override_attr('ha', self.environment)
+
     def _pre_configure(self, node):
+        self.set_run_list(node)
         self.prepare_cinder(node)
 
     def _apply_feature(self, node):
@@ -209,6 +222,9 @@ class Neutron(Feature):
     def __init__(self):
         super(Neutron, self).__init__()
         self.environment = self.config['environments']['neutron']
+
+    def _update_environment(self, node):
+        node.environment._add_override_attr('neutron', self.environment)
 
     def pre_configure(self):
         raise NotImplementedError
@@ -228,6 +244,9 @@ class OpenLDAP(Feature):
         super(OpenLDAP, self).__init__()
         self.environment = self.config['environment']['ldap']
         self.ldapadd_cmd = 'ldapadd -x -D "cn=admin,dc=rcb,dc=me -wostackdemo -f /root/base.ldif'
+
+    def _update_environment(self, node):
+        node.environment._add_override_attr('ldap', self.environment)
 
     def pre_configure(self):
         raise NotImplementedError
@@ -250,6 +269,9 @@ class GlanceCF(Feature):
         super(GlanceCF, self).__init__()
         self.environment = self.config['environment']['glance']
 
+    def _update_environment(self, node):
+        node.environment._add_override_attr('glance', self.environment)
+
     def pre_configure(self):
         raise NotImplementedError
 
@@ -267,6 +289,9 @@ class Swift(Feature):
     def __init__(self):
         super(Swift, self).__init__()
         self.environment = self.config['environment']['swift']
+
+    def _update_environment(self, node):
+        node.environment._add_override_attr('swift', self.environment)
 
     def pre_configure(self):
         raise NotImplementedError
