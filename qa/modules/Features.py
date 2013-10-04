@@ -40,7 +40,45 @@ class Feature(object):
 
         command = commands.join("; ")
 
+        return node.run_cmd(command, quiet=True)
+
+    @classmethod
+    def prepare_cinder(cls, node):
+        """ Prepares the node for use with cinder
+        """
+
+        # Clean up any VG errors
+        commands = ["vg=`pvdisplay | grep unknown -A 1 | grep VG | "
+                    "awk '{print $3}'`",
+                    "for i in `lvdisplay | grep 'LV Name' | grep $vg "
+                    "| awk '{print $3}'`; do lvremove $i; done",
+                    "vgreduce $vg --removemissing"]
+        command = commands.join("; ")
         node.run_cmd(command)
+
+        # Gather the created volume group for cinder
+        command = "vgdisplay 2> /dev/null | grep pool | awk '{print $3}'"
+        ret = node.run_cmd(command)
+        volume_group = ret['return'].replace("\n", "").replace("\r", "")
+        
+        # Update our environment
+        env = node.environment
+        cinder = {
+            "storage": {
+                "lvm": {
+                    "volume_group": volume_group
+                }
+            }
+        }
+        env._add_override_attr("cinder", cinder)
+
+    @classmethod
+    def run_chef_client(cls, node):
+        """ Runs chef-client on the given node
+        """
+
+        return node.run_cmd('chef-client', quiet=True)
+
 
 class ChefServer(Feature):
     """ Represents a chef server
@@ -58,13 +96,13 @@ class ChefServer(Feature):
                                 ]
 
     def _pre_configure(self, node):
-        self._remove_chef(node)
+        self.remove_chef(node)
 
     def _apply_feature(self, node):
-        self.install()
+        self._install(node)
     
     def _post_configure(self, node):
-        self.install_cookbooks()
+        self._install_cookbooks(node)
 
     def _install(self, node):
         """ Installs chef server on the given node
@@ -107,7 +145,7 @@ class ChefServer(Feature):
 
         command = commands.join("; ")
 
-        node.run_cmd(command)
+        return node.run_cmd(command)
 
 class HighAvailability(Feature):
     """ Represents a highly available cluster
@@ -118,15 +156,11 @@ class HighAvailability(Feature):
         self.number = number
         self.environment = self.config['environments']['ha']
 
-    def pre_configure(self):
-        self._prepare_cinder(node)
-        raise NotImplementedError
+    def _pre_configure(self, node):
+        self.prepare_cinder(node)
 
-    def apply_feature(self):
-        raise NotImplementedError
-    
-    def post_configure(self):
-        raise NotImplementedError
+    def _apply_feature(self, node):
+        self.run_chef_client(node)
 
 
 class Neutron(Feature):
@@ -140,8 +174,8 @@ class Neutron(Feature):
     def pre_configure(self):
         raise NotImplementedError
 
-    def apply_feature(self):
-        raise NotImplementedError
+    def apply_feature(self, node):
+        self.run_chef_client(node)
     
     def post_configure(self):
         raise NotImplementedError
@@ -159,8 +193,8 @@ class OpenLDAP(Feature):
     def pre_configure(self):
         raise NotImplementedError
 
-    def apply_feature(self):
-        raise NotImplementedError
+    def apply_feature(self, node):
+        self.run_chef_client(node)
     
     def post_configure(self):
         self._ldap_add()
