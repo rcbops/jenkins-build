@@ -1,3 +1,8 @@
+import sys
+from time import sleep
+from modules.Environments import Chef
+from modules.Nodes import ChefRazorNode
+
 """
 OpenStack deployments
 """
@@ -5,14 +10,11 @@ OpenStack deployments
 
 class Deployment(object):
     """Base for OpenStack deployments"""
-    def __init__(self, name, os, branch, features):
+    def __init__(self, name, os, branch, features=[]):
         self.name = name
         self.os = os
         self.features = features
         self.nodes = []
-
-    def __iter__(self):
-        return self.nodes
 
     def destroy(self):
         """ Destroys an OpenStack deployment """
@@ -25,43 +27,73 @@ class Deployment(object):
 
     def provision(self):
         """Provisions nodes for each desired feature"""
-        if self.features['openldap']:
-            self.create_node(Roles.DirectoryServer)
-        if self.features['quantum']:
-            self.create_node(Roles.DirectoryServer)
-        if self.features['ha']:
-            self.create_node(Roles.DirectoryServer)
-        for _ in xrange(config['computes']):
-            self.create_node(Roles.Compute)
+
+    def pre_configure(self):
+        """Pre configures node for each feature"""
+        for feature in self.features:
+            feature.pre_configure(self)
+
+    def build_nodes(self):
+        """Builds each node"""
+        for node in self.nodes:
+            node.build()
+
+    def post_configure(self):
+        """Post configures node for each feature"""
+        for feature in self.features:
+            feature.post_configure(self)
+
+    def build(self):
+        """Runs build steps for node's features"""
+        self.update_environment()
+        self.pre_configure()
+        self.build_nodes()
+        self.pre_configure()
 
 
-class ChefRazorOSDeployment(OSDeployment):
+class ChefRazorDeployment(Deployment):
     """
     Deployment mechinisms specific to deployment using:
     Puppet's Razor as provisioner and
     Opscode's Chef as configuration management
     """
     def __init__(self, name, os, branch, features, chef, razor):
-        super(ChefRazorOSDeployment, self).__init__(name, os, branch, features)
+        super(ChefRazorDeployment, self).__init__(name, os, branch, features)
         self.chef = chef
         self.razor = razor
         self.environment = None
 
-    def create_node(self, role):
+    def free_node(self, image):
+        """
+        Provides a free node from
+        """
+        in_image_pool = "name:qa-%s-pool*" % image
+        is_default_environment = "chef_environment:_default"
+        is_ifaced = """run_list:recipe\[network-interfaces\]"""
+        query = "%s AND %s AND %s" % (in_image_pool,
+                                      is_default_environment,
+                                      is_ifaced)
+        nodes = self.node_search(query)
+        fails = 0
+        try:
+            node = next(nodes)
+            node['in_use'] = "provisioned"
+            nodes.save
+            yield node
+        except StopIteration:
+            if fails > 10:
+                print "No available chef nodes"
+                sys.exit(1)
+            fails += 1
+            sleep(15)
+            nodes = self.node_search(query)
+
+    def create_node(self, os):
         """Creates a node with chef cm and razor provisioner"""
-        node = self.chef.free_node(self.os)
-        config_manager = ChefConfigManager(node.name, self.chef,
-                                           self.features)
-        config_manager.set_in_use()
-        am_id = node.attributes['razor_metadata']['razor_active_model_uuid']
-        provisioner = RazorProvisioner(self.razor, am_id)
-        password = provisioner.get_password()
-        ip = node['ipaddress']
-        user = "root"
-        osnode = OSChefNode(ip, user, password, role, config_manager,
-                            provisioner)
-        osnode.add_cleanup(osnode.run_cmd("reboot 0"))
-        osnode.add_cleanup(time.sleep(15))
+        chef_node = self.free_node(self.os)
+        osnode = ChefRazorNode(name, os, product, envrionment, provisioner,
+                               branch, features)
+
         self.nodes.append(osnode)
         return osnode
 

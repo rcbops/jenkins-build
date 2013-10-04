@@ -1,4 +1,5 @@
 precise-default:
+  product: compute
   name: default
   os: precise
   features:
@@ -10,6 +11,7 @@ precise-default:
     - [compute]
 
 centos-default:
+  product: compute
   name: default
   os: centos
   features:
@@ -21,6 +23,7 @@ centos-default:
     - [compute]
 
 precise-ha:
+  product: compute
   name: ha
   os: precise
   features:
@@ -33,6 +36,7 @@ precise-ha:
     - [compute]
 
 centos-ha:
+  product: compute
   name: ha
   os: centos
   features:
@@ -45,6 +49,7 @@ centos-ha:
     - [compute]
 
 precise-ldap:
+  product: compute
   name: ldap
   os: precise
   features:
@@ -56,6 +61,7 @@ precise-ldap:
     - [compute]
 
 centos-ldap:
+  product: compute
   name: ldap
   os: centos
   features:
@@ -67,6 +73,7 @@ centos-ldap:
     - [compute]
 
 precise-swift:
+  product: compute
   name: swift
   os: precise
   features:
@@ -81,6 +88,7 @@ precise-swift:
     - [storage3]
 
 centos-swift:
+  product: compute
   name: swift
   os: centos
   features:
@@ -95,6 +103,7 @@ centos-swift:
     - [storage3]
 
 precise-neutron:
+  product: compute
   name: neutron
   os: precise
   features:
@@ -107,6 +116,7 @@ precise-neutron:
     - [compute]
 
 centos-neutron:
+  product: compute
   name: neutron
   os: centos
   features:

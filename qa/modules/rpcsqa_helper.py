@@ -184,7 +184,7 @@ class rpcsqa_helper:
 
     def erase_node(self, chef_node):
         print "Deleting: %s" % str(chef_node)
-        am_uuid = chef_node['razor_metadata'].to_dict()['razor_active_model_uuid']
+        am_uuid = chef_node['razor_metadata']['razor_active_model_uuid']
         run = run_remote_ssh_cmd(chef_node['ipaddress'], 'root', self.razor_password(chef_node), "reboot 0", quiet=True)
         if not run['success']:
             raise Exception("Error rebooting server %s@%s " % (chef_node, chef_node['ipaddress']))

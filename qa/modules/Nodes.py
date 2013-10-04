@@ -1,3 +1,6 @@
+from time import sleep
+from chef import Node as CNode
+from chef import Client as CClient
 from server_helper import ssh_cmd, scp_to, scp_from
 
 
@@ -76,12 +79,12 @@ class Node(object):
         self._cleanups.append((function, args, kwargs))
 
 
-class ChefNode(Node):
+class ChefRazorNode(Node):
     """
     A chef entity
     Provides chef related server fuctions
     """
-    def __init__(self, name, os, product, environment, api, qa, branch,
+    def __init__(self, name, os, product, environment, provisioner, branch,
                  features=[]):
         self.name = name
         self.os = os
@@ -104,3 +107,12 @@ class ChefNode(Node):
             return map[item]
         else:
             return self.__dict__[item]
+
+    def destroy(self):
+        cnode = CNode(self.name)
+        active_model = cnode['razor_metadata']['razor_active_model_uuid']
+        self.qa.razor.remove_active_model(active_model)
+        self.run_cmd("reboot 0")
+        CClient(self.name).delete()
+        cnode.delete()
+        sleep(15)
