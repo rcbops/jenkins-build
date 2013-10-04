@@ -2,7 +2,7 @@
 OpenStack Features
 """
 
-from chef import ChefAPI, Node
+from chef import ChefAPI
 
 class Feature(object):
     """ Represents a OpenStack Feature
