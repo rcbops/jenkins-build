@@ -4,15 +4,17 @@ OpenStack Environments
 
 from chef import Environment as ChefEnvironment
 
+
 class Environment(dict):
 
     def __init__(self, name, description):
         self.name = name
         self.description = description
 
+
 class Chef(Environment):
 
-    def __init__(self, name, local_api, chef_server_name=None, remote_api=None, 
+    def __init__(self, name, local_api, chef_server_name=None, remote_api=None,
                  description=None, default={}, override={}):
         super(Chef, self).__init__(name, description)
         self.cookbook_versions = {}

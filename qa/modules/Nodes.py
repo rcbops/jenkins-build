@@ -10,12 +10,14 @@ class Node(object):
     Provides server related functions
     """
     def __init__(self, ip, user, password, os, product, environment,
-                 features=[]):
+                 deployment, features=[]):
         self.ip = ip
         self.user = user
         self.password = password
         self.os = os
-        self.product
+        self.product = product
+        self.environment = environment
+        self.deployment = deployment
         self.features = features
         self._cleanups = []
 
@@ -70,26 +72,19 @@ class Node(object):
     def destroy(self):
         raise NotImplementedError
 
-    def clean_up(self):
-        for cleanup in self._cleanups:
-            function, args, kwargs = cleanup
-            function(*args, **kwargs)
-
-    def add_cleanup(self, function, *args, **kwargs):
-        self._cleanups.append((function, args, kwargs))
-
 
 class ChefRazorNode(Node):
     """
     A chef entity
     Provides chef related server fuctions
     """
-    def __init__(self, name, os, product, environment, provisioner, branch,
-                 features=[]):
+    def __init__(self, name, os, product, environment, deployment, provisioner,
+                 branch, features=[]):
         self.name = name
         self.os = os
         self.product = product
         self.environment = environment
+        self.deployment = deployment
         self.razor = provisioner
         self.branch = branch
         self.features = features

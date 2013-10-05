@@ -4,13 +4,14 @@ OpenStack Features
 
 from chef import ChefAPI
 
+
 class Feature(object):
     """ Represents a OpenStack Feature
     """
 
     def __init__(self, config=None):
         self.config = config
-    
+
     def __repr__(self):
         """ print current instace of class
         """
@@ -65,7 +66,7 @@ class Feature(object):
         command = "vgdisplay 2> /dev/null | grep pool | awk '{print $3}'"
         ret = node.run_cmd(command)
         volume_group = ret['return'].replace("\n", "").replace("\r", "")
-        
+
         # Update our environment
         env = node.environment
         cinder = {
@@ -99,12 +100,10 @@ class ChefServer(Feature):
         super(ChefServer, self).__init__()
         self.iscript = self.config['chef']['server']['install_script']
         self.iscript_name = self.iscript.split('/')[-1]
-        self.install_commands = ['curl {0} >> {1}'.format(
-                                    self.iscript,
-                                    self.iscript_name),
+        self.install_commands = ['curl {0} >> {1}'.format(self.iscript,
+                                                          self.iscript_name),
                                  'chmod u+x ~/{0}'.format(self.iscript_name),
-                                 './{0}'.format(self.iscript_name)
-                                ]
+                                 './{0}'.format(self.iscript_name)]
 
     def pre_configure(self, node):
         self.remove_chef(node)
@@ -113,7 +112,7 @@ class ChefServer(Feature):
         self._install(node)
         self._install_cookbooks(node)
         self.set_up_remote(node)
-    
+
     def post_configure(self, deployment):
         pass
 
@@ -127,7 +126,7 @@ class ChefServer(Feature):
     def _install_cookbooks(self, node):
         """ Installs cookbooks on node
         """
-        
+
         cookbook_url = self.config['rcbops'][node.product]['git']['url']
         cookbook_branch = node.branch
         cookbook_name = cookbook_url.split("/")[-1].split(".")[0]
@@ -235,7 +234,7 @@ class Neutron(Feature):
 
     def apply_feature(self, node):
         self.run_chef_client(node)
-    
+
     def post_configure(self, deployment):
         raise NotImplementedError
 
@@ -258,7 +257,7 @@ class OpenLDAP(Feature):
     def apply_feature(self, node):
         self.run_chef_client(node)
         self._ldap_add(node)
-    
+
     def post_configure(self, deployment):
         raise NotImplementedError
 
@@ -282,7 +281,7 @@ class GlanceCF(Feature):
 
     def apply_feature(self, node):
         self.run_chef_client(node)
-    
+
     def post_configure(self, deployment):
         raise NotImplementedError
 
@@ -303,9 +302,10 @@ class Swift(Feature):
 
     def apply_feature(self, node):
         self.run_chef_client(node)
-    
+
     def post_configure(self, deployment):
         raise NotImplementedError
+
 
 class Remote(Feature):
     """ Represents the deployment having a remote chef server

@@ -1,7 +1,12 @@
+import os
 import sys
 from time import sleep
+from chef import autoconfigure
+from modules.razor_api import razor_api
+from modules.Config import Config
 from modules.Environments import Chef
 from modules.Nodes import ChefRazorNode
+
 
 """
 OpenStack deployments
@@ -10,9 +15,9 @@ OpenStack deployments
 
 class Deployment(object):
     """Base for OpenStack deployments"""
-    def __init__(self, name, os, branch, features=[]):
+    def __init__(self, name, os_name, branch, features=[]):
         self.name = name
-        self.os = os
+        self.os = os_name
         self.features = features
         self.nodes = []
 
@@ -57,13 +62,15 @@ class ChefRazorDeployment(Deployment):
     Puppet's Razor as provisioner and
     Opscode's Chef as configuration management
     """
-    def __init__(self, name, os, branch, features, chef, razor):
-        super(ChefRazorDeployment, self).__init__(name, os, branch, features)
+    def __init__(self, name, os_name, branch, features, chef, razor):
+        super(ChefRazorDeployment, self).__init__(name, os_name, branch,
+                                                  features)
         self.chef = chef
         self.razor = razor
         self.environment = None
 
-    def free_node(self, image):
+    @classmethod
+    def free_node(cls, image):
         """
         Provides a free node from
         """
@@ -73,7 +80,8 @@ class ChefRazorDeployment(Deployment):
         query = "%s AND %s AND %s" % (in_image_pool,
                                       is_default_environment,
                                       is_ifaced)
-        nodes = self.node_search(query)
+        # TODO: Add node_search to chef helper
+        nodes = Chef.node_search(query)
         fails = 0
         try:
             node = next(nodes)
@@ -86,16 +94,29 @@ class ChefRazorDeployment(Deployment):
                 sys.exit(1)
             fails += 1
             sleep(15)
-            nodes = self.node_search(query)
+            # TODO: Add node_search to chef helper
+            nodes = Chef.node_search(query)
 
-    def create_node(self, os):
-        """Creates a node with chef cm and razor provisioner"""
-        chef_node = self.free_node(self.os)
-        osnode = ChefRazorNode(name, os, product, envrionment, provisioner,
-                               branch, features)
-
-        self.nodes.append(osnode)
-        return osnode
+    @classmethod
+    def fromfile(cls, name, branch, config, path=None):
+        if not path:
+            path = os.path.join(os.path.dirname(__file__),
+                                os.pardir,
+                                'deployment_templates/default.yaml')
+        template = Config(path)[name]
+        local_api = autoconfigure()
+        chef = Chef(name, local_api, description=name)
+        razor = razor_api(config['razor']['ip'])
+        os_name = template['os']
+        product = template['product']
+        deployment = cls(template['name'], os_name, branch,
+                         template['features'], chef, razor)
+        for node_features in template['nodes']:
+            node = ChefRazorNode(cls.free_node(os_name).name, os_name, product,
+                                 chef, deployment, razor, branch,
+                                 node_features)
+            deployment.nodes.append(node)
+        return deployment
 
     def search_role(self, role):
         """Returns nodes the have the desired role"""
@@ -103,16 +124,7 @@ class ChefRazorDeployment(Deployment):
         chef_nodes = (node.name for node in self.chef.node_search(query=query))
         return (osnode for osnode in self.nodes if chef_nodes)
 
-    def provision(self):
-        """Creates remote chef node then provisions roles"""
-        self.environment = self.chef.prepare_environment(self.name,
-                                                         self.os,
-                                                         self.os_version,
-                                                         self.features)
-        if self.features['remote_chef']:
-            self.create_node(Roles.ChefServer)
-        super(ChefRazorOSDeployment, self).provision()
-
     def destroy(self):
-        super(ChefRazorOSDeployment, self).destroy()
-        self.chef.destroy_environment(self.environment)
+        super(ChefRazorDeployment, self).destroy()
+        # TODO: Add destroy to a chef helper class
+        self.environment.destroy()
