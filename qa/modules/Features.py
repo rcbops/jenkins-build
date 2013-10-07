@@ -49,47 +49,18 @@ class Feature(object):
         return node.run_cmd(command, quiet=True)
 
     @classmethod
-    def prepare_cinder(cls, node):
-        """ Prepares the node for use with cinder
-        """
-
-        # Clean up any VG errors
-        commands = ["vg=`pvdisplay | grep unknown -A 1 | grep VG | "
-                    "awk '{print $3}'`",
-                    "for i in `lvdisplay | grep 'LV Name' | grep $vg "
-                    "| awk '{print $3}'`; do lvremove $i; done",
-                    "vgreduce $vg --removemissing"]
-        command = commands.join("; ")
-        node.run_cmd(command)
-
-        # Gather the created volume group for cinder
-        command = "vgdisplay 2> /dev/null | grep pool | awk '{print $3}'"
-        ret = node.run_cmd(command)
-        volume_group = ret['return'].replace("\n", "").replace("\r", "")
-
-        # Update our environment
-        env = node.environment
-        cinder = {
-            "storage": {
-                "lvm": {
-                    "volume_group": volume_group
-                }
-            }
-        }
-        env._add_override_attr("cinder", cinder)
-
-    @classmethod
     def run_chef_client(cls, node):
         """ Runs chef-client on the given node
         """
 
         return node.run_cmd('chef-client', quiet=True)
 
-    @classmethod
-    def set_run_list(cls, node):
+    def set_run_list(self, node):
         """ Sets the nodes run list based on the Feature
         """
-        raise NotImplementedError
+        run_list = self.config['rcbops'][node.product][self.__name__.lower()][
+            'run_list']
+        node['run_list'].extend(run_list)
 
 
 class ChefServer(Feature):
@@ -340,3 +311,43 @@ class Remote(Feature):
                                                               node.password)
 
         chef_server_node.run_cmd(command)
+
+
+class CinderLocal(Feature):
+    """
+    Enables cinder with local lvm backend
+    """
+
+    def pre_configure(self, node):
+        self.prepare_cinder(node)
+        self.set_run_list()
+
+    @classmethod
+    def prepare_cinder(cls, node):
+        """ Prepares the node for use with cinder
+        """
+
+        # Clean up any VG errors
+        commands = ["vg=`pvdisplay | grep unknown -A 1 | grep VG | "
+                    "awk '{print $3}'`",
+                    "for i in `lvdisplay | grep 'LV Name' | grep $vg "
+                    "| awk '{print $3}'`; do lvremove $i; done",
+                    "vgreduce $vg --removemissing"]
+        command = commands.join("; ")
+        node.run_cmd(command)
+
+        # Gather the created volume group for cinder
+        command = "vgdisplay 2> /dev/null | grep pool | awk '{print $3}'"
+        ret = node.run_cmd(command)
+        volume_group = ret['return'].replace("\n", "").replace("\r", "")
+
+        # Update our environment
+        env = node.environment
+        cinder = {
+            "storage": {
+                "lvm": {
+                    "volume_group": volume_group
+                }
+            }
+        }
+        env._add_override_attr("cinder", cinder)

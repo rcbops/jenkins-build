@@ -111,6 +111,10 @@ class ChefRazorNode(Node):
         else:
             return self.__dict__[item]
 
+    def __setitem__(self, item, value):
+        # TODO: Use both apis
+        CNode(self.name)[item] = value
+
     def destroy(self):
         cnode = CNode(self.name)
         active_model = cnode['razor_metadata']['razor_active_model_uuid']

@@ -1,5 +1,5 @@
 chef:
-  server: 
+  server:
     install_script: https://raw.github.com/rcbops/jenkins-build/master/qa/bash/jenkins/install-chef-server.sh
     install_dir: /opt/rcbops
 razor:
@@ -47,7 +47,7 @@ environments:
     horizon:
         default:
             theme: "default"
-    developer_mode: 
+    developer_mode:
         default: false
     osops_networks:
         default:
@@ -145,7 +145,7 @@ environments:
            swift_hash_suffix: ""
         dispersion:
             dis_key: "secrete"
-        keystone: 
+        keystone:
            swift_admin_url: ""
            swift_public_url: ""
            swift_internal_url: ""
@@ -168,16 +168,18 @@ rcbops:
                         - v3.0.0
                         - v3.0.1
                         - v3.1.0
-        chef_server:
+        chefserver:
             run_list: []
         compute:
             run_list: ['role[single-compute]']
-        directory_server:
+        ldap:
             run_list: ['role[qa-openldap]']
         controller1:
-            run_list: ['role[ha-controller1]', 'role[cinder-all]']
+            run_list: ['role[ha-controller1]']
         controller2:
             run_list: ['role[ha-controller2]']
+        cinderlocal:
+            run_list: ['role[cinder-all']
     storage:
         git:
             url: "https://github.com/rcbops-cookbooks/swift-private-cloud.git"
