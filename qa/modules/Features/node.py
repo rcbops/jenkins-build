@@ -2,7 +2,7 @@
 A nodes features
 """
 
-from base import Feature
+from Feature import Feature
 from chef import ChefAPI
 
 class Node(Feature):
@@ -12,12 +12,6 @@ class Node(Feature):
     def __init__(self, node):
         super(Node, self).__init__(node.deployment.config)
         self.node = node
-
-    def run_chef_client(self):
-        """ Runs chef-client on the given node
-        """
-
-        return self.node.run_cmd('chef-client', quiet=True)
 
     def set_run_list(self):
         """ Sets the nodes run list based on the Feature
@@ -39,7 +33,6 @@ class Controller(Node):
 
     def apply_feature(self):
         self.set_run_list()
-        self.run_chef_client()
 
     def _apply_keystone(self, feature):
         pass
@@ -54,7 +47,6 @@ class Compute(Node):
 
     def apply_feature(self):
         self.set_run_list()
-        self.run_chef_client()
 
 
 class Proxy(Node):
@@ -66,7 +58,6 @@ class Proxy(Node):
 
     def apply_feature(self):
         self.set_run_list()
-        self.run_chef_client()
 
 
 class ChefServer(Node):
@@ -268,4 +259,3 @@ class Swift(Node):
 
     def apply_feature(self):
         self.set_run_list()
-        self.run_chef_client()
