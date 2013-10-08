@@ -2,9 +2,11 @@ precise-default:
   product: compute
   name: default
   os: precise
-  features:
-    - glance-cf
-    - cinder-local
+  os-features:
+    glance:
+      - cf
+    cinder:
+      - local
   nodes:
     - [chef-server]
     - [controller1, cinder-local]
@@ -26,8 +28,10 @@ precise-ha:
   product: compute
   name: ha
   os: precise
-  features:
-    - glance-cf
+  os-features:
+    glance:
+      - cf
+  rpcs-features:
     - ha
   nodes:
     - [chef-server]
@@ -40,7 +44,8 @@ centos-ha:
   name: ha
   os: centos
   features:
-    - glance-cf
+    glance:
+      -cf
     - ha
   nodes:
     - [chef-server]
@@ -80,7 +85,7 @@ precise-swift:
     - swift
   nodes:
     - [chef-server]
-    - [controller1]
+    - [controller]
     - [proxy1]
     - [proxy2]
     - [storage1]

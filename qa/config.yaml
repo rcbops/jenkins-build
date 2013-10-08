@@ -101,7 +101,8 @@ environments:
         default:
             theme: default
     developer_mode:
-        default: false
+        default:
+            default: false
     osops_networks:
         default:
             management: 198.101.133.0/24

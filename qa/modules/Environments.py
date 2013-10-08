@@ -26,19 +26,19 @@ class Chef(Environment):
         self.remote_api = remote_api
         self.chef_server_name = chef_server_name
 
-    def _add_override_attr(self, key, value):
+    def add_override_attr(self, key, value):
         self.override_attributes[key] = value
         self.save()
 
-    def _add_default_attr(self, key, value):
+    def add_default_attr(self, key, value):
         self.default_attributes[key] = value
         self.save()
 
-    def _del_override_attr(self, key, value):
+    def del_override_attr(self, key, value):
         del self.override_attributes[key]
         self.save()
 
-    def _del_default_attr(self, key, value):
+    def del_default_attr(self, key, value):
         del self.default_attributes[key]
         self.save()
 

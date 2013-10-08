@@ -33,12 +33,16 @@ class Feature(object):
         pass
 
 
+#############################################################################
+############################ Node Features ##################################
+#############################################################################
+
 class Node(Feature):
     """ Represents a feature on a node
     """
 
     def __init__(self, node):
-        super(Node, self).__init__(node.config)
+        super(Node, self).__init__(node.deployment.config)
         self.node = node
 
     def run_chef_client(self):
@@ -62,9 +66,15 @@ class Controller(Node):
     def __init__(self, node):
         super(Controller, self).__init__(node)
 
+    def update_environment(self):
+        pass
+
     def apply_feature(self):
         self.set_run_list()
         self.run_chef_client()
+
+    def _apply_keystone(self, feature):
+        pass
 
 
 class Compute(Node):
@@ -186,7 +196,7 @@ class ChefServer(Node):
                 self.node.name)
 
         # save the remote dict
-        self.node.environment._add_override_attr('remote_chef', remote_chef)
+        self.node.environment.add_override_attr('remote_chef', remote_chef)
 
         # set the remote api
         setattr(self.node.environment.remote_api,
@@ -250,13 +260,15 @@ class Remote(Node):
         chef_server_node.run_cmd(command)
 
 
-class CinderLocal(Node):
+class Cinder(Node):
     """
     Enables cinder with local lvm backend
     """
 
-    def __init__(self, node):
-        super(CinderLocal, self).__init__(node)
+    def __init__(self, node, location):
+        super(Cinder, self).__init__(node)
+        self.location = location
+        self.name = 'cinder-{0}'.format(location)
 
     def pre_configure(self):
         self.prepare_cinder()
@@ -289,7 +301,12 @@ class CinderLocal(Node):
                 }
             }
         }
-        env._add_override_attr("cinder", cinder)
+        env.add_override_attr("cinder", cinder)
+
+
+#############################################################################
+######################### Deployment Features ###############################
+#############################################################################
 
 
 class Deployment(Feature):
@@ -304,61 +321,213 @@ class Deployment(Feature):
         pass
 
 
-class HighAvailability(Deployment):
-    """ Represents a highly available cluster
+#############################################################################
+############################ OpenStack Features #############################
+#############################################################################
+
+class OpenStack(Deployment):
+    """ Represents a Rackspace Private Cloud Software Feature
     """
 
     def __init__(self, deployment):
-        super(HighAvailability, self).__init__(deployment)
-        self.environment = self.config['environments']['ha'][deployment.os]
+        super(OpenStack, self).__init__(deployment)
 
     def update_environment(self):
-        self.node.environment._add_override_attr('ha', self.environment)
-
+        pass
 
 class Neutron(Deployment):
     """ Represents a neutron network cluster
     """
 
-    def __init__(self, deployment):
+    def __init__(self, deployment, rpcs_feature):
         super(Neutron, self).__init__(deployment)
-        self.environment = self.config['environments']['neutron']
+        self.environment = \
+            self.config['environments'][self.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
-        self.node.environment._add_override_attr('neutron', self.environment)
+        self.node.environment.add_override_attr('neutron', self.environment)
 
 
 class Swift(Deployment):
     """ Represents a block storage cluster enabled by swift
     """
 
-    def __init__(self, deployment):
+    def __init__(self, deployment, rpcs_feature='default'):
         super(Swift, self).__init__(deployment)
-        self.environment = self.config['environment']['swift']
+        self.environment = \
+            self.config['environments'][self.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
-        self.node.environment._add_override_attr('swift', self.environment)
+        self.node.environment.add_override_attr(
+            self.__name__.lower(), self.environment)
 
 
-class GlanceCF(Deployment):
+class Glance(Deployment):
     """ Represents a glance with cloud files backend
     """
 
-    def __init__(self, deployment):
-        super(GlanceCF, self).__init__(deployment)
-        self.environment = self.config['environment']['glance']
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Glance, self).__init__(deployment)
+        self.environment = \
+            self.config['environment'][self.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
-        self.node.environment._add_override_attr('glance', self.environment)
+        self.node.environment.add_override_attr(
+            self.__name__.lower(), self.environment)
 
 
-class OpenLDAP(Deployment):
+class Keystone(Deployment):
+    """ Represents the keystone feature
+    """
+
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Keystone, self).__init__(deployment)
+        self.environment = \
+            self.config['environments'][self.__name__.lower()][rpcs_feature]
+
+    def update_environment(self):
+        self.deployment.environment.add_override_attr(
+            self.__name__.lower(), self.environment)
+
+
+class Nova(Deployment):
+    """ Represents the monitoring feature
+    """
+
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Monitoring, self).__init__(deployment)
+        self.environment = \
+            self.config['environments'][self.__name__.lower()][rpcs_feature]
+
+    def update_environment(self):
+        self.deployment.environment.add_override_attr(
+            self.__name__.lower(), self.environment)
+
+
+class Horizon(Deployment):
+    """ Represents the monitoring feature
+    """
+
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Monitoring, self).__init__(deployment)
+        self.environment = \
+            self.config['environments'][self.__name__.lower()][rpcs_feature]
+
+    def update_environment(self):
+        self.deployment.environment.add_override_attr(
+            self.__name__.lower(), self.environment)
+
+
+#############################################################################
+############### Rackspace Private Cloud Software Features ###################
+#############################################################################
+
+class RPCS(Deployment):
+    """ Represents a Rackspace Private Cloud Software Feature
+    """
+
+    def __init__(self, deployment, name):
+        super(RPCS, self).__init__(deployment)
+        self.name = name
+
+    def update_environment(self):
+        pass
+
+class Monitoring(RPCS):
+    """ Represents the monitoring feature
+    """
+
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Monitoring, self).__init__(deployment,
+                                         self.__name__.lower())
+        self.environment = \
+            self.config['environments'][self.name][rpcs_feature]
+
+    def update_environment(self):
+        self.deployment.environment.add_override_attr(
+            self.__name__.lower(), self.environment)
+
+class MySql(RPCS):
+    """ Represents the monitoring feature
+    """
+
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Monitoring, self).__init__(deployment,
+                                         self.__name__.lower())
+        self.environment = \
+            self.config['environments'][self.name][rpcs_feature]
+
+    def update_environment(self):
+        self.deployment.environment.add_override_attr(
+            self.name, self.environment)
+
+
+class OsOps(RPCS):
+    """ Represents the monitoring feature
+    """
+
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Monitoring, self).__init__(deployment,
+                                         self.__name__.lower())
+        self.environment = \
+            self.config['environments'][self.name][rpcs_feature]
+
+    def update_environment(self):
+        self.deployment.environment.add_override_attr(
+            self.name, self.environment)
+
+
+class DeveloperMode(RPCS):
+    """ Represents the monitoring feature
+    """
+
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Monitoring, self).__init__(deployment, 'developer_mode')
+        self.environment = \
+            self.config['environments'][self.name][rpcs_feature]
+
+    def update_environment(self):
+        self.deployment.environment.add_override_attr(
+            self.name, self.environment)
+
+
+class OsOpsNetworks(RPCS):
+    """ Represents the monitoring feature
+    """
+
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Monitoring, self).__init__(deployment, 'osops_networks')
+        self.environment = \
+            self.config['environments'][self.name][rpcs_feature]
+
+    def update_environment(self):
+        self.deployment.environment.add_override_attr(
+            self.name, self.environment)
+
+
+class HighAvailability(RPCS):
+    """ Represents a highly available cluster
+    """
+
+    def __init__(self, deployment):
+        super(HighAvailability, self).__init__(deployment, 'ha')
+        self.environment = \
+            self.config['environments'][self.name][deployment.os]
+
+    def update_environment(self):
+        self.node.environment.add_override_attr(self.name, self.environment)
+
+
+class LDAP(RPCS):
     """ Represents a keystone with an openldap backend
     """
 
     def __init__(self, deployment):
-        super(OpenLDAP, self).__init__(deployment)
-        self.environment = self.config['environment']['openldap']
+        super(LDAP, self).__init__(deployment,
+                                   self.__name__.lower())
+        self.environment = \
+            self.config['environments'][self.name]
 
     def update_environment(self):
-        self.node.environment._add_override_attr('ldap', self.environment)
+        self.deployment.environment.add_override_attr(
+            self.name, self.environment)
