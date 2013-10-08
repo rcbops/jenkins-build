@@ -358,7 +358,7 @@ class OpenLDAP(Deployment):
 
     def __init__(self, deployment):
         super(OpenLDAP, self).__init__(deployment)
-        self.environment = self.config['environment']['ldap']
+        self.environment = self.config['environment']['openldap']
 
     def update_environment(self):
         self.node.environment._add_override_attr('ldap', self.environment)
