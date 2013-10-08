@@ -18,11 +18,11 @@ environments:
                     password: ostackdemo
                 admin:
                     roles:
-                        admin: 
+                        admin:
                             - admin
                             - demo
                     password: ostackdemo
-            tenants: 
+            tenants:
                 - admin
                 - service
                 - demo
@@ -57,13 +57,13 @@ environments:
                             - demo
                         default_tenant: demo
                         password: ostackdemo
-              admin:
-                roles:
-                    admin:
-                        - admin
-                        - demo
-                    password: ostackdemo
-            tenants: 
+                admin:
+                   roles:
+                        admin:
+                            - admin
+                            - demo
+                   password: ostackdemo
+            tenants:
                 - admin
                 - service
                 - demo
@@ -110,7 +110,7 @@ environments:
     glance:
         default:
             image_upload: true
-            images: 
+            images:
                 - cirros
                 - precise
         cf:
@@ -122,15 +122,15 @@ environments:
                 swift_store_auth_address: https://identity.api.rackspacecloud.com/v2.0
             services:
                 api:
-                    path: 
+                    path:
                 admin-api:
-                    path: 
+                    path:
                 internal-api:
-                    path: 
+                    path:
                 registry:
-                    path: 
+                    path:
             image_upload: true
-            images: 
+            images:
                 - cirros
                 - precise
     neutron:
