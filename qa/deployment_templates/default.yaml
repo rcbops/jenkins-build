@@ -3,11 +3,11 @@ precise-default:
   name: default
   os: precise
   features:
-    - glance-cf
-    - cinder-local
+    - glancecf
+    - cinderlocal
   nodes:
-    - [chef-server]
-    - [controller1, cinder-local]
+    - [chefserver]
+    - [controller, cinderlocal]
     - [compute]
 
 centos-default:
@@ -15,11 +15,11 @@ centos-default:
   name: default
   os: centos
   features:
-    - glance-cf
-    - cinder-local
+    - glancecf
+    - cinderlocal
   nodes:
-    - [chef-server]
-    - [controller1, cinder-local]
+    - [chefserver]
+    - [controller, cinderlocal]
     - [compute]
 
 precise-ha:
@@ -27,12 +27,12 @@ precise-ha:
   name: ha
   os: precise
   features:
-    - glance-cf
+    - glancecf
     - ha
   nodes:
-    - [chef-server]
-    - [controller1]
-    - [controller2]
+    - [chefserver]
+    - [controller]
+    - [controller]
     - [compute]
 
 centos-ha:
@@ -40,36 +40,36 @@ centos-ha:
   name: ha
   os: centos
   features:
-    - glance-cf
+    - glancecf
     - ha
   nodes:
-    - [chef-server]
-    - [controller1]
-    - [controller2]
+    - [chefserver]
+    - [controller]
+    - [controller]
     - [compute]
 
-precise-ldap:
+precise-openldap:
   product: compute
-  name: ldap
+  name: openldap
   os: precise
   features:
-    - ldap
+    - openldap
   nodes:
     - [directory-server]
-    - [chef-server]
-    - [controller1]
+    - [chefserver]
+    - [controller]
     - [compute]
 
-centos-ldap:
+centos-openldap:
   product: compute
-  name: ldap
+  name: openldap
   os: centos
   features:
-    - ldap
+    - openldap
   nodes:
     - [directory-server]
-    - [chef-server]
-    - [controller1]
+    - [chefserver]
+    - [controller]
     - [compute]
 
 precise-swift:
@@ -79,8 +79,8 @@ precise-swift:
   features:
     - swift
   nodes:
-    - [chef-server]
-    - [controller1]
+    - [chefserver]
+    - [controller]
     - [proxy1]
     - [proxy2]
     - [storage1]
@@ -94,8 +94,8 @@ centos-swift:
   features:
     - swift
   nodes:
-    - [chef-server]
-    - [controller1]
+    - [chefserver]
+    - [controller]
     - [proxy1]
     - [proxy2]
     - [storage1]
@@ -110,9 +110,9 @@ precise-neutron:
     - neutron
     - ha
   nodes:
-    - [chef-server]
-    - [controller1, neutron]
-    - [controller2, neutron]
+    - [chefserver]
+    - [controller, neutron]
+    - [controller, neutron]
     - [compute]
 
 centos-neutron:
@@ -123,7 +123,7 @@ centos-neutron:
     - neutron
     - ha
   nodes:
-    - [chef-server]
-    - [controller1, neutron]
-    - [controller2, neutron]
+    - [chefserver]
+    - [controller, neutron]
+    - [controller, neutron]
     - [compute]
