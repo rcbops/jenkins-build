@@ -17,7 +17,7 @@ class Node(Feature):
         """ Sets the nodes run list based on the Feature
         """
         run_list = self.config['rcbops'][self.node.product]\
-                              [self.__name__.lower()]['run_list']
+                              [self.__class__.__name__.lower()]['run_list']
         self.node['run_list'].extend(run_list)
 
 
