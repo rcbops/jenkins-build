@@ -41,21 +41,6 @@ class Node(Feature):
         super(Node, self).__init__(node.config)
         self.node = node
 
-    def remove_chef(self):
-        """ Removes chef from the given node
-        """
-
-        if self.node.os == "precise":
-            commands = ["apt-get remove --purge -y chef",
-                        "rm -rf /etc/chef"]
-        if self.node.os in ["centos", "rhel"]:
-            commands = ["yum remove -y chef",
-                        "rm -rf /etc/chef /var/chef"]
-
-        command = commands.join("; ")
-
-        return self.node.run_cmd(command, quiet=True)
-
     def run_chef_client(self):
         """ Runs chef-client on the given node
         """
@@ -68,6 +53,54 @@ class Node(Feature):
         run_list = self.config['rcbops'][self.node.product][self.__name__.lower()][
             'run_list']
         self.node['run_list'].extend(run_list)
+
+
+class Controller(Node):
+    """ Represents a RPCS Controller
+    """
+
+    def __init__(self, node):
+        super(Controller, self).__init__(node)
+
+    def apply_feature(self):
+        self.set_run_list()
+        self.run_chef_client()
+
+
+class Compute(Node):
+    """ Represents a RPCS compute
+    """
+
+    def __init__(self, node):
+        super(Compute, self).__init__(node)
+
+    def apply_feature(self):
+        self.set_run_list()
+        self.run_chef_client()
+
+
+class Proxy(Node):
+    """ Represents a RPCS proxy node
+    """
+
+    def __init__(self, node):
+        super(Proxy, self).__init__(node)
+
+    def apply_feature(self):
+        self.set_run_list()
+        self.run_chef_client()
+
+
+class ObjectStore(Node):
+    """ Represents a RPCS object store node
+    """
+
+    def __init__(self, node):
+        super(ObjectStore).__init__(node)
+
+    def apply_feature(self):
+        self.set_run_list()
+        self.run_chef_client()
 
 
 class ChefServer(Node):
@@ -180,15 +213,24 @@ class Remote(Node):
     def __init__(self, node):
         super(Remote, self).__init__(node)
 
-    def pre_configure(self):
-        pass
-
     def apply_feature(self):
-        self.remove_chef()
+        self._remove_chef()
         self._bootstrap_chef()
 
-    def post_configure(self, deployment):
-        pass
+    def _remove_chef(self):
+        """ Removes chef from the given node
+        """
+
+        if self.node.os == "precise":
+            commands = ["apt-get remove --purge -y chef",
+                        "rm -rf /etc/chef"]
+        if self.node.os in ["centos", "rhel"]:
+            commands = ["yum remove -y chef",
+                        "rm -rf /etc/chef /var/chef"]
+
+        command = commands.join("; ")
+
+        return self.node.run_cmd(command, quiet=True)
 
     def _bootstrap_chef(self):
         """ Bootstraps the node to a chef server
@@ -257,6 +299,9 @@ class Deployment(Feature):
     def __init__(self, deployment):
         super(Deployment, self).__init__(deployment.config)
         self.deployment = deployment
+
+    def update_environment(self):
+        pass
 
 
 class HighAvailability(Deployment):
