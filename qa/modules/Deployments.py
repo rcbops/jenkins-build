@@ -118,11 +118,9 @@ class ChefRazorDeployment(Deployment):
             deployment.nodes.append(node)
         return deployment
 
-    def search_role(self, role):
+    def search_role(self, feature):
         """Returns nodes the have the desired role"""
-        query = "chef_environment:%s AND in_use:%s" % (self.environment, role)
-        chef_nodes = (node.name for node in self.chef.node_search(query=query))
-        return (osnode for osnode in self.nodes if chef_nodes)
+        return (node for node in self.nodes if feature in node.features)
 
     def destroy(self):
         super(ChefRazorDeployment, self).destroy()
