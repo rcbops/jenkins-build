@@ -102,7 +102,7 @@ class ChefRazorNode(Node):
             self.run_cmd("chef-client")
         super(ChefRazorNode, self).apply_feature()
 
-    def _password(self, chef_node):
+    def _password(self):
         try:
             uuid = self['razor_metadata']['razor_active_model_uuid']
         except:
