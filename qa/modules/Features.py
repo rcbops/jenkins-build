@@ -50,8 +50,8 @@ class Node(Feature):
     def set_run_list(self):
         """ Sets the nodes run list based on the Feature
         """
-        run_list = self.config['rcbops'][self.node.product][self.__name__.lower()][
-            'run_list']
+        run_list = self.config['rcbops'][self.node.product]\
+                              [self.__name__.lower()]['run_list']
         self.node['run_list'].extend(run_list)
 
 
@@ -244,8 +244,8 @@ class Remote(Node):
         # Gather the info for the chef server
         chef_server_node = self.node.deployment.nodes['chef_server']
 
-        command = 'knife bootstrap {0} -s root -p {1}'.format(chef_server_node.ip,
-                                                              self.node.password)
+        command = 'knife bootstrap {0} -s root -p {1}'.format(
+            chef_server_node.ip, self.node.password)
 
         chef_server_node.run_cmd(command)
 
