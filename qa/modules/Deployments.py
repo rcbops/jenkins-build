@@ -120,7 +120,8 @@ class ChefRazorDeployment(Deployment):
         razor = razor_api(config['razor']['ip'])
         os_name = template['os']
         product = template['product']
-        deployment = cls(template['name'], os_name, branch, chef, razor)
+        deployment = cls(template['name'], os_name, branch, config, chef,
+                         razor)
         for node_features in template['nodes']:
             node = ChefRazorNode(next(cls.free_node(os_name)).name, os_name,
                                  product, chef, deployment, razor, branch)
