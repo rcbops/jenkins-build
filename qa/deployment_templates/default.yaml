@@ -7,6 +7,17 @@ precise-default:
       - cf
     cinder:
       - local
+    nova:
+      - default
+    horizon:
+      - default
+    keystone:
+      - default
+    osops:
+      - default
+    osopsnetworks:
+      - default
+  rpcs-features:
   nodes:
     - [chefserver]
     - [controller, cinder]
@@ -46,7 +57,7 @@ centos-ha:
   features:
     glance:
       -cf
-    - ha
+    ha:
   nodes:
     - [chefserver]
     - [controller]
