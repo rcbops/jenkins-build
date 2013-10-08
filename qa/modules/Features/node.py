@@ -3,6 +3,7 @@ A nodes features
 """
 
 from base import Feature
+from chef import ChefAPI
 
 class Node(Feature):
     """ Represents a feature on a node
@@ -62,18 +63,6 @@ class Proxy(Node):
 
     def __init__(self, node):
         super(Proxy, self).__init__(node)
-
-    def apply_feature(self):
-        self.set_run_list()
-        self.run_chef_client()
-
-
-class ObjectStore(Node):
-    """ Represents a RPCS object store node
-    """
-
-    def __init__(self, node):
-        super(ObjectStore).__init__(node)
 
     def apply_feature(self):
         self.set_run_list()
@@ -227,13 +216,13 @@ class Remote(Node):
         chef_server_node.run_cmd(command)
 
 
-class CinderLocal(Node):
+class Cinder(Node):
     """
     Enables cinder with local lvm backend
     """
 
     def __init__(self, node, location):
-        super(CinderLocal, self).__init__(node)
+        super(Cinder, self).__init__(node)
         self.location = location
         self.name = 'cinder-{0}'.format(location)
 
@@ -269,3 +258,14 @@ class CinderLocal(Node):
             }
         }
         env.add_override_attr("cinder", cinder)
+
+class Swift(Node):
+    """ Represents a RPCS object store node
+    """
+
+    def __init__(self, node):
+        super(Swift, self).__init__(node)
+
+    def apply_feature(self):
+        self.set_run_list()
+        self.run_chef_client()
