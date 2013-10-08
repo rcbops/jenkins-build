@@ -212,10 +212,8 @@ class Cinder(Node):
     Enables cinder with local lvm backend
     """
 
-    def __init__(self, node, location):
+    def __init__(self, node):
         super(Cinder, self).__init__(node)
-        self.location = location
-        self.name = 'cinder-{0}'.format(location)
 
     def pre_configure(self):
         self.prepare_cinder()

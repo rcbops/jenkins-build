@@ -8,7 +8,6 @@ from modules.razor_api import razor_api
 from modules.Environments import Chef
 from modules.Nodes import ChefRazorNode
 from modules.Features import deployment as deployment_features
-from modules.Features import node as node_features
 
 """
 OpenStack deployments
@@ -63,9 +62,9 @@ class Deployment(object):
         deployment = ("Deployment - name: {0} "
                       "os: {1} branch: {2}\n".format(self.name, self.os,
                                                      self.branch))
-        features = "Features: {0}\n".format(", ".join(self.features))
-        nodes = "Nodes:\n{0}".format("\n".join(self.nodes))
-        return "".join(deployment, features, nodes)
+        features = "Features: {0}\n".format(", ".join(map(str, self.features)))
+        nodes = "Nodes:\n{0}".format("\n".join(map(str, self.nodes)))
+        return "".join([deployment, features, nodes])
 
 
 class ChefRazorDeployment(Deployment):
@@ -127,8 +126,9 @@ class ChefRazorDeployment(Deployment):
                                            os_name, branch, config, chef,
                                            razor)
         for features in template['nodes']:
-            cls.node_config(deployment, features, os_name, product, chef,
-                            razor, branch)
+            node = cls.node_config(deployment, features, os_name, product,
+                                   chef, razor, branch)
+            deployment.nodes.append(node)
 
         return deployment
 
@@ -137,9 +137,7 @@ class ChefRazorDeployment(Deployment):
                     branch):
         node = ChefRazorNode(next(cls.free_node(os_name)).name, os_name,
                              product, chef, deployment, razor, branch)
-        for feature in features:
-                feature_class = cls.feature_map(feature, node_features)
-                node.features.append(feature_class(node))
+        node.add_features(features)
         return node
 
     @classmethod
@@ -147,20 +145,18 @@ class ChefRazorDeployment(Deployment):
                           branch, config, chef, razor):
         deployment = cls(name, os_name, branch, config, chef,
                          razor)
-        for feature, rpcs_feature in os_features.items():
-            feature_class = cls.feature_map(feature, deployment_features)
-            deployment.features.append(feature_class(deployment,
-                                                     rpcs_feature))
+        deployment.add_features(os_features)
+        try:
+            deployment.add_features(rpcs_features)
+        except AttributeError:
+            pass
+        return deployment
 
-        for feature, rpcs_feature in rpcs_features.items():
-            feature_class = cls.feature_map(feature, deployment_features)
-            deployment.features.append(feature_class(deployment,
-                                                     rpcs_feature))
-
-    @classmethod
-    def feature_map(cls, feature, level):
-        classes = {k.lower(): v for (k, v) in getmembers(level, isclass)}
-        return classes[feature]
+    def add_features(self, features):
+        classes = {k.lower(): v for (k, v) in
+                   getmembers(deployment_features, isclass)}
+        for feature, rpcs_feature in features.items():
+            self.features.append(classes[feature](self, rpcs_feature[0]))
 
     @classmethod
     def node_search(cls, query, environment=None, tries=10):
