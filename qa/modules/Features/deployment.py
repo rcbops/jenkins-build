@@ -175,7 +175,7 @@ class OsOps(RPCS):
     """
 
     def __init__(self, deployment, rpcs_feature='default'):
-        super(Monitoring, self).__init__(deployment,
+        super(OsOps, self).__init__(deployment,
                                          self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
@@ -190,7 +190,7 @@ class DeveloperMode(RPCS):
     """
 
     def __init__(self, deployment, rpcs_feature='default'):
-        super(Monitoring, self).__init__(deployment, 'developer_mode')
+        super(DeveloperMode, self).__init__(deployment, 'developer_mode')
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
 
