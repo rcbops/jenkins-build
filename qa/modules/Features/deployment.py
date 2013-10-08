@@ -104,7 +104,7 @@ class Horizon(Deployment):
     """
 
     def __init__(self, deployment, rpcs_feature='default'):
-        super(Monitoring, self).__init__(deployment)
+        super(Horizon, self).__init__(deployment)
         self.environment = \
             self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
@@ -204,7 +204,7 @@ class OsOpsNetworks(RPCS):
     """
 
     def __init__(self, deployment, rpcs_feature='default'):
-        super(Monitoring, self).__init__(deployment, 'osops_networks')
+        super(OsOpsNetworks, self).__init__(deployment, 'osops_networks')
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
 
