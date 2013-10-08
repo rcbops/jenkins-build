@@ -1,9 +1,11 @@
 import os
 import sys
 from time import sleep
+from modules import Features
 from chef import autoconfigure
-from modules.razor_api import razor_api
 from modules.Config import Config
+from inspect import getmembers, isclass
+from modules.razor_api import razor_api
 from modules.Environments import Chef
 from modules.Nodes import ChefRazorNode
 
@@ -62,7 +64,7 @@ class ChefRazorDeployment(Deployment):
     Puppet's Razor as provisioner and
     Opscode's Chef as configuration management
     """
-    def __init__(self, name, os_name, branch, features, chef, razor):
+    def __init__(self, name, os_name, branch, chef, razor, features=[]):
         super(ChefRazorDeployment, self).__init__(name, os_name, branch,
                                                   features)
         self.chef = chef
@@ -109,14 +111,23 @@ class ChefRazorDeployment(Deployment):
         razor = razor_api(config['razor']['ip'])
         os_name = template['os']
         product = template['product']
-        deployment = cls(template['name'], os_name, branch,
-                         template['features'], chef, razor)
+        deployment = cls(template['name'], os_name, branch, chef, razor)
         for node_features in template['nodes']:
             node = ChefRazorNode(cls.free_node(os_name).name, os_name, product,
-                                 chef, deployment, razor, branch,
-                                 node_features)
+                                 chef, deployment, razor, branch)
+            for feature in node_features:
+                feature_class = cls.feature_map(feature)
+                node.features.append(feature_class(node))
             deployment.nodes.append(node)
+        for deployment_feature in template['features']:
+            feature_class = cls.feature_map(feature)
+            deployment.features.append(feature_class(deployment))
         return deployment
+
+    @classmethod
+    def feature_map(cls, feature):
+        classes = {k.lower(): v for (k, v) in getmembers(Features, isclass)}
+        return classes[feature]
 
     def search_role(self, role):
         """Returns nodes the have the desired role"""
