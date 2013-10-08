@@ -136,19 +136,20 @@ environments:
             network:
                 provider: "quantum"
                 apply_patches: True
-    swift-private-cloud:
-        network:
-            management: ""
-            exnet: ""
-        swift_common:
-           swift_hash_prefix: ""
-           swift_hash_suffix: ""
-        dispersion:
-            dis_key: "secrete"
-        keystone:
-           swift_admin_url: ""
-           swift_public_url: ""
-           swift_internal_url: ""
+    swift:
+        swift-private-cloud:
+            network:
+                management: ""
+                exnet: ""
+            swift_common:
+               swift_hash_prefix: ""
+               swift_hash_suffix: ""
+            dispersion:
+                dis_key: "secrete"
+            keystone:
+               swift_admin_url: ""
+               swift_public_url: ""
+               swift_internal_url: ""
 rcbops:
     compute:
         git:
