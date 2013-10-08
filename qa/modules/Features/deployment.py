@@ -64,7 +64,7 @@ class Glance(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Glance, self).__init__(deployment)
         self.environment = \
-            self.config['environment'][self.__class__.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
         self.node.environment.add_override_attr(
