@@ -37,7 +37,7 @@ class Neutron(Deployment):
     def __init__(self, deployment, rpcs_feature):
         super(Neutron, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
         self.node.environment.add_override_attr('neutron', self.environment)
@@ -50,11 +50,11 @@ class Swift(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Swift, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
         self.node.environment.add_override_attr(
-            self.__name__.lower(), self.environment)
+            self.__class__.__name__.lower(), self.environment)
 
 
 class Glance(Deployment):
@@ -64,11 +64,11 @@ class Glance(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Glance, self).__init__(deployment)
         self.environment = \
-            self.config['environment'][self.__name__.lower()][rpcs_feature]
+            self.config['environment'][self.__class__.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
         self.node.environment.add_override_attr(
-            self.__name__.lower(), self.environment)
+            self.__class__.__name__.lower(), self.environment)
 
 
 class Keystone(Deployment):
@@ -78,11 +78,11 @@ class Keystone(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Keystone, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
-            self.__name__.lower(), self.environment)
+            self.__class__.__name__.lower(), self.environment)
 
 
 class Nova(Deployment):
@@ -92,11 +92,11 @@ class Nova(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Monitoring, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
-            self.__name__.lower(), self.environment)
+            self.__class__.__name__.lower(), self.environment)
 
 
 class Horizon(Deployment):
@@ -106,11 +106,11 @@ class Horizon(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Monitoring, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
-            self.__name__.lower(), self.environment)
+            self.__class__.__name__.lower(), self.environment)
 
 class Cinder(Deployment):
     """ Represents the Cinder feature
@@ -119,11 +119,11 @@ class Cinder(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Cinder, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
-            self.__name__.lower(), self.environment)
+            self.__class__.__name__.lower(), self.environment)
 
 
 #############################################################################
@@ -147,13 +147,13 @@ class Monitoring(RPCS):
 
     def __init__(self, deployment, rpcs_feature='default'):
         super(Monitoring, self).__init__(deployment,
-                                         self.__name__.lower())
+                                         self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
-            self.__name__.lower(), self.environment)
+            self.__class__.__name__.lower(), self.environment)
 
 class MySql(RPCS):
     """ Represents the monitoring feature
@@ -161,7 +161,7 @@ class MySql(RPCS):
 
     def __init__(self, deployment, rpcs_feature='default'):
         super(Monitoring, self).__init__(deployment,
-                                         self.__name__.lower())
+                                         self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
 
@@ -176,7 +176,7 @@ class OsOps(RPCS):
 
     def __init__(self, deployment, rpcs_feature='default'):
         super(Monitoring, self).__init__(deployment,
-                                         self.__name__.lower())
+                                         self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
 
@@ -232,7 +232,7 @@ class LDAP(RPCS):
 
     def __init__(self, deployment):
         super(LDAP, self).__init__(deployment,
-                                   self.__name__.lower())
+                                   self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name]
 
