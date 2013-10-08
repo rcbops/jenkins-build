@@ -260,13 +260,13 @@ class Remote(Node):
         chef_server_node.run_cmd(command)
 
 
-class Cinder(Node):
+class CinderLocal(Node):
     """
     Enables cinder with local lvm backend
     """
 
     def __init__(self, node, location):
-        super(Cinder, self).__init__(node)
+        super(CinderLocal, self).__init__(node)
         self.location = location
         self.name = 'cinder-{0}'.format(location)
 
@@ -410,6 +410,19 @@ class Horizon(Deployment):
 
     def __init__(self, deployment, rpcs_feature='default'):
         super(Monitoring, self).__init__(deployment)
+        self.environment = \
+            self.config['environments'][self.__name__.lower()][rpcs_feature]
+
+    def update_environment(self):
+        self.deployment.environment.add_override_attr(
+            self.__name__.lower(), self.environment)
+
+class Cinder(Deployment):
+    """ Represents the Cinder feature
+    """
+
+    def __init__(self, deployment, rpcs_feature='default'):
+        super(Cinder, self).__init__(deployment)
         self.environment = \
             self.config['environments'][self.__name__.lower()][rpcs_feature]
 

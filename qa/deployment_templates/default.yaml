@@ -9,7 +9,7 @@ precise-default:
       - local
   nodes:
     - [chefserver]
-    - [controller, cinderlocal]
+    - [controller, cinder]
     - [compute]
 
 centos-default:
@@ -21,7 +21,7 @@ centos-default:
     - cinderlocal
   nodes:
     - [chefserver]
-    - [controller, cinderlocal]
+    - [controller, cinder]
     - [compute]
 
 precise-ha:

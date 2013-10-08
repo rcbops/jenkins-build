@@ -140,6 +140,12 @@ environments:
                 network:
                     provider: quantum
                     apply_patches: True
+    cinder:
+        default:
+        local:
+            storage:
+                lvm:
+                    volume_group: "vgubuntu01"
     swift:
         default:
             swift-private-cloud:
