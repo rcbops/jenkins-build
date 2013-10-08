@@ -102,11 +102,9 @@ class ChefRazorNode(Node):
             self.run_cmd("chef-client")
         super(ChefRazorNode, self).apply_feature()
 
-    def _password(self, chef_node):
+    def _password(self):
         try:
-            chef_node = CNode(chef_node.name, api=self.chef)
-            uuid = chef_node.attributes['razor_metadata'][
-                'razor_active_model_uuid']
+            uuid = self['razor_metadata']['razor_active_model_uuid']
         except:
             raise Exception("Couldn't find razor_metadata/password")
         return self.razor.get_active_model_pass(uuid)['password']
@@ -115,8 +113,8 @@ class ChefRazorNode(Node):
         """
         Gets ip, user, and password from chef
         """
-        map = {'ip': Node(self.name)['ipaddress'],
-               'user': Node(self.name)['current_user'],
+        map = {'ip': self['ipaddress'],
+               'user': self['current_user'],
                'password': self._password()}
         if item in map.keys():
             return map[item]
