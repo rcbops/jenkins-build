@@ -2,7 +2,7 @@
 A nodes features
 """
 
-from Feature import Feature
+from feature import Feature
 from chef import ChefAPI
 
 class Node(Feature):
