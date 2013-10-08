@@ -62,13 +62,27 @@ class Feature(object):
             'run_list']
         node['run_list'].extend(run_list)
 
+class Node(Feature):
+    """ Represents a feature on a node
+    """
 
-class ChefServer(Feature):
+    def __init__(self, node):
+        self.node = node
+
+class Deployment(Feature):
+    """ Represents a feature across a deployment
+    """
+
+    def __init__(self, deployment):
+        self.deployment = deployment
+
+
+class ChefServer(Node):
     """ Represents a chef server
     """
 
-    def __init__(self):
-        super(ChefServer, self).__init__()
+    def __init__(self, node):
+        super(ChefServer, self).__init__(node)
         self.iscript = self.config['chef']['server']['install_script']
         self.iscript_name = self.iscript.split('/')[-1]
         self.install_commands = ['curl {0} >> {1}'.format(self.iscript,
@@ -76,30 +90,30 @@ class ChefServer(Feature):
                                  'chmod u+x ~/{0}'.format(self.iscript_name),
                                  './{0}'.format(self.iscript_name)]
 
-    def pre_configure(self, node):
-        self.remove_chef(node)
+    def pre_configure(self):
+        self.remove_chef()
 
-    def apply_feature(self, node):
-        self._install(node)
-        self._install_cookbooks(node)
-        self.set_up_remote(node)
+    def apply_feature(self):
+        self._install()
+        self._install_cookbooks()
+        self.set_up_remote()
 
-    def post_configure(self, deployment):
+    def post_configure(self):
         pass
 
-    def _install(self, node):
+    def _install(self):
         """ Installs chef server on the given node
         """
 
         command = self.install_commands.join("; ")
-        node.run_cmd(command)
+        self.node.run_cmd(command)
 
-    def _install_cookbooks(self, node):
-        """ Installs cookbooks on node
+    def _install_cookbooks(self):
+        """ Installs cookbooks
         """
 
-        cookbook_url = self.config['rcbops'][node.product]['git']['url']
-        cookbook_branch = node.branch
+        cookbook_url = self.config['rcbops'][self.node.product]['git']['url']
+        cookbook_branch = self.node.branch
         cookbook_name = cookbook_url.split("/")[-1].split(".")[0]
         install_dir = self.config['chef']['server']['install_dir']
 
@@ -128,22 +142,22 @@ class ChefServer(Feature):
 
         command = commands.join("; ")
 
-        return node.run_cmd(command)
+        return self.node.run_cmd(command)
 
-    def _set_up_remote(self, node):
+    def _set_up_remote(self):
         """ Sets up and saves a remote api and dict to the nodes
             environment
         """
 
         remote_chef = {
             "client": "admin",
-            "key": self._get_admin_pem(node),
-            "url": "https://{0}:4443".format(node.ip)
+            "key": self._get_admin_pem(self.node),
+            "url": "https://{0}:4443".format(self.node.ip)
         }
 
         # set the remote chef server name
         setattr(self.node.environment.chef_server_name,
-                node.name)
+                self.node.name)
 
         # save the remote dict
         self.node.environment._add_override_attr('remote_chef', remote_chef)
@@ -158,15 +172,15 @@ class ChefServer(Feature):
 
         return ChefAPI(**chef_api_dict)
 
-    def _get_admin_pem(self, node):
+    def _get_admin_pem(self):
         """ Gets the admin pem from the chef server
         """
 
         command = 'cat ~/.chef/admin.pem'
-        return node.run_cmd(command)['return']
+        return self.node.run_cmd(command)['return']
 
 
-class HighAvailability(Feature):
+class HighAvailability(Node):
     """ Represents a highly available cluster
     """
 
@@ -185,7 +199,7 @@ class HighAvailability(Feature):
     def apply_feature(self, node):
         self.run_chef_client(node)
 
-    def post_configure(self, deployment):
+    def post_configure(self):
         pass
 
 
