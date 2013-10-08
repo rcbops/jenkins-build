@@ -6,76 +6,85 @@ razor:
   ip: 198.101.133.3
 environments:
     package_component:
-        default: "grizzly"
+        default: grizzly
     keystone:
         default:
-            admin_user: "admin"
+            admin_user: admin
             users:
                 demo:
                     roles:
-                        member: "demo"
-                    default_tenant: "demo"
-                    password: "ostackdemo"
+                        member: demo
+                    default_tenant: demo
+                    password: ostackdemo
                 admin:
                     roles:
-                        admin: ["admin", "demo"]
-                    password: "ostackdemo"
-            tenants: ["admin", "service", "demo"]
+                        admin: 
+                            - admin
+                            - demo
+                    password: ostackdemo
+            tenants: 
+                - admin
+                - service
+                - demo
     monitoring:
         default:
-            metric_provider: "collectd"
-            procmon_provider: "monit"
+            metric_provider: collectd
+            procmon_provider: monit
     mysql:
         default:
-            root_network_acl: "%"
+            root_network_acl: %
             allow_remote_root: true
     nova:
         default:
             apply_patches: true
             networks:
                 public:
-                    bridge: "br0"
-                    dns1: "8.8.8.8"
-                    dns2: "8.8.4.4"
-                    bridge_dev: "eth0"
+                    bridge: br0
+                    dns1: 8.8.8.8
+                    dns2: 8.8.4.4
+                    bridge_dev: eth0
                     network_size: "254"
-                    ipv4_cidr: "172.32.0.0/24"
-                    label: "public"
+                    ipv4_cidr: 172.32.0.0/24
+                    label: public
     osops:
         default:
             apply_patches: true
     horizon:
         default:
-            theme: "default"
+            theme: default
     developer_mode:
         default: false
     osops_networks:
         default:
-            management: "198.101.133.0/24"
-            nova: "198.101.133.0/24"
-            public: "198.101.133.0/24"
+            management: 198.101.133.0/24
+            nova: 198.101.133.0/24
+            public: 198.101.133.0/24
     glance:
         default:
             image_upload: true
-            images: ["cirros", "precise"]
+            images: 
+                - cirros
+                - precise
         cf:
             api:
-                default_store: "swift"
-                swift_store_user: "<Tenant_Id>:<Tenant_Name>"
-                swift_store_key: "<Tenant_Password>"
+                default_store: swift
+                swift_store_user: <Tenant_Id>:<Tenant_Name>
+                swift_store_key: <Tenant_Password>
                 swift_store_auth_version: "2"
-                swift_store_auth_address: "https://identity.api.rackspacecloud.com/v2.0"
+                swift_store_auth_address: https://identity.api.rackspacecloud.com/v2.0
             services:
                 api:
-                    path: ""
+                    path: 
                 admin-api:
-                    path: ""
+                    path: 
                 internal-api:
-                    path: ""
+                    path: 
                 registry:
-                    path: ""
+                    path: 
             image_upload: true
-            images: ["cirros", "precise"]
+            images: 
+                - cirros
+                - precise
     ha:
         precise:
             vips:
@@ -97,13 +106,13 @@ environments:
                 config:
                     198.101.133.154:
                         vrid: 10
-                        network: "public"
+                        network: public
                     198.101.133.155:
                         vrid: 11
-                        network: "public"
+                        network: public
                     198.101.133.156:
                         vrid: 12
-                        network: "public"
+                        network: public
         centos:
             vips:
                 mysql-db: "198.101.133.157"
@@ -124,32 +133,75 @@ environments:
                 config:
                     198.101.133.157:
                         vrid: 14
-                        network: "public"
+                        network: public
                     198.101.133.158:
                         vrid: 15
-                        network: "public"
+                        network: public
                     198.101.133.159:
                         vrid: 16
-                        network: "public"
+                        network: public
     neutron:
         nova:
             network:
-                provider: "quantum"
+                provider: quantum
                 apply_patches: True
     swift:
         swift-private-cloud:
             network:
-                management: ""
-                exnet: ""
+                management: 
+                exnet: 
             swift_common:
-               swift_hash_prefix: ""
-               swift_hash_suffix: ""
+               swift_hash_prefix: 
+               swift_hash_suffix: 
             dispersion:
-                dis_key: "secrete"
+                dis_key: secrete
             keystone:
-               swift_admin_url: ""
-               swift_public_url: ""
-               swift_internal_url: ""
+               swift_admin_url: 
+               swift_public_url: 
+               swift_internal_url: 
+
+    openldap:
+        keystone:
+            debug: True
+            auth_type: ldap
+            ldap:
+                user_mail_attribute: mail
+                user_enabled_emulation: True
+                user_tree_dn: "ou=Users,dc=rcb,dc=me"
+                user_attribute_ignore: tenantId
+                tenant_enabled_emulation: True
+                url: ldap://<LDAP_IP>
+                user: "cn=admin,dc=rcb,dc=me"
+                role_objectclass: organizationalRole
+                tenant_objectclass: groupOfNames
+                group_attribute_ignore: enabled
+                tenant_attribute_ignore: tenantId
+                tenant_tree_dn: "ou=Groups,dc=rcb,dc=me"
+                allow_subtree_delete: false
+                password: <LDAP_ADMIN_PASS>
+                suffix: "dc=rcb,dc=me"
+                user_objectclass: inetOrgPerson
+                domain_attribute_ignore: enabled
+                use_dumb_member: True
+                role_tree_dn: "ou=Roles,dc=rcb,dc=me"
+            admin_user: admin
+            users:
+                demo:
+                    roles:
+                        Member:
+                            - demo
+                        default_tenant: demo
+                        password: ostackdemo
+              admin:
+                roles:
+                    admin:
+                        - admin
+                        - demo
+                    password: ostackdemo
+            tenants: 
+                - admin
+                - service
+                - demo
 rcbops:
     compute:
         git:
@@ -183,7 +235,7 @@ rcbops:
             run_list: ['role[cinder-all']
     storage:
         git:
-            url: "https://github.com/rcbops-cookbooks/swift-private-cloud.git"
+            url: https://github.com/rcbops-cookbooks/swift-private-cloud.git
             branches:
                 master:
                     tags:
