@@ -90,6 +90,13 @@ class ChefRazorNode(Node):
         self.features = features
         self._cleanups = []
 
+    def __str__(self):
+        node = ("Node - name: {0} os: {1} "
+                "product: {2} branch: {3}\n").format(self.name, self.os,
+                                                     self.product, self.branch)
+        features = "Features: {0}".format(", ".join(self.features))
+        return "".join(node, features)
+
     def apply_feature(self):
         if self['run_list']:
             self.run_cmd("chef-client")

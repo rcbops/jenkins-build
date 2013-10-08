@@ -2,7 +2,7 @@ import os
 import sys
 from time import sleep
 from modules import Features
-from chef import autoconfigure
+from chef import autoconfigure, Search
 from modules.Config import Config
 from inspect import getmembers, isclass
 from modules.razor_api import razor_api
@@ -57,6 +57,14 @@ class Deployment(object):
         self.build_nodes()
         self.pre_configure()
 
+    def __str__(self):
+        deployment = ("Deployment - name: {0} "
+                      "os: {1} branch: {2}\n".format(self.name, self.os,
+                                                     self.branch))
+        features = "Features: {0}\n".format(", ".join(self.features))
+        nodes = "Nodes:\n{0}".format("\n".join(self.nodes))
+        return "".join(deployment, features, nodes)
+
 
 class ChefRazorDeployment(Deployment):
     """
@@ -82,13 +90,12 @@ class ChefRazorDeployment(Deployment):
         query = "%s AND %s AND %s" % (in_image_pool,
                                       is_default_environment,
                                       is_ifaced)
-        # TODO: Add node_search to chef helper
-        nodes = Chef.node_search(query)
+        nodes = cls.node_search(query)
         fails = 0
         try:
             node = next(nodes)
             node['in_use'] = "provisioned"
-            nodes.save
+            node.save
             yield node
         except StopIteration:
             if fails > 10:
@@ -96,8 +103,7 @@ class ChefRazorDeployment(Deployment):
                 sys.exit(1)
             fails += 1
             sleep(15)
-            # TODO: Add node_search to chef helper
-            nodes = Chef.node_search(query)
+            nodes = cls.node_search(query)
 
     @classmethod
     def fromfile(cls, name, branch, config, path=None):
@@ -113,8 +119,8 @@ class ChefRazorDeployment(Deployment):
         product = template['product']
         deployment = cls(template['name'], os_name, branch, chef, razor)
         for node_features in template['nodes']:
-            node = ChefRazorNode(cls.free_node(os_name).name, os_name, product,
-                                 chef, deployment, razor, branch)
+            node = ChefRazorNode(next(cls.free_node(os_name)).name, os_name,
+                                 product, chef, deployment, razor, branch)
             for feature in node_features:
                 feature_class = cls.feature_map(feature)
                 node.features.append(feature_class(node))
@@ -128,6 +134,18 @@ class ChefRazorDeployment(Deployment):
     def feature_map(cls, feature):
         classes = {k.lower(): v for (k, v) in getmembers(Features, isclass)}
         return classes[feature]
+
+    @classmethod
+    def node_search(cls, query, environment=None, tries=10):
+        api = autoconfigure()
+        if environment:
+            api = environment.local_api
+        search = None
+        while not search and tries > 0:
+            search = Search("node", api=api).query(query)
+            sleep(10)
+            tries = tries - 1
+        return (n.object for n in search)
 
     def search_role(self, feature):
         """Returns nodes the have the desired role"""
