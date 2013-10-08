@@ -90,7 +90,7 @@ class Nova(Deployment):
     """
 
     def __init__(self, deployment, rpcs_feature='default'):
-        super(Monitoring, self).__init__(deployment)
+        super(Nova, self).__init__(deployment)
         self.environment = \
             self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
