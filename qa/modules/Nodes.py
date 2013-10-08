@@ -90,6 +90,11 @@ class ChefRazorNode(Node):
         self.features = features
         self._cleanups = []
 
+    def apply_feature(self):
+        if self['run_list']:
+            self.run_cmd("chef-client")
+        super(ChefRazorNode, self).apply_feature()
+
     def _password(self, chef_node):
         try:
             chef_node = CNode(chef_node.name, api=self.chef)
@@ -101,7 +106,7 @@ class ChefRazorNode(Node):
 
     def __getattr__(self, item):
         """
-        Gets ip, user, and password from provisioners
+        Gets ip, user, and password from chef
         """
         map = {'ip': Node(self.name)['ipaddress'],
                'user': Node(self.name)['current_user'],
@@ -111,9 +116,19 @@ class ChefRazorNode(Node):
         else:
             return self.__dict__[item]
 
+    def __getitem__(self, item):
+        """
+        Node has access to chef attributes
+        """
+        return CNode(self.name, api=self.environment.local_api)[item]
+
     def __setitem__(self, item, value):
-        # TODO: Use both apis
-        CNode(self.name)[item] = value
+        """
+        Node can set chef attributes
+        """
+        CNode(self.name, api=self.environment.local_api)[item] = value
+        if self.environment.remote_api:
+            CNode(self.name, api=self.environment.remote_api)[item] = value
 
     def destroy(self):
         cnode = CNode(self.name)

@@ -1,5 +1,5 @@
 """
-OpenStack Features
+Private Cloud OpenStack Features
 """
 
 from chef import ChefAPI
@@ -32,43 +32,50 @@ class Feature(object):
     def post_configure(self):
         pass
 
-    @classmethod
-    def remove_chef(cls, node):
+
+class Node(Feature):
+    """ Represents a feature on a node
+    """
+
+    def __init__(self, node):
+        super(Node, self).__init__(node.config)
+        self.node = node
+
+    def remove_chef(self):
         """ Removes chef from the given node
         """
 
-        if node.os == "precise":
+        if self.node.os == "precise":
             commands = ["apt-get remove --purge -y chef",
                         "rm -rf /etc/chef"]
-        if node.os in ["centos", "rhel"]:
+        if self.node.os in ["centos", "rhel"]:
             commands = ["yum remove -y chef",
                         "rm -rf /etc/chef /var/chef"]
 
         command = commands.join("; ")
 
-        return node.run_cmd(command, quiet=True)
+        return self.node.run_cmd(command, quiet=True)
 
-    @classmethod
-    def run_chef_client(cls, node):
+    def run_chef_client(self):
         """ Runs chef-client on the given node
         """
 
-        return node.run_cmd('chef-client', quiet=True)
+        return self.node.run_cmd('chef-client', quiet=True)
 
-    def set_run_list(self, node):
+    def set_run_list(self):
         """ Sets the nodes run list based on the Feature
         """
-        run_list = self.config['rcbops'][node.product][self.__name__.lower()][
+        run_list = self.config['rcbops'][self.node.product][self.__name__.lower()][
             'run_list']
-        node['run_list'].extend(run_list)
+        self.node['run_list'].extend(run_list)
 
 
-class ChefServer(Feature):
+class ChefServer(Node):
     """ Represents a chef server
     """
 
-    def __init__(self):
-        super(ChefServer, self).__init__()
+    def __init__(self, node):
+        super(ChefServer, self).__init__(node)
         self.iscript = self.config['chef']['server']['install_script']
         self.iscript_name = self.iscript.split('/')[-1]
         self.install_commands = ['curl {0} >> {1}'.format(self.iscript,
@@ -76,30 +83,30 @@ class ChefServer(Feature):
                                  'chmod u+x ~/{0}'.format(self.iscript_name),
                                  './{0}'.format(self.iscript_name)]
 
-    def pre_configure(self, node):
-        self.remove_chef(node)
+    def pre_configure(self):
+        self.remove_chef()
 
-    def apply_feature(self, node):
-        self._install(node)
-        self._install_cookbooks(node)
-        self.set_up_remote(node)
+    def apply_feature(self):
+        self._install()
+        self._install_cookbooks()
+        self.set_up_remote()
 
-    def post_configure(self, deployment):
+    def post_configure(self):
         pass
 
-    def _install(self, node):
+    def _install(self):
         """ Installs chef server on the given node
         """
 
         command = self.install_commands.join("; ")
-        node.run_cmd(command)
+        self.node.run_cmd(command)
 
-    def _install_cookbooks(self, node):
-        """ Installs cookbooks on node
+    def _install_cookbooks(self):
+        """ Installs cookbooks
         """
 
-        cookbook_url = self.config['rcbops'][node.product]['git']['url']
-        cookbook_branch = node.branch
+        cookbook_url = self.config['rcbops'][self.node.product]['git']['url']
+        cookbook_branch = self.node.branch
         cookbook_name = cookbook_url.split("/")[-1].split(".")[0]
         install_dir = self.config['chef']['server']['install_dir']
 
@@ -128,22 +135,22 @@ class ChefServer(Feature):
 
         command = commands.join("; ")
 
-        return node.run_cmd(command)
+        return self.node.run_cmd(command)
 
-    def _set_up_remote(self, node):
+    def _set_up_remote(self):
         """ Sets up and saves a remote api and dict to the nodes
             environment
         """
 
         remote_chef = {
             "client": "admin",
-            "key": self._get_admin_pem(node),
-            "url": "https://{0}:4443".format(node.ip)
+            "key": self._get_admin_pem(self.node),
+            "url": "https://{0}:4443".format(self.node.ip)
         }
 
         # set the remote chef server name
         setattr(self.node.environment.chef_server_name,
-                node.name)
+                self.node.name)
 
         # save the remote dict
         self.node.environment._add_override_attr('remote_chef', remote_chef)
@@ -158,144 +165,32 @@ class ChefServer(Feature):
 
         return ChefAPI(**chef_api_dict)
 
-    def _get_admin_pem(self, node):
+    def _get_admin_pem(self):
         """ Gets the admin pem from the chef server
         """
 
         command = 'cat ~/.chef/admin.pem'
-        return node.run_cmd(command)['return']
+        return self.node.run_cmd(command)['return']
 
 
-class HighAvailability(Feature):
-    """ Represents a highly available cluster
-    """
-
-    def __init__(self, number):
-        super(HighAvailability, self).__init__()
-        self.number = number
-        self.environment = self.config['environments']['ha']
-
-    def update_environment(self, node):
-        node.environment._add_override_attr('ha', self.environment)
-
-    def pre_configure(self, node):
-        self.set_run_list(node)
-        self.prepare_cinder(node)
-
-    def apply_feature(self, node):
-        self.run_chef_client(node)
-
-    def post_configure(self, deployment):
-        pass
-
-
-class Neutron(Feature):
-    """ Represents a neutron network cluster
-    """
-
-    def __init__(self):
-        super(Neutron, self).__init__()
-        self.environment = self.config['environments']['neutron']
-
-    def update_environment(self, node):
-        node.environment._add_override_attr('neutron', self.environment)
-
-    def pre_configure(self, node):
-        raise NotImplementedError
-
-    def apply_feature(self, node):
-        self.run_chef_client(node)
-
-    def post_configure(self, deployment):
-        raise NotImplementedError
-
-
-class OpenLDAP(Feature):
-    """ Represents a keystone with an openldap backend
-    """
-
-    def __init__(self):
-        super(OpenLDAP, self).__init__()
-        self.environment = self.config['environment']['ldap']
-        self.ldapadd_cmd = 'ldapadd -x -D "cn=admin,dc=rcb,dc=me -wostackdemo -f /root/base.ldif'
-
-    def update_environment(self, node):
-        node.environment._add_override_attr('ldap', self.environment)
-
-    def pre_configure(self, node):
-        raise NotImplementedError
-
-    def apply_feature(self, node):
-        self.run_chef_client(node)
-        self._ldap_add(node)
-
-    def post_configure(self, deployment):
-        raise NotImplementedError
-
-    def _ldap_add(self):
-        raise NotImplementedError
-
-
-class GlanceCF(Feature):
-    """ Represents a glance with cloud files backend
-    """
-
-    def __init__(self):
-        super(GlanceCF, self).__init__()
-        self.environment = self.config['environment']['glance']
-
-    def update_environment(self, node):
-        node.environment._add_override_attr('glance', self.environment)
-
-    def pre_configure(self, node):
-        raise NotImplementedError
-
-    def apply_feature(self, node):
-        self.run_chef_client(node)
-
-    def post_configure(self, deployment):
-        raise NotImplementedError
-
-
-class Swift(Feature):
-    """ Represents a block storage cluster enabled by swift
-    """
-
-    def __init__(self):
-        super(Swift, self).__init__()
-        self.environment = self.config['environment']['swift']
-
-    def update_environment(self, node):
-        node.environment._add_override_attr('swift', self.environment)
-
-    def pre_configure(self, node):
-        raise NotImplementedError
-
-    def apply_feature(self, node):
-        self.run_chef_client(node)
-
-    def post_configure(self, deployment):
-        raise NotImplementedError
-
-
-class Remote(Feature):
+class Remote(Node):
     """ Represents the deployment having a remote chef server
     """
 
     def __init__(self, node):
-        super(Remote, self).__init__()
+        super(Remote, self).__init__(node)
 
-    def pre_configure(self, node):
+    def pre_configure(self):
         pass
 
-    def apply_feature(self, node):
-        self.remove_chef(node)
-        self._bootstrap_chef(node)
+    def apply_feature(self):
+        self.remove_chef()
+        self._bootstrap_chef()
 
     def post_configure(self, deployment):
         pass
 
-    def _bootstrap_chef(self, node):
+    def _bootstrap_chef(self):
         """ Bootstraps the node to a chef server
         """
 
@@ -305,25 +200,27 @@ class Remote(Feature):
         # chef server node obkect so i can use its run_cmd
 
         # Gather the info for the chef server
-        chef_server_node = node.deployment.nodes['chef_server']
+        chef_server_node = self.node.deployment.nodes['chef_server']
 
         command = 'knife bootstrap {0} -s root -p {1}'.format(chef_server_node.ip,
-                                                              node.password)
+                                                              self.node.password)
 
         chef_server_node.run_cmd(command)
 
 
-class CinderLocal(Feature):
+class CinderLocal(Node):
     """
     Enables cinder with local lvm backend
     """
 
-    def pre_configure(self, node):
-        self.prepare_cinder(node)
+    def __init__(self, node):
+        super(CinderLocal, self).__init__(node)
+
+    def pre_configure(self):
+        self.prepare_cinder()
         self.set_run_list()
 
-    @classmethod
-    def prepare_cinder(cls, node):
+    def prepare_cinder(self):
         """ Prepares the node for use with cinder
         """
 
@@ -334,15 +231,15 @@ class CinderLocal(Feature):
                     "| awk '{print $3}'`; do lvremove $i; done",
                     "vgreduce $vg --removemissing"]
         command = commands.join("; ")
-        node.run_cmd(command)
+        self.node.run_cmd(command)
 
         # Gather the created volume group for cinder
         command = "vgdisplay 2> /dev/null | grep pool | awk '{print $3}'"
-        ret = node.run_cmd(command)
+        ret = self.node.run_cmd(command)
         volume_group = ret['return'].replace("\n", "").replace("\r", "")
 
         # Update our environment
-        env = node.environment
+        env = self.node.environment
         cinder = {
             "storage": {
                 "lvm": {
@@ -351,3 +248,72 @@ class CinderLocal(Feature):
             }
         }
         env._add_override_attr("cinder", cinder)
+
+
+class Deployment(Feature):
+    """ Represents a feature across a deployment
+    """
+
+    def __init__(self, deployment):
+        super(Deployment, self).__init__(deployment.config)
+        self.deployment = deployment
+
+
+class HighAvailability(Deployment):
+    """ Represents a highly available cluster
+    """
+
+    def __init__(self, deployment):
+        super(HighAvailability, self).__init__(deployment)
+        self.environment = self.config['environments']['ha'][deployment.os]
+
+    def update_environment(self):
+        self.node.environment._add_override_attr('ha', self.environment)
+
+
+class Neutron(Deployment):
+    """ Represents a neutron network cluster
+    """
+
+    def __init__(self, deployment):
+        super(Neutron, self).__init__(deployment)
+        self.environment = self.config['environments']['neutron']
+
+    def update_environment(self):
+        self.node.environment._add_override_attr('neutron', self.environment)
+
+
+class Swift(Deployment):
+    """ Represents a block storage cluster enabled by swift
+    """
+
+    def __init__(self, deployment):
+        super(Swift, self).__init__(deployment)
+        self.environment = self.config['environment']['swift']
+
+    def update_environment(self):
+        self.node.environment._add_override_attr('swift', self.environment)
+
+
+class GlanceCF(Deployment):
+    """ Represents a glance with cloud files backend
+    """
+
+    def __init__(self, deployment):
+        super(GlanceCF, self).__init__(deployment)
+        self.environment = self.config['environment']['glance']
+
+    def update_environment(self):
+        self.node.environment._add_override_attr('glance', self.environment)
+
+
+class OpenLDAP(Deployment):
+    """ Represents a keystone with an openldap backend
+    """
+
+    def __init__(self, deployment):
+        super(OpenLDAP, self).__init__(deployment)
+        self.environment = self.config['environment']['ldap']
+
+    def update_environment(self):
+        self.node.environment._add_override_attr('ldap', self.environment)
