@@ -57,6 +57,14 @@ class Deployment(object):
         self.build_nodes()
         self.pre_configure()
 
+    def __str__(self):
+        deployment = ("Deployment - name: {0} "
+                      "os: {1} branch: {2}\n".format(self.name, self.os,
+                                                     self.branch))
+        features = "Features: {0}\n".format(", ".join(self.features))
+        nodes = "Nodes:\n{0}".format("\n".join(self.nodes))
+        return "".join(deployment, features, nodes)
+
 
 class ChefRazorDeployment(Deployment):
     """
