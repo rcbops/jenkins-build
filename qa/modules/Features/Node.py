@@ -2,8 +2,10 @@
 A nodes features
 """
 
+import shared
 from Feature import Feature
 from chef import ChefAPI
+
 
 class Node(Feature):
     """ Represents a feature on a node
@@ -101,7 +103,7 @@ class ChefServer(Node):
         return outl
 
     def pre_configure(self):
-        self.remove_chef()
+        shared.remove_chef(self.node)
 
     def apply_feature(self):
         self._install()
@@ -204,23 +206,8 @@ class Remote(Node):
         return outl
 
     def apply_feature(self):
-        self._remove_chef()
+        shared.remove_chef(self.node)
         self._bootstrap_chef()
-
-    def _remove_chef(self):
-        """ Removes chef from the given node
-        """
-
-        if self.node.os == "precise":
-            commands = ["apt-get remove --purge -y chef",
-                        "rm -rf /etc/chef"]
-        if self.node.os in ["centos", "rhel"]:
-            commands = ["yum remove -y chef",
-                        "rm -rf /etc/chef /var/chef"]
-
-        command = commands.join("; ")
-
-        return self.node.run_cmd(command, quiet=True)
 
     def _bootstrap_chef(self):
         """ Bootstraps the node to a chef server
@@ -281,6 +268,7 @@ class Cinder(Node):
             }
         }
         env.add_override_attr("cinder", cinder)
+
 
 class Swift(Node):
     """ Represents a RPCS object store node
