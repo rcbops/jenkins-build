@@ -1,6 +1,8 @@
 from time import sleep
 from chef import Node as CNode
 from chef import Client as CClient
+from inspect import getmembers, isclass
+from modules.Features import node as node_features
 from server_helper import ssh_cmd, scp_to, scp_from
 
 
@@ -94,8 +96,8 @@ class ChefRazorNode(Node):
         node = ("Node - name: {0} os: {1} "
                 "product: {2} branch: {3}\n").format(self.name, self.os,
                                                      self.product, self.branch)
-        features = "Features: {0}".format(", ".join(self.features))
-        return "".join(node, features)
+        features = "Features: {0}".format(", ".join(map(str, self.features)))
+        return "".join([node, features])
 
     def apply_feature(self):
         if self['run_list']:
@@ -143,3 +145,9 @@ class ChefRazorNode(Node):
         CClient(self.name).delete()
         cnode.delete()
         sleep(15)
+
+    def add_features(self, features):
+        classes = {k.lower(): v for (k, v) in
+                   getmembers(node_features, isclass)}
+        for feature in features:
+            self.features.append(classes[feature](self))

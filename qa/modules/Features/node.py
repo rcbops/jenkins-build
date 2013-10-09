@@ -17,7 +17,7 @@ class Node(Feature):
         """ Sets the nodes run list based on the Feature
         """
         run_list = self.config['rcbops'][self.node.product]\
-                              [self.__name__.lower()]['run_list']
+                              [self.__class__.__name__.lower()]['run_list']
         self.node['run_list'].extend(run_list)
 
 
@@ -209,10 +209,8 @@ class Cinder(Node):
     Enables cinder with local lvm backend
     """
 
-    def __init__(self, node, location):
+    def __init__(self, node):
         super(Cinder, self).__init__(node)
-        self.location = location
-        self.name = 'cinder-{0}'.format(location)
 
     def pre_configure(self):
         self.prepare_cinder()
