@@ -16,8 +16,6 @@ class Deployment(Feature):
         """ Print out current instance
         """
         outl = 'class :' + self.__class__.__name__
-        for attr in self.__dict__:
-            outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
     def update_environment(self):
@@ -35,6 +33,12 @@ class OpenStack(Deployment):
     def __init__(self, deployment):
         super(OpenStack, self).__init__(deployment)
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
         pass
 
@@ -47,8 +51,14 @@ class Neutron(Deployment):
         self.environment = \
             self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
-        self.node.environment.add_override_attr('neutron', self.environment)
+        self.deployment.environment.add_override_attr('neutron', self.environment)
 
 
 class Swift(Deployment):
@@ -60,8 +70,14 @@ class Swift(Deployment):
         self.environment = \
             self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
-        self.node.environment.add_override_attr(
+        self.deployment.environment.add_override_attr(
             self.__class__.__name__.lower(), self.environment)
 
 
@@ -74,8 +90,14 @@ class Glance(Deployment):
         self.environment = \
             self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
-        self.node.environment.add_override_attr(
+        self.deployment.environment.add_override_attr(
             self.__class__.__name__.lower(), self.environment)
 
 
@@ -87,6 +109,12 @@ class Keystone(Deployment):
         super(Keystone, self).__init__(deployment)
         self.environment = \
             self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
@@ -102,6 +130,12 @@ class Nova(Deployment):
         self.environment = \
             self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
         self.deployment.environment.add_override_attr(
             self.__class__.__name__.lower(), self.environment)
@@ -116,6 +150,12 @@ class Horizon(Deployment):
         self.environment = \
             self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
         self.deployment.environment.add_override_attr(
             self.__class__.__name__.lower(), self.environment)
@@ -128,6 +168,12 @@ class Cinder(Deployment):
         super(Cinder, self).__init__(deployment)
         self.environment = \
             self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
@@ -146,6 +192,12 @@ class RPCS(Deployment):
         super(RPCS, self).__init__(deployment)
         self.name = name
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
         pass
 
@@ -158,6 +210,12 @@ class Monitoring(RPCS):
                                          self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
@@ -172,6 +230,12 @@ class MySql(RPCS):
                                          self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
@@ -188,6 +252,12 @@ class OsOps(RPCS):
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
         self.deployment.environment.add_override_attr(
             self.name, self.environment)
@@ -201,6 +271,12 @@ class DeveloperMode(RPCS):
         super(DeveloperMode, self).__init__(deployment, 'developer_mode')
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(
@@ -216,6 +292,12 @@ class OsOpsNetworks(RPCS):
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
         self.deployment.environment.add_override_attr(
             self.name, self.environment)
@@ -230,8 +312,14 @@ class HighAvailability(RPCS):
         self.environment = \
             self.config['environments'][self.name][deployment.os]
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
-        self.node.environment.add_override_attr(self.name, self.environment)
+        self.deployment.environment.add_override_attr(self.name, self.environment)
 
 
 class LDAP(RPCS):
@@ -243,6 +331,12 @@ class LDAP(RPCS):
                                    self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name]
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def update_environment(self):
         self.deployment.environment.add_override_attr(

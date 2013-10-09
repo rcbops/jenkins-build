@@ -7,9 +7,11 @@ from modules.Deployments import ChefRazorDeployment
 def v3(name="precise-default", branch="grizzly", template_path=None,
        config=None):
     config = Config(config)
-    deployment = ChefRazorDeployment.fromfile(name, branch, config,
+    deployment = ChefRazorDeployment.fromfile(name,
+                                              branch,
+                                              config,
                                               template_path)
-    print deployment
+    #print deployment
 
 if __name__ == "__main__":
     parser = argh.ArghParser()

@@ -13,6 +13,12 @@ class Node(Feature):
         super(Node, self).__init__(node.deployment.config)
         self.node = node
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def set_run_list(self):
         """ Sets the nodes run list based on the Feature
         """
@@ -28,6 +34,12 @@ class Controller(Node):
     def __init__(self, node):
         super(Controller, self).__init__(node)
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def update_environment(self):
         pass
 
@@ -42,6 +54,12 @@ class Compute(Node):
     def __init__(self, node):
         super(Compute, self).__init__(node)
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def apply_feature(self):
         self.set_run_list()
 
@@ -52,6 +70,12 @@ class Proxy(Node):
 
     def __init__(self, node):
         super(Proxy, self).__init__(node)
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def apply_feature(self):
         self.set_run_list()
@@ -69,6 +93,12 @@ class ChefServer(Node):
                                                           self.iscript_name),
                                  'chmod u+x ~/{0}'.format(self.iscript_name),
                                  './{0}'.format(self.iscript_name)]
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def pre_configure(self):
         self.remove_chef()
@@ -167,6 +197,12 @@ class Remote(Node):
     def __init__(self, node):
         super(Remote, self).__init__(node)
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
+
     def apply_feature(self):
         self._remove_chef()
         self._bootstrap_chef()
@@ -190,13 +226,8 @@ class Remote(Node):
         """ Bootstraps the node to a chef server
         """
 
-        # I need the ability to get a node instance based on name
-        # I think deployments need to have a list of all the nodes
-        # in the deployment so i can search through them for my
-        # chef server node obkect so i can use its run_cmd
-
         # Gather the info for the chef server
-        chef_server_node = self.node.deployment.nodes['chef_server']
+        chef_server_node = self.node.deployment.search_role('chef_server')
 
         command = 'knife bootstrap {0} -s root -p {1}'.format(
             chef_server_node.ip, self.node.password)
@@ -211,6 +242,12 @@ class Cinder(Node):
 
     def __init__(self, node):
         super(Cinder, self).__init__(node)
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def pre_configure(self):
         self.prepare_cinder()
@@ -251,6 +288,12 @@ class Swift(Node):
 
     def __init__(self, node):
         super(Swift, self).__init__(node)
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def apply_feature(self):
         self.set_run_list()

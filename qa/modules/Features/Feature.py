@@ -10,10 +10,10 @@ class Feature(object):
         self.config = config
 
     def __repr__(self):
-        """ print current instace of class
+        """ Print out current instance
         """
-        feature = 'Feature  {0}'.format(self.__class__.__name__)
-        return feature
+        outl = 'class :' + self.__class__.__name__
+        return outl
 
     def update_environment(self):
         pass

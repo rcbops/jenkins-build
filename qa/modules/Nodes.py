@@ -23,6 +23,22 @@ class Node(object):
         self.features = features
         self._cleanups = []
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        for attr in self.__dict__:
+            # We want to not print the deployment because
+            # it is a circular reference
+            if attr != 'deployment':
+                if type(getattr(self, attr)) is list:
+                    outl += '\n\t' + attr + ' : ' + ", ".join(getattr(self, attr))
+                elif type(getattr(self, attr)) is type(None):
+                    outl += '\n\t' + attr + ' : None'
+                else:
+                    outl += '\n\t' + attr + ' : ' + getattr(self, attr)
+        return outl
+
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
         password = password or self.password
@@ -67,9 +83,6 @@ class Node(object):
         self.pre_configure()
         self.apply_feature()
         self.pre_configure()
-
-    def __str__(self):
-        return "Node: %s" % self.ip
 
     def destroy(self):
         raise NotImplementedError

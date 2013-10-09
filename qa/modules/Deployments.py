@@ -24,6 +24,19 @@ class Deployment(object):
         self.features = features
         self.nodes = []
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        for attr in self.__dict__:
+            if type(getattr(self, attr)) is list:
+                outl += '\n\t' + attr + ' : ' + ", ".join(getattr(self, attr))
+            elif type(getattr(self, attr)) is type(None):
+                outl += '\n\t' + attr + ' : None'
+            else:
+                outl += '\n\t' + attr + ' : ' + getattr(self, attr)
+        return outl
+
     def destroy(self):
         """ Destroys an OpenStack deployment """
         for node in self.nodes:
@@ -57,14 +70,6 @@ class Deployment(object):
         self.pre_configure()
         self.build_nodes()
         self.pre_configure()
-
-    def __str__(self):
-        deployment = ("Deployment - name: {0} "
-                      "os: {1} branch: {2}\n".format(self.name, self.os,
-                                                     self.branch))
-        features = "Features: {0}\n".format(", ".join(map(str, self.features)))
-        nodes = "Nodes:\n{0}".format("\n".join(map(str, self.nodes)))
-        return "".join([deployment, features, nodes])
 
 
 class ChefRazorDeployment(Deployment):
