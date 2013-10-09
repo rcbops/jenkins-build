@@ -120,10 +120,10 @@ class ChefRazorNode(Node):
 
     def __str__(self):
         node = ("Node: \n\t\tName: {0}\n\t\tOS: {1}\n\t\t"
-                "Product: {2}\n\t\tBranch: {3}").format(self.name, self.os,
+                "Product: {2}\n\t\tBranch: {3}\n").format(self.name, self.os,
                                                      self.product, self.branch)
-        features = "Features: {0}".format(", ".join(map(str, self.features)))
-        return "\n".join([node, features])
+        features = "Features: {0}\n".format(", ".join(map(str, self.features)))
+        return "".join([node, features])
 
     def apply_feature(self):
         if self['run_list']:
