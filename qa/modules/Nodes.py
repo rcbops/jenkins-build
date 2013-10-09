@@ -169,12 +169,18 @@ class ChefRazorNode(Node):
 
     def destroy(self):
         cnode = CNode(self.name)
-        active_model = cnode['razor_metadata']['razor_active_model_uuid']
-        self.razor.remove_active_model(active_model)
-        self.run_cmd("reboot 0")
-        CClient(self.name).delete()
-        cnode.delete()
-        sleep(15)
+        if self['in_use'] == "provisioned":
+            # Return to pool if the node is clean
+            cnode.chef_environment = "_default"
+            cnode.save()
+        else:
+            # Remove active model if the node is dirty
+            active_model = cnode['razor_metadata']['razor_active_model_uuid']
+            self.razor.remove_active_model(active_model)
+            self.run_cmd("reboot 0")
+            CClient(self.name).delete()
+            cnode.delete()
+            sleep(15)
 
     def add_features(self, features):
         classes = {k.lower(): v for (k, v) in
