@@ -34,7 +34,7 @@ class Deployment(object):
                     ", ".join(map(str, self.features)))
             elif attr == 'nodes':
                 nodes = "\tNodes: {0}".format(
-                    ", ".join(map(str, self.nodes)))
+                    "".join(map(str, self.nodes)))
             elif isinstance(getattr(self, attr), types.NoneType):
                 outl += '\n\t{0} : {1}'.format(attr, 'None')
             else:
