@@ -2,6 +2,7 @@
 OpenStack Environments
 """
 
+import logging
 from chef import Environment as ChefEnvironment
 
 

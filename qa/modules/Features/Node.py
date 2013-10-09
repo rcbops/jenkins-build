@@ -3,6 +3,7 @@ A nodes features
 """
 
 import shared
+import logging
 from Feature import Feature
 from chef import ChefAPI
 
