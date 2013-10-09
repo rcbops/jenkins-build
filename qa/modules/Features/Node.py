@@ -16,7 +16,7 @@ class Node(Feature):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def set_run_list(self):
@@ -37,7 +37,7 @@ class Controller(Node):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -57,7 +57,7 @@ class Compute(Node):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def apply_feature(self):
@@ -74,7 +74,7 @@ class Proxy(Node):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def apply_feature(self):
@@ -97,7 +97,7 @@ class ChefServer(Node):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def pre_configure(self):
@@ -200,7 +200,7 @@ class Remote(Node):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def apply_feature(self):
@@ -246,7 +246,7 @@ class Cinder(Node):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def pre_configure(self):
@@ -292,7 +292,7 @@ class Swift(Node):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def apply_feature(self):

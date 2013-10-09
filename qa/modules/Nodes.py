@@ -27,7 +27,7 @@ class Node(object):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         for attr in self.__dict__:
             # We want to not print the deployment because
             # it is a circular reference

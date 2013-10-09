@@ -12,7 +12,7 @@ class Feature(object):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
