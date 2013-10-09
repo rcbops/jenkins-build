@@ -27,7 +27,7 @@ class Node(Feature):
         """
         run_list = self.config['rcbops'][self.node.product]\
                               [self.__class__.__name__.lower()]['run_list']
-        self.node['run_list'].extend(run_list)
+        self.node.add_run_list_item(run_list)
 
 
 class Controller(Node):
@@ -118,7 +118,7 @@ class ChefServer(Node):
         """ Installs chef server on the given node
         """
 
-        command = self.install_commands.join("; ")
+        command = "; ".join(self.install_commands)
         self.node.run_cmd(command)
 
     def _install_cookbooks(self):
@@ -133,16 +133,15 @@ class ChefServer(Node):
         commands = ["mkdir -p {0}".format(install_dir),
                     "cd {0}".format(install_dir),
                     "git clone {0} --recursive".format(cookbook_url),
-                    "cd {0}/cookbooks".format(cookbook_url),
+                    "cd {0}/cookbooks".format(install_dir),
                     "git checkout {0}".format(cookbook_branch)]
 
         if 'cookbooks' in cookbook_name:
              # add submodule stuff to list
-            commands.append('cd /opt/rcbops/chef-cookbooks')
             commands.append('git submodule init')
             commands.append('git submodule sync')
             commands.append('git submodule update')
-            commands.append('knife cookbook upload --all --cookbook-path'
+            commands.append('knife cookbook upload --all --cookbook-path '
                             '{0}/{1}/cookbooks'.format(install_dir,
                                                        cookbook_name))
         else:
@@ -153,7 +152,7 @@ class ChefServer(Node):
         commands.append('knife role from file {0}/{1}/roles/*.rb'.format(
             install_dir, cookbook_name))
 
-        command = commands.join("; ")
+        command = "; ".join(commands)
 
         return self.node.run_cmd(command)
 
@@ -251,7 +250,7 @@ class Cinder(Node):
                     "for i in `lvdisplay | grep 'LV Name' | grep $vg "
                     "| awk '{print $3}'`; do lvremove $i; done",
                     "vgreduce $vg --removemissing"]
-        command = commands.join("; ")
+        command = "; ".join(commands)
         self.node.run_cmd(command)
 
         # Gather the created volume group for cinder

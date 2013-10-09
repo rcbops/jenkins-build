@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import sys
 import argh
+import logging
 import traceback
 from modules.Config import Config
 from modules.Deployments import ChefRazorDeployment
@@ -8,6 +9,7 @@ from modules.Deployments import ChefRazorDeployment
 
 def v3(name="precise-default", branch="grizzly", template_path=None,
        config=None, destroy=True):
+    logging.basicConfig(level=logging.DEBUG)
     config = Config(config)
     deployment = ChefRazorDeployment.fromfile(name,
                                               branch,

@@ -188,4 +188,4 @@ class ChefRazorDeployment(Deployment):
 
     def destroy(self):
         super(ChefRazorDeployment, self).destroy()
-        self.chef.destroy()
+        self.environment.destroy()

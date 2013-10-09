@@ -47,6 +47,7 @@ class Node(object):
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
         password = password or self.password
+        logging.info("Running: {0} on {1}".format(remote_cmd, self.name))
         return ssh_cmd(self.ip, remote_cmd=remote_cmd, user=user,
                        password=password, quiet=quiet)
 
@@ -112,6 +113,7 @@ class ChefRazorNode(Node):
                  branch):
         self.name = name
         self.os = os
+        self.run_list = []
         self.product = product
         self.environment = environment
         self.deployment = deployment
@@ -132,7 +134,7 @@ class ChefRazorNode(Node):
         return node
 
     def apply_feature(self):
-        if self['run_list']:
+        if self.run_list:
             self.run_cmd("chef-client")
         super(ChefRazorNode, self).apply_feature()
 
@@ -155,6 +157,10 @@ class ChefRazorNode(Node):
         else:
             return self.__dict__[item]
 
+    def add_run_list_item(self, items):
+        self.run_list.extend(items)
+        CNode(self.name).run_list = self.run_list
+
     def __getitem__(self, item):
         """
         Node has access to chef attributes
@@ -165,9 +171,13 @@ class ChefRazorNode(Node):
         """
         Node can set chef attributes
         """
-        CNode(self.name, api=self.environment.local_api)[item] = value
+        lnode = CNode(self.name, api=self.environment.local_api)
+        lnode[item] = value
+        lnode.save()
         if self.environment.remote_api:
-            CNode(self.name, api=self.environment.remote_api)[item] = value
+            rnode = CNode(self.name, api=self.environment.remote_api)
+            rnode[item] = value
+            rnode.save()
 
     def destroy(self):
         cnode = CNode(self.name)
