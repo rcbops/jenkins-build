@@ -1,3 +1,4 @@
+import types
 from time import sleep
 from chef import Node as CNode
 from chef import Client as CClient
@@ -32,11 +33,11 @@ class Node(object):
             # it is a circular reference
             if attr != 'deployment':
                 if type(getattr(self, attr)) is list:
-                    outl += '\n\t' + attr + ' : ' + ", ".join(getattr(self, attr))
-                elif type(getattr(self, attr)) is type(None):
+                    outl += '\n\t' + attr + ' : ' + ", ".join(str(getattr(self, attr)))
+                elif isinstance(getattr(self, attr), types.NoneType):
                     outl += '\n\t' + attr + ' : None'
                 else:
-                    outl += '\n\t' + attr + ' : ' + getattr(self, attr)
+                    outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
