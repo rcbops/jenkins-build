@@ -134,13 +134,15 @@ class ChefRazorNode(Node):
                 else:
                     outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
 
+    """
     def __str__(self):
         node = ("Node - name: {0} os: {1} "
                 "product: {2} branch: {3}\n").format(self.name, self.os,
                                                      self.product, self.branch)
         features = "Features: {0}".format(", ".join(map(str, self.features)))
         return "".join([node, features])
-
+    """
+    
     def apply_feature(self):
         if self['run_list']:
             self.run_cmd("chef-client")
