@@ -39,7 +39,7 @@ class Node(object):
                     outl += '\n\t{0} : {1}'.format(attr, 'None')
                 else:
                     outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
-
+            outl += '\n\tIP : {1}'.format(self.ip)
 
         return "\n".join([outl, features])
 
@@ -64,25 +64,26 @@ class Node(object):
     def update_environment(self):
         """Updates environment for each feature"""
         for feature in self.features:
-            feature.update_environment(self)
+            feature.update_environment()
 
     def pre_configure(self):
         """Pre configures node for each feature"""
         for feature in self.features:
-            feature.pre_configure(self)
+            feature.pre_configure()
 
     def apply_feature(self):
         """Applies each feature"""
         for feature in self.features:
-            feature.apply_feature(self)
+            feature.apply_feature()
 
     def post_configure(self):
         """Post configures node for each feature"""
         for feature in self.features:
-            feature.post_configure(self)
+            feature.post_configure()
 
     def build(self):
         """Runs build steps for node's features"""
+        self['in_use'] = ",".join(map(str, self.features))
         self.update_environment()
         self.pre_configure()
         self.apply_feature()
@@ -93,7 +94,7 @@ class Node(object):
 
     @classmethod
     def test(cls):
-        node = cls("192.168.0.1", "root", "secrete", 
+        node = cls("192.168.0.1", "root", "secrete",
                    "precise", "compute", "precise-default",
                    None)
         features = ['nova', 'keystone', 'glance', 'cinder']
