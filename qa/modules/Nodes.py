@@ -118,7 +118,7 @@ class ChefRazorNode(Node):
         self.features = []
         self._cleanups = []
 
-    def __repr__(self):
+    def __str__(self):
         """ Print out current instance
         """
         outl = 'class :' + self.__class__.__name__
@@ -134,6 +134,8 @@ class ChefRazorNode(Node):
                 else:
                     outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
 
+        return "\n".join([outl, features])
+
     """
     def __str__(self):
         node = ("Node - name: {0} os: {1} "
@@ -142,7 +144,7 @@ class ChefRazorNode(Node):
         features = "Features: {0}".format(", ".join(map(str, self.features)))
         return "".join([node, features])
     """
-    
+
     def apply_feature(self):
         if self['run_list']:
             self.run_cmd("chef-client")
