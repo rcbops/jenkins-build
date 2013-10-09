@@ -119,11 +119,15 @@ class ChefRazorNode(Node):
         self._cleanups = []
 
     def __str__(self):
-        node = ("Node: \n\t\tName: {0}\n\t\tOS: {1}\n\t\t"
-                "Product: {2}\n\t\tBranch: {3}\n").format(self.name, self.os,
-                                                     self.product, self.branch)
-        features = "Features: {0}\n".format(", ".join(map(str, self.features)))
-        return "".join([node, features])
+        features = "{0}".format(", ".join(map(str, self.features)))
+        node = ("\n\tNode: \n\t\tName: {0}\n\t\tOS: {1}\n\t\t"
+                "Product: {2}\n\t\tBranch: {3}\n\t\t"
+                "Features: {4}\n").format(self.name,
+                                          self.os,
+                                          self.product,
+                                          self.branch,
+                                          features)
+        return node
 
     def apply_feature(self):
         if self['run_list']:
