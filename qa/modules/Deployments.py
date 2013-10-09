@@ -30,9 +30,7 @@ class Deployment(object):
         outl = 'class :' + self.__class__.__name__
         for attr in self.__dict__:
             if type(getattr(self, attr)) is list:
-                list_ = getattr(self, attr)
-                for item in list_:
-                    outl += '\n\t\t{0} : {1}'.format(attr, list_[item])
+                outl += '\n\t{0} : {1}'.format(map(str, getattr(self, attr)))
             elif isinstance(getattr(self, attr), types.NoneType):
                 outl += '\n\t{0} : {1}'.format(attr, 'None')
             else:
