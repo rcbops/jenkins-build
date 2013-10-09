@@ -1,5 +1,4 @@
 import os
-import sys
 from time import sleep
 from chef import autoconfigure, Search
 from Config import Config
@@ -84,33 +83,21 @@ class ChefRazorDeployment(Deployment):
                                                   config, features)
         self.chef = chef
         self.razor = razor
-        self.environment = None
 
-    @classmethod
-    def free_node(cls, image):
+    def free_node(self, image, environment):
         """
         Provides a free node from
         """
-        in_image_pool = "name:qa-%s-pool*" % image
-        is_default_environment = "chef_environment:_default"
-        is_ifaced = """run_list:recipe\[network-interfaces\]"""
-        query = "%s AND %s AND %s" % (in_image_pool,
-                                      is_default_environment,
-                                      is_ifaced)
-        nodes = cls.node_search(query)
-        fails = 0
-        try:
-            node = next(nodes)
-            node['in_use'] = "provisioned"
-            node.save
-            yield node
-        except StopIteration:
-            if fails > 10:
-                print "No available chef nodes"
-                sys.exit(1)
-            fails += 1
-            sleep(15)
-            nodes = cls.node_search(query)
+        nodes = self.node_search("name:qa-%s-pool*" % image)
+        for node in nodes:
+            is_default = node.chef_environment == "_default"
+            iface_in_run_list = "recipe[network-interfaces]" in node.run_list
+            if (is_default and iface_in_run_list):
+                node.chef_environment = environment.name
+                node['in_use'] = 0
+                node.save()
+                return node
+        raise Exception("No more nodes!!")
 
     @classmethod
     def fromfile(cls, name, branch, config, path=None):
@@ -140,8 +127,8 @@ class ChefRazorDeployment(Deployment):
     @classmethod
     def node_config(cls, deployment, features, os_name, product, chef, razor,
                     branch):
-        node = ChefRazorNode(next(cls.free_node(os_name)).name, os_name,
-                             product, chef, deployment, razor, branch)
+        node = ChefRazorNode(deployment.free_node(os_name, chef).name,
+                             os_name, product, chef, deployment, razor, branch)
         node.add_features(features)
         return node
 
@@ -163,7 +150,6 @@ class ChefRazorDeployment(Deployment):
         for feature, rpcs_feature in features.items():
             self.features.append(classes[feature](self, rpcs_feature[0]))
 
-    @classmethod
     def node_search(cls, query, environment=None, tries=10):
         api = autoconfigure()
         if environment:
