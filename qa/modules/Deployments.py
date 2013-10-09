@@ -54,10 +54,15 @@ class Deployment(object):
     def provision(self):
         """Provisions nodes for each desired feature"""
 
+    def update_environment(self):
+        """Pre configures node for each feature"""
+        for feature in self.features:
+            feature.update_environment()
+
     def pre_configure(self):
         """Pre configures node for each feature"""
         for feature in self.features:
-            feature.pre_configure(self)
+            feature.pre_configure()
 
     def build_nodes(self):
         """Builds each node"""
@@ -67,7 +72,7 @@ class Deployment(object):
     def post_configure(self):
         """Post configures node for each feature"""
         for feature in self.features:
-            feature.post_configure(self)
+            feature.post_configure()
 
     def build(self):
         """Runs build steps for node's features"""
@@ -78,7 +83,8 @@ class Deployment(object):
 
     @classmethod
     def test(cls):
-        deployment = cls("Test Deployment", "precuse", "grizzly", "config.yaml")
+        deployment = cls("Test Deployment", "precuse", "grizzly",
+                         "config.yaml")
         features = ['ha', 'ldap']
         setattr(deployment, 'features', features)
 
@@ -91,10 +97,10 @@ class ChefRazorDeployment(Deployment):
     Puppet's Razor as provisioner and
     Opscode's Chef as configuration management
     """
-    def __init__(self, name, os_name, branch, config, chef, razor):
+    def __init__(self, name, os_name, branch, config, environment, razor):
         super(ChefRazorDeployment, self).__init__(name, os_name, branch,
                                                   config)
-        self.chef = chef
+        self.environment = environment
         self.razor = razor
 
     def free_node(self, image, environment):
