@@ -1,5 +1,6 @@
 import os
 import types
+import logging
 from time import sleep
 from chef import autoconfigure, Search
 from Config import Config

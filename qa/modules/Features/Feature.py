@@ -2,6 +2,8 @@
 Base Feature
 """
 
+import logging
+
 class Feature(object):
     """ Represents a OpenStack Feature
     """

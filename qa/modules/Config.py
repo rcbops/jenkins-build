@@ -1,6 +1,7 @@
 """Gathers application config"""
 
 import os
+import logging
 from yaml import load
 
 

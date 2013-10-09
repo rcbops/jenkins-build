@@ -1,7 +1,8 @@
 """
 A Deployment Features
 """
-
+import time
+import logging
 from Feature import Feature
 
 class Deployment(Feature):
@@ -19,6 +20,15 @@ class Deployment(Feature):
         return outl
 
     def update_environment(self):
+        pass
+
+    def pre_configure(self):
+        pass
+
+    def apply_feature(self):
+        pass
+
+    def post_configure(self):
         pass
 
 
@@ -39,9 +49,6 @@ class OpenStack(Deployment):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
-    def update_environment(self):
-        pass
-
 class Neutron(Deployment):
     """ Represents a neutron network cluster
     """
@@ -58,9 +65,31 @@ class Neutron(Deployment):
         return outl
 
     def update_environment(self):
-        self.deployment.environment.add_override_attr('neutron', self.environment)
+        self.deployment.environment.add_override_attr(
+            self.__class__.__name__.lower(), self.environment)
 
+    def post_configure(self):
+        """ Runs cluster post configure commands
+        """
+        if self.deployment.os in ['centos', 'rhel']:
+            self._reboot_cluster()
 
+    def _reboot_cluster(self):
+        self.deployment.reboot_deployment()
+        sleep_in_minutes = 5
+        total_sleep_time = 0
+        while self.deployment.is_online() == False:
+            print "## Current Deployment is Offline ##"
+            print "## Sleeping for {0} minutes ##".format(
+                str(sleep_in_minutes))
+            time.sleep(sleep_in_minutes * 60)
+            total_sleep_time += sleep_in_minutes
+            sleep_in_minutes -= 1
+
+            if sleep_in_minutes == 0:
+                error = ("## -- Failed to reboot deployment"
+                        "after {0} minutes -- ##".format(total_sleep_time))
+                raise Exception(error)
 class Swift(Deployment):
     """ Represents a block storage cluster enabled by swift
     """

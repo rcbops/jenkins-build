@@ -1,4 +1,5 @@
 import types
+import logging
 from time import sleep
 from chef import Node as CNode
 from chef import Client as CClient

@@ -2,6 +2,7 @@
 A nodes features
 """
 
+import logging
 from Feature import Feature
 from chef import ChefAPI
 
