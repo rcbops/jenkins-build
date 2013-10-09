@@ -52,7 +52,7 @@ class Chef(Environment):
         self.save()
 
     def save(self):
-        env = ChefEnvironment.create(self.name, api=self.local_api)
+        env = ChefEnvironment(self.name, api=self.local_api)
         env.attributes = self.__dict__
         env.save(self.local_api)
         if self.remote_api:
