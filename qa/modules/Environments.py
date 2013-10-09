@@ -33,6 +33,7 @@ class Chef(Environment):
         self.local_api = local_api
         self.remote_api = remote_api
         self.chef_server_name = chef_server_name
+        self.save()
 
     def add_override_attr(self, key, value):
         self.override_attributes[key] = value

@@ -36,7 +36,7 @@ class OpenStack(Deployment):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -54,7 +54,7 @@ class Neutron(Deployment):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -73,7 +73,7 @@ class Swift(Deployment):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -93,7 +93,7 @@ class Glance(Deployment):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -113,7 +113,7 @@ class Keystone(Deployment):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -133,7 +133,7 @@ class Nova(Deployment):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -153,7 +153,7 @@ class Horizon(Deployment):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -172,7 +172,7 @@ class Cinder(Deployment):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -195,7 +195,7 @@ class RPCS(Deployment):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -214,7 +214,7 @@ class Monitoring(RPCS):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -234,7 +234,7 @@ class MySql(RPCS):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -255,7 +255,7 @@ class OsOps(RPCS):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -275,7 +275,7 @@ class DeveloperMode(RPCS):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -295,7 +295,7 @@ class OsOpsNetworks(RPCS):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -315,7 +315,7 @@ class HighAvailability(RPCS):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
@@ -335,7 +335,7 @@ class LDAP(RPCS):
     def __repr__(self):
         """ Print out current instance
         """
-        outl = 'class :' + self.__class__.__name__
+        outl = 'class: ' + self.__class__.__name__
         return outl
 
     def update_environment(self):
