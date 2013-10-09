@@ -56,3 +56,6 @@ class Chef(Environment):
         env.save(self.local_api)
         if self.remote_api:
             env.save(self.remote_api)
+
+    def destroy(self):
+        ChefEnvironment(self.name).delete()

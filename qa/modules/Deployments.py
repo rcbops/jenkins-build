@@ -107,7 +107,7 @@ class ChefRazorDeployment(Deployment):
             iface_in_run_list = "recipe[network-interfaces]" in node.run_list
             if (is_default and iface_in_run_list):
                 node.chef_environment = environment.name
-                node['in_use'] = 0
+                node['in_use'] = "provisioned"
                 node.save()
                 return node
         raise Exception("No more nodes!!")
@@ -180,5 +180,4 @@ class ChefRazorDeployment(Deployment):
 
     def destroy(self):
         super(ChefRazorDeployment, self).destroy()
-        # TODO: Add destroy to a chef helper class
         self.environment.destroy()
