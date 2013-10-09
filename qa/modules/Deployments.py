@@ -7,7 +7,7 @@ from inspect import getmembers, isclass
 from razor_api import razor_api
 from Environments import Chef
 from Nodes import ChefRazorNode
-from Features import Deployment as deployment_features
+from Features import deployment as deployment_features
 
 """
 OpenStack deployments
@@ -30,7 +30,7 @@ class Deployment(object):
         outl = 'class :' + self.__class__.__name__
         for attr in self.__dict__:
             if type(getattr(self, attr)) is list:
-                outl += '\n\t' + attr + ' : ' + ", ".join(str(getattr(self, attr)))
+                outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
             elif isinstance(getattr(self, attr), types.NoneType):
                 outl += '\n\t' + attr + ' : None'
             else:
