@@ -34,9 +34,6 @@ class Controller(Node):
     def apply_feature(self):
         self.set_run_list()
 
-    def _apply_keystone(self, feature):
-        pass
-
 
 class Compute(Node):
     """ Represents a RPCS compute
