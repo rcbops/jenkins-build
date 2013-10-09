@@ -35,9 +35,9 @@ class Node(object):
                 if type(getattr(self, attr)) is list:
                     outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
                 elif isinstance(getattr(self, attr), types.NoneType):
-                    outl += '\n\t' + attr + ' : None'
+                    outl += '\n\t{0} : {1}'.format(attr, 'None')
                 else:
-                    outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
+                    outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
         return outl
 
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
