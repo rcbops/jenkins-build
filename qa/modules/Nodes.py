@@ -33,7 +33,9 @@ class Node(object):
             # it is a circular reference
             if attr != 'deployment':
                 if type(getattr(self, attr)) is list:
-                    outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
+                    list_ = getattr(self, attr)
+                    for item in list_:
+                        outl += '\n\t\t{0} : {1}'.format(attr, list_[item])
                 elif isinstance(getattr(self, attr), types.NoneType):
                     outl += '\n\t{0} : {1}'.format(attr, 'None')
                 else:
