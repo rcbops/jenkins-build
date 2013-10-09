@@ -1,4 +1,5 @@
 import os
+import types
 from time import sleep
 from chef import autoconfigure, Search
 from Config import Config
@@ -29,11 +30,11 @@ class Deployment(object):
         outl = 'class :' + self.__class__.__name__
         for attr in self.__dict__:
             if type(getattr(self, attr)) is list:
-                outl += '\n\t' + attr + ' : ' + ", ".join(getattr(self, attr))
-            elif type(getattr(self, attr)) is type(None):
+                outl += '\n\t' + attr + ' : ' + ", ".join(str(getattr(self, attr)))
+            elif isinstance(getattr(self, attr), types.NoneType):
                 outl += '\n\t' + attr + ' : None'
             else:
-                outl += '\n\t' + attr + ' : ' + getattr(self, attr)
+                outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
         return outl
 
     def destroy(self):

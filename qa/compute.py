@@ -11,7 +11,7 @@ def v3(name="precise-default", branch="grizzly", template_path=None,
                                               branch,
                                               config,
                                               template_path)
-    #print deployment
+    print deployment
 
 if __name__ == "__main__":
     parser = argh.ArghParser()
