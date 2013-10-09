@@ -2,12 +2,12 @@ import os
 import sys
 from time import sleep
 from chef import autoconfigure, Search
-from modules.Config import Config
+from Config import Config
 from inspect import getmembers, isclass
-from modules.razor_api import razor_api
-from modules.Environments import Chef
-from modules.Nodes import ChefRazorNode
-from modules.Features import deployment as deployment_features
+from razor_api import razor_api
+from Environments import Chef
+from Nodes import ChefRazorNode
+from Features import deployment as deployment_features
 
 """
 OpenStack deployments

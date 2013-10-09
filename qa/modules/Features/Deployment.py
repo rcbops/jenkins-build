@@ -12,6 +12,14 @@ class Deployment(Feature):
         super(Deployment, self).__init__(deployment.config)
         self.deployment = deployment
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        for attr in self.__dict__:
+            outl += '\n\t' + attr + ' : ' + str(getattr(self, attr))
+        return outl
+
     def update_environment(self):
         pass
 
@@ -176,7 +184,7 @@ class OsOps(RPCS):
 
     def __init__(self, deployment, rpcs_feature='default'):
         super(OsOps, self).__init__(deployment,
-                                         self.__class__.__name__.lower())
+                                    self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name][rpcs_feature]
 
