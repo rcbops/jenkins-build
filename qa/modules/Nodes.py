@@ -3,7 +3,7 @@ from time import sleep
 from chef import Node as CNode
 from chef import Client as CClient
 from inspect import getmembers, isclass
-from Features import node as node_features
+from Features import Node as node_features
 from server_helper import ssh_cmd, scp_to, scp_from
 
 
