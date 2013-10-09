@@ -118,6 +118,22 @@ class ChefRazorNode(Node):
         self.features = []
         self._cleanups = []
 
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class :' + self.__class__.__name__
+        for attr in self.__dict__:
+            # We want to not print the deployment because
+            # it is a circular reference
+            if attr != 'deployment':
+                if attr == 'features':
+                    features = "\tFeatures: {0}".format(
+                        ", ".join(map(str, self.features)))
+                elif isinstance(getattr(self, attr), types.NoneType):
+                    outl += '\n\t{0} : {1}'.format(attr, 'None')
+                else:
+                    outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
+
     def __str__(self):
         node = ("Node - name: {0} os: {1} "
                 "product: {2} branch: {3}\n").format(self.name, self.os,
