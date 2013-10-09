@@ -13,7 +13,7 @@ class Node(object):
     Provides server related functions
     """
     def __init__(self, ip, user, password, os, product, environment,
-                 deployment, features=[]):
+                 deployment):
         self.ip = ip
         self.user = user
         self.password = password
@@ -21,7 +21,7 @@ class Node(object):
         self.product = product
         self.environment = environment
         self.deployment = deployment
-        self.features = features
+        self.features = []
         self._cleanups = []
 
     def __repr__(self):
@@ -32,13 +32,16 @@ class Node(object):
             # We want to not print the deployment because
             # it is a circular reference
             if attr != 'deployment':
-                if type(getattr(self, attr)) is list:
-                    outl += '\n\t{0} : {1}'.format(map(str, getattr(self, attr)))
+                if attr == 'features':
+                    features = "\tFeatures: {0}".format(
+                        ", ".join(map(str, self.features)))
                 elif isinstance(getattr(self, attr), types.NoneType):
                     outl += '\n\t{0} : {1}'.format(attr, 'None')
                 else:
                     outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
-        return outl
+
+
+        return "\n".join([outl, features])
 
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
@@ -87,6 +90,15 @@ class Node(object):
 
     def destroy(self):
         raise NotImplementedError
+
+    @classmethod
+    def test(cls):
+        node = cls("192.168.0.1", "root", "secrete", 
+                   "precise", "compute", "precise-default",
+                   None)
+        features = ['nova', 'keystone', 'glance', 'cinder']
+        setattr(node, 'features', features)
+        print node
 
 
 class ChefRazorNode(Node):
