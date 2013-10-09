@@ -15,12 +15,12 @@ OpenStack deployments
 
 class Deployment(object):
     """Base for OpenStack deployments"""
-    def __init__(self, name, os_name, branch, config, features=[]):
+    def __init__(self, name, os_name, branch, config):
         self.name = name
         self.os = os_name
         self.branch = branch
         self.config = config
-        self.features = features
+        self.features = []
         self.nodes = []
 
     def __repr__(self):
@@ -77,10 +77,9 @@ class ChefRazorDeployment(Deployment):
     Puppet's Razor as provisioner and
     Opscode's Chef as configuration management
     """
-    def __init__(self, name, os_name, branch, config, chef, razor,
-                 features=[]):
+    def __init__(self, name, os_name, branch, config, chef, razor):
         super(ChefRazorDeployment, self).__init__(name, os_name, branch,
-                                                  config, features)
+                                                  config)
         self.chef = chef
         self.razor = razor
 

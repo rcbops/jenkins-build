@@ -94,7 +94,7 @@ class ChefRazorNode(Node):
     Provides chef related server fuctions
     """
     def __init__(self, name, os, product, environment, deployment, provisioner,
-                 branch, features=[]):
+                 branch):
         self.name = name
         self.os = os
         self.product = product
@@ -102,7 +102,7 @@ class ChefRazorNode(Node):
         self.deployment = deployment
         self.razor = provisioner
         self.branch = branch
-        self.features = features
+        self.features = []
         self._cleanups = []
 
     def __str__(self):
@@ -163,4 +163,5 @@ class ChefRazorNode(Node):
         classes = {k.lower(): v for (k, v) in
                    getmembers(node_features, isclass)}
         for feature in features:
-            self.features.append(classes[feature](self))
+            feature_class = classes[feature](self)
+            self.features.append(feature_class)
