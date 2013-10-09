@@ -2,7 +2,7 @@
 A Deployment Features
 """
 
-from feature import Feature
+from Feature import Feature
 
 class Deployment(Feature):
     """ Represents a feature across a deployment
