@@ -39,7 +39,7 @@ class Deployment(object):
                 outl += '\n\t{0} : {1}'.format(attr, 'None')
             else:
                 outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
-        
+
         return "\n".join([outl, features, nodes])
 
     def destroy(self):
@@ -111,6 +111,7 @@ class ChefRazorDeployment(Deployment):
                 node.save()
                 return node
         raise Exception("No more nodes!!")
+        self.destroy()
 
     @classmethod
     def fromfile(cls, name, branch, config, path=None):
@@ -180,4 +181,4 @@ class ChefRazorDeployment(Deployment):
 
     def destroy(self):
         super(ChefRazorDeployment, self).destroy()
-        self.environment.destroy()
+        self.chef.destroy()
