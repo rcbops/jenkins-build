@@ -32,6 +32,26 @@ function build_default() {
     build_chef_environment
 }
 
+function build_daily() {
+
+    # build environment files from templates
+    set_environment_files
+
+    # source our secret file with hidden info
+    source ~/source_files/CLOUD_FILES_AUTH.sh
+
+    ## replace the lines we are looking for
+    result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<TENANT_ID>/'${TENANT_ID}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<TENANT_NAME>/'${TENANT_NAME}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<TENANT_PASSWORD>/'${TENANT_PASSWORD}'/g' $ENVIRONMENT_FILENAME`
+    result=`sed -i 's/<THEME>/'${THEME}'/g' $ENVIRONMENT_FILENAME`
+
+    # build chef environment
+    build_chef_environment
+}
+
 function build_ha() {
 
     # build environment files from templates
@@ -174,6 +194,7 @@ done
 
 case $FEATURE_SET in
     'default')          build_default;;
+    'daily')            build_daily;;
     'ha')               build_ha;;
     'glance-cf')        build_glance_cf;;
     'keystone-ldap')    build_keystone_ldap;;
