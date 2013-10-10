@@ -3,7 +3,7 @@ import logging
 from time import sleep
 from chef import Node as CNode
 from chef import Client as CClient
-import features.Node as node_features
+import Features.Node as node_features
 from inspect import getmembers, isclass
 from server_helper import ssh_cmd, scp_to, scp_from
 
@@ -119,6 +119,7 @@ class ChefRazorNode(Node):
         self.deployment = deployment
         self.razor = provisioner
         self.branch = branch
+        self.password = self._password()
         self.features = []
         self._cleanups = []
 
@@ -139,10 +140,7 @@ class ChefRazorNode(Node):
         super(ChefRazorNode, self).apply_feature()
 
     def _password(self):
-        try:
-            uuid = self['razor_metadata']['razor_active_model_uuid']
-        except:
-            raise Exception("Couldn't find razor_metadata/password")
+        uuid = self['razor_metadata']['razor_active_model_uuid']
         return self.razor.get_active_model_pass(uuid)['password']
 
     def __getattr__(self, item):
@@ -150,8 +148,7 @@ class ChefRazorNode(Node):
         Gets ip, user, and password from chef
         """
         map = {'ip': self['ipaddress'],
-               'user': self['current_user'],
-               'password': self._password()}
+               'user': self['current_user']}
         if item in map.keys():
             return map[item]
         else:
@@ -188,8 +185,8 @@ class ChefRazorNode(Node):
         else:
             # Remove active model if the node is dirty
             active_model = cnode['razor_metadata']['razor_active_model_uuid']
-            self.razor.remove_active_model(active_model)
             self.run_cmd("reboot 0")
+            self.razor.remove_active_model(active_model)
             CClient(self.name).delete()
             cnode.delete()
             sleep(15)
@@ -200,3 +197,7 @@ class ChefRazorNode(Node):
         for feature in features:
             feature_class = classes[feature](self)
             self.features.append(feature_class)
+
+    @classmethod
+    def from_chef_node(cls, node, os, environment, provisioner):
+        return cls(node.name, os, None, environment, None, provisioner, None)

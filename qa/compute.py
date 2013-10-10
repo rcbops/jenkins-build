@@ -11,6 +11,9 @@ def v3(name="precise-default", branch="grizzly", template_path=None,
        config=None, destroy=True):
     logging.basicConfig(level=logging.DEBUG)
     config = Config(config)
+
+
+
     deployment = ChefRazorDeployment.fromfile(name,
                                               branch,
                                               config,

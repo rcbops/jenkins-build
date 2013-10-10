@@ -2,13 +2,14 @@ import os
 import types
 import logging
 from time import sleep
-from chef import autoconfigure, Search
 from Config import Config
-from inspect import getmembers, isclass
 from razor_api import razor_api
 from Environments import Chef
 from Nodes import ChefRazorNode
-import features.Deployment as deployment_features
+from server_helper import ssh_cmd
+from chef import autoconfigure, Search
+from inspect import getmembers, isclass
+import Features.Deployment as deployment_features
 
 """
 OpenStack deployments
@@ -103,6 +104,21 @@ class ChefRazorDeployment(Deployment):
                                                   config)
         self.environment = environment
         self.razor = razor
+        self.set_network_interfaces(os_name)
+
+    def set_network_interfaces(self, os):
+        #Make sure all network interfacing is set
+        query = "name:*%s*" % os
+        for node in self.node_search(query):
+            if "role[qa-base]" in node.run_list:
+                crnode = ChefRazorNode.from_chef_node(node, os,
+                                                      self.environment,
+                                                      self.razor)
+                crnode.add_run_list_item("recipe[network-interfaces]")
+                crnode['in_use'] = 0
+                logging.info("Running network interfaces for %s" % node)
+                for i in xrange(3):
+                    crnode.run_cmd('chef-client')
 
     def free_node(self, image, environment):
         """

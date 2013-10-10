@@ -109,7 +109,7 @@ class ChefServer(Node):
     def apply_feature(self):
         self._install()
         self._install_cookbooks()
-        self.set_up_remote()
+        self._set_up_remote()
 
     def post_configure(self):
         pass
@@ -132,8 +132,8 @@ class ChefServer(Node):
 
         commands = ["mkdir -p {0}".format(install_dir),
                     "cd {0}".format(install_dir),
-                    "git clone {0} --recursive".format(cookbook_url),
-                    "cd {0}/cookbooks".format(install_dir),
+                    "git clone {0}".format(cookbook_url),
+                    "cd {0}/chef-cookbooks".format(install_dir),
                     "git checkout {0}".format(cookbook_branch)]
 
         if 'cookbooks' in cookbook_name:
