@@ -3,8 +3,8 @@ import logging
 from time import sleep
 from chef import Node as CNode
 from chef import Client as CClient
+import features.Node as node_features
 from inspect import getmembers, isclass
-from Features import Node as node_features
 from server_helper import ssh_cmd, scp_to, scp_from
 
 
@@ -40,13 +40,14 @@ class Node(object):
                     outl += '\n\t{0} : {1}'.format(attr, 'None')
                 else:
                     outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
-
+            outl += '\n\tIP : {1}'.format(self.ip)
 
         return "\n".join([outl, features])
 
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
         password = password or self.password
+        logging.info("Running: {0} on {1}".format(remote_cmd, self.name))
         return ssh_cmd(self.ip, remote_cmd=remote_cmd, user=user,
                        password=password, quiet=quiet)
 
@@ -65,25 +66,26 @@ class Node(object):
     def update_environment(self):
         """Updates environment for each feature"""
         for feature in self.features:
-            feature.update_environment(self)
+            feature.update_environment()
 
     def pre_configure(self):
         """Pre configures node for each feature"""
         for feature in self.features:
-            feature.pre_configure(self)
+            feature.pre_configure()
 
     def apply_feature(self):
         """Applies each feature"""
         for feature in self.features:
-            feature.apply_feature(self)
+            feature.apply_feature()
 
     def post_configure(self):
         """Post configures node for each feature"""
         for feature in self.features:
-            feature.post_configure(self)
+            feature.post_configure()
 
     def build(self):
         """Runs build steps for node's features"""
+        self['in_use'] = ",".join(map(str, self.features))
         self.update_environment()
         self.pre_configure()
         self.apply_feature()
@@ -94,7 +96,7 @@ class Node(object):
 
     @classmethod
     def test(cls):
-        node = cls("192.168.0.1", "root", "secrete", 
+        node = cls("192.168.0.1", "root", "secrete",
                    "precise", "compute", "precise-default",
                    None)
         features = ['nova', 'keystone', 'glance', 'cinder']
@@ -111,6 +113,7 @@ class ChefRazorNode(Node):
                  branch):
         self.name = name
         self.os = os
+        self.run_list = []
         self.product = product
         self.environment = environment
         self.deployment = deployment
@@ -131,7 +134,7 @@ class ChefRazorNode(Node):
         return node
 
     def apply_feature(self):
-        if self['run_list']:
+        if self.run_list:
             self.run_cmd("chef-client")
         super(ChefRazorNode, self).apply_feature()
 
@@ -154,6 +157,10 @@ class ChefRazorNode(Node):
         else:
             return self.__dict__[item]
 
+    def add_run_list_item(self, items):
+        self.run_list.extend(items)
+        CNode(self.name).run_list = self.run_list
+
     def __getitem__(self, item):
         """
         Node has access to chef attributes
@@ -164,9 +171,13 @@ class ChefRazorNode(Node):
         """
         Node can set chef attributes
         """
-        CNode(self.name, api=self.environment.local_api)[item] = value
+        lnode = CNode(self.name, api=self.environment.local_api)
+        lnode[item] = value
+        lnode.save()
         if self.environment.remote_api:
-            CNode(self.name, api=self.environment.remote_api)[item] = value
+            rnode = CNode(self.name, api=self.environment.remote_api)
+            rnode[item] = value
+            rnode.save()
 
     def destroy(self):
         cnode = CNode(self.name)
