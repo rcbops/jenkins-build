@@ -119,7 +119,8 @@ if results.ha_enabled and results.neutron:
     env_obj.override_attributes['quantum'] = quantum_network
     
     # Remove the networks attribute
-    env_obj.override_attributes['nova'].pop("networks", None)
+    if 'networks' in env_obj.override_attributes['nova']:
+        env_obj.override_attributes['nova'].pop("networks", None)
     
     # Save node
     env_obj.save()
