@@ -28,8 +28,9 @@ popd
 # if we have a DIFF, apply it
 if [[ ${GIT_DIFF_URL} != "noop" ]]; then
   curl -s ${GIT_DIFF_URL} > patch.diff
+  PATCH_PWD=$(pwd)
   pushd ${TARGET_DIR}/cookbooks/${GIT_REPO}
-  if ! ( cat ../patch.diff | git apply ); then
+  if ! ( cat ${PATCH_PWD}/patch.diff | git apply ); then
     echo "Unable to merge proposed patch: ${GIT_DIFF_URL}"
     curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST'  -d '{"body": "Gate Failed - The patch '${GIT_DIFF_URL}' could not be applied to '${GIT_BRANCH}' of '${GIT_MASTER_URL}'.  Please see '${BUILD_URL}'consoleFull for more details."}'
     exit 1
