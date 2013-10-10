@@ -41,7 +41,7 @@ def ssh_cmd(ip, remote_cmd, user='root', password=None, quiet=False):
     for line in stderr.xreadlines():
         sys.stdout.write(line)
         error.write(line)
-    exit_status = stdout.channel.recv_exit_status()
+        exit_status = stdout.channel.recv_exit_status()
     return {'success': True if exit_status == 0 else False,
             'return': output.getvalue(),
             'exit_status': exit_status,
