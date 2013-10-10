@@ -9,6 +9,7 @@ TARGET_DIR=$(echo ${GIT_MASTER_URL} | sed 's/https:\/\/github.com\///g')
 
 # cleanup the old chef-cookbooks tarball from the last run
 rm -f chef-cookbooks.tgz
+rm -f patch.diff
 
 if [[ ! -d ${TARGET_DIR} ]]; then
   git clone ${GIT_MASTER_URL} ${TARGET_DIR}
@@ -26,8 +27,9 @@ popd
 
 # if we have a DIFF, apply it
 if [[ ${GIT_DIFF_URL} != "noop" ]]; then
+  curl -s ${GIT_DIFF_URL} > patch.diff
   pushd ${TARGET_DIR}/cookbooks/${GIT_REPO}
-  if ! ( curl -s ${GIT_DIFF_URL} | git apply ); then
+  if ! ( cat ../patch.diff | git apply ); then
     echo "Unable to merge proposed patch: ${GIT_DIFF_URL}"
     curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST'  -d '{"body": "Gate Failed - The patch '${GIT_DIFF_URL}' could not be applied to '${GIT_BRANCH}' of '${GIT_MASTER_URL}'.  Please see '${BUILD_URL}'consoleFull for more details."}'
     exit 1
