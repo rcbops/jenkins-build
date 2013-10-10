@@ -8,7 +8,7 @@ from inspect import getmembers, isclass
 from razor_api import razor_api
 from Environments import Chef
 from Nodes import ChefRazorNode
-from Features import Deployment as deployment_features
+import features.Deployment as deployment_features
 
 """
 OpenStack deployments
