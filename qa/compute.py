@@ -1,8 +1,9 @@
+#! /usr/bin/env python
+
 """
 Command Line interface for Building Openstack clasuters
 """
 
-#! /usr/bin/env python
 import sys
 import argh
 import logging
