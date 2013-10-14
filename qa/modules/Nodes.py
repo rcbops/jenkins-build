@@ -1,11 +1,15 @@
+"""
+Provides classes of nodes (server entities)
+"""
+
 import types
 import logging
 from time import sleep
 from chef import Node as CNode
 from chef import Client as CClient
-import Features.Node as node_features
+import modules.Features.Node as node_features
 from inspect import getmembers, isclass
-from server_helper import ssh_cmd, scp_to, scp_from
+from modules.server_helper import ssh_cmd, scp_to, scp_from
 
 
 class Node(object):
@@ -15,7 +19,7 @@ class Node(object):
     """
     def __init__(self, ip, user, password, os, product, environment,
                  deployment):
-        self.ip = ip
+        self.ipaddress = ip
         self.user = user
         self.password = password
         self.os = os
@@ -32,7 +36,7 @@ class Node(object):
         for attr in self.__dict__:
             # We want to not print the deployment because
             # it is a circular reference
-            if attr != 'deployment':
+            if attr not in ['deployment', 'password']:
                 if attr == 'features':
                     features = "\tFeatures: {0}".format(
                         ", ".join(map(str, self.features)))
@@ -40,7 +44,7 @@ class Node(object):
                     outl += '\n\t{0} : {1}'.format(attr, 'None')
                 else:
                     outl += '\n\t{0} : {1}'.format(attr, getattr(self, attr))
-            outl += '\n\tIP : {1}'.format(self.ip)
+            outl += '\n\tIP : {1}'.format(self.ipaddress)
 
         return "\n".join([outl, features])
 
@@ -48,20 +52,20 @@ class Node(object):
         user = user or self.user
         password = password or self.password
         logging.info("Running: {0} on {1}".format(remote_cmd, self.name))
-        return ssh_cmd(self.ip, remote_cmd=remote_cmd, user=user,
+        return ssh_cmd(self.ipaddress, remote_cmd=remote_cmd, user=user,
                        password=password, quiet=quiet)
 
     def scp_to(self, local_path, user=None, password=None, remote_path=""):
         user = user or self.user
         password = password or self.password
-        return scp_to(self.ip, local_path, user=user, password=password,
+        return scp_to(self.ipaddress, local_path, user=user, password=password,
                       remote_path=remote_path)
 
     def scp_from(self, remote_path, user=None, password=None, local_path=""):
         user = user or self.user
         password = password or self.password
-        return scp_from(self.ip, remote_path, user=user, password=password,
-                        local_path=local_path)
+        return scp_from(self.ipaddress, remote_path, user=user,
+                        password=password, local_path=local_path)
 
     def update_environment(self):
         """Updates environment for each feature"""
@@ -94,34 +98,24 @@ class Node(object):
     def destroy(self):
         raise NotImplementedError
 
-    @classmethod
-    def test(cls):
-        node = cls("192.168.0.1", "root", "secrete",
-                   "precise", "compute", "precise-default",
-                   None)
-        features = ['nova', 'keystone', 'glance', 'cinder']
-        setattr(node, 'features', features)
-        print node
-
 
 class ChefRazorNode(Node):
     """
     A chef entity
     Provides chef related server fuctions
     """
-    def __init__(self, name, os, product, environment, deployment, provisioner,
-                 branch):
+    def __init__(self, ip, user, password, os, product, environment,
+                 deployment, name, provisioner, branch):
         self.name = name
-        self.os = os
-        self.run_list = []
-        self.product = product
-        self.environment = environment
-        self.deployment = deployment
+
         self.razor = provisioner
         self.branch = branch
-        self.password = self._password()
+        password = password or self['password']
+        user = user or self['current_user']
+        self.run_list = []
         self.features = []
-        self._cleanups = []
+        super(ChefRazorNode, self).__init__(ip, user, password, os, product,
+                                            environment, deployment)
 
     def __str__(self):
         features = "{0}".format(", ".join(map(str, self.features)))
@@ -138,21 +132,6 @@ class ChefRazorNode(Node):
         if self.run_list:
             self.run_cmd("chef-client")
         super(ChefRazorNode, self).apply_feature()
-
-    def _password(self):
-        uuid = self['razor_metadata']['razor_active_model_uuid']
-        return self.razor.get_active_model_pass(uuid)['password']
-
-    def __getattr__(self, item):
-        """
-        Gets ip, user, and password from chef
-        """
-        map = {'ip': self['ipaddress'],
-               'user': self['current_user']}
-        if item in map.keys():
-            return map[item]
-        else:
-            return self.__dict__[item]
 
     def add_run_list_item(self, items):
         self.run_list.extend(items)

@@ -164,7 +164,7 @@ class ChefServer(Node):
         remote_chef = {
             "client": "admin",
             "key": self._get_admin_pem(),
-            "url": "https://{0}:4443".format(self.node.ip)
+            "url": "https://{0}:4443".format(self.node.ipaddress)
         }
 
         # set the remote chef server name
@@ -217,7 +217,7 @@ class Remote(Node):
         chef_server_node = self.node.deployment.search_role('chef_server')
 
         command = 'knife bootstrap {0} -s root -p {1}'.format(
-            chef_server_node.ip, self.node.password)
+            chef_server_node.ipaddress, self.node.password)
 
         chef_server_node.run_cmd(command)
 

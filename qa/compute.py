@@ -1,3 +1,7 @@
+"""
+Command Line interface for Building Openstack clasuters
+"""
+
 #! /usr/bin/env python
 import sys
 import argh
@@ -7,12 +11,13 @@ from modules.Config import Config
 from modules.Deployments import ChefRazorDeployment
 
 
-def v3(name="precise-default", branch="grizzly", template_path=None,
-       config=None, destroy=True):
+def build(name="precise-default", branch="grizzly", template_path=None,
+          config=None, destroy=True):
+    """
+    Builds an OpenStack Cluster
+    """
     logging.basicConfig(level=logging.DEBUG)
     config = Config(config)
-
-
 
     deployment = ChefRazorDeployment.fromfile(name,
                                               branch,
@@ -32,5 +37,5 @@ def v3(name="precise-default", branch="grizzly", template_path=None,
 
 if __name__ == "__main__":
     parser = argh.ArghParser()
-    parser.add_commands([v3])
+    parser.add_commands([build])
     parser.dispatch()
