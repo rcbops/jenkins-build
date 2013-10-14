@@ -6,7 +6,6 @@ from Config import Config
 from razor_api import razor_api
 from Environments import Chef
 from Nodes import ChefRazorNode
-from server_helper import ssh_cmd
 from chef import autoconfigure, Search
 from inspect import getmembers, isclass
 import Features.Deployment as deployment_features
@@ -161,9 +160,10 @@ class ChefRazorDeployment(Deployment):
 
         return deployment
 
-    def node_config(self, deployment, features, os_name, product, chef, razor,
+    @classmethod
+    def node_config(cls, deployment, features, os_name, product, chef, razor,
                     branch):
-        cnode = self.free_node(os_name, chef)
+        cnode = cls.free_node(os_name, chef)
         node = ChefRazorNode.from_chef_node(cnode, os_name, product, chef,
                                             razor, deployment, razor, branch)
         node.add_features(features)
