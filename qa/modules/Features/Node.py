@@ -163,7 +163,7 @@ class ChefServer(Node):
 
         remote_chef = {
             "client": "admin",
-            "key": self._get_admin_pem(self.node),
+            "key": self._get_admin_pem(),
             "url": "https://{0}:4443".format(self.node.ip)
         }
 
