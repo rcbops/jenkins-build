@@ -165,7 +165,7 @@ class ChefRazorDeployment(Deployment):
                     branch):
         cnode = self.free_node(os_name, chef)
         node = ChefRazorNode.from_chef_node(cnode, os_name, product, chef,
-                                            deployment, razor, branch)
+                                            razor, deployment, razor, branch)
         node.add_features(features)
         return node
 
