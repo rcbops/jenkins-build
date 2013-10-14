@@ -111,9 +111,9 @@ class ChefRazorDeployment(Deployment):
         query = "name:*%s*" % os
         for node in self.node_search(query):
             if "role[qa-base]" in node.run_list:
-                crnode = ChefRazorNode.from_chef_node(node, os,
-                                                      self.environment,
-                                                      self.razor)
+                crnode = ChefRazorNode.from_chef_node(node, os, None,
+                                                      self.environment, None,
+                                                      self.razor, None)
                 crnode.add_run_list_item("recipe[network-interfaces]")
                 crnode['in_use'] = 0
                 logging.info("Running network interfaces for %s" % node)

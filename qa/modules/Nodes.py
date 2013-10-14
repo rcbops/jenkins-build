@@ -178,5 +178,11 @@ class ChefRazorNode(Node):
             self.features.append(feature_class)
 
     @classmethod
-    def from_chef_node(cls, node, os, environment, provisioner):
-        return cls(node.name, os, None, environment, None, provisioner, None)
+    def from_chef_node(cls, node, os, product, environment, deployment,
+                       provisioner, branch):
+        ip = node['ipaddress']
+        user = node['current_user']
+        password = node['password']
+        name = node.name
+        return cls(ip, user, password, os, product, environment,
+                   deployment, name, provisioner, branch)
