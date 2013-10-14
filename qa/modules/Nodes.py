@@ -107,11 +107,8 @@ class ChefRazorNode(Node):
     def __init__(self, ip, user, password, os, product, environment,
                  deployment, name, provisioner, branch):
         self.name = name
-
         self.razor = provisioner
         self.branch = branch
-        password = password or self['password']
-        user = user or self['current_user']
         self.run_list = []
         self.features = []
         super(ChefRazorNode, self).__init__(ip, user, password, os, product,

@@ -161,11 +161,11 @@ class ChefRazorDeployment(Deployment):
 
         return deployment
 
-    @classmethod
-    def node_config(cls, deployment, features, os_name, product, chef, razor,
+    def node_config(self, deployment, features, os_name, product, chef, razor,
                     branch):
-        node = ChefRazorNode(deployment.free_node(os_name, chef).name,
-                             os_name, product, chef, deployment, razor, branch)
+        cnode = self.free_node(os_name, chef)
+        node = ChefRazorNode.from_chef_node(cnode, os_name, product, chef,
+                                            deployment, razor, branch)
         node.add_features(features)
         return node
 
