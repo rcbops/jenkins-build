@@ -36,6 +36,11 @@ def build(name="precise-default", branch="grizzly", template_path=None,
     if destroy:
         deployment.destroy()
 
+
+def destroy():
+    pass
+
+
 if __name__ == "__main__":
     parser = argh.ArghParser()
     parser.add_commands([build])
