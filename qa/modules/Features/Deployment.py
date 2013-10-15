@@ -5,6 +5,7 @@ import time
 import logging
 from Feature import Feature
 
+
 class Deployment(Feature):
     """ Represents a feature across a deployment
     """
@@ -49,6 +50,7 @@ class OpenStack(Deployment):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
+
 class Neutron(Deployment):
     """ Represents a neutron network cluster
     """
@@ -56,7 +58,8 @@ class Neutron(Deployment):
     def __init__(self, deployment, rpcs_feature):
         super(Neutron, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][
+                rpcs_feature]
 
     def __repr__(self):
         """ Print out current instance
@@ -78,7 +81,7 @@ class Neutron(Deployment):
         self.deployment.reboot_deployment()
         sleep_in_minutes = 5
         total_sleep_time = 0
-        while self.deployment.is_online() == False:
+        while not self.deployment.is_online():
             print "## Current Deployment is Offline ##"
             print "## Sleeping for {0} minutes ##".format(
                 str(sleep_in_minutes))
@@ -88,8 +91,10 @@ class Neutron(Deployment):
 
             if sleep_in_minutes == 0:
                 error = ("## -- Failed to reboot deployment"
-                        "after {0} minutes -- ##".format(total_sleep_time))
+                         "after {0} minutes -- ##".format(total_sleep_time))
                 raise Exception(error)
+
+
 class Swift(Deployment):
     """ Represents a block storage cluster enabled by swift
     """
@@ -97,7 +102,8 @@ class Swift(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Swift, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][
+                rpcs_feature]
 
     def __repr__(self):
         """ Print out current instance
@@ -117,7 +123,8 @@ class Glance(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Glance, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][
+                rpcs_feature]
 
     def __repr__(self):
         """ Print out current instance
@@ -137,7 +144,8 @@ class Keystone(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Keystone, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][
+                rpcs_feature]
 
     def __repr__(self):
         """ Print out current instance
@@ -157,7 +165,8 @@ class Nova(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Nova, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][
+                rpcs_feature]
 
     def __repr__(self):
         """ Print out current instance
@@ -177,7 +186,8 @@ class Horizon(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Horizon, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][
+                rpcs_feature]
 
     def __repr__(self):
         """ Print out current instance
@@ -189,6 +199,7 @@ class Horizon(Deployment):
         self.deployment.environment.add_override_attr(
             self.__class__.__name__.lower(), self.environment)
 
+
 class Cinder(Deployment):
     """ Represents the Cinder feature
     """
@@ -196,7 +207,8 @@ class Cinder(Deployment):
     def __init__(self, deployment, rpcs_feature='default'):
         super(Cinder, self).__init__(deployment)
         self.environment = \
-            self.config['environments'][self.__class__.__name__.lower()][rpcs_feature]
+            self.config['environments'][self.__class__.__name__.lower()][
+                rpcs_feature]
 
     def __repr__(self):
         """ Print out current instance
@@ -230,6 +242,7 @@ class RPCS(Deployment):
     def update_environment(self):
         pass
 
+
 class Monitoring(RPCS):
     """ Represents the monitoring feature
     """
@@ -249,6 +262,7 @@ class Monitoring(RPCS):
     def update_environment(self):
         self.deployment.environment.add_override_attr(
             self.__class__.__name__.lower(), self.environment)
+
 
 class MySql(RPCS):
     """ Represents the monitoring feature
@@ -348,7 +362,8 @@ class HighAvailability(RPCS):
         return outl
 
     def update_environment(self):
-        self.deployment.environment.add_override_attr(self.name, self.environment)
+        self.deployment.environment.add_override_attr(self.name,
+                                                      self.environment)
 
 
 class LDAP(RPCS):
