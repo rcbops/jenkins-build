@@ -525,6 +525,10 @@ if results.action == "build":
                 print "## OS is Centos, need to reboot cluster for kernel upgrades ##"
                 # Reboot all nodes
                 rpcsqa.reboot_cluster(env)
+
+                # Sleep for 20 seconds to let reboots take place
+                print "## Sleeping for 20 seconds ##"
+                time.sleep(20)
                 
                 # Logic to reboot and wait for online status to be true
                 sleep_in_minutes = 5
