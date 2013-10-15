@@ -168,15 +168,14 @@ class ChefServer(Node):
         }
 
         # set the remote chef server name
-        setattr(self.node.environment.chef_server_name,
-                self.node.name)
+        self.node.environment.chef_server_name = self.node.name
 
         # save the remote dict
         self.node.environment.add_override_attr('remote_chef', remote_chef)
 
         # set the remote api
-        setattr(self.node.environment.remote_api,
-                self._set_remote_chef_api(remote_chef))
+        remote_api = self._set_remote_chef_api(remote_chef)
+        self.node.environment.remote_api = remote_api
 
     def _remote_chef_api(self, chef_api_dict):
         """ Builds a remote chef API object
