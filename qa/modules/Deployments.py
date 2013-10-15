@@ -154,18 +154,17 @@ class ChefRazorDeployment(Deployment):
                                            os_name, branch, config, chef,
                                            razor)
         for features in template['nodes']:
-            node = cls.node_config(deployment, features, os_name, product,
-                                   chef, razor, branch)
+            node = deployment.node_config(features, os_name, product, chef,
+                                          razor, branch)
             deployment.nodes.append(node)
 
         return deployment
 
-    @classmethod
-    def node_config(cls, deployment, features, os_name, product, chef, razor,
+    def node_config(self, features, os_name, product, chef, razor,
                     branch):
-        cnode = cls.free_node(os_name, chef)
+        cnode = self.free_node(os_name, chef)
         node = ChefRazorNode.from_chef_node(cnode, os_name, product, chef,
-                                            razor, deployment, razor, branch)
+                                            self, razor, branch)
         node.add_features(features)
         return node
 
