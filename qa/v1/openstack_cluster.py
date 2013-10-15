@@ -427,7 +427,8 @@ if results.action == "build":
                     print "## Running chef-client on {0} after reboot ##".format(compute)
                     rpcsqa.run_chef_client(rpcsqa.get_server_info(compute)['node'])
 
-                # Setup Neutron
+            # If Neutron enabled, setup network
+            if results.neutron:
                 rpcsqa.setup_neutron_network(env, results.ha_enabled)
 
             # print all servers info
