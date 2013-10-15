@@ -385,7 +385,7 @@ if results.action == "build":
 
             # Do to kernel issues on 6.4, need to reboot all servers and rerun
             # chef client on all boxes, then setup networking
-            if results.os_distro == 'centos':
+            if results.os_distro == 'centos' and results.neutron:
                 
                 print "## OS is Centos, need to reboot cluster for kernel upgrades ##"
                 # Reboot all nodes
@@ -427,8 +427,7 @@ if results.action == "build":
                     print "## Running chef-client on {0} after reboot ##".format(compute)
                     rpcsqa.run_chef_client(rpcsqa.get_server_info(compute)['node'])
 
-            # If Neutron enabled, setup network
-            if results.neutron:
+                # Setup Neutron
                 rpcsqa.setup_neutron_network(env, results.ha_enabled)
 
             # print all servers info
