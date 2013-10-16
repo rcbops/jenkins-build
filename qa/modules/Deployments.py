@@ -1,6 +1,6 @@
 import os
 import types
-import logging
+from modules import util
 from time import sleep
 from Config import Config
 from razor_api import razor_api
@@ -59,7 +59,7 @@ class Deployment(object):
         """Pre configures node for each feature"""
         for feature in self.features:
             feature.update_environment()
-        logging.info(self.environment)
+        util.logger.info(self.environment)
 
 
     def pre_configure(self):
@@ -120,7 +120,7 @@ class ChefRazorDeployment(Deployment):
                                                       self.razor, None)
                 crnode.add_run_list_item("recipe[network-interfaces]")
                 crnode['in_use'] = 0
-                logging.info("Running network interfaces for %s" % node)
+                util.logger.info("Running network interfaces for %s" % node)
                 for i in xrange(3):
                     crnode.run_cmd('chef-client')
 

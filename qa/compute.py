@@ -6,8 +6,8 @@ Command Line interface for Building Openstack clasuters
 
 import sys
 import argh
-import logging
 import traceback
+from modules import util
 from modules.Config import Config
 from modules.Deployments import ChefRazorDeployment
 
@@ -17,19 +17,17 @@ def build(name="precise-default", branch="grizzly", template_path=None,
     """
     Builds an OpenStack Cluster
     """
-    logging.basicConfig(level=logging.DEBUG)
     config = Config(config)
-
     deployment = ChefRazorDeployment.fromfile(name,
                                               branch,
                                               config,
                                               template_path)
-    print deployment
+    util.logger.info(deployment)
 
     try:
         deployment.build()
     except Exception:
-        print traceback.print_exc()
+        util.logger.error(traceback.print_exc())
         deployment.destroy()
         sys.exit(1)
 

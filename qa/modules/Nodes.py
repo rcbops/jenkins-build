@@ -3,7 +3,7 @@ Provides classes of nodes (server entities)
 """
 
 import types
-import logging
+from modules import util
 from time import sleep
 from chef import Node as CNode
 from chef import Client as CClient
@@ -51,7 +51,7 @@ class Node(object):
     def run_cmd(self, remote_cmd, user=None, password=None, quiet=False):
         user = user or self.user
         password = password or self.password
-        logging.info("Running: {0} on {1}".format(remote_cmd, self.name))
+        util.logger.info("Running: {0} on {1}".format(remote_cmd, self.name))
         return ssh_cmd(self.ipaddress, remote_cmd=remote_cmd, user=user,
                        password=password, quiet=quiet)
 

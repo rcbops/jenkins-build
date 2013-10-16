@@ -2,7 +2,7 @@
 A Deployment Features
 """
 import time
-import logging
+from modules import util
 from Feature import Feature
 
 
@@ -78,7 +78,7 @@ class Neutron(Deployment):
             self._reboot_cluster()
 
     def _reboot_cluster(self):
-        
+
         # reboot the deployment
         self.deployment.reboot_deployment()
 

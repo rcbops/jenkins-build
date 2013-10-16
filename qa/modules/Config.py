@@ -1,7 +1,7 @@
 """Gathers application config"""
 
 import os
-import logging
+from modules import util
 from yaml import load
 
 
