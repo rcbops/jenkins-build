@@ -18,6 +18,8 @@ def build(name="precise-default", branch="grizzly", template_path=None,
     Builds an OpenStack Cluster
     """
     logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger("paramiko").setLevel(logging.WARNING)
+    logging.getLogger("chef").setLevel(logging.WARNING)
     config = Config(config)
 
     deployment = ChefRazorDeployment.fromfile(name,
