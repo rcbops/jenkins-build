@@ -78,7 +78,15 @@ class Neutron(Deployment):
             self._reboot_cluster()
 
     def _reboot_cluster(self):
+        
+        # reboot the deployment
         self.deployment.reboot_deployment()
+
+        # Sleep for 20 seconds to let the deployment reboot
+        time.sleep(20)
+
+        # Keep sleeping till the deployment comes back
+        # Max at 8 minutes
         sleep_in_minutes = 5
         total_sleep_time = 0
         while not self.deployment.is_online():
@@ -89,6 +97,7 @@ class Neutron(Deployment):
             total_sleep_time += sleep_in_minutes
             sleep_in_minutes -= 1
 
+            # if we run out of time to wait, exit
             if sleep_in_minutes == 0:
                 error = ("## -- Failed to reboot deployment"
                          "after {0} minutes -- ##".format(total_sleep_time))
