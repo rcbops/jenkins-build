@@ -289,6 +289,19 @@ tests:
   swift:
     - object_storage
 
-disks:
+swift:
+    auto_build_rings: False
     disk: "sdb"
     disk_label: "sdb1"
+    num_rings: 3
+    part_power: 10
+    replicas: 3
+    min_part_hours: 1
+    disk_weight: 1000
+    builders:
+        object:
+            port: 6000
+        container:
+            port: 6001
+        account:
+            port: 6002
