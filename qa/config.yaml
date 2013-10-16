@@ -251,13 +251,13 @@ rcbops:
                     tags:
                         - v4.2.0
         chef_server:
-            roles: []
+            run_list: []
         controller:
-            roles: ['role[spc-starter-controller]']
+            run_list: ['role[spc-starter-controller]']
         proxy:
-            roles: ['role[spc-starter-proxy]']
+            run_list: ['role[spc-starter-proxy]']
         storage:
-            roles: ['role[spc-starter-storage]']
+            run_list: ['role[spc-starter-storage]']
 tests:
   default:
     - compute
@@ -288,3 +288,7 @@ tests:
     - volume
   swift:
     - object_storage
+
+disks:
+    disk: "sdb"
+    disk_label: "sdb1"

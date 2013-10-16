@@ -124,6 +124,16 @@ class Swift(Deployment):
         self.deployment.environment.add_override_attr(
             self.__class__.__name__.lower(), self.environment)
 
+    def post_configure(self):
+
+        # Run chef on the controller node
+        controller = self.deployment.search_role('controller')
+        controller.run_cmd('chef-client')
+
+        # Build Swift Rings
+        disk = self.config['disks']['disk']
+        disk_label = self.config['disks']['disk_label']
+
 
 class Glance(Deployment):
     """ Represents a glance with cloud files backend

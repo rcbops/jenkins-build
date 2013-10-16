@@ -189,6 +189,7 @@ class ChefRazorDeployment(Deployment):
         for feature, rpcs_feature in features.items():
             self.features.append(classes[feature](self, rpcs_feature[0]))
 
+    @classmethod
     def node_search(cls, query, environment=None, tries=10):
         api = autoconfigure()
         if environment:
