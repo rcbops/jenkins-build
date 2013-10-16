@@ -22,12 +22,12 @@ def build(name="precise-default", branch="grizzly", template_path=None,
                                               branch,
                                               config,
                                               template_path)
-    print deployment
+    util.logger.info(deployment)
 
     try:
         deployment.build()
     except Exception:
-        print traceback.print_exc()
+        util.logger(traceback.print_exc())
         deployment.destroy()
         sys.exit(1)
 
