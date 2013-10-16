@@ -130,6 +130,9 @@ class ChefRazorNode(Node):
             self.run_cmd("chef-client")
         super(ChefRazorNode, self).apply_feature()
 
+    def set_run_list(self, run_list):
+        CNode(self.name).run_list = run_list
+
     def add_run_list_item(self, items):
         self.run_list.extend(items)
         CNode(self.name).run_list = self.run_list
