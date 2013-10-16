@@ -2,7 +2,7 @@
 A nodes features
 """
 
-import logging
+from modules import util
 from Feature import Feature, remove_chef
 from chef import ChefAPI
 

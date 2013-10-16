@@ -2,7 +2,7 @@
 Base Feature
 """
 
-import logging
+from modules import util
 
 class Feature(object):
     """ Represents a OpenStack Feature
