@@ -59,6 +59,8 @@ class Deployment(object):
         """Pre configures node for each feature"""
         for feature in self.features:
             feature.update_environment()
+        logging.info(self.environment)
+
 
     def pre_configure(self):
         """Pre configures node for each feature"""
