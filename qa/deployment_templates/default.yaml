@@ -102,22 +102,22 @@ centos-openldap:
     - [compute]
 
 precise-swift:
-  product: compute
+  product: storage
   name: swift
   os: precise
   features:
     - swift
   nodes:
-    - [chef-server]
+    - [chefserver]
     - [controller]
-    - [proxy1]
-    - [proxy2]
-    - [storage1]
-    - [storage2]
-    - [storage3]
+    - [proxy]
+    - [proxy]
+    - [storage]
+    - [storage]
+    - [storage]
 
 centos-swift:
-  product: compute
+  product: storage
   name: swift
   os: centos
   features:
@@ -125,11 +125,11 @@ centos-swift:
   nodes:
     - [chefserver]
     - [controller]
-    - [proxy1]
-    - [proxy2]
-    - [storage1]
-    - [storage2]
-    - [storage3]
+    - [proxy]
+    - [proxy]
+    - [storage]
+    - [storage]
+    - [storage]
 
 precise-neutron:
   product: compute

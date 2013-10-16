@@ -178,6 +178,7 @@ class Swift(Deployment):
         ####################################################################
         ## Setup partitions on storage nodes, (must run as swiftops user) ##
         ####################################################################
+        
         num_rings = self.config['swift']['num_rings']
         part_power = self.config['swift']['part_power']
         replicas = self.config['swift']['replicas']
