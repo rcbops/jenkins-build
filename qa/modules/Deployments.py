@@ -106,6 +106,7 @@ class ChefRazorDeployment(Deployment):
         self.environment = environment
         self.razor = razor
         self.set_network_interfaces(os_name)
+        self.has_controller = False
 
     def set_network_interfaces(self, os):
         #Make sure all network interfacing is set
