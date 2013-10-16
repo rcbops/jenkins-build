@@ -156,6 +156,7 @@ class ChefRazorNode(Node):
         cnode = CNode(self.name)
         if self['in_use'] == "provisioned":
             # Return to pool if the node is clean
+            self['in_use'] = "0"
             cnode.chef_environment = "_default"
             cnode.save()
         else:
