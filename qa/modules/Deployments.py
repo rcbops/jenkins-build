@@ -190,6 +190,7 @@ class ChefRazorDeployment(Deployment):
 
     def search_role(self, feature):
         """Returns nodes the have the desired role"""
+        features = map(lambda x: x.__name__.lower(), node.features)
         return (node for node in self.nodes if feature in node.features)
 
     def destroy(self):
