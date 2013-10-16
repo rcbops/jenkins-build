@@ -107,22 +107,7 @@ class ChefRazorDeployment(Deployment):
                                                   config)
         self.environment = environment
         self.razor = razor
-        self.set_network_interfaces(os_name)
         self.has_controller = False
-
-    def set_network_interfaces(self, os):
-        #Make sure all network interfacing is set
-        query = "name:*%s*" % os
-        for node in self.node_search(query):
-            if "role[qa-base]" in node.run_list:
-                crnode = ChefRazorNode.from_chef_node(node, os, None,
-                                                      self.environment, None,
-                                                      self.razor, None)
-                crnode.add_run_list_item("recipe[network-interfaces]")
-                crnode['in_use'] = 0
-                util.logger.info("Running network interfaces for %s" % node)
-                for i in xrange(3):
-                    crnode.run_cmd('chef-client')
 
     def free_node(self, image, environment):
         """
