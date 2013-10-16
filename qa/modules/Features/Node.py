@@ -4,7 +4,7 @@ A nodes features
 
 import shared
 import logging
-from Feature import Feature, remote_chef
+from Feature import Feature, remove_chef
 from chef import ChefAPI
 
 
