@@ -93,7 +93,7 @@ class Node(object):
         self.update_environment()
         self.pre_configure()
         self.apply_feature()
-        self.pre_configure()
+        self.post_configure()
 
     def destroy(self):
         raise NotImplementedError

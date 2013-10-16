@@ -80,11 +80,13 @@ class Deployment(object):
         self.update_environment()
         self.pre_configure()
         self.build_nodes()
-        self.pre_configure()
+        self.post_configure()
 
     @classmethod
     def test(cls):
-        deployment = cls("Test Deployment", "precuse", "grizzly",
+        deployment = cls("Test Deployment",
+                         "precuse",
+                         "grizzly",
                          "config.yaml")
         features = ['ha', 'ldap']
         setattr(deployment, 'features', features)

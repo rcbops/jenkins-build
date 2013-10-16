@@ -22,11 +22,31 @@ class Node(Feature):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
+    def pre_configure(self):
+        pass
+
+    def apply_feature(self):
+        pass
+
+    def post_configure(self):
+        pass
+
     def set_run_list(self):
         """ Sets the nodes run list based on the Feature
         """
-        run_list = self.config['rcbops'][self.node.product][
-            self.__class__.__name__.lower()]['run_list']
+
+        # have to add logic for controllers
+        if hasattr(self, number):
+            # Set the role based on the feature name and number of the node
+            role = "{0}{1}".format(self.__class__.__name__.lower(),
+                                   self.node.number)
+        else:
+            role = self.__class__.__name__.lower()
+
+        # Set the run list based on the deployment config for the role
+        run_list = self.config['rcbops'][self.node.product][role]['run_list']
+
+        # Add the run list to the node
         self.node.add_run_list_item(run_list)
 
 
@@ -36,6 +56,7 @@ class Controller(Node):
 
     def __init__(self, node):
         super(Controller, self).__init__(node)
+        self.number = None
 
     def __repr__(self):
         """ Print out current instance
@@ -43,11 +64,23 @@ class Controller(Node):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
-    def update_environment(self):
-        pass
+    def pre_configre(self):
+        if self.node.deployment.has_controller:
+            self.number = 2
+            self.set_run_list()
+        else:
+            self.number = 1
+            self.set_run_list()
+
 
     def apply_feature(self):
-        self.set_run_list()
+        self.node.deployment.has_controller = True
+
+    def post_configure(self):
+        if self.number == 2:
+            controllers = self.deployment.search_role('controller')
+            controller1 = next(controllers)
+            controller1.run_cmd('chef-client')
 
 
 class Compute(Node):
