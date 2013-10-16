@@ -25,8 +25,8 @@ class Node(Feature):
     def set_run_list(self):
         """ Sets the nodes run list based on the Feature
         """
-        run_list = self.config['rcbops'][self.node.product]\
-                              [self.__class__.__name__.lower()]['run_list']
+        run_list = self.config['rcbops'][self.node.product][
+            self.__class__.__name__.lower()]['run_list']
         self.node.add_run_list_item(run_list)
 
 

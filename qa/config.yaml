@@ -241,7 +241,7 @@ rcbops:
             run_list: ['role[ha-controller1]']
         controller2:
             run_list: ['role[ha-controller2]']
-        cinderlocal:
+        cinder:
             run_list: ['role[cinder-all']
     storage:
         git:
