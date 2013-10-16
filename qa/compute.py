@@ -27,7 +27,7 @@ def build(name="precise-default", branch="grizzly", template_path=None,
     try:
         deployment.build()
     except Exception:
-        util.logger(traceback.print_exc())
+        util.logger.error(traceback.print_exc())
         deployment.destroy()
         sys.exit(1)
 
