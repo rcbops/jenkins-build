@@ -115,6 +115,101 @@ class Proxy(Node):
         self.set_run_list()
 
 
+class Storage(Node):
+    """ Represents a RPCS proxy node
+    """
+
+    def __init__(self, node):
+        super(Proxy, self).__init__(node)
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class: ' + self.__class__.__name__
+        return outl
+
+    def pre_configure(self):
+        self.set_run_list()
+
+
+class Remote(Node):
+    """ Represents the deployment having a remote chef server
+    """
+
+    def __init__(self, node):
+        super(Remote, self).__init__(node)
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class: ' + self.__class__.__name__
+        return outl
+
+    def apply_feature(self):
+        remove_chef(self.node)
+        self._bootstrap_chef()
+
+    def _bootstrap_chef(self):
+        """ Bootstraps the node to a chef server
+        """
+
+        # Gather the info for the chef server
+        chef_server_node = self.node.deployment.search_role('chef_server')
+
+        command = 'knife bootstrap {0} -s root -p {1}'.format(
+            chef_server_node.ipaddress, self.node.password)
+
+        chef_server_node.run_cmd(command)
+
+
+class Cinder(Node):
+    """
+    Enables cinder with local lvm backend
+    """
+
+    def __init__(self, node):
+        super(Cinder, self).__init__(node)
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class: ' + self.__class__.__name__
+        return outl
+
+    def pre_configure(self):
+        self.prepare_cinder()
+        self.set_run_list()
+
+    def prepare_cinder(self):
+        """ Prepares the node for use with cinder
+        """
+
+        # Clean up any VG errors
+        commands = ["vg=`pvdisplay | grep unknown -A 1 | grep VG | "
+                    "awk '{print $3}'`",
+                    "for i in `lvdisplay | grep 'LV Name' | grep $vg "
+                    "| awk '{print $3}'`; do lvremove $i; done",
+                    "vgreduce $vg --removemissing"]
+        command = "; ".join(commands)
+        self.node.run_cmd(command)
+
+        # Gather the created volume group for cinder
+        command = "vgdisplay 2> /dev/null | grep pool | awk '{print $3}'"
+        ret = self.node.run_cmd(command)
+        volume_group = ret['return'].replace("\n", "").replace("\r", "")
+
+        # Update our environment
+        env = self.node.environment
+        cinder = {
+            "storage": {
+                "lvm": {
+                    "volume_group": volume_group
+                }
+            }
+        }
+        env.add_override_attr("cinder", cinder)
+
+
 class ChefServer(Node):
     """ Represents a chef server
     """
@@ -218,97 +313,3 @@ class ChefServer(Node):
         command = 'cat ~/.chef/admin.pem'
         return self.node.run_cmd(command)['return']
 
-
-class Remote(Node):
-    """ Represents the deployment having a remote chef server
-    """
-
-    def __init__(self, node):
-        super(Remote, self).__init__(node)
-
-    def __repr__(self):
-        """ Print out current instance
-        """
-        outl = 'class: ' + self.__class__.__name__
-        return outl
-
-    def apply_feature(self):
-        remove_chef(self.node)
-        self._bootstrap_chef()
-
-    def _bootstrap_chef(self):
-        """ Bootstraps the node to a chef server
-        """
-
-        # Gather the info for the chef server
-        chef_server_node = self.node.deployment.search_role('chef_server')
-
-        command = 'knife bootstrap {0} -s root -p {1}'.format(
-            chef_server_node.ipaddress, self.node.password)
-
-        chef_server_node.run_cmd(command)
-
-
-class Cinder(Node):
-    """
-    Enables cinder with local lvm backend
-    """
-
-    def __init__(self, node):
-        super(Cinder, self).__init__(node)
-
-    def __repr__(self):
-        """ Print out current instance
-        """
-        outl = 'class: ' + self.__class__.__name__
-        return outl
-
-    def pre_configure(self):
-        self.prepare_cinder()
-        self.set_run_list()
-
-    def prepare_cinder(self):
-        """ Prepares the node for use with cinder
-        """
-
-        # Clean up any VG errors
-        commands = ["vg=`pvdisplay | grep unknown -A 1 | grep VG | "
-                    "awk '{print $3}'`",
-                    "for i in `lvdisplay | grep 'LV Name' | grep $vg "
-                    "| awk '{print $3}'`; do lvremove $i; done",
-                    "vgreduce $vg --removemissing"]
-        command = "; ".join(commands)
-        self.node.run_cmd(command)
-
-        # Gather the created volume group for cinder
-        command = "vgdisplay 2> /dev/null | grep pool | awk '{print $3}'"
-        ret = self.node.run_cmd(command)
-        volume_group = ret['return'].replace("\n", "").replace("\r", "")
-
-        # Update our environment
-        env = self.node.environment
-        cinder = {
-            "storage": {
-                "lvm": {
-                    "volume_group": volume_group
-                }
-            }
-        }
-        env.add_override_attr("cinder", cinder)
-
-
-class Swift(Node):
-    """ Represents a RPCS object store node
-    """
-
-    def __init__(self, node):
-        super(Swift, self).__init__(node)
-
-    def __repr__(self):
-        """ Print out current instance
-        """
-        outl = 'class: ' + self.__class__.__name__
-        return outl
-
-    def pre_configure(self):
-        self.set_run_list()
