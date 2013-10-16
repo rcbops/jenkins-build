@@ -4,7 +4,7 @@ A nodes features
 
 import shared
 import logging
-from Feature import Feature
+from Feature import Feature, remote_chef
 from chef import ChefAPI
 
 
@@ -104,7 +104,7 @@ class ChefServer(Node):
         return outl
 
     def pre_configure(self):
-        shared.remove_chef(self.node)
+        remove_chef(self.node)
 
     def apply_feature(self):
         self._install()
@@ -205,7 +205,7 @@ class Remote(Node):
         return outl
 
     def apply_feature(self):
-        shared.remove_chef(self.node)
+        remove_chef(self.node)
         self._bootstrap_chef()
 
     def _bootstrap_chef(self):
