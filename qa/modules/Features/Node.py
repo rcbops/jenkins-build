@@ -2,7 +2,6 @@
 A nodes features
 """
 
-import shared
 import logging
 from Feature import Feature, remove_chef
 from chef import ChefAPI
@@ -36,7 +35,7 @@ class Node(Feature):
         """
 
         # have to add logic for controllers
-        if hasattr(self, number):
+        if hasattr(self, "number"):
             # Set the role based on the feature name and number of the node
             role = "{0}{1}".format(self.__class__.__name__.lower(),
                                    self.node.number)
@@ -71,7 +70,6 @@ class Controller(Node):
         else:
             self.number = 1
             self.set_run_list()
-
 
     def apply_feature(self):
         self.node.deployment.has_controller = True
