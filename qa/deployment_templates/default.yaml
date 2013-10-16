@@ -27,9 +27,22 @@ centos-default:
   product: compute
   name: default
   os: centos
-  features:
-    - glancecf
-    - cinderlocal
+  os-features:
+    glance:
+      - cf
+    cinder:
+      - local
+    nova:
+      - default
+    horizon:
+      - default
+    keystone:
+      - default
+    osops:
+      - default
+    osopsnetworks:
+      - default
+  rpcs-features:
   nodes:
     - [chefserver]
     - [controller, cinder]
