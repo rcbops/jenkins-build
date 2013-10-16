@@ -96,7 +96,7 @@ class Compute(Node):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
-    def apply_feature(self):
+    def pre_configure(self):
         self.set_run_list()
 
 
@@ -113,7 +113,7 @@ class Proxy(Node):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
-    def apply_feature(self):
+    def pre_configure(self):
         self.set_run_list()
 
 
@@ -143,9 +143,6 @@ class ChefServer(Node):
         self._install()
         self._install_cookbooks()
         self._set_up_remote()
-
-    def post_configure(self):
-        pass
 
     def _install(self):
         """ Installs chef server on the given node
@@ -315,5 +312,5 @@ class Swift(Node):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
-    def apply_feature(self):
+    def pre_configure(self):
         self.set_run_list()
