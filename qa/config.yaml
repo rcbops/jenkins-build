@@ -14,7 +14,8 @@ environments:
             users:
                 demo:
                     roles:
-                        member: demo
+                        Member:
+                          - demo
                     default_tenant: demo
                     password: ostackdemo
                 admin:
@@ -27,54 +28,54 @@ environments:
                 - admin
                 - service
                 - demo
+    ldap:
+        debug: True
+        auth_type: ldap
         ldap:
-            debug: True
-            auth_type: ldap
-            ldap:
-                user_mail_attribute: mail
-                user_enabled_emulation: True
-                user_tree_dn: "ou=Users,dc=rcb,dc=me"
-                user_attribute_ignore: tenantId
-                tenant_enabled_emulation: True
-                url: ldap://<LDAP_IP>
-                user: "cn=admin,dc=rcb,dc=me"
-                role_objectclass: organizationalRole
-                tenant_objectclass: groupOfNames
-                group_attribute_ignore: enabled
-                tenant_attribute_ignore: tenantId
-                tenant_tree_dn: "ou=Groups,dc=rcb,dc=me"
-                allow_subtree_delete: false
-                password: <LDAP_ADMIN_PASS>
-                suffix: "dc=rcb,dc=me"
-                user_objectclass: inetOrgPerson
-                domain_attribute_ignore: enabled
-                use_dumb_member: True
-                role_tree_dn: "ou=Roles,dc=rcb,dc=me"
-            admin_user: admin
-            users:
-                demo:
-                    roles:
-                        Member:
-                            - demo
-                        default_tenant: demo
-                        password: ostackdemo
-                admin:
-                   roles:
-                        admin:
-                            - admin
-                            - demo
-                   password: ostackdemo
-            tenants:
-                - admin
-                - service
-                - demo
+            user_mail_attribute: mail
+            user_enabled_emulation: True
+            user_tree_dn: "ou=Users,dc=rcb,dc=me"
+            user_attribute_ignore: tenantId
+            tenant_enabled_emulation: True
+            url: ldap://<LDAP_IP>
+            user: "cn=admin,dc=rcb,dc=me"
+            role_objectclass: organizationalRole
+            tenant_objectclass: groupOfNames
+            group_attribute_ignore: enabled
+            tenant_attribute_ignore: tenantId
+            tenant_tree_dn: "ou=Groups,dc=rcb,dc=me"
+            allow_subtree_delete: false
+            password: <LDAP_ADMIN_PASS>
+            suffix: "dc=rcb,dc=me"
+            user_objectclass: inetOrgPerson
+            domain_attribute_ignore: enabled
+            use_dumb_member: True
+            role_tree_dn: "ou=Roles,dc=rcb,dc=me"
+        admin_user: admin
+        users:
+            demo:
+                roles:
+                    Member:
+                        - demo
+                    default_tenant: demo
+                    password: ostackdemo
+            admin:
+               roles:
+                    admin:
+                        - admin
+                        - demo
+               password: ostackdemo
+        tenants:
+            - admin
+            - service
+            - demo
 
-        swift:
-           swift_admin_url: ""
-           swift_public_url: ""
-           swift_internal_url: ""
-           auth_password: "secrete"
-           admin_password: "secrete"
+    swift:
+       swift_admin_url: ""
+       swift_public_url: ""
+       swift_internal_url: ""
+       auth_password: "secrete"
+       admin_password: "secrete"
     monitoring:
         default:
             metric_provider: collectd
