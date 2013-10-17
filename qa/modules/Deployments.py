@@ -48,13 +48,6 @@ class Deployment(object):
         for node in self.nodes:
             node.destroy()
 
-    def create_node(self, role):
-        """ Abstract node creation method """
-        raise NotImplementedError
-
-    def provision(self):
-        """Provisions nodes for each desired feature"""
-
     def update_environment(self):
         """Pre configures node for each feature"""
         for feature in self.features:
@@ -206,5 +199,6 @@ class ChefRazorDeployment(Deployment):
         return (node for node in self.nodes if feature in features)
 
     def destroy(self):
+        self.environment.remote_api = None
         super(ChefRazorDeployment, self).destroy()
         self.environment.destroy()
