@@ -314,12 +314,12 @@ class ChefServer(Node):
         return self.node.run_cmd(command)['return']
 
 
-class LDAP(Node):
+class OpenLDAP(Node):
     """ Represents a LDAP server
     """
 
     def __init__(self, node):
-        super(LDAP, self).__init__()
+        super(OpenLDAP, self).__init__()
 
     def __repr__(self):
         """ Print out current instance
