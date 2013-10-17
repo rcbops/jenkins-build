@@ -3,11 +3,7 @@ OpenStack Environments
 """
 
 from modules import util
-import logging
 from chef import Environment as ChefEnvironment
-
-logging.basicConfig(level=logging.DEBUG)
-
 
 class Environment(dict):
 
