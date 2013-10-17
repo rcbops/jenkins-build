@@ -55,6 +55,10 @@ class Chef(Environment):
     def save(self):
         env = ChefEnvironment(self.name, api=self.local_api)
         env.attributes = self.__dict__
+
+        # THE ABOVE DOESN'T WORK, DOESN'T ACTUALLY SEND ATTRIBUTES
+        env.override_attributes = self.override_attributes
+
         env.save(self.local_api)
         if self.remote_api:
             env.save(self.remote_api)
