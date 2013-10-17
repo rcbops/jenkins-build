@@ -38,7 +38,7 @@ class Node(Feature):
         if hasattr(self, "number"):
             # Set the role based on the feature name and number of the node
             role = "{0}{1}".format(self.__class__.__name__.lower(),
-                                   self.node.number)
+                                   self.number)
         else:
             role = self.__class__.__name__.lower()
 
