@@ -42,7 +42,6 @@ function build_daily() {
 
     ## replace the lines we are looking for
     result=`sed -i 's/<NAME>/'${NAME}-${OS_DISTRO}-${PACKAGE_COMPONENT}-${FEATURE_SET}'/g' $ENVIRONMENT_FILENAME`
-    result=`sed -i 's/<PACKAGE_COMPONENT>/'${PACKAGE_COMPONENT}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<TENANT_ID>/'${TENANT_ID}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<TENANT_NAME>/'${TENANT_NAME}'/g' $ENVIRONMENT_FILENAME`
     result=`sed -i 's/<TENANT_PASSWORD>/'${TENANT_PASSWORD}'/g' $ENVIRONMENT_FILENAME`

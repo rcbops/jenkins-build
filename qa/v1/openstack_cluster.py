@@ -385,7 +385,7 @@ if results.action == "build":
 
             # Do to kernel issues on 6.4, need to reboot all servers and rerun
             # chef client on all boxes, then setup networking
-            if results.os_distro == 'centos':
+            if results.os_distro == 'centos' and results.neutron:
                 
                 print "## OS is Centos, need to reboot cluster for kernel upgrades ##"
                 # Reboot all nodes
@@ -525,6 +525,10 @@ if results.action == "build":
                 print "## OS is Centos, need to reboot cluster for kernel upgrades ##"
                 # Reboot all nodes
                 rpcsqa.reboot_cluster(env)
+
+                # Sleep for 20 seconds to let reboots take place
+                print "## Sleeping for 20 seconds ##"
+                time.sleep(20)
                 
                 # Logic to reboot and wait for online status to be true
                 sleep_in_minutes = 5
