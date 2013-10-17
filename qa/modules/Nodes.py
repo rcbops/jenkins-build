@@ -72,7 +72,7 @@ class Node(object):
         for feature in self.features:
             log = "Node feature: pre-configure: {0}"\
                 .format(str(feature))
-            util.logger.info(log)
+            util.logger.debug(log)
             feature.pre_configure()
 
     def apply_feature(self):
@@ -80,7 +80,7 @@ class Node(object):
         for feature in self.features:
             log = "Node feature: update environment: {0}"\
                 .format(str(feature))
-            util.logger.info(log)
+            util.logger.debug(log)
             feature.apply_feature()
 
     def post_configure(self):
@@ -88,7 +88,7 @@ class Node(object):
         for feature in self.features:
             log = "Node feature: post-configure: {0}"\
                 .format(str(feature))
-            util.logger.info(log)
+            util.logger.debug(log)
             feature.post_configure()
 
     def build(self):
@@ -134,8 +134,10 @@ class ChefRazorNode(Node):
         super(ChefRazorNode, self).apply_feature()
 
     def add_run_list_item(self, items):
+        util.logger.debug("items:" + str(items))
         self.run_list.extend(items)
         cnode = CNode(self.name)
+        util.logger.debug("pre-run_list:" + str(cnode.run_list))
         cnode.run_list = self.run_list
         cnode.save()
 
