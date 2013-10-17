@@ -55,6 +55,18 @@ precise-ha:
   os-features:
     glance:
       - cf
+    cinder:
+      - local
+    nova:
+      - default
+    horizon:
+      - default
+    keystone:
+      - default
+    osops:
+      - default
+    osopsnetworks:
+      - default
   rpcs-features:
     - ha
   nodes:
@@ -67,10 +79,23 @@ centos-ha:
   product: compute
   name: ha
   os: centos
-  features:
+  os-features:
     glance:
-      -cf
-    ha:
+      - cf
+    cinder:
+      - local
+    nova:
+      - default
+    horizon:
+      - default
+    keystone:
+      - default
+    osops:
+      - default
+    osopsnetworks:
+      - default
+  rpcs-features:
+    - ha
   nodes:
     - [chefserver]
     - [controller]
@@ -81,7 +106,22 @@ precise-openldap:
   product: compute
   name: openldap
   os: precise
-  features:
+  os-features:
+    glance:
+      - cf
+    cinder:
+      - local
+    nova:
+      - default
+    horizon:
+      - default
+    keystone:
+      - openldap
+    osops:
+      - default
+    osopsnetworks:
+      - default
+  rpcs-features:
     - openldap
   nodes:
     - [openldap]
@@ -93,12 +133,70 @@ centos-openldap:
   product: compute
   name: openldap
   os: centos
-  features:
+  os-features:
+    glance:
+      - cf
+    cinder:
+      - local
+    nova:
+      - default
+    horizon:
+      - default
+    keystone:
+      - openldap
+    osops:
+      - default
+    osopsnetworks:
+      - default
+  rpcs-features:
     - openldap
   nodes:
     - [openldap]
     - [chefserver]
     - [controller]
+    - [compute]
+
+precise-neutron:
+  product: compute
+  name: neutron
+  os: precise
+  os-features:
+    glance:
+      - cf
+    cinder:
+      - local
+    nova:
+      - default
+    neutron:
+      - defaultl
+    horizon:
+      - default
+    keystone:
+      - default
+    osops:
+      - default
+    osopsnetworks:
+      - default
+  features:
+    - neutron
+    - ha
+  nodes:
+    - [chefserver]
+    - [controller, neutron]
+    - [controller, neutron]
+    - [compute]
+
+centos-neutron:
+  product: compute
+  name: neutron
+  os: centos
+  features:
+    - neutron
+    - ha
+  nodes:
+    - [chefserver]
+    - [controller, neutron]
+    - [controller, neutron]
     - [compute]
 
 precise-swift:
@@ -130,29 +228,3 @@ centos-swift:
     - [storage]
     - [storage]
     - [storage]
-
-precise-neutron:
-  product: compute
-  name: neutron
-  os: precise
-  features:
-    - neutron
-    - ha
-  nodes:
-    - [chefserver]
-    - [controller, neutron]
-    - [controller, neutron]
-    - [compute]
-
-centos-neutron:
-  product: compute
-  name: neutron
-  os: centos
-  features:
-    - neutron
-    - ha
-  nodes:
-    - [chefserver]
-    - [controller, neutron]
-    - [controller, neutron]
-    - [compute]
