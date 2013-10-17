@@ -114,6 +114,16 @@ class ChefRazorDeployment(Deployment):
         self.razor = razor
         self.has_controller = False
 
+        self.save_to_environment()
+
+    def save_to_environment(self):
+        deployment = {'features': map(str, self.features),
+                      'rpcs_features': None,
+                      'name': self.name,
+                      'os_name': self.os,
+                      'branch': self.branch}
+        self.environment.add_override_attr('deployment', deployment)
+
     def free_node(self, image, environment):
         """
         Provides a free node from
@@ -156,9 +166,30 @@ class ChefRazorDeployment(Deployment):
         return deployment
 
     @classmethod
-    def from_chef_environment(environment):
-        env = Environment(environment)
-        nodes = None
+    def from_chef_environment(cls, environment, config, path=None):
+        """
+        Rebuilds a Deployment given a chef environment
+        """
+        local_api = autoconfigure()
+        env = Environment(environment, api=local_api)
+        deployment_args = env.override_attributes['deployment']
+        chef = Chef(env.name, local_api, description=env.name)
+        deployment_args['chef'] = chef
+        razor = razor_api(config['razor']['ip'])
+        deployment_args['razor'] = razor
+        deployment_args['config'] = config
+        deployment = cls.deployment_config(**deployment_args)
+        template = Config(path)[environment]
+        product = template['product']
+        query = "chef_environment:{0}".format(environment)
+        for node in cls.node_search(query):
+            crnode = ChefRazorNode.from_chef_node(node,
+                                                  deployment_args['os_name'],
+                                                  product, chef,
+                                                  deployment, razor,
+                                                  deployment_args['branch'])
+            deployment.nodes.append(crnode)
+        return deployment
 
     def node_config(self, features, os_name, product, chef, razor,
                     branch):
