@@ -35,11 +35,14 @@ def build(name="precise-default", branch="grizzly", template_path=None,
         deployment.destroy()
 
 
-def destroy():
-    pass
+def destroy(name="precise-default", config=None):
+    config = Config(config)
+    deployment = ChefRazorDeployment.from_chef_environment(name, config)
+    print deployment
+    # deployment.destroy()
 
 
 if __name__ == "__main__":
     parser = argh.ArghParser()
-    parser.add_commands([build])
+    parser.add_commands([build, destroy])
     parser.dispatch()
