@@ -58,13 +58,18 @@ class Deployment(object):
     def update_environment(self):
         """Pre configures node for each feature"""
         for feature in self.features:
+            log = "Deployment feature: update environment: {0}"\
+                .format(str(feature))
+            util.logger.info(log)
             feature.update_environment()
         util.logger.info(self.environment)
-
 
     def pre_configure(self):
         """Pre configures node for each feature"""
         for feature in self.features:
+            log = "Deployment feature: pre-configure: {0}"\
+                .format(str(feature))
+            util.logger.info(log)
             feature.pre_configure()
 
     def build_nodes(self):
@@ -75,13 +80,20 @@ class Deployment(object):
     def post_configure(self):
         """Post configures node for each feature"""
         for feature in self.features:
+            log = "Deployment feature: post-configure: {0}"\
+                .format(str(feature))
+            util.logger.info(log)
             feature.post_configure()
 
     def build(self):
         """Runs build steps for node's features"""
+        util.logger.info("Deployment step: update environment")
         self.update_environment()
+        util.logger.info("Deployment step: pre-configure")
         self.pre_configure()
+        util.logger.info("Deployment step: build nodes")
         self.build_nodes()
+        util.logger.info("Deployment step: post-configure")
         self.post_configure()
 
     @classmethod
@@ -190,8 +202,8 @@ class ChefRazorDeployment(Deployment):
 
     def search_role(self, feature):
         """Returns nodes the have the desired role"""
-        features = map(lambda x: x.__name__.lower(), node.features)
-        return (node for node in self.nodes if feature in node.features)
+        features = map(str, self.features)
+        return (node for node in self.nodes if feature in features)
 
     def destroy(self):
         super(ChefRazorDeployment, self).destroy()
