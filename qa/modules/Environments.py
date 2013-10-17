@@ -3,7 +3,10 @@ OpenStack Environments
 """
 
 from modules import util
+import logging
 from chef import Environment as ChefEnvironment
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Environment(dict):
@@ -24,7 +27,7 @@ class Environment(dict):
 class Chef(Environment):
 
     def __init__(self, name, local_api, chef_server_name=None, remote_api=None,
-                 description=None, default={}, override={}):
+                 description='', default={}, override={}):
         super(Chef, self).__init__(name, description)
         self.cookbook_versions = {}
         self.json_class = "Chef::Environment"
@@ -53,12 +56,15 @@ class Chef(Environment):
         self.save()
 
     def save(self):
+        # Load local chef env
         env = ChefEnvironment(self.name, api=self.local_api)
-        env.attributes = self.__dict__
 
-        # THE ABOVE DOESN'T WORK, DOESN'T ACTUALLY SEND ATTRIBUTES
-        env.override_attributes = self.override_attributes
+        # update chef env with local object info
+        for attr in self.__dict__:
+            util.logger.debug("{0}: {1}".format(attr, self.__dict__[attr]))
+            setattr(env, attr, self.__dict__[attr])
 
+        # Save local/remote
         env.save(self.local_api)
         if self.remote_api:
             env.save(self.remote_api)
