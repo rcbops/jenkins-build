@@ -48,23 +48,21 @@ class Deployment(object):
         for node in self.nodes:
             node.destroy()
 
-    def create_node(self, role):
-        """ Abstract node creation method """
-        raise NotImplementedError
-
-    def provision(self):
-        """Provisions nodes for each desired feature"""
-
     def update_environment(self):
         """Pre configures node for each feature"""
         for feature in self.features:
+            log = "Deployment feature: update environment: {0}"\
+                .format(str(feature))
+            util.logger.debug(log)
             feature.update_environment()
-        util.logger.info(self.environment)
-
+        util.logger.debug(self.environment)
 
     def pre_configure(self):
         """Pre configures node for each feature"""
         for feature in self.features:
+            log = "Deployment feature: pre-configure: {0}"\
+                .format(str(feature))
+            util.logger.debug(log)
             feature.pre_configure()
 
     def build_nodes(self):
@@ -75,13 +73,20 @@ class Deployment(object):
     def post_configure(self):
         """Post configures node for each feature"""
         for feature in self.features:
+            log = "Deployment feature: post-configure: {0}"\
+                .format(str(feature))
+            util.logger.debug(log)
             feature.post_configure()
 
     def build(self):
         """Runs build steps for node's features"""
+        util.logger.debug("Deployment step: update environment")
         self.update_environment()
+        util.logger.debug("Deployment step: pre-configure")
         self.pre_configure()
+        util.logger.debug("Deployment step: build nodes")
         self.build_nodes()
+        util.logger.debug("Deployment step: post-configure")
         self.post_configure()
 
     @classmethod
@@ -190,8 +195,10 @@ class ChefRazorDeployment(Deployment):
 
     def search_role(self, feature):
         """Returns nodes the have the desired role"""
-        return (node for node in self.nodes if feature in node.features)
+        features = map(str, self.features)
+        return (node for node in self.nodes if feature in features)
 
     def destroy(self):
+        self.environment.remote_api = None
         super(ChefRazorDeployment, self).destroy()
         self.environment.destroy()

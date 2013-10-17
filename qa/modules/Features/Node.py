@@ -38,7 +38,7 @@ class Node(Feature):
         if hasattr(self, "number"):
             # Set the role based on the feature name and number of the node
             role = "{0}{1}".format(self.__class__.__name__.lower(),
-                                   self.node.number)
+                                   self.number)
         else:
             role = self.__class__.__name__.lower()
 
@@ -63,7 +63,7 @@ class Controller(Node):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
-    def pre_configre(self):
+    def pre_configure(self):
         if self.node.deployment.has_controller:
             self.number = 2
             self.set_run_list()
@@ -312,4 +312,3 @@ class ChefServer(Node):
 
         command = 'cat ~/.chef/admin.pem'
         return self.node.run_cmd(command)['return']
-

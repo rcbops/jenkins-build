@@ -4,6 +4,7 @@ Base Feature
 
 from modules import util
 
+
 class Feature(object):
     """ Represents a OpenStack Feature
     """
@@ -17,6 +18,9 @@ class Feature(object):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
+    def __str__(self):
+        return self.__class__.__name__
+
     def update_environment(self):
         pass
 
@@ -28,6 +32,7 @@ class Feature(object):
 
     def post_configure(self):
         pass
+
 
 def remove_chef(node):
     """ Removes chef from the given node
