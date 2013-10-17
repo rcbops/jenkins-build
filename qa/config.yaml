@@ -2,6 +2,7 @@ chef:
   server:
     install_script: https://raw.github.com/rcbops/jenkins-build/master/qa/bash/jenkins/install-chef-server.sh
     install_dir: /opt/rcbops
+  run_cmd: "chef-client"
 razor:
   ip: 198.101.133.3
 environments:
