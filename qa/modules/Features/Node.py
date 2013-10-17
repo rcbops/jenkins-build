@@ -72,9 +72,11 @@ class Controller(Node):
             self.set_run_list()
 
     def apply_feature(self):
+        """
+        Run chef client on controler1 after controller2's completes
+        """
         self.node.deployment.has_controller = True
 
-    def post_configure(self):
         if self.number == 2:
             controllers = self.deployment.search_role('controller')
             controller1 = next(controllers)
