@@ -570,7 +570,7 @@ class OpenLDAP(RPCS):
         self.deployment.environment.add_override_attr(
             self.name, self.environment)
 
-        ldap_server = self.deployment.search_role('ldap')
+        ldap_server = self.deployment.search_role('openldap')
         password = self.deployment.config['ldap']['pass']
         ip = ldap_server.ipaddress
         env = self.deployment.environment
