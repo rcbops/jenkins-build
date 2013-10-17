@@ -63,7 +63,7 @@ class Controller(Node):
         outl = 'class: ' + self.__class__.__name__
         return outl
 
-    def pre_configre(self):
+    def pre_configure(self):
         if self.node.deployment.has_controller:
             self.number = 2
             self.set_run_list()
@@ -312,4 +312,3 @@ class ChefServer(Node):
 
         command = 'cat ~/.chef/admin.pem'
         return self.node.run_cmd(command)['return']
-
