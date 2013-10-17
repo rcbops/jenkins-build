@@ -2,9 +2,8 @@
 OpenStack Environments
 """
 
-import logging
+from modules import util
 from chef import Environment as ChefEnvironment
-
 
 class Environment(dict):
 
