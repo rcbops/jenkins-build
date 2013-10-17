@@ -67,30 +67,33 @@ class Node(object):
         return scp_from(self.ipaddress, remote_path, user=user,
                         password=password, local_path=local_path)
 
-    def update_environment(self):
-        """Updates environment for each feature"""
-        for feature in self.features:
-            feature.update_environment()
-
     def pre_configure(self):
         """Pre configures node for each feature"""
         for feature in self.features:
+            log = "Node feature: pre-configure: {0}"\
+                .format(str(feature))
+            util.logger.info(log)
             feature.pre_configure()
 
     def apply_feature(self):
         """Applies each feature"""
         for feature in self.features:
+            log = "Node feature: update environment: {0}"\
+                .format(str(feature))
+            util.logger.info(log)
             feature.apply_feature()
 
     def post_configure(self):
         """Post configures node for each feature"""
         for feature in self.features:
+            log = "Node feature: post-configure: {0}"\
+                .format(str(feature))
+            util.logger.info(log)
             feature.post_configure()
 
     def build(self):
         """Runs build steps for node's features"""
         self['in_use'] = ",".join(map(str, self.features))
-        self.update_environment()
         self.pre_configure()
         self.apply_feature()
         self.post_configure()
@@ -130,12 +133,11 @@ class ChefRazorNode(Node):
             self.run_cmd("chef-client")
         super(ChefRazorNode, self).apply_feature()
 
-    def set_run_list(self, run_list):
-        CNode(self.name).run_list = run_list
-
     def add_run_list_item(self, items):
         self.run_list.extend(items)
-        CNode(self.name).run_list = self.run_list
+        cnode = CNode(self.name)
+        cnode.run_list = self.run_list
+        cnode.save()
 
     def __getitem__(self, item):
         """
