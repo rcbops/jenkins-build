@@ -53,16 +53,16 @@ class Deployment(object):
         for feature in self.features:
             log = "Deployment feature: update environment: {0}"\
                 .format(str(feature))
-            util.logger.info(log)
+            util.logger.debug(log)
             feature.update_environment()
-        util.logger.info(self.environment)
+        util.logger.debug(self.environment)
 
     def pre_configure(self):
         """Pre configures node for each feature"""
         for feature in self.features:
             log = "Deployment feature: pre-configure: {0}"\
                 .format(str(feature))
-            util.logger.info(log)
+            util.logger.debug(log)
             feature.pre_configure()
 
     def build_nodes(self):
@@ -75,18 +75,18 @@ class Deployment(object):
         for feature in self.features:
             log = "Deployment feature: post-configure: {0}"\
                 .format(str(feature))
-            util.logger.info(log)
+            util.logger.debug(log)
             feature.post_configure()
 
     def build(self):
         """Runs build steps for node's features"""
-        util.logger.info("Deployment step: update environment")
+        util.logger.debug("Deployment step: update environment")
         self.update_environment()
-        util.logger.info("Deployment step: pre-configure")
+        util.logger.debug("Deployment step: pre-configure")
         self.pre_configure()
-        util.logger.info("Deployment step: build nodes")
+        util.logger.debug("Deployment step: build nodes")
         self.build_nodes()
-        util.logger.info("Deployment step: post-configure")
+        util.logger.debug("Deployment step: post-configure")
         self.post_configure()
 
     @classmethod
