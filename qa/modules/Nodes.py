@@ -176,11 +176,17 @@ class ChefRazorNode(Node):
             sleep(15)
 
     def add_features(self, features):
+        """
+        Adds a list of feature classes
+        """
         classes = {k.lower(): v for (k, v) in
                    getmembers(node_features, isclass)}
         for feature in features:
             feature_class = classes[feature](self)
             self.features.append(feature_class)
+
+        # save features for restore
+        self['features'] = features
 
     @classmethod
     def from_chef_node(cls, node, os, product, environment, deployment,
@@ -189,5 +195,7 @@ class ChefRazorNode(Node):
         user = node['current_user']
         password = node['password']
         name = node.name
-        return cls(ip, user, password, os, product, environment,
-                   deployment, name, provisioner, branch)
+        crnode = cls(ip, user, password, os, product, environment, deployment,
+                     name, provisioner, branch)
+        crnode.add_features(node.get('features', []))
+        return crnode
