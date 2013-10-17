@@ -31,6 +31,7 @@ def build(name="precise-default", branch="grizzly", template_path=None,
         deployment.destroy()
         sys.exit(1)
 
+    util.logger.info(deployment)
     if destroy:
         deployment.destroy()
 
