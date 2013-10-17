@@ -32,7 +32,6 @@ class Deployment(Feature):
     def post_configure(self):
         pass
 
-
 #############################################################################
 ############################ OpenStack Features #############################
 #############################################################################
@@ -403,7 +402,6 @@ class Cinder(Deployment):
     def update_environment(self):
         self.deployment.environment.add_override_attr(
             self.__class__.__name__.lower(), self.environment)
-
 
 #############################################################################
 ############### Rackspace Private Cloud Software Features ###################

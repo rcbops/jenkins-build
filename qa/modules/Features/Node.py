@@ -329,3 +329,10 @@ class OpenLDAP(Node):
 
     def pre_configure(self):
         self.set_run_list()
+
+    def post_configure(self):
+        self._configure_ldap()
+
+    def _configure_ldap(self):
+        ldapadd = 'ldapadd -x -D "cn=admin,dc=rcb,dc=me" -wostackdemo -f /root/base.ldif'
+        self.node.run_cmd(ldapadd)
