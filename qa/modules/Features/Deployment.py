@@ -550,12 +550,12 @@ class HighAvailability(RPCS):
                                                       self.environment)
 
 
-class LDAP(RPCS):
+class OpenLDAP(RPCS):
     """ Represents a keystone with an openldap backend
     """
 
     def __init__(self, deployment):
-        super(LDAP, self).__init__(deployment,
+        super(OpenLDAP, self).__init__(deployment,
                                    self.__class__.__name__.lower())
         self.environment = \
             self.config['environments'][self.name]
@@ -569,3 +569,16 @@ class LDAP(RPCS):
     def update_environment(self):
         self.deployment.environment.add_override_attr(
             self.name, self.environment)
+
+        ldap_server = self.deployment.search_role('ldap')
+        password = self.deployment.config['ldap']['pass']
+        ip = ldap_server.ipaddress
+        env = self.deployment.environment
+
+        # Override the attrs
+        env.override_attributes['keystone']['ldap']['url'] = \
+            "ldap://{0}".format(ip)
+        env.override_attributes['keystone']['ldap']['password'] = password
+
+        # Save the Environment
+        self.node.deployment.environment.save()

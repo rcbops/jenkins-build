@@ -312,3 +312,20 @@ class ChefServer(Node):
 
         command = 'cat ~/.chef/admin.pem'
         return self.node.run_cmd(command)['return']
+
+
+class LDAP(Node):
+    """ Represents a LDAP server
+    """
+
+    def __init__(self, node):
+        super(LDAP, self).__init__()
+
+    def __repr__(self):
+        """ Print out current instance
+        """
+        outl = 'class: ' + self.__class__.__name__
+        return outl
+
+    def pre_configure(self):
+        self.set_run_list()

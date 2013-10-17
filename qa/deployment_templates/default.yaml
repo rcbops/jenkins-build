@@ -84,7 +84,7 @@ precise-openldap:
   features:
     - openldap
   nodes:
-    - [directory-server]
+    - [openldap]
     - [chefserver]
     - [controller]
     - [compute]
@@ -96,7 +96,7 @@ centos-openldap:
   features:
     - openldap
   nodes:
-    - [directory-server]
+    - [openldap]
     - [chefserver]
     - [controller]
     - [compute]
