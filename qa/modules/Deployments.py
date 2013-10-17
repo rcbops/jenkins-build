@@ -6,7 +6,7 @@ from Config import Config
 from razor_api import razor_api
 from Environments import Chef
 from Nodes import ChefRazorNode
-from chef import autoconfigure, Search
+from chef import autoconfigure, Search, Environment
 from inspect import getmembers, isclass
 import Features.Deployment as deployment_features
 
@@ -154,6 +154,11 @@ class ChefRazorDeployment(Deployment):
             deployment.nodes.append(node)
 
         return deployment
+
+    @classmethod
+    def from_chef_environment(environment):
+        env = Environment(environment)
+        nodes = None
 
     def node_config(self, features, os_name, product, chef, razor,
                     branch):
