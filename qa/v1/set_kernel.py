@@ -10,4 +10,8 @@ def main():
               if 'kernel' in node]
     gevent.joinall(events)
 
-argh.dispatch(main)
+parser = argh.ArghParser()
+parser.add_commands([main])
+
+if __name__ == '__main__':
+    parser.dispatch()
