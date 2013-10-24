@@ -11,7 +11,7 @@ def main():
     gevent.joinall(events)
 
 parser = argh.ArghParser()
-parser.add_command(main)
+parser.add_commands(main)
 
 if __name__ == '__main__':
     parser.dispatch()
