@@ -279,11 +279,16 @@ class rpcsqa_helper:
         tempest_dir = "/opt/tempest/"
         tag_arg = "-a " + " -a ".join(tags) if tags else ""
         paths = " ".join(tests) if tests else ""
-        command = ("{0}tools/with_venv.sh nosetests -w "
+        exclude = "-e floating -e volume -e resize"
+        if 'precise' in node.name:
+            exclude = "-e floating -e resize"
+
+        command = ("{0}tools/with_venv.sh nosetests {4} -w "
                    "{0}tempest/tests {1} {2} {3}".format(tempest_dir,
                                                          xunit_flag,
                                                          tag_arg,
-                                                         paths))
+                                                         paths,
+                                                         exclude))
         self.run_command_on_node(node, command)
         self.scp_from_node(node=node, path=xunit_file, destination=".")
 
