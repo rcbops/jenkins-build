@@ -17,7 +17,7 @@ parser.add_argument('--old_branch', action="store",
                     dest="old_branch", required=False, default="grizzly",
                     help="Use this to upgrade to a specific branch.")
 parser.add_argument('--upgrade_branch', action="store",
-                    dest="upgrade_branch", required=False, default="v4.0.0",
+                    dest="upgrade_branch", required=False, default="v4.1.3rc",
                     help="Use this to upgrade to a specific branch.")
 results = parser.parse_args()
 
