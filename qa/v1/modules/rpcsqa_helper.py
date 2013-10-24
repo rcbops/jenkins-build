@@ -1210,7 +1210,7 @@ class rpcsqa_helper:
         cmd = "rpm -Uvh http://mirror.centos.org/centos/6/xen4/x86_64/Packages/kernel-3.4.61-9.el6.centos.alt.x86_64.rpm http://mirror.centos.org/centos/6/xen4/x86_64/Packages/kernel-headers-3.4.61-9.el6.centos.alt.x86_64.rpm http://mirror.centos.org/centos/6/xen4/x86_64/Packages/kernel-firmware-3.4.61-9.el6.centos.alt.noarch.rpm; reboot 0"
         ret = self.run_cmd_on_node(node=chef_node, cmd='hostname')
         sleep(10)
-        chef_node['kernel'] = "set"
+        chef_node.override['kernel'] = "set"
         chef_node.save()
         print ret['return']
 
