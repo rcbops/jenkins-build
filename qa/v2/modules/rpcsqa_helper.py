@@ -280,7 +280,7 @@ class rpcsqa_helper:
         tag_arg = "-a " + " -a ".join(tags) if tags else ""
         paths = " ".join(tests) if tests else ""
         exclude = "-e floating -e volume -e resize"
-        if 'precise' in node.name:
+        if 'precise' not in node.name:
             exclude = "-e floating -e resize"
 
         command = ("{0}tools/with_venv.sh nosetests {4} -w "
