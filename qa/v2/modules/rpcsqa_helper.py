@@ -112,7 +112,7 @@ class rpcsqa_helper:
         for i in xrange(0, num_times):
             user_pass = self.razor_password(chef_node)
             print "On {0}, Running: {1}".format(node.name, command)
-            run = run_remote_ssh_cmd(ip, 'root', user_pass, command, quiet)
+            run = ssh_cmd(ip, command, 'root', user_pass, quiet)
             if run['success'] is False:
                 success = False
             runs.append(run)
@@ -174,7 +174,7 @@ class rpcsqa_helper:
                 user_pass = self.razor.get_active_model_pass(
                     data['am_uuid'])['password']
                 ip = data['eth1_ip']
-                run = run_remote_ssh_cmd(ip, 'root', user_pass, 'reboot 0')
+                run = ssh_cmd(ip, 'root', user_pass, 'reboot 0')
                 if run['success']:
                     self.razor.remove_active_model(data['am_uuid'])
                     time.sleep(15)
@@ -185,7 +185,7 @@ class rpcsqa_helper:
     def erase_node(self, chef_node):
         print "Deleting: %s" % str(chef_node)
         am_uuid = chef_node['razor_metadata']['razor_active_model_uuid']
-        run = run_remote_ssh_cmd(chef_node['ipaddress'], 'root', self.razor_password(chef_node), "reboot 0", quiet=True)
+        run = ssh_cmd(chef_node['ipaddress'], 'root', self.razor_password(chef_node), "reboot 0", quiet=True)
         if not run['success']:
             raise Exception("Error rebooting server %s@%s " % (chef_node, chef_node['ipaddress']))
         #Knife node remove; knife client remove
@@ -230,7 +230,7 @@ class rpcsqa_helper:
         user = "root"
         password = self.razor_password(node)
         ip = node['ipaddress']
-        return get_file_from_server(ip, user, password, path, destination)
+        return scp_from(ip, path, user, password, destination)
 
     def scp_to_node(self, node=None, path=None):
         user = "root"

@@ -1,0 +1,290 @@
+chef:
+  server:
+    install_script: https://raw.github.com/rcbops/jenkins-build/master/qa/bash/jenkins/install-chef-server.sh
+    install_dir: /opt/rcbops
+razor:
+  ip: 198.101.133.3
+environments:
+    package_component:
+        default: grizzly
+    keystone:
+        default:
+            admin_user: admin
+            users:
+                demo:
+                    roles:
+                        member: demo
+                    default_tenant: demo
+                    password: ostackdemo
+                admin:
+                    roles:
+                        admin:
+                            - admin
+                            - demo
+                    password: ostackdemo
+            tenants:
+                - admin
+                - service
+                - demo
+        ldap:
+            debug: True
+            auth_type: ldap
+            ldap:
+                user_mail_attribute: mail
+                user_enabled_emulation: True
+                user_tree_dn: "ou=Users,dc=rcb,dc=me"
+                user_attribute_ignore: tenantId
+                tenant_enabled_emulation: True
+                url: ldap://<LDAP_IP>
+                user: "cn=admin,dc=rcb,dc=me"
+                role_objectclass: organizationalRole
+                tenant_objectclass: groupOfNames
+                group_attribute_ignore: enabled
+                tenant_attribute_ignore: tenantId
+                tenant_tree_dn: "ou=Groups,dc=rcb,dc=me"
+                allow_subtree_delete: false
+                password: <LDAP_ADMIN_PASS>
+                suffix: "dc=rcb,dc=me"
+                user_objectclass: inetOrgPerson
+                domain_attribute_ignore: enabled
+                use_dumb_member: True
+                role_tree_dn: "ou=Roles,dc=rcb,dc=me"
+            admin_user: admin
+            users:
+                demo:
+                    roles:
+                        Member:
+                            - demo
+                        default_tenant: demo
+                        password: ostackdemo
+                admin:
+                   roles:
+                        admin:
+                            - admin
+                            - demo
+                   password: ostackdemo
+            tenants:
+                - admin
+                - service
+                - demo
+
+        swift:
+           swift_admin_url: ""
+           swift_public_url: ""
+           swift_internal_url: ""
+           auth_password: "secrete"
+           admin_password: "secrete"
+    monitoring:
+        default:
+            metric_provider: collectd
+            procmon_provider: monit
+    mysql:
+        default:
+            root_network_acl: "%"
+            allow_remote_root: true
+    nova:
+        default:
+            apply_patches: true
+            networks:
+                public:
+                    bridge: br0
+                    dns1: 8.8.8.8
+                    dns2: 8.8.4.4
+                    bridge_dev: eth0
+                    network_size: "254"
+                    ipv4_cidr: 172.32.0.0/24
+                    label: public
+    osops:
+        default:
+            apply_patches: true
+    horizon:
+        default:
+            theme: default
+    developer_mode:
+        default:
+            default: false
+    osops_networks:
+        default:
+            management: 198.101.133.0/24
+            nova: 198.101.133.0/24
+            public: 198.101.133.0/24
+    glance:
+        default:
+            image_upload: true
+            images:
+                - cirros
+                - precise
+        cf:
+            api:
+                default_store: swift
+                swift_store_user: <Tenant_Id>:<Tenant_Name>
+                swift_store_key: <Tenant_Password>
+                swift_store_auth_version: "2"
+                swift_store_auth_address: https://identity.api.rackspacecloud.com/v2.0
+            services:
+                api:
+                    path:
+                admin-api:
+                    path:
+                internal-api:
+                    path:
+                registry:
+                    path:
+            image_upload: true
+            images:
+                - cirros
+                - precise
+    neutron:
+        default:
+            nova:
+                network:
+                    provider: quantum
+                    apply_patches: True
+    cinder:
+        default:
+        local:
+            storage:
+                lvm:
+                    volume_group: "vgubuntu01"
+    swift:
+        default:
+            swift-private-cloud:
+                network:
+                    management: ""
+                    exnet: ""
+                swift_common:
+                   swift_hash_prefix: ""
+                   swift_hash_suffix: ""
+                dispersion:
+                    dis_key: secrete
+    ha:
+        precise:
+            vips:
+                mysql-db: "198.101.133.154"
+                rabbitmq-queue: "198.101.133.155"
+                cinder-api: "198.101.133.156"
+                glance-api: "198.101.133.156"
+                glance-registry: "198.101.133.156"
+                horizon-dash: "198.101.133.156"
+                horizon-dash_ssl: "198.101.133.156"
+                keystone-admin-api: "198.101.133.156"
+                keystone-internal-api: "198.101.133.156"
+                keystone-service-api: "198.101.133.156"
+                nova-api: "198.101.133.156"
+                nova-ec2-public: "198.101.133.156"
+                nova-novnc-proxy: "198.101.133.156"
+                nova-xvpvnc-proxy: "198.101.133.156"
+                swift-proxy: "198.101.133.156"
+                config:
+                    198.101.133.154:
+                        vrid: 10
+                        network: public
+                    198.101.133.155:
+                        vrid: 11
+                        network: public
+                    198.101.133.156:
+                        vrid: 12
+                        network: public
+        centos:
+            vips:
+                mysql-db: "198.101.133.157"
+                rabbitmq-queue: "198.101.133.158"
+                cinder-api: "198.101.133.159"
+                glance-api: "198.101.133.159"
+                glance-registry: "198.101.133.159"
+                horizon-dash: "198.101.133.159"
+                horizon-dash_ssl: "198.101.133.159"
+                keystone-admin-api: "198.101.133.159"
+                keystone-internal-api: "198.101.133.159"
+                keystone-service-api: "198.101.133.159"
+                nova-api: "198.101.133.159"
+                nova-ec2-public: "198.101.133.159"
+                nova-novnc-proxy: "198.101.133.159"
+                nova-xvpvnc-proxy: "198.101.133.159"
+                swift-proxy: "198.101.133.159"
+                config:
+                    198.101.133.157:
+                        vrid: 14
+                        network: public
+                    198.101.133.158:
+                        vrid: 15
+                        network: public
+                    198.101.133.159:
+                        vrid: 16
+                        network: public
+rcbops:
+    compute:
+        git:
+            url: https://github.com/rcbops/chef-cookbooks.git
+            branches:
+                havana:
+                    tags:
+                        - v4.2.0
+                grizzly:
+                    tags:
+                        - v4.1.2
+                        - v4.1.1
+                        - v4.1.0
+                        - v4.0.0
+                folsom:
+                    tags:
+                        - v3.0.0
+                        - v3.0.1
+                        - v3.1.0
+        chefserver:
+            run_list: []
+        compute:
+            run_list: ['role[single-compute]']
+        ldap:
+            run_list: ['role[qa-openldap]']
+        controller1:
+            run_list: ['role[ha-controller1]']
+        controller2:
+            run_list: ['role[ha-controller2]']
+        cinderlocal:
+            run_list: ['role[cinder-all']
+    storage:
+        git:
+            url: https://github.com/rcbops-cookbooks/swift-private-cloud.git
+            branches:
+                master:
+                    tags:
+                        - v4.2.0
+        chef_server:
+            roles: []
+        controller:
+            roles: ['role[spc-starter-controller]']
+        proxy:
+            roles: ['role[spc-starter-proxy]']
+        storage:
+            roles: ['role[spc-starter-storage]']
+tests:
+  default:
+    - compute
+    - identity
+  ha:
+    - compute
+    - identity
+  glance-cf:
+    - compute/images
+    - image
+  glance-local:
+    - compute/images
+    - image
+  keystone-ldap:
+    - compute/admin
+    - compute/security_groups
+    - compute/test_authorization.py
+    - identity
+  keystone-mysql:
+    - compute/admin
+    - compute/security_groups
+    - compute/test_authorization.py
+    - identity
+  neutron:
+    - network
+  cinder-local:
+    - compute/volumes
+    - volume
+  swift:
+    - object_storage

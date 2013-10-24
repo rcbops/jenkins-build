@@ -15,7 +15,7 @@ def tempest(environment="autotest-precise-grizzly-glance-cf",
     """
     Tests an openstack cluster with tempest
     """
-    qa = rpcsqa_helper(razor_ip=razor_ip)
+    qa = rpcsqa_helper()
     env = Environment(environment)
     if 'remote_chef' in env.override_attributes:
         api = qa.remote_chef_client(environment)

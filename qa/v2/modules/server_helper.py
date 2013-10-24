@@ -34,6 +34,7 @@ def ssh_cmd(ip, remote_cmd, user='root', password=None, quiet=False):
     ssh.connect(ip, username=user, password=password)
     stdin, stdout, stderr = ssh.exec_command(remote_cmd)
     stdin.close()
+    exit_status = None
     for line in stdout.xreadlines():
         if not quiet:
             sys.stdout.write(line)
