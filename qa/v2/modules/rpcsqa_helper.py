@@ -301,6 +301,7 @@ class rpcsqa_helper:
         self.run_command_on_node(chef_server, "; ".join(cmds))['success']
 
     def xunit_merge(self, path="."):
+        print "Merging xunit files"
         files = glob(path +"/*.xml")
         tree = None
         attrs = ["failures", "tests", "errors", "skip"]
