@@ -1,0 +1,70 @@
+#!/bin/bash
+
+set -e
+set -x
+
+# skip these modules from the auto-repo-update
+#SKIP_REGEX="yum"
+
+# if SKIP_REGEX is empty fill it with a blank space so we can continue
+SKIP_REGEX=${SKIP_REGEX:- }
+
+branches='master'
+
+for branch in $branches; do
+
+    echo "checking submodule updates for ${branch}"
+    echo "========================================"
+    rm -fr chef-cookbooks
+    git clone git://github.com/rcbops/chef-cookbooks
+    pushd chef-cookbooks
+
+    git checkout $branch
+
+    declare -a updated
+
+    # get list only of non rcbops-cookbooks owned submodules
+    repolist=$(grep url .gitmodules | awk '{print $3}' | grep -v 'rcbops-cookbooks' | grep -v "${SKIP_REGEX}" )
+
+    # check each and fire off downstream job if repo has changed
+    for repo in ${repolist}; do
+        # get bare submodule name
+        submodule=$(echo ${repo##*/}|cut -d'.' -f1)
+
+        #update submodule
+        git submodule init
+        git submodule update cookbooks/${submodule}
+
+        # compare current, and master, and fire tests if different
+        pushd cookbooks/${submodule}
+        current_ref=$(git reflog | head -1 | cut -d' ' -f1)
+        git checkout master
+        git pull
+        master_ref=$(git reflog | head -1 | cut -d' ' -f1)
+        if [ "${current_ref}" = "${master_ref}" ] ; then
+            echo "upstream $submodule cookbook has not changed. Nothing to do here, move along please..."
+        else
+            echo "$submodule cookbook has some updates.  Triggering an all-in-one to test..."
+            #curl -s ${JENKINS_URL}/view/Gate%20Jobs/job/gate-upstream-repo-commits/buildWithParameters?SUBMODULE=${submodule}&GIT_BRANCH=${branch}&token=whaamwhaam&GIT_USER=mancdaz
+            #curl -s -d "GIT_BRANCH=${branch}&SUBMODULE=${submodule}&token=whaamwhaam&GIT_USER=mancdaz" ${JENKINS_URL}/view/Gate%20Jobs/job/gate-upstream-repo-commits/buildWithParameters
+            curl -X POST -s -K ~/.rcbjenkins-jenkins-creds -d "GIT_BRANCH=${branch}&SUBMODULE=${submodule}" ${JENKINS_URL}/job/gate-upstream-repo-commits/buildWithParameters
+            updated=("${updated[@]}" "${branch}:${submodule}")
+        fi
+        popd
+    done
+
+    # clean up
+    popd
+    rm -fr chef-cookbooks
+    echo
+
+done
+
+if [ ! -z $updated ] ; then
+    echo "The following submodules had updates, and downstream tests were kicked off for them:"
+    echo ${updated[@]}
+else
+    echo "There are no updates to any submodules today"
+fi
+
+exit 0
