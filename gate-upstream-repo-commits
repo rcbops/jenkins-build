@@ -1,0 +1,64 @@
+#!/bin/bash
+
+set -e
+set -x
+
+##### check if there have been any changes to the repo
+##### and run tests, if so
+
+if [ "${SUBMODULE}" = "dontbuild" ]; then
+    echo "Build not triggered from a submodule update"
+    exit 1
+fi
+
+# pre build tidy up
+rm -fr $CHEF_COOKBOOKS_REPO_NAME
+
+# Clone the repo
+git clone $CHEF_COOKBOOKS_GIT_REPO
+pushd $CHEF_COOKBOOKS_REPO_NAME
+
+# Checkout the specified chef-cookbooks branch (eg folsom, grizzly)
+git checkout $GIT_BRANCH
+
+# Setup non-global user.name
+git config user.name "rcbjenkins"
+git config user.email rcb-deploy@lists.rackspace.com
+
+# Update the specified submodule
+git submodule init
+git submodule update cookbooks/$SUBMODULE
+pushd cookbooks/$SUBMODULE
+
+# get the submodule repo url
+SUBMODULE_REPO=$(git remote -v | head -1 | awk '{print $2}')
+
+# check if there have been any changes
+current_ref=$(git reflog | head -1 | cut -d' ' -f1)    
+git checkout master
+git pull
+master_ref=$(git reflog | head -1 | cut -d' ' -f1)
+
+if [ "${current_ref}" = "${master_ref}" ] ; then 
+    echo "nothing to do here, move along please"
+    RETVAL=5
+    exit $RETVAL
+else
+    echo "master has some updates.  Triggering an all-in-one to test..."
+    cd ../../../
+    RETVAL=0
+    # build a file with the required COOKBOOK_OVERRIDE parameter to
+    # pass to the nova aio step
+    #echo -e "COOKBOOK_OVERRIDE=${SUBMODULE_REPO},${GIT_BRANCH}\nGIT_BRANCH=$GIT_BRANCH\nSUBMODULE=${SUBMODULE}" > "${WORKSPACE}/${BUILD_ID}-vars"
+    echo -e "COOKBOOK_OVERRIDE=${SUBMODULE_REPO},master\nGIT_BRANCH=$GIT_BRANCH\nSUBMODULE=${SUBMODULE}" > "${WORKSPACE}/${BUILD_ID}-vars"
+
+
+    popd
+    popd
+    #tar zcf chef-cookbooks.tgz --exclude=.git --exclude=.gitignore chef-cookbooks
+    
+# Clean up after ourselves
+
+#    rm -rf $CHEF_COOKBOOKS_REPO_NAME
+    exit $RETVAL
+fi
