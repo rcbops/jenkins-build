@@ -3,11 +3,17 @@
 set -e
 set -x
 
-# skip these modules from the auto-repo-update
-#SKIP_REGEX="yum"
+# Once a repo is known to have upstream changes, start of a gate job to verify
+# those changes
+start_gate_subjob(){
+    job_name="$1"
+    curl -X POST -s -K ~/.rcbjenkins-jenkins-creds \
+        -d "GIT_BRANCH=${branch}&SUBMODULE=${submodule}" \
+        ${JENKINS_URL}/job/${job_name}/buildWithParameters
+}
 
-# if SKIP_REGEX is empty fill it with a blank space so we can continue
-SKIP_REGEX=${SKIP_REGEX:- }
+# skip these modules from the auto-repo-update.
+SKIP_REGEX="rcbops-cookbooks"
 
 branches='master'
 
@@ -23,8 +29,8 @@ for branch in $branches; do
 
     declare -a updated
 
-    # get list only of non rcbops-cookbooks owned submodules
-    repolist=$(grep url .gitmodules | awk '{print $3}' | grep -v 'rcbops-cookbooks' | grep -v "${SKIP_REGEX}" )
+    # get list of submodules to check
+    repolist=$(awk '/url/ && $3 !~/'"${SKIP_REGEX}"'/ {print $3}' .gitmodules)
 
     # check each and fire off downstream job if repo has changed
     for repo in ${repolist}; do
@@ -44,10 +50,12 @@ for branch in $branches; do
         if [ "${current_ref}" = "${master_ref}" ] ; then
             echo "upstream $submodule cookbook has not changed. Nothing to do here, move along please..."
         else
-            echo "$submodule cookbook has some updates.  Triggering an all-in-one to test..."
-            #curl -s ${JENKINS_URL}/view/Gate%20Jobs/job/gate-upstream-repo-commits/buildWithParameters?SUBMODULE=${submodule}&GIT_BRANCH=${branch}&token=whaamwhaam&GIT_USER=mancdaz
-            #curl -s -d "GIT_BRANCH=${branch}&SUBMODULE=${submodule}&token=whaamwhaam&GIT_USER=mancdaz" ${JENKINS_URL}/view/Gate%20Jobs/job/gate-upstream-repo-commits/buildWithParameters
-            curl -X POST -s -K ~/.rcbjenkins-jenkins-creds -d "GIT_BRANCH=${branch}&SUBMODULE=${submodule}" ${JENKINS_URL}/job/gate-upstream-repo-commits/buildWithParameters
+            echo "$submodule cookbook has some updates.  Triggering gate job to test..."
+            if [[ "$url" =~ 'ceph-cookbooks' ]]; then
+                start_gate_subjob gate-upstream-repo-commits-ceph
+            else
+                start_gate_subjob gate-upstream-repo-commits
+            fi
             updated=("${updated[@]}" "${branch}:${submodule}")
         fi
         popd
