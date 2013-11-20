@@ -30,7 +30,7 @@ for branch in $branches; do
     declare -a updated
 
     # get list of submodules to check
-    repolist=$(awk '/url/ && $3 !~/'"${SKIP_REGEX}"'/ {print $3}' .gitmodules)
+    repolist=$(awk '/path/{submodule=$3}; /url/ && $3 !~/'"${SKIP_REGEX}"'/ {print submodule}' .gitmodules)
 
     # check each and fire off downstream job if repo has changed
     for repo in ${repolist}; do
