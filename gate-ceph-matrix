@@ -10,13 +10,20 @@ IFS=_ read distro image<<<"$INSTANCE_IMAGE"
 flavor="performance1-4"
 disk="/dev/xvde1"
 tags=${TAGS:-all}
-buildid="${BUILD_NUMBER}_$distro"
+buildid="${BUILD_NUMBER}-$distro"
 
 # Override for centos on standard flavors. (For some reason CentOS is not working on performance at the moment).
-[[ "$distro" =~ "CentOS" ]] && { 
+[[ "$distro" =~ "CentOS" ]] && {
   flavor="5"
   disk="/osds/0"
-}
+}||:
+
+[[ "$STAGE" == "BUILD" ]] && {
+    cat > $WORKSPACE/vars <<EOF
+export INSTANCE_IMAGE="$INSTANCE_IMAGE"
+export BUILD_NUMBER="$BUILD_NUMBER"
+EOF
+}||:
 
 pushd ~/ansible-openstack-ceph-gate
 source venv/bin/activate
@@ -33,10 +40,3 @@ ansible-playbook bootstrap.yml\
     --private-key=id_rsa\
     --tags="$tags"\
     -vvvv
-
-[[ "$STAGE" == "BUILD" ]] && {
-    cat > $WORKSPACE/vars <<EOF
-export INSTANCE_IMAGE="$INSTANCE_IMAGE"
-export BUILD_NUMBER="$BUILD_NUMBER"
-EOF
-}
