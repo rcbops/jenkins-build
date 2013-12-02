@@ -1,0 +1,42 @@
+#!/bin/bash
+
+[[ "$STAGE" == "POSTBUILD" ]] && {
+    source vars
+}
+
+IFS=_ read distro image<<<"$INSTANCE_IMAGE"
+
+#Defaults - work for ubuntu on performance flavors.
+flavor="performance1-4"
+disk="/dev/xvde1"
+tags=${TAGS:-all}
+buildid="${BUILD_NUMBER}-$distro"
+
+# Override for centos on standard flavors. (For some reason CentOS is not working on performance at the moment).
+[[ "$distro" =~ "CentOS" ]] && {
+  flavor="5"
+  disk="/osds/0"
+}||:
+
+[[ "$STAGE" == "BUILD" ]] && {
+    cat > $WORKSPACE/vars <<EOF
+export INSTANCE_IMAGE="$INSTANCE_IMAGE"
+export BUILD_NUMBER="$BUILD_NUMBER"
+EOF
+}||:
+
+pushd ~/ansible-openstack-ceph-gate
+source venv/bin/activate
+pushd ansible-openstack-ceph-bootstrap
+ansible-playbook bootstrap.yml\
+    -e network=jenkins\
+    -e network_prefix=192.168.150\
+    -e keypair=jenkins\
+    -e image="$image"\
+    -e flavor="$flavor"\
+    -e disk="$disk"\
+    -e buildid="$buildid"\
+    -i inventory-jenkins\
+    --private-key=id_rsa\
+    --tags="$tags"\
+    -vvvv
