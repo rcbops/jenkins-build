@@ -1,33 +1,45 @@
 #!/bin/bash
 
-[[ "$STAGE" == "POSTBUILD" ]] && {
-    source vars
-}
-
-IFS=_ read distro image<<<"$INSTANCE_IMAGE"
-
-#Defaults - work for ubuntu on performance flavors.
-flavor="performance1-4"
-disk="/dev/xvde1"
-tags=${TAGS:-all}
-buildid="${BUILD_NUMBER}-$distro"
-
-# Override for centos on standard flavors. (For some reason CentOS is not working on performance at the moment).
-[[ "$distro" =~ "CentOS" ]] && {
-  flavor="5"
-  disk="/osds/0"
-}||:
-
-[[ "$STAGE" == "BUILD" ]] && {
+# Environment Variables available at build time, store them.
+if [[ "$STAGE" == "BUILD" ]]; then
     cat > $WORKSPACE/vars <<EOF
 export INSTANCE_IMAGE="$INSTANCE_IMAGE"
 export BUILD_NUMBER="$BUILD_NUMBER"
 EOF
-}||:
+fi
 
+# Recall environment variables sotred earlier
+if [[ "$STAGE" == "POSTBUILD" ]]; then
+    source vars
+fi
+
+# tags defaults to all
+tags=${TAGS:-all}
+
+# Split INSTANCE_IMAGE into distro name and image uuid
+IFS=_ read distro image<<<"$INSTANCE_IMAGE"
+
+# Set build ID
+buildid="${BUILD_NUMBER}-$distro"
+
+#Defaults - work for ubuntu on performance flavors.
+flavor="performance1-4"
+disk="/dev/xvde1"
+
+# Override for centos on standard flavors.
+# (For some reason CentOS is not working on performance at the moment).
+if [[ "$distro" =~ "centos" ]]; then
+  flavor="5"
+  disk="/osds/0"
+fi
+
+# Activate python virtualenv that has ansible, pyrax and rackspace-novaclient
+# installed.
 pushd ~/ansible-openstack-ceph-gate
 source venv/bin/activate
 pushd ansible-openstack-ceph-bootstrap
+
+export PYTHONUNBUFFERED=1
 ansible-playbook bootstrap.yml\
     -e network=jenkins\
     -e network_prefix=192.168.150\
