@@ -17,6 +17,7 @@ fi
 
 # setup the git repo
 pushd ${TARGET_DIR}
+git fetch origin
 git checkout ${GIT_BRANCH}
 git clean -ffdx
 git pull origin ${GIT_BRANCH}
