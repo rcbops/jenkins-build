@@ -12,11 +12,13 @@ rm -f chef-cookbooks.tgz
 rm -f patch.diff
 
 if [[ ! -d ${TARGET_DIR} ]]; then
-  git clone -b ${GIT_BRANCH} ${GIT_MASTER_URL} ${TARGET_DIR}
+  git clone ${GIT_MASTER_URL} ${TARGET_DIR}
 fi
 
 # setup the git repo
 pushd ${TARGET_DIR}
+git fetch origin
+git checkout ${GIT_BRANCH}
 git clean -ffdx
 git pull origin ${GIT_BRANCH}
 git submodule init
