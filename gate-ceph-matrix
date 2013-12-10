@@ -50,5 +50,4 @@ ansible-playbook bootstrap.yml\
     -e buildid="$buildid"\
     -i inventory-jenkins\
     --private-key=id_rsa\
-    --tags="$tags"\
-    -vvvv
+    --tags="$tags"
