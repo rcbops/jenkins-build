@@ -4,12 +4,12 @@ set -e
 set -u
 curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Running GATE test(s): '${BUILD_URL}'console"}' || :
 
-GIT_DIFF_URL=${GIT_DIFF_URL:-noop}
+GIT_PATCH_URL=${GIT_PATCH_URL:-noop}
 TARGET_DIR=$(echo ${GIT_MASTER_URL} | sed 's/https:\/\/github.com\///g')
 
 # cleanup the old chef-cookbooks tarball from the last run
 rm -f chef-cookbooks.tgz
-rm -f patch.diff
+rm -f pr.patch
 
 if [[ ! -d ${TARGET_DIR} ]]; then
   git clone ${GIT_MASTER_URL} ${TARGET_DIR}
@@ -26,14 +26,14 @@ git submodule sync
 git submodule update
 popd
 
-# if we have a DIFF, apply it
-if [[ ${GIT_DIFF_URL} != "noop" ]]; then
-  curl -s ${GIT_DIFF_URL} > patch.diff
+# if we have a PATCH, apply it
+if [[ ${GIT_PATCH_URL} != "noop" ]]; then
+  curl -s ${GIT_PATCH_URL} > pr.patch
   PATCH_PWD=$(pwd)
   pushd ${TARGET_DIR}/cookbooks/${GIT_REPO}
-  if ! ( cat ${PATCH_PWD}/patch.diff | git apply ); then
-    echo "Unable to merge proposed patch: ${GIT_DIFF_URL}"
-    curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST'  -d '{"body": "Gate Failed - The patch '${GIT_DIFF_URL}' could not be applied to '${GIT_BRANCH}' of '${GIT_MASTER_URL}'.  Please see '${BUILD_URL}'consoleFull for more details."}'
+  if ! ( cat ${PATCH_PWD}/pr.patch | git apply ); then
+    echo "Unable to merge proposed patch: ${GIT_PATCH_URL}"
+    curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST'  -d '{"body": "Gate Failed - The patch '${GIT_PATCH_URL}' could not be applied to '${GIT_BRANCH}' of '${GIT_MASTER_URL}'.  Please see '${BUILD_URL}'consoleFull for more details."}'
     exit 1
   fi
   popd
@@ -46,8 +46,8 @@ git clean -ffdx
 git submodule foreach "git clean -ffdx"
 popd
 
-# clean up the submodule that we applied the DIFF to
-if [[ ${GIT_DIFF_URL} != "noop" ]]; then
+# clean up the submodule that we applied the PATCH to
+if [[ ${GIT_PATCH_URL} != "noop" ]]; then
   pushd ${TARGET_DIR}/cookbooks/${GIT_REPO}
   git reset --hard HEAD
   popd
