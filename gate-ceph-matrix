@@ -29,7 +29,7 @@ disk="/dev/xvde1"
 # Override for centos on standard flavors.
 # (For some reason CentOS is not working on performance at the moment).
 if [[ "$distro" =~ "centos" ]]; then
-  flavor="5"
+  #flavor="5"
   disk="/osds/0"
 fi
 
