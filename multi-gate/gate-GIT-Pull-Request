@@ -2,7 +2,14 @@
 set -x
 set -e
 set -u
-curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Running GATE test(s): '${BUILD_URL}'console"}' || :
+
+# check that we gate only on master and things that end in rc
+if [[ ${GIT_BRANCH} == "master" ]] || [[ ${GIT_BRANCH} == *rc ]]; then
+  curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Running GATE test(s): '${BUILD_URL}'console"}' || :
+else 
+  curl -s -K ~/.rcbjenkins-git-creds ${GIT_COMMENT_URL} -X 'POST' -d '{"body": "Gating is only enabled on master and rc branches."}' || :
+  exit 1;
+fi
 
 GIT_PATCH_URL=${GIT_PATCH_URL:-noop}
 TARGET_DIR=$(echo ${GIT_MASTER_URL} | sed 's/https:\/\/github.com\///g')
