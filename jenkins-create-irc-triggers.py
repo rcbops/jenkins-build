@@ -69,7 +69,11 @@ for repo in repo_list:
                     print ".... FAILED TO UPDATE IRC HOOK FOR %s" % (repo['name'])
                     sys.exit(1)
             else:
-                print ".. IRC hook is configured for pull_req"
+                print ".. IRC hook is configured for pull_req, updating it"
+                response, content = http.request(hook_path, 'POST', headers=headers, body=json.dumps(irc_config_data))
+                if response.status != 200:
+                    print ".... FAILED TO ADD IRC HOOK FOR %s" % (repo['name'])
+                    sys.exit(1)
     if not has_irc_hook:
         print ".. %s does not have IRC hook configured.... FIXING" % repo['name']
         response, content = http.request(hook_path, 'POST', headers=headers, body=json.dumps(irc_config_data))
