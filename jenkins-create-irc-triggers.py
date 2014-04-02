@@ -39,8 +39,10 @@ irc_config_data = {
         "long_url": "1",
         "no_colors": "1",
         "nick": "gitcheffoo",
+        "nickserv_password": "secrete",
         "password": "",
-        "port": "6667",
+        "port": "7000",
+        "ssl": "1",
         "room": "#rcbops",
         "server": "irc.freenode.net"}
 }
