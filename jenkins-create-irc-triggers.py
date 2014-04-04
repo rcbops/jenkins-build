@@ -35,16 +35,17 @@ irc_config_data = {
     "name": "irc",
     "active": True,
     "config": {
-        "branch_regexes": "",
-        "long_url": "1",
-        "no_colors": "1",
-        "nick": "gitcheffoo",
-        "nickserv_password": "secrete",
-        "password": "",
-        "port": "7000",
-        "ssl": "1",
-        "room": "#rcbops",
-        "server": "irc.freenode.net"}
+      "server": "bouncer.breu.org",
+      "port": "6667",
+      "room": "#rcbops",
+      "nick": "gitcheffoo",
+      "branch_regexes": "",
+      "nickserv_password": "secrete",
+      "password": "Iequ1eeCe2Hai3Ae",
+      "ssl": "1",
+      "no_colors": "1",
+      "long_url": "1"
+    }
 }
 
 event_data = {"events": [ "push", "issues", "pull_request", "issue_comment" ]}
