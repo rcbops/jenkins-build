@@ -1,0 +1,70 @@
+# Copyright 2014, Rackspace US, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author Kevin.Carter@Rackspace.com
+
+# Sections:
+#   "git_repo"
+#       Set all of the repositories that you want to have web-hooks created
+#       for. This will iterate through all repositories found in the accounts
+#       provided. Each account needs to have a unique key with the full prefix,
+#       domain, and path to the account.
+
+#   Example:
+#       [git_repo]
+#       my_repo = https://api.github.com/orgs/personal_github_account_name
+#       work_repo = https://api.github.com/orgs/some_work_account_name
+
+
+#   "irc"
+#       Set all of the information required to get an IRC notifier setup for
+#       events that happen within your github repositories. The only special
+#       argument is "events". This is a comma separated list of events that you
+#       want to relieve notifications on.
+
+#   Example:
+#       [irc]
+#       name = irc
+#       active = True
+#       server = someserver.someaddress
+#       port = 6667
+#       room = #SomeRoom
+#       nick = somenick
+#       branch_regexes =
+#       nickserv_password = somepassword
+#       password = somepassword
+#       ssl = 1
+#       no_colors = 1
+#       long_url = 1
+#       events = push,issues,pull_request,issue_comment
+
+
+[git_repo]
+some_account = some_github_api_repo_path
+some_other_account = some_github_api_repo_path
+
+
+[irc]
+name = irc
+active = True
+server = someserver.someaddress
+port = 6667
+room = #SomeRoom
+nick = somenick
+nickserv_password = somepassword
+password = somepassword
+ssl = 0
+no_colors = 0
+long_url = 0
+events = push,issues,pull_request,issue_comment
