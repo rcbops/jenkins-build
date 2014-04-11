@@ -18,7 +18,6 @@
 
 import base64
 import ConfigParser
-import io
 import json
 import logging
 from logging import handlers
@@ -27,9 +26,6 @@ import stat
 import sys
 
 import httplib2
-
-
-APPNAME = 'jenkins_notify'
 
 
 class ConfigurationSetup(object):
@@ -177,21 +173,20 @@ def exit_failure(msg):
     raise SystemExit(msg)
 
 
-def get_git_creds():
+def get_config():
     """Return a string with the git creds.
 
     From the local configuration file load the git creds.
     """
 
-    config_file = '.rcbjenkins-git-creds'
-    file_path = os.path.abspath(os.path.join(HOME, config_file))
+    sys_config = ConfigurationSetup()
+    irc_args = sys_config.config_args(section='irc')
+    LOG.debug(irc_args)
 
-    with open(file_path, 'rb') as f:
-        config = io.StringIO(u'[default]\n%s' % f.read())
+    git_repos = sys_config.config_args(section='git_repo')
+    LOG.debug(git_repos)
 
-    parser = ConfigParser.ConfigParser()
-    parser.readfp(config)
-    return parser.get('default', 'user')
+    return irc_args, git_repos
 
 
 def process_hooks(hook_list, irc_data, git_hook_path, git_headers,
@@ -209,26 +204,8 @@ def process_hooks(hook_list, irc_data, git_hook_path, git_headers,
     :param git_repo: ``dict``
     :param irc_hook: ``bol``
     """
-
-    def _update_hook():
-        LOG.warn(
-            'IRC hook is out of sync from known good config, UPDATERATING.'
-        )
-        resp, _content = HTTP.request(
-            git_hook_path,
-            'POST',
-            headers=git_headers,
-            body=json.dumps(irc_data)
-        )
-        if resp.status != 200:
-            LOG.error(
-                'FAILED TO ADD IRC HOOK FOR %s', git_repo['name']
-            )
-
-    irc_data.update(git_event_data)
-
     for hook in hook_list:
-        if hook.get('name') == 'irc':
+        if isinstance(hook, dict) and hook.get('name') == 'irc':
             irc_hook = True
             # Make sure irc_hook is configured for pull_req
             hook_events = hook['events']
@@ -255,21 +232,41 @@ def process_hooks(hook_list, irc_data, git_hook_path, git_headers,
                 hook_config = hook['config']
                 if hook['active'] is not True:
                     LOG.warn('Hook not active')
-                    _update_hook()
+                    _update_hook(
+                        git_hook_path,
+                        git_headers,
+                        irc_data,
+                        git_repo
+                    )
                 elif hook['events'] != git_event_data['events']:
                     LOG.warn('Events out of sync')
-                    _update_hook()
+                    _update_hook(
+                        git_hook_path,
+                        git_headers,
+                        irc_data,
+                        git_repo
+                    )
                 else:
                     try:
                         for key, value in irc_data['config'].items():
                             if value != hook_config[key]:
                                 LOG.warn('Key [ %s ] not set correctly', key)
-                                _update_hook()
+                                _update_hook(
+                                    git_hook_path,
+                                    git_headers,
+                                    irc_data,
+                                    git_repo
+                                )
                     except KeyError as exp:
                         LOG.warn(
                             'Configuration key [ %s ] seems to be missing', exp
                         )
-                        _update_hook()
+                        _update_hook(
+                            git_hook_path,
+                            git_headers,
+                            irc_data,
+                            git_repo
+                        )
 
     if not irc_hook:
         LOG.info(
@@ -284,6 +281,23 @@ def process_hooks(hook_list, irc_data, git_hook_path, git_headers,
         )
         if resp.status != 201:
             LOG.error('FAILED TO ADD IRC HOOK FOR [ %s ]' % git_repo['name'])
+
+
+def _update_hook(git_hook_path, git_headers, irc_data, git_repo):
+    LOG.warn(
+        'IRC hook is out of sync from known good config, UPDATERATING.'
+    )
+    response, update_content = HTTP.request(
+        git_hook_path,
+        'POST',
+        headers=git_headers,
+        body=json.dumps(irc_data)
+    )
+    if response.status >= 300:
+        LOG.error(
+            'FAILED TO ADD/MODIFY IRC HOOK FOR [ %s ] RETURN CODE [ %s ]',
+            git_repo['name'], response.status
+        )
 
 
 def irc_json_data(irc_data):
@@ -320,75 +334,106 @@ def irc_json_data(irc_data):
     return data
 
 
+def get_repos(path, git_path, api_uri, headers):
+    """Return a list of repositories from the provided github api.
+
+    :param path: ``str``
+    :param git_path: ``str``
+    :param api_uri: ``str``
+    :param headers: ``dict``
+    :return: ``list``
+    """
+    response, content = HTTP.request(path, 'HEAD', headers=headers)
+
+    if 'link' in response:
+        repo_content = []
+        links = response['link'].split(',')
+        pages = [i.replace(' ', '') for i in links if 'last' in i]
+        page_link = pages[0].split(';')[0]
+        page_link = page_link.strip('>').strip('<')
+        page_link = page_link.split('=')
+        page_num = int(page_link[-1])
+        for page in range(0, page_num):
+            git_page_number = page + 1
+            req_path = git_path % (api_uri, git_page_number)
+            response, content = HTTP.request(req_path, 'GET', headers=headers)
+            for repo in json.loads(content):
+                repo_content.append(repo)
+        else:
+            return repo_content
+    else:
+        response, content = HTTP.request(path, 'GET', headers=headers)
+        return json.loads(content)
+
+
+def process_repos(repo_content, headers, irc_config_data, configured_events):
+    """Iterate through the repos and ensure the IRC triggers are setup.
+
+    :param repo_content: ``list``
+    :param headers: ``dict``
+    :param irc_config_data: ``dict``
+    :param configured_events: ``dict``
+    """
+    for repo in repo_content:
+        # Update all of the IRC data with our configured events
+        irc_config_data.update(configured_events)
+
+        LOG.info('Fetching hooks for repo: %s' % repo['name'])
+        hook_path = '%s/hooks' % repo['url']
+        response, content = HTTP.request(hook_path, 'GET', headers=headers)
+
+        process_hooks(
+            hook_list=json.loads(content),
+            irc_data=irc_config_data,
+            git_hook_path=hook_path,
+            git_headers=headers,
+            git_event_data=configured_events,
+            git_repo=repo
+        )
+
+
 def main():
-    git_creds = get_git_creds()
-    headers = {
-        'Authorization': 'Basic %s' % base64.encodestring(git_creds)
-    }
-
+    """Run the main application."""
     # Get all of the configuration options from our configuration file.
-    get_config = ConfigurationSetup()
-    irc_args = get_config.config_args(section='irc')
-    LOG.debug(irc_args)
-
-    git_repos = get_config.config_args(section='git_repo')
-    LOG.debug(git_repos)
+    irc_args, git_repos = get_config()
 
     # Iterate through the repos and make sure the IRC notifier is working
     for git_repo in git_repos.keys():
-        LOG.info('Grabbing all repos from %s' % git_repos[git_repo])
+        username, password, api_uri = git_repos[git_repo].split('||')
 
-        # github paginates, this will be an issue once we have ~100 repos
+        # load and encode the git creds for API access
+        git_creds = '%s:%s' % (username, password)
+        git_creds = base64.encodestring(git_creds)
+        headers = {
+            'Authorization': 'Basic %s' % git_creds
+        }
+
+        # Load all of the repositories
+        LOG.info('Grabbing all repos from %s' % api_uri)
         git_path = '%s/repos?page=%s'
-        path = git_path % (git_repos[git_repo], 1)
-
-        response, content = HTTP.request(path, 'HEAD', headers=headers)
-
-        if 'link' in response:
-            repo_content = []
-            links = response['link'].split(',')
-            pages = [i.replace(' ', '') for i in links if 'last' in i]
-            page_link = pages[0].split(';')[0]
-            page_link = page_link.strip('>').strip('<')
-            page_link = page_link.split('=')
-            page_num = int(page_link[-1])
-            for page in range(0, page_num):
-                git_page_number = page + 1
-                req_path = git_path % (git_repos[git_repo], git_page_number)
-                response, content = HTTP.request(
-                    req_path, 'GET', headers=headers
-                )
-                for repo in json.loads(content):
-                    repo_content.append(repo)
-        else:
-            response, content = HTTP.request(path, 'GET', headers=headers)
-            repo_content = json.loads(content)
-
+        repo_content = get_repos(
+            path=git_path % (api_uri, 1),
+            git_path=git_path,
+            api_uri=api_uri,
+            headers=headers
+        )
         LOG.info('Found [ %s ] repositories', len(repo_content))
 
         # Get the IRC data from config and format into a dict
         irc_config_data = irc_json_data(irc_data=irc_args)
 
-        event_data = {
+        configured_events = {
             'events': irc_args.get('events', '').split(',')
         }
-
-        for repo in repo_content:
-            LOG.info('Fetching hooks for repo: %s' % repo['name'])
-            hook_path = '%s/hooks' % repo['url']
-            response, content = HTTP.request(
-                hook_path, 'GET', headers=headers
-            )
-            process_hooks(
-                hook_list=json.loads(content),
-                irc_data=irc_config_data,
-                git_hook_path=hook_path,
-                git_headers=headers,
-                git_event_data=event_data,
-                git_repo=repo
-            )
+        process_repos(
+            repo_content=repo_content,
+            headers=headers,
+            irc_config_data=irc_config_data,
+            configured_events=configured_events
+        )
 
 
+APPNAME = 'jenkins_notify'
 HOME = os.getenv('HOME')
 HTTP = httplib2.Http()
 

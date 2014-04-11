@@ -19,12 +19,13 @@
 #       Set all of the repositories that you want to have web-hooks created
 #       for. This will iterate through all repositories found in the accounts
 #       provided. Each account needs to have a unique key with the full prefix,
-#       domain, and path to the account.
+#       domain, and path to the account. The repo line needs to have the
+#       username, password and url. format is key = username||password||uri
 
 #   Example:
 #       [git_repo]
-#       my_repo = https://api.github.com/orgs/personal_github_account_name
-#       work_repo = https://api.github.com/orgs/some_work_account_name
+#       my_repo = username||password||https://api.github.com/orgs/some_name
+#       work_repo = username||password||https://api.github.com/orgs/other_name
 
 
 #   "irc"
@@ -51,8 +52,8 @@
 
 
 [git_repo]
-some_account = some_github_api_repo_path
-some_other_account = some_github_api_repo_path
+some_account = username||password||https://some_github_api_repo_path
+some_other_account = username||password||https://some_github_api_repo_path
 
 
 [irc]
