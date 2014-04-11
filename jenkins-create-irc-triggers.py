@@ -204,26 +204,8 @@ def process_hooks(hook_list, irc_data, git_hook_path, git_headers,
     :param git_repo: ``dict``
     :param irc_hook: ``bol``
     """
-
-    def _update_hook():
-        LOG.warn(
-            'IRC hook is out of sync from known good config, UPDATERATING.'
-        )
-        response, update_content = HTTP.request(
-            git_hook_path,
-            'POST',
-            headers=git_headers,
-            body=json.dumps(irc_data)
-        )
-        if response.status != 200:
-            LOG.error(
-                'FAILED TO ADD IRC HOOK FOR %s', git_repo['name']
-            )
-
-    irc_data.update(git_event_data)
-
     for hook in hook_list:
-        if hook.get('name') == 'irc':
+        if isinstance(hook, dict) and hook.get('name') == 'irc':
             irc_hook = True
             # Make sure irc_hook is configured for pull_req
             hook_events = hook['events']
@@ -250,21 +232,41 @@ def process_hooks(hook_list, irc_data, git_hook_path, git_headers,
                 hook_config = hook['config']
                 if hook['active'] is not True:
                     LOG.warn('Hook not active')
-                    _update_hook()
+                    _update_hook(
+                        git_hook_path,
+                        git_headers,
+                        irc_data,
+                        git_repo
+                    )
                 elif hook['events'] != git_event_data['events']:
                     LOG.warn('Events out of sync')
-                    _update_hook()
+                    _update_hook(
+                        git_hook_path,
+                        git_headers,
+                        irc_data,
+                        git_repo
+                    )
                 else:
                     try:
                         for key, value in irc_data['config'].items():
                             if value != hook_config[key]:
                                 LOG.warn('Key [ %s ] not set correctly', key)
-                                _update_hook()
+                                _update_hook(
+                                    git_hook_path,
+                                    git_headers,
+                                    irc_data,
+                                    git_repo
+                                )
                     except KeyError as exp:
                         LOG.warn(
                             'Configuration key [ %s ] seems to be missing', exp
                         )
-                        _update_hook()
+                        _update_hook(
+                            git_hook_path,
+                            git_headers,
+                            irc_data,
+                            git_repo
+                        )
 
     if not irc_hook:
         LOG.info(
@@ -279,6 +281,23 @@ def process_hooks(hook_list, irc_data, git_hook_path, git_headers,
         )
         if resp.status != 201:
             LOG.error('FAILED TO ADD IRC HOOK FOR [ %s ]' % git_repo['name'])
+
+
+def _update_hook(git_hook_path, git_headers, irc_data, git_repo):
+    LOG.warn(
+        'IRC hook is out of sync from known good config, UPDATERATING.'
+    )
+    response, update_content = HTTP.request(
+        git_hook_path,
+        'POST',
+        headers=git_headers,
+        body=json.dumps(irc_data)
+    )
+    if response.status >= 300:
+        LOG.error(
+            'FAILED TO ADD/MODIFY IRC HOOK FOR [ %s ] RETURN CODE [ %s ]',
+            git_repo['name'], response.status
+        )
 
 
 def irc_json_data(irc_data):
@@ -356,9 +375,13 @@ def process_repos(repo_content, headers, irc_config_data, configured_events):
     :param configured_events: ``dict``
     """
     for repo in repo_content:
+        # Update all of the IRC data with our configured events
+        irc_config_data.update(configured_events)
+
         LOG.info('Fetching hooks for repo: %s' % repo['name'])
         hook_path = '%s/hooks' % repo['url']
         response, content = HTTP.request(hook_path, 'GET', headers=headers)
+
         process_hooks(
             hook_list=json.loads(content),
             irc_data=irc_config_data,
